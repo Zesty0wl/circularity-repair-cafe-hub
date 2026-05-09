@@ -51,8 +51,9 @@ hundreds of repairs, and yours to host on a £5/month VPS or a Pi in the corner.
 
 ## Quick start (Docker)
 
-You need Docker (with Compose v2) and a host that can route a port. That's it —
-everything else lives inside the container.
+You'll need a Linux host (a small VPS, a home server, or a Raspberry Pi 4/5
+works well) with Docker and Docker Compose v2 installed. Everything else lives
+inside the container.
 
 ```bash
 git clone https://github.com/Zesty0wl/circularity-repair-cafe-hub.git
@@ -64,10 +65,25 @@ sed -i "s|please-change-me-32-or-more-random-chars|$(openssl rand -hex 32)|" .en
 
 # 2. Build and start
 docker compose up -d --build
-
-# 3. Open the setup wizard
-xdg-open http://127.0.0.1:5026
 ```
+
+By default the container only listens on `127.0.0.1:5026` on the server. To
+**open the setup wizard from your laptop**, you have two options:
+
+**Option A — quick: SSH tunnel** (great for trying it out before setting up
+a domain). On your Windows / Mac / Linux laptop, run:
+
+```bash
+ssh -L 5026:127.0.0.1:5026 user@your-server
+```
+
+Then open <http://127.0.0.1:5026> in your browser. The tunnel stays open as
+long as the SSH session is.
+
+**Option B — production: a public hostname behind a reverse proxy.** This is
+the recommended setup for anything you actually want to use on event day —
+see ["Deploying behind Cloudflare + nginx"](#deploying-behind-cloudflare--nginx)
+below.
 
 The first request bootstraps the database, runs migrations, seeds the default
 skill categories, then walks you through creating the super-admin account and

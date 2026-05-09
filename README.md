@@ -37,7 +37,7 @@ hundreds of repairs, and yours to host on a £5/month VPS or a Pi in the corner.
   in Facebook / LinkedIn / Slack, optional [Plausible](https://plausible.io)
   integration, configurable favicon and meta description — all from the admin UI.
 - **Privacy by design** — bcrypt passwords, JWT + httpOnly refresh cookies,
-  rate-limited login, CSP headers, configurable PII retention with auto-purge.
+  rate-limited login, CSP headers, configurable PII retention with one-click purge.
 - **Single container** — Node 22 + Fastify + PostgreSQL 16, supervised by
   s6-overlay; one `/data` volume for the database, uploads and QR codes.
 
@@ -91,6 +91,15 @@ filling in your cafe details.
 
 To upgrade later, `git pull && docker compose up -d --build`. Migrations are
 idempotent and run automatically on container start.
+
+## Documentation
+
+Once you're up and running, the **[user documentation in `docs/`](./docs/README.md)**
+walks repair cafe organisers through the whole platform — getting started,
+branding, skills, venues & events, running an event day, reporting and GDPR.
+There's also a [short repairer guide](./docs/repairer-guide.md) for your
+volunteers. The docs live in this repo so they always match the version of the
+software you're running.
 
 ## Deploying behind Cloudflare + nginx
 

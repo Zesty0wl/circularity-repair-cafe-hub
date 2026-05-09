@@ -1,0 +1,145 @@
+<script lang="ts">
+  import { onMount } from 'svelte';
+  import { api } from '$lib/api';
+  import { Clock, CheckCircle2, XCircle, Hourglass, History } from 'lucide-svelte';
+  import { goto } from '$app/navigation';
+
+  interface Job {
+    id: string; jobNumber: string; customerName: string | null; itemDescription: string;
+    faultDescription: string; itemBrand: string | null; status: string; repairerId: string | null;
+    createdAt: string; category: string | null; categoryIcon: string | null; categoryColour: string | null;
+  }
+  interface ActiveData {
+    event: any | null;
+    jobs: Job[];
+    counts: { waiting: number; in_progress: number; completed: number; cannot_repair: number } | null;
+    myJobs: Job[];
+  }
+
+  let data: ActiveData | null = null;
+  let stats: { total: number; successRate: number; busiestCategory: string | null } | null = null;
+  let filter: 'all' | 'waiting' | 'in_progress' | 'completed' | 'cannot_repair' = 'waiting';
+  let timer: ReturnType<typeof setInterval> | null = null;
+  let busyId: string | null = null;
+
+  async function load() {
+    [data, stats] = await Promise.all([
+      api<ActiveData>('/api/repairer/active-event'),
+      api<{ total: number; successRate: number; busiestCategory: string | null }>('/api/repairer/stats'),
+    ]);
+  }
+
+  onMount(() => {
+    load();
+    timer = setInterval(load, 60000);
+    return () => { if (timer) clearInterval(timer); };
+  });
+
+  async function accept(id: string) {
+    busyId = id;
+    try {
+      await api(`/api/repairer/jobs/${id}/accept`, { method: 'PATCH', json: {} });
+      await load();
+      goto(`/repairer/job/${id}`);
+    } finally {
+      busyId = null;
+    }
+  }
+
+  $: filteredJobs = (data?.jobs ?? []).filter((j) => filter === 'all' || j.status === filter);
+
+  function fmtTime(ts: string): string {
+    const d = new Date(ts);
+    const mins = Math.round((Date.now() - d.getTime()) / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return `${mins} min ago`;
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+</script>
+
+<div class="grid sm:grid-cols-2 gap-4">
+  {#if data?.event}
+    <div class="card p-5">
+      <h2 class="text-lg font-semibold">{data.event.name}</h2>
+      <p class="text-slate-600 text-sm">{data.event.venueName} · {data.event.startTime.slice(0,5)}–{data.event.endTime.slice(0,5)}</p>
+      {#if data.counts}
+        <div class="mt-4 grid grid-cols-4 gap-2 text-center">
+          <div class="rounded-lg bg-amber-50 text-amber-800 p-2"><p class="text-xs">Waiting</p><p class="text-2xl font-bold">{data.counts.waiting}</p></div>
+          <div class="rounded-lg bg-blue-50 text-blue-800 p-2"><p class="text-xs">In progress</p><p class="text-2xl font-bold">{data.counts.in_progress}</p></div>
+          <div class="rounded-lg bg-emerald-50 text-emerald-800 p-2"><p class="text-xs">Done</p><p class="text-2xl font-bold">{data.counts.completed}</p></div>
+          <div class="rounded-lg bg-rose-50 text-rose-800 p-2"><p class="text-xs">Couldn't</p><p class="text-2xl font-bold">{data.counts.cannot_repair}</p></div>
+        </div>
+      {/if}
+    </div>
+  {:else}
+    <div class="card p-5">
+      <h2 class="text-lg font-semibold">No active event</h2>
+      <p class="text-slate-600 text-sm mt-2">An admin will activate an event when it starts.</p>
+    </div>
+  {/if}
+
+  <div class="card p-5">
+    <h2 class="text-lg font-semibold">My stats</h2>
+    <div class="mt-3 grid grid-cols-3 text-center">
+      <div><p class="text-2xl font-bold">{stats?.total ?? 0}</p><p class="text-xs text-slate-500">My repairs</p></div>
+      <div><p class="text-2xl font-bold">{stats?.successRate ?? 0}%</p><p class="text-xs text-slate-500">Success rate</p></div>
+      <div><p class="text-sm font-semibold pt-2">{stats?.busiestCategory ?? '—'}</p><p class="text-xs text-slate-500">Busiest category</p></div>
+    </div>
+    <a href="/repairer/history" class="mt-4 btn-secondary w-full"><History size={16} /> My history</a>
+  </div>
+</div>
+
+{#if data?.myJobs?.length}
+  <section class="mt-6">
+    <h2 class="text-lg font-semibold mb-3">My active repairs</h2>
+    <div class="grid sm:grid-cols-2 gap-3">
+      {#each data.myJobs as j}
+        <a href={`/repairer/job/${j.id}`} class="card p-4 hover:bg-slate-50">
+          <p class="text-xs text-slate-500">{j.jobNumber}</p>
+          <p class="font-semibold">{j.itemDescription}</p>
+          <p class="text-sm text-slate-600">{j.customerName ?? '—'}</p>
+        </a>
+      {/each}
+    </div>
+  </section>
+{/if}
+
+<section class="mt-8">
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="text-lg font-semibold">Job queue</h2>
+    <div class="flex gap-1 text-sm">
+      {#each ['waiting', 'in_progress', 'completed', 'cannot_repair', 'all'] as f}
+        <button class="px-3 py-1 rounded-full {filter === f ? 'bg-brand-600 text-white' : 'bg-white ring-1 ring-slate-200 text-slate-700'}" on:click={() => (filter = f)}>{f.replace('_', ' ')}</button>
+      {/each}
+    </div>
+  </div>
+
+  {#if filteredJobs.length === 0}
+    <p class="text-slate-500">No jobs to show.</p>
+  {:else}
+    <div class="grid sm:grid-cols-2 gap-3">
+      {#each filteredJobs as j}
+        <article class="card p-4">
+          <div class="flex justify-between items-start gap-3">
+            <div>
+              <p class="text-xs text-slate-500">{j.jobNumber} · <Clock class="inline" size={12} /> {fmtTime(j.createdAt)}</p>
+              <h3 class="font-semibold mt-1">{j.itemDescription}</h3>
+              {#if j.itemBrand}<p class="text-sm text-slate-500">{j.itemBrand}</p>{/if}
+              {#if j.category}<span class="badge mt-2" style="background-color: {j.categoryColour}22; color: {j.categoryColour}">{j.category}</span>{/if}
+              <p class="mt-2 text-sm text-slate-700 line-clamp-2">{j.faultDescription}</p>
+              <p class="mt-2 text-xs text-slate-500">Customer: {j.customerName ?? '—'}</p>
+            </div>
+            <span class="badge badge-{j.status}">{j.status.replace('_', ' ')}</span>
+          </div>
+          <div class="mt-3 flex justify-end">
+            {#if j.status === 'waiting'}
+              <button class="btn-primary text-sm" disabled={busyId === j.id} on:click={() => accept(j.id)}>Accept this repair</button>
+            {:else}
+              <a href={`/repairer/job/${j.id}`} class="btn-secondary text-sm">View</a>
+            {/if}
+          </div>
+        </article>
+      {/each}
+    </div>
+  {/if}
+</section>

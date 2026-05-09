@@ -1,0 +1,27 @@
+{
+  "name": "circularity-hub",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Circularity Repair Cafe Hub - self-hosted repair cafe management",
+  "license": "MIT",
+  "homepage": "https://circularity.org/repair-cafe",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Zesty0wl/circularity-repair-cafe-hub.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Zesty0wl/circularity-repair-cafe-hub/issues"
+  },
+  "packageManager": "pnpm@9.12.0",
+  "scripts": {
+    "build:shared": "pnpm --filter @circularity/shared build",
+    "build:web": "pnpm --filter @circularity/web build",
+    "build:server": "pnpm --filter @circularity/server build",
+    "build": "pnpm build:shared && pnpm build:web && pnpm build:server",
+    "dev:server": "pnpm --filter @circularity/server dev",
+    "dev:web": "pnpm --filter @circularity/web dev"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

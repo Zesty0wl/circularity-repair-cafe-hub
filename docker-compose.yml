@@ -1,0 +1,36 @@
+services:
+  hub:
+    build: .
+    image: circularity-repair-cafe-hub:latest
+    container_name: circularity-repair-cafe-hub
+    restart: unless-stopped
+    # Use the default Docker bridge network — the host has many other networks
+    # already and the predefined address pools are exhausted.  This container
+    # only needs outbound + the published port.
+    network_mode: bridge
+    ports:
+      # Host 5026 → container 3000 (verified free between podkit-circularity:5025 and rosettacheck:5032)
+      - "127.0.0.1:5026:3000"
+    environment:
+      TZ: "${TZ:-Europe/London}"
+      # SECRET_KEY MUST be set in .env (32+ chars, randomly generated)
+      SECRET_KEY: "${SECRET_KEY}"
+      # Internal database URL — points at PostgreSQL inside the same container
+      DATABASE_URL: "postgresql://circularity:circularity@127.0.0.1:5432/circularity"
+      NODE_ENV: production
+      PORT: "3000"
+      UPLOADS_DIR: /data/uploads
+      # Trust X-Forwarded-* from the reverse proxy
+      TRUST_PROXY: "true"
+    volumes:
+      - hub-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+volumes:
+  hub-data:
+    name: circularity-repair-cafe-hub-data

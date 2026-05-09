@@ -1,0 +1,17 @@
+node_modules
+.pnpm-store
+**/dist
+**/build
+**/.svelte-kit
+.git
+.gitignore
+.dockerignore
+.vscode
+.env
+.env.*
+!.env.example
+README.md
+*.md
+docker-compose.yml
+nginx.conf
+data

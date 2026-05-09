@@ -1,0 +1,60 @@
+import { writable, derived } from 'svelte/store';
+import { api } from '../api';
+
+export interface HomePageContent {
+  intro?: { heading?: string; body?: string };
+  howItWorks?: Array<{ title: string; body: string }>;
+  whatToBring?: { heading?: string; body?: string };
+  faqs?: Array<{ q: string; a: string }>;
+}
+
+export interface GalleryImage {
+  id: string;
+  url: string;
+  caption: string | null;
+}
+
+export interface CafeInfo {
+  name: string;
+  tagline: string | null;
+  description: string | null;
+  logoUrl: string | null;
+  bannerUrl: string | null;
+  websiteUrl: string | null;
+  contactEmail: string | null;
+  address: string | null;
+  socialLinks: Record<string, string>;
+  homePage: HomePageContent;
+  gallery: GalleryImage[];
+  // SEO + analytics (all optional)
+  faviconUrl: string | null;
+  seoTitle: string | null;
+  seoDescription: string | null;
+  ogImageUrl: string | null;
+  plausibleDomain: string | null;
+  plausibleSrc: string | null;
+}
+
+export const cafe = writable<CafeInfo | null>(null);
+
+export async function loadCafe(): Promise<void> {
+  try {
+    const c = await api<CafeInfo>('/api/public/cafe');
+    cafe.set(c);
+  } catch {
+    cafe.set(null);
+  }
+}
+
+export const setupCompleted = writable<boolean | null>(null);
+
+export async function loadSetupStatus(): Promise<boolean> {
+  try {
+    const res = await api<{ setupCompleted: boolean }>('/api/setup/status');
+    setupCompleted.set(res.setupCompleted);
+    return res.setupCompleted;
+  } catch {
+    setupCompleted.set(false);
+    return false;
+  }
+}

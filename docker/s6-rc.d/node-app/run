@@ -1,0 +1,10 @@
+#!/command/with-contenv bash
+# Wait for postgres before starting the node app
+for i in $(seq 1 60); do
+  if pg_isready -h 127.0.0.1 -p 5432 -U circularity >/dev/null 2>&1; then
+    break
+  fi
+  sleep 1
+done
+cd /app/server
+exec node dist/index.js

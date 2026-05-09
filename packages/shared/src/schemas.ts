@@ -1,0 +1,144 @@
+import { z } from 'zod';
+
+export const passwordSchema = z
+  .string()
+  .min(10, 'Password must be at least 10 characters')
+  .regex(/[A-Z]/, 'Password must contain an uppercase letter')
+  .regex(/[a-z]/, 'Password must contain a lowercase letter')
+  .regex(/[0-9]/, 'Password must contain a number');
+
+export const emailSchema = z.string().email('Please enter a valid email address');
+
+export const setupCompleteSchema = z.object({
+  admin: z.object({
+    displayName: z.string().min(1).max(100),
+    email: emailSchema,
+    password: passwordSchema,
+  }),
+  cafe: z.object({
+    name: z.string().min(1).max(200),
+    tagline: z.string().max(120).optional().nullable(),
+    contactEmail: z.string().email().optional().nullable(),
+    websiteUrl: z.string().url().optional().nullable(),
+    description: z.string().max(2000).optional().nullable(),
+  }),
+  venue: z.object({
+    name: z.string().min(1).max(200),
+    address: z.string().max(500).optional().nullable(),
+    postcode: z.string().max(20).optional().nullable(),
+    notes: z.string().max(1000).optional().nullable(),
+  }),
+  publicUrl: z.string().url('Please enter a valid URL'),
+});
+
+export type SetupCompletePayload = z.infer<typeof setupCompleteSchema>;
+
+export const loginSchema = z.object({
+  email: emailSchema,
+  password: z.string().min(1),
+});
+
+export const checkInSubmitSchema = z.object({
+  customerName: z.string().min(1).max(50),
+  customerContact: z.string().max(100).optional().nullable(),
+  gdprConsent: z.literal(true),
+  itemDescription: z.string().min(1).max(200),
+  faultDescription: z.string().min(1).max(500),
+  itemCategoryId: z.string().uuid().optional().nullable(),
+  itemBrand: z.string().max(100).optional().nullable(),
+});
+
+export type CheckInSubmitPayload = z.infer<typeof checkInSubmitSchema>;
+
+export const recurrenceRuleSchema = z.object({
+  frequency: z.enum(['weekly', 'biweekly', 'monthly']),
+  interval: z.number().int().positive().default(1).optional(),
+  byWeekday: z.union([
+    z.enum(['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU']),
+    z.array(z.enum(['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'])),
+  ]),
+  bySetPos: z.union([z.number().int(), z.array(z.number().int())]).optional(),
+});
+
+export type RecurrenceRule = z.infer<typeof recurrenceRuleSchema>;
+
+export const eventTemplateSchema = z.object({
+  name: z.string().min(1).max(200),
+  venueId: z.string().uuid(),
+  description: z.string().max(2000).optional().nullable(),
+  startTime: z.string().regex(/^\d{2}:\d{2}$/),
+  endTime: z.string().regex(/^\d{2}:\d{2}$/),
+  recurrenceRule: recurrenceRuleSchema,
+  recurrenceEndDate: z.string().optional().nullable(),
+  maxItemsPerSession: z.number().int().positive().optional().nullable(),
+  isPublished: z.boolean().default(false),
+});
+
+export const oneOffEventSchema = z.object({
+  name: z.string().min(1).max(200),
+  venueId: z.string().uuid(),
+  description: z.string().max(2000).optional().nullable(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  startTime: z.string().regex(/^\d{2}:\d{2}$/),
+  endTime: z.string().regex(/^\d{2}:\d{2}$/),
+  isPublished: z.boolean().default(false),
+  maxItems: z.number().int().positive().optional().nullable(),
+});
+
+export const venueSchema = z.object({
+  name: z.string().min(1).max(200),
+  address: z.string().max(500).optional().nullable(),
+  postcode: z.string().max(20).optional().nullable(),
+  what3words: z.string().max(100).optional().nullable(),
+  mapUrl: z.string().url().optional().nullable().or(z.literal('')),
+  notes: z.string().max(1000).optional().nullable(),
+  isHomeVenue: z.boolean().optional(),
+  isActive: z.boolean().optional(),
+});
+
+export const skillCategorySchema = z.object({
+  name: z.string().min(1).max(100),
+  icon: z.string().max(50).default('wrench'),
+  colour: z.string().regex(/^#[0-9a-fA-F]{6}$/).default('#6366f1'),
+  sortOrder: z.number().int().default(0),
+  isActive: z.boolean().default(true),
+});
+
+export const userCreateSchema = z.object({
+  email: emailSchema,
+  displayName: z.string().min(1).max(100),
+  role: z.enum(['super_admin', 'admin', 'repairer']).default('repairer'),
+  bio: z.string().max(2000).optional().nullable(),
+  skills: z.array(z.string()).default([]),
+  joinDate: z.string().optional().nullable(),
+  showOnPublicPage: z.boolean().default(true),
+});
+
+export const userUpdateSchema = userCreateSchema.partial().extend({
+  isActive: z.boolean().optional(),
+});
+
+export const repairUpdateSchema = z.object({
+  status: z.enum(['waiting', 'in_progress', 'completed', 'cannot_repair', 'returned']).optional(),
+  repairerId: z.string().uuid().nullable().optional(),
+  outcomeNotes: z.string().max(2000).optional().nullable(),
+  partsUsed: z.string().max(500).optional().nullable(),
+  environmentalSavingKg: z.number().nonnegative().optional().nullable(),
+  customerName: z.string().max(50).optional().nullable(),
+  customerContact: z.string().max(100).optional().nullable(),
+  itemDescription: z.string().max(200).optional(),
+  faultDescription: z.string().max(500).optional(),
+  itemCategoryId: z.string().uuid().optional().nullable(),
+  itemBrand: z.string().max(100).optional().nullable(),
+});
+
+export const cafeSettingsSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  tagline: z.string().max(120).optional().nullable(),
+  description: z.string().max(2000).optional().nullable(),
+  websiteUrl: z.string().url().optional().nullable().or(z.literal('')),
+  publicUrl: z.string().url().optional(),
+  contactEmail: z.string().email().optional().nullable(),
+  address: z.string().max(500).optional().nullable(),
+  socialLinks: z.record(z.string(), z.string()).optional(),
+});

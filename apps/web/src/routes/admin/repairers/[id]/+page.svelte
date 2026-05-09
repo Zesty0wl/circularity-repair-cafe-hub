@@ -39,7 +39,7 @@
 
   async function resetLink() {
     const res = await api<{ token: string }>(`/api/admin/users/${id}/reset-link`, { method: 'POST', json: {} });
-    prompt('Reset link (1-hour expiry, single use):', `${window.location.origin}/reset/${res.token}`);
+    prompt('Reset link (14-day expiry, single use):', `${window.location.origin}/reset/${res.token}`);
   }
 
   async function del() {

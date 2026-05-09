@@ -78,7 +78,7 @@ Click **Add repairer** in the top right.
 2. Tick the **skills** they'll handle — these match the categories from
    `/admin/skills`.
 3. Save. The system creates the user and **immediately gives you a
-   one-hour, single-use reset link** for them.
+   single-use reset link** for them, valid for 14 days.
 4. Send the link to the new user via your usual channel (email, signal,
    WhatsApp, paper note). They click it, set a password, and they're in.
 
@@ -104,7 +104,7 @@ Click their name in the list. From there you can:
 - Min 10 characters, must include an uppercase letter, a lowercase letter
   and a digit.
 - There's no self-service "forgot my password" — admins generate a
-  one-hour reset link and send it through whatever channel suits them.
+  reset link (valid 14 days) and send it through whatever channel suits them.
   This is intentional: it keeps reset paths short and traceable, and there's
   no need to ship transactional email.
 

@@ -15,7 +15,7 @@
   async function resetLink(id: string) {
     const res = await api<{ token: string }>(`/api/admin/users/${id}/reset-link`, { method: 'POST', json: {} });
     const url = `${window.location.origin}/reset/${res.token}`;
-    prompt('Reset link (1-hour expiry, single use):', url);
+    prompt('Reset link (14-day expiry, single use):', url);
   }
 </script>
 

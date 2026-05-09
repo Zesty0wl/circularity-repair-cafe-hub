@@ -187,7 +187,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 export async function generateResetLinkForUser(userId: string): Promise<string> {
   const raw = randomToken(24);
   const tokenHash = hashToken(raw);
-  const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+  const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000); // 14 days
   await db.insert(passwordResetTokens).values({ userId, tokenHash, expiresAt });
   return raw;
 }

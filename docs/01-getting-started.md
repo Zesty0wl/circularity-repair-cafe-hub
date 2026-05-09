@@ -60,7 +60,7 @@ From now on, the front page is your public site. To get back into the admin
 area, go to `/login` and use the email + password you set during setup.
 
 If you forget your password, **another super-admin or admin** can generate a
-1-hour reset link for you from `/admin/repairers`. There is deliberately no
+14-day reset link for you from `/admin/repairers`. There is deliberately no
 self-service "forgot password" flow — repair cafes typically have multiple
 admins, and a reset link kept inside the admin team is more secure for a
 small organisation than a public email-reset endpoint.

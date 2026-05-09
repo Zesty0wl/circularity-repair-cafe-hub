@@ -38,7 +38,7 @@
 {#if result}
   <div class="card p-6 mt-4 max-w-xl">
     <p class="font-semibold text-emerald-700">User created</p>
-    <p class="mt-2 text-sm">Send them this single-use reset link (expires in 1 hour):</p>
+    <p class="mt-2 text-sm">Send them this single-use reset link (expires in 14 days):</p>
     <code class="mt-3 block break-all bg-slate-100 p-3 rounded">{`${window.location.origin}/reset/${result.token}`}</code>
     <a href="/admin/repairers" class="btn-primary mt-4">Back to list</a>
   </div>

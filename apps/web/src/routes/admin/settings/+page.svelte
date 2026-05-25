@@ -1,13 +1,27 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { get } from 'svelte/store';
   import { api } from '$lib/api';
+  import { auth } from '$lib/stores/auth';
   import { loadCafe } from '$lib/stores/cafe';
-  import { Trash2, Plus, ArrowUp, ArrowDown } from 'lucide-svelte';
+  import { Trash2, Plus, ArrowUp, ArrowDown, Download, Upload, AlertTriangle } from 'lucide-svelte';
 
   let cafe: any = null;
   let busy = false;
-  type Tab = 'profile' | 'home' | 'gallery' | 'preferences' | 'seo' | 'gdpr' | 'about';
+  type Tab = 'profile' | 'home' | 'gallery' | 'preferences' | 'seo' | 'gdpr' | 'backup' | 'about';
   let tab: Tab = 'profile';
+
+  $: isSuperAdmin = $auth?.user.role === 'super_admin';
+
+  // ─── Backup & restore state ───
+  let backupInfo: { appVersion: string; backupFormatVersion: number; confirmPhrase: string } | null = null;
+  let backupBusy = false;
+  let backupDownloadError = '';
+  let restoreFile: FileList | null = null;
+  let restorePhrase = '';
+  let restoreBusy = false;
+  let restoreError = '';
+  let restoreInfo = '';
   let logoFile: FileList | null = null;
   let bannerFile: FileList | null = null;
   let galleryFile: FileList | null = null;
@@ -168,12 +182,104 @@
     const res = await api<{ purged: number }>('/api/admin/repairs/purge-expired-pii', { method: 'POST', json: {} });
     alert(`Purged PII from ${res.purged} jobs.`);
   }
+
+  async function loadBackupInfo() {
+    if (!isSuperAdmin) return;
+    try {
+      backupInfo = await api('/api/admin/backup/info');
+    } catch (err: any) {
+      backupDownloadError = err?.message ?? 'Failed to load backup info';
+    }
+  }
+
+  async function downloadBackup() {
+    backupBusy = true;
+    backupDownloadError = '';
+    try {
+      const state = get(auth);
+      const res = await fetch('/api/admin/backup/download', {
+        method: 'GET',
+        headers: state?.accessToken ? { Authorization: `Bearer ${state.accessToken}` } : {},
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        let msg = res.statusText;
+        try { const body = await res.json(); msg = body?.error ?? msg; } catch { /* ignore */ }
+        throw new Error(msg);
+      }
+      const cd = res.headers.get('content-disposition') || '';
+      const m = cd.match(/filename="([^"]+)"/);
+      const filename = m?.[1] ?? 'circularity-backup.zip';
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      backupDownloadError = err?.message ?? 'Backup failed';
+    } finally {
+      backupBusy = false;
+    }
+  }
+
+  async function restoreBackupNow() {
+    restoreError = '';
+    restoreInfo = '';
+    if (!restoreFile || restoreFile.length === 0) {
+      restoreError = 'Choose a backup zip first.';
+      return;
+    }
+    const expected = backupInfo?.confirmPhrase ?? 'WIPE AND RESTORE';
+    if (restorePhrase !== expected) {
+      restoreError = `Type the phrase exactly: ${expected}`;
+      return;
+    }
+    const file = restoreFile[0];
+    if (!confirm(`This will DELETE all current data and replace it with the contents of ${file.name}. The app will restart. Continue?`)) return;
+
+    restoreBusy = true;
+    try {
+      const state = get(auth);
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/zip',
+        'X-Confirm-Wipe': expected,
+      };
+      if (state?.accessToken) headers.Authorization = `Bearer ${state.accessToken}`;
+      const res = await fetch('/api/admin/backup/restore', {
+        method: 'POST',
+        headers,
+        credentials: 'include',
+        body: file,
+      });
+      if (!res.ok) {
+        let msg = res.statusText;
+        try { const body = await res.json(); msg = body?.error ?? msg; } catch { /* ignore */ }
+        throw new Error(msg);
+      }
+      const body = await res.json();
+      restoreInfo = `Restored backup from ${body?.manifest?.appVersion ?? 'unknown'} (${body?.manifest?.counts?.users ?? '?'} users, ${body?.manifest?.counts?.events ?? '?'} events). The app is restarting — you will need to sign back in.`;
+      // The server restarts in ~1s; wait a bit longer then bounce to /login.
+      setTimeout(() => { window.location.href = '/login'; }, 4000);
+    } catch (err: any) {
+      restoreError = err?.message ?? 'Restore failed';
+    } finally {
+      restoreBusy = false;
+    }
+  }
+
+  $: if (tab === 'backup' && isSuperAdmin && !backupInfo) {
+    void loadBackupInfo();
+  }
 </script>
 
 <h1 class="text-2xl font-bold">Settings</h1>
 
 <div class="mt-3 flex gap-2 flex-wrap text-sm">
-  {#each [['profile','Cafe profile'],['home','Home page'],['gallery','Gallery'],['preferences','Check-in & preferences'],['seo','SEO & analytics'],['gdpr','GDPR'],['about','About']] as [key, label]}
+  {#each [['profile','Cafe profile'],['home','Home page'],['gallery','Gallery'],['preferences','Check-in & preferences'],['seo','SEO & analytics'],['gdpr','GDPR'], ...(isSuperAdmin ? [['backup','Backup & restore']] : []),['about','About']] as [key, label]}
     <button class="btn-{tab === key ? 'primary' : 'secondary'}" on:click={() => (tab = key as Tab)}>{label}</button>
   {/each}
   <a href="/admin/settings/users" class="btn-secondary">Users…</a>
@@ -409,6 +515,52 @@
       <h2 class="font-semibold">Data retention</h2>
       <p class="text-sm text-slate-600">Customer-personal data is automatically purged after the configured retention period. You can also trigger an immediate purge of expired data.</p>
       <button class="btn-danger" on:click={purgePii}>Purge expired PII now</button>
+    </div>
+  {/if}
+
+  {#if tab === 'backup' && isSuperAdmin}
+    <div class="mt-4 max-w-2xl space-y-4">
+      <div class="card p-6 space-y-3">
+        <h2 class="font-semibold flex items-center gap-2"><Download class="w-4 h-4" /> Download a backup</h2>
+        <p class="text-sm text-slate-600">Creates a zip containing the entire database (all tables including audit log) plus every uploaded photo and branding asset. Keep this somewhere safe — anyone with the file can restore your cafe's data.</p>
+        {#if backupInfo}
+          <p class="text-xs text-slate-500">App version <span class="font-mono">{backupInfo.appVersion}</span> · backup format v{backupInfo.backupFormatVersion}</p>
+        {/if}
+        {#if backupDownloadError}
+          <p class="text-sm text-rose-700">{backupDownloadError}</p>
+        {/if}
+        <button class="btn-primary inline-flex items-center gap-2" on:click={downloadBackup} disabled={backupBusy}>
+          <Download class="w-4 h-4" />
+          {backupBusy ? 'Preparing backup…' : 'Download backup zip'}
+        </button>
+        <p class="text-xs text-slate-500">The download starts as soon as the database dump is ready. Big cafes with lots of photos may take a minute.</p>
+      </div>
+
+      <div class="card p-6 space-y-3 border-rose-200">
+        <h2 class="font-semibold text-rose-800 flex items-center gap-2"><AlertTriangle class="w-4 h-4" /> Restore from a backup</h2>
+        <div class="rounded-lg bg-rose-50 border border-rose-200 p-3 text-sm text-rose-900">
+          <p class="font-semibold">This wipes every record currently in this install.</p>
+          <ul class="list-disc ml-5 mt-1 space-y-0.5">
+            <li>All users, events, repair jobs, photos and settings are replaced with the backup's contents.</li>
+            <li>You will be signed out and must log in with credentials from the backup.</li>
+            <li>The app restarts as part of the restore — give it ~10 seconds before refreshing.</li>
+          </ul>
+        </div>
+        <div>
+          <label class="label" for="restore-file">Backup zip</label>
+          <input id="restore-file" class="input" type="file" accept=".zip,application/zip" bind:files={restoreFile} />
+        </div>
+        <div>
+          <label class="label" for="restore-phrase">Type <span class="font-mono">{backupInfo?.confirmPhrase ?? 'WIPE AND RESTORE'}</span> to confirm</label>
+          <input id="restore-phrase" class="input font-mono" bind:value={restorePhrase} placeholder={backupInfo?.confirmPhrase ?? 'WIPE AND RESTORE'} />
+        </div>
+        {#if restoreError}<p class="text-sm text-rose-700">{restoreError}</p>{/if}
+        {#if restoreInfo}<p class="text-sm text-emerald-700">{restoreInfo}</p>{/if}
+        <button class="btn-danger inline-flex items-center gap-2" on:click={restoreBackupNow} disabled={restoreBusy || !restoreFile || restorePhrase !== (backupInfo?.confirmPhrase ?? 'WIPE AND RESTORE')}>
+          <Upload class="w-4 h-4" />
+          {restoreBusy ? 'Restoring…' : 'Wipe and restore'}
+        </button>
+      </div>
     </div>
   {/if}
 

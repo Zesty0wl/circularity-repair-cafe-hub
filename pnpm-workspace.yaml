@@ -1,3 +1,13 @@
 packages:
   - "apps/*"
   - "packages/*"
+
+# Allowed install scripts. pnpm 11 refuses to run native module postinstalls
+# unless they're explicitly approved. These three need it:
+#   bcrypt  — compiles native bindings
+#   sharp   — downloads its prebuilt binary
+#   esbuild — downloads its native binary
+allowBuilds:
+  bcrypt: true
+  sharp: true
+  esbuild: true

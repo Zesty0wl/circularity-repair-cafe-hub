@@ -34,8 +34,10 @@ RUN pnpm --filter @circularity/shared build \
  && pnpm --filter @circularity/web    build \
  && pnpm --filter @circularity/server build
 
-# Prune dev deps for the server only — keep production node_modules
-RUN pnpm --filter @circularity/server deploy --prod /app/server-bundle
+# Prune dev deps for the server only — keep production node_modules.
+# --legacy keeps the v9-style behaviour where workspace packages don't need
+# to be marked as "inject-workspace-packages" (which is the v10+ default).
+RUN pnpm --filter @circularity/server deploy --legacy --prod /app/server-bundle
 
 ###############################################################################
 # Stage 2 — runtime: Debian slim with PostgreSQL 16, Node 22, s6-overlay      #

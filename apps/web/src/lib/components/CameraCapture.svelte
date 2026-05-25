@@ -23,6 +23,13 @@
 
   async function start() {
     errorMsg = null;
+    // The in-page camera requires a secure context (HTTPS or localhost).
+    // If we're not in one, skip the attempt and tell the user.
+    if (typeof window !== 'undefined' && window.isSecureContext === false) {
+      errorMsg = 'In-page camera needs a secure (HTTPS) connection. Use the "Take a photo" button above instead.';
+      supportsCamera = false;
+      return;
+    }
     try {
       stream = await navigator.mediaDevices.getUserMedia({
         video: {
@@ -37,8 +44,15 @@
         await videoEl.play();
       }
       active = true;
-    } catch (err) {
-      errorMsg = 'Could not access the camera. You can upload a photo instead.';
+    } catch (err: any) {
+      const name = err?.name ?? '';
+      if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
+        errorMsg = 'Camera permission was denied. Use the "Take a photo" button above instead.';
+      } else if (name === 'NotFoundError' || name === 'OverconstrainedError') {
+        errorMsg = 'No camera was found on this device. Use the "Take a photo" button above instead.';
+      } else {
+        errorMsg = 'Could not start the camera preview. Use the "Take a photo" button above instead.';
+      }
       supportsCamera = false;
     }
   }
@@ -136,20 +150,33 @@
     </div>
   {:else}
     <div class="space-y-3">
-      {#if supportsCamera}
-        <button class="btn-primary btn-lg w-full" type="button" on:click={start}>
-          <Camera size={20} /> Open camera
-        </button>
-        <p class="text-center text-sm text-slate-500">or</p>
-      {/if}
+      <button
+        class="btn-primary btn-lg w-full"
+        type="button"
+        on:click={() => fileInput?.click()}
+      >
+        <Camera size={20} /> Take a photo
+      </button>
       <input
         bind:this={fileInput}
         on:change={onFile}
         type="file"
         accept="image/*"
         capture="environment"
-        class="block w-full text-sm file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100"
+        class="sr-only"
       />
+      <button
+        class="btn-ghost w-full text-sm"
+        type="button"
+        on:click={() => { if (fileInput) { fileInput.removeAttribute('capture'); fileInput.click(); fileInput.setAttribute('capture', 'environment'); } }}
+      >
+        Choose from gallery instead
+      </button>
+      {#if supportsCamera}
+        <button class="btn-secondary w-full text-sm" type="button" on:click={start}>
+          Use in-page camera preview
+        </button>
+      {/if}
       {#if errorMsg}<p class="text-sm text-amber-700">{errorMsg}</p>{/if}
     </div>
   {/if}

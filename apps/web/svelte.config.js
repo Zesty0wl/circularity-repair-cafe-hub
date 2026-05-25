@@ -37,6 +37,16 @@ const config = {
         'connect-src': ['self', 'https://api.iconify.design', 'https:'],
         'font-src': ['self', 'data:'],
         'frame-ancestors': ['none'],
+        // Allow embedded maps from common providers. We deliberately allowlist
+        // hosts rather than `https:` so a venue mapUrl can only iframe a map,
+        // not arbitrary third-party content.
+        'frame-src': [
+          'self',
+          'https://www.google.com',
+          'https://maps.google.com',
+          'https://www.openstreetmap.org',
+          'https://www.bing.com',
+        ],
         'base-uri': ['self'],
         'form-action': ['self'],
         'object-src': ['none'],

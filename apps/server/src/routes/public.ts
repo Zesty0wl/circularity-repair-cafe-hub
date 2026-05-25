@@ -23,6 +23,8 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
       socialLinks: cafe.socialLinks,
       homePage: cafe.homePage,
       gallery,
+      primaryColor: cafe.primaryColor,
+      donateUrl: cafe.donateUrl,
       // ── SEO + analytics surfaced for the SPA <head> ────────────
       faviconUrl: cafe.faviconUrl,
       seoTitle: cafe.seoTitle,
@@ -83,6 +85,7 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
         avatarUrl: users.avatarUrl,
         skills: users.skills,
         joinDate: users.joinDate,
+        showOnHomePage: users.showOnHomePage,
       })
       .from(users)
       .where(and(eq(users.isActive, true), eq(users.showOnPublicPage, true)))
@@ -106,6 +109,45 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
     }));
 
     return { categories: categoryWithCounts, repairers };
+  });
+
+  // Single repairer profile, for the public /team/:id page. 404 if the user
+  // is inactive or has hidden themselves from the public listing.
+  app.get('/api/public/repairers/:id', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    // Basic shape check — id is a UUID, but we don't want to throw on garbage.
+    if (!/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(id)) {
+      reply.code(404).send({ error: 'Not found', code: 'repairer/not_found' });
+      return;
+    }
+    const [row] = await db
+      .select({
+        id: users.id,
+        displayName: users.displayName,
+        bio: users.bio,
+        avatarUrl: users.avatarUrl,
+        skills: users.skills,
+        joinDate: users.joinDate,
+        repairCount: users.repairCountCache,
+      })
+      .from(users)
+      .where(and(eq(users.id, id), eq(users.isActive, true), eq(users.showOnPublicPage, true)))
+      .limit(1);
+    if (!row) {
+      reply.code(404).send({ error: 'Not found', code: 'repairer/not_found' });
+      return;
+    }
+    // Resolve skill IDs → names (same approach as /api/public/skills).
+    const cats = await db
+      .select({ id: skillCategories.id, name: skillCategories.name, colour: skillCategories.colour, icon: skillCategories.icon })
+      .from(skillCategories)
+      .where(eq(skillCategories.isActive, true));
+    const byId = new Map(cats.map((c) => [c.id, c]));
+    const skills = (row.skills ?? [])
+      .map((sId) => byId.get(sId))
+      .filter((s): s is { id: string; name: string; colour: string; icon: string } => Boolean(s));
+    reply.header('Cache-Control', 'no-store');
+    return { ...row, skills };
   });
 
   app.get('/api/public/venue', async () => {

@@ -44,7 +44,10 @@
     {:else}
       <div class="mt-6 grid sm:grid-cols-2 md:grid-cols-3 gap-4">
         {#each repairers as r}
-          <div class="card p-5">
+          <a
+            href="/team/{r.id}"
+            class="card p-5 block hover:shadow-md transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+          >
             <div class="flex items-center gap-3">
               {#if r.avatarUrl}
                 <img src={r.avatarUrl} alt="" class="h-14 w-14 rounded-full object-cover" />
@@ -52,11 +55,11 @@
                 <div class="h-14 w-14 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-semibold">{r.displayName.slice(0,2).toUpperCase()}</div>
               {/if}
               <div>
-                <p class="font-semibold">{r.displayName}</p>
+                <p class="font-semibold text-brand-700">{r.displayName}</p>
                 {#if r.joinDate}<p class="text-xs text-slate-500">Joined {new Date(r.joinDate).getFullYear()}</p>{/if}
               </div>
             </div>
-            {#if r.bio}<p class="mt-3 text-sm text-slate-700">{r.bio}</p>{/if}
+            {#if r.bio}<p class="mt-3 text-sm text-slate-700 line-clamp-3">{r.bio}</p>{/if}
             {#if r.skills.length > 0}
               <div class="mt-3 flex flex-wrap gap-1">
                 {#each r.skills as s}
@@ -64,7 +67,7 @@
                 {/each}
               </div>
             {/if}
-          </div>
+          </a>
         {/each}
       </div>
     {/if}

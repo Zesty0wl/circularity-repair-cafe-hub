@@ -92,10 +92,16 @@ export async function adminBoardRoutes(app: FastifyInstance): Promise<void> {
         }
       }
 
-      jobs = rows.map((r) => ({
-        ...r,
-        thumbnailUrl: imageMap.get(r.id) ?? null,
-      }));
+      // `repair_images.file_path` stores the path relative to the uploads dir
+      // (see services/imageUpload.ts). The board renders it straight into an
+      // <img src>, so we prefix `/uploads/` here to produce a working URL.
+      jobs = rows.map((r) => {
+        const rel = imageMap.get(r.id);
+        return {
+          ...r,
+          thumbnailUrl: rel ? `/uploads/${rel}` : null,
+        };
+      });
     }
 
     return {

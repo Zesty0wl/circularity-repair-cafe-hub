@@ -52,11 +52,28 @@
   const SCALE_STEP = 0.1;
 
   // ───────────── Paging ─────────────
-  // Default 10 rows per page (designed for 1080p). When we have more than
-  // PAGE_SIZE jobs we automatically rotate to the next page every PAGE_INTERVAL.
-  const PAGE_SIZE = 10;
+  // Page size adapts to viewport so phones don't have to scroll to see
+  // every row. We recompute on resize/orientation change. Auto-rotation
+  // walks through the pages every PAGE_INTERVAL.
   const PAGE_INTERVAL_MS = 60_000;
+  let pageSize = 10;
   let currentPage = 0;
+  function computePageSize(): number {
+    if (typeof window === 'undefined') return 10;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    if (w < 540) return 5;                     // phone portrait
+    if (w < 900) return h < 700 ? 6 : 8;       // tablet / phone landscape
+    return h < 800 ? 8 : 10;                   // desktop / TV
+  }
+  function syncPageSize() {
+    const next = computePageSize();
+    if (next !== pageSize) {
+      pageSize = next;
+      // Keep the first item of the current page visible when paging shrinks
+      if (currentPage * pageSize >= jobs.length) currentPage = 0;
+    }
+  }
 
   // Polling cadence (ms)
   const POLL_MS = 4000;
@@ -225,9 +242,12 @@
       return;
     }
     loadScale();
+    syncPageSize();
     document.addEventListener('fullscreenchange', onFsChange);
     document.addEventListener('keydown', onKey);
     document.addEventListener('wheel', onWheelZoom, { passive: false });
+    window.addEventListener('resize', syncPageSize);
+    window.addEventListener('orientationchange', syncPageSize);
     load();
     pollTimer = setInterval(load, POLL_MS);
     // Tick every second so timers update live
@@ -245,6 +265,8 @@
     document.removeEventListener('fullscreenchange', onFsChange);
     document.removeEventListener('keydown', onKey);
     document.removeEventListener('wheel', onWheelZoom);
+    window.removeEventListener('resize', syncPageSize);
+    window.removeEventListener('orientationchange', syncPageSize);
     disableWakeLock();
   });
 
@@ -253,10 +275,10 @@
   $: sortedJobs = [...jobs].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   );
-  $: totalPages = Math.max(1, Math.ceil(sortedJobs.length / PAGE_SIZE));
+  $: totalPages = Math.max(1, Math.ceil(sortedJobs.length / pageSize));
   // Clamp page if jobs shrunk
   $: if (currentPage >= totalPages) currentPage = 0;
-  $: pageJobs = sortedJobs.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
+  $: pageJobs = sortedJobs.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
 
   $: counts = {
     waiting: jobs.filter((j) => j.status === 'waiting').length,
@@ -709,20 +731,93 @@
   }
 
   @media (max-width: 900px) {
-    .topbar { grid-template-columns: 1fr; gap: 8px; }
-    .topbar-mid { justify-content: flex-start; }
-    .topbar-right { justify-content: flex-start; }
-    .clock { display: none; }
-    .row {
-      grid-template-columns: 80px 1fr auto;
-      grid-template-areas:
-        "thumb who time"
-        "thumb what status";
+    /* ───── Tablet / phone landscape ───── */
+    .board {
+      /* Override the TV-tuned scale so text/spacing don't get tiny when an
+         admin loads the board on their iPad after running it at 1.0 on a TV. */
+      --scale: 1.0;
+      --customer-fs: 1.25rem;
+      --item-fs: 1.05rem;
+      --time-fs: 1.5rem;
+      --meta-fs: 0.85rem;
+      --badge-fs: 0.75rem;
+      --jobno-fs: 0.75rem;
+      --stat-fs: 1.6rem;
+      --row-h: 88px;
+      --thumb-w: 88px;
+      padding: 10px 14px 20px;
     }
-    .thumb     { grid-area: thumb; width: 80px; height: 80px; }
-    .who       { grid-area: who; }
-    .what      { grid-area: what; grid-column: span 3; }
-    .time      { grid-area: time; align-items: flex-end; }
-    .status-col{ grid-area: status; justify-content: flex-end; }
+    .topbar {
+      grid-template-columns: auto 1fr auto;
+      grid-template-areas: "left mid right";
+      gap: 10px;
+    }
+    .topbar-left   { grid-area: left; }
+    .topbar-mid    { grid-area: mid; gap: 18px; }
+    .topbar-right  { grid-area: right; gap: 6px; }
+    .scale-group   { display: none; }
+    .clock         { display: none; }
+    .row {
+      grid-template-columns: var(--thumb-w) minmax(140px, 1.3fr) minmax(0, 2fr) auto auto;
+      gap: 10px;
+    }
+  }
+
+  @media (max-width: 540px) {
+    /* ───── Phone portrait ───── */
+    .board {
+      --customer-fs: 1.05rem;
+      --item-fs: 0.95rem;
+      --time-fs: 1.35rem;
+      --meta-fs: 0.78rem;
+      --badge-fs: 0.7rem;
+      --jobno-fs: 0.72rem;
+      --stat-fs: 1.35rem;
+      --row-h: auto;
+      --thumb-w: 56px;
+      padding: 8px 10px 16px;
+    }
+    .topbar {
+      grid-template-columns: 1fr auto;
+      grid-template-areas:
+        "left  right"
+        "mid   mid";
+      gap: 8px 10px;
+    }
+    .topbar-mid   { justify-content: space-around; gap: 0; }
+    .stat-lbl     { font-size: 0.62rem; }
+    .topbar-right { gap: 4px; flex-wrap: nowrap; }
+    .topbar-right select.ctl { display: none; }   /* event picker collapses; multi-event sites rarely run board from a phone */
+    .ctl { height: 34px; min-width: 34px; padding: 0 8px; }
+    .brand { font-size: 0.95rem; }
+    .sub   { font-size: 0.72rem; }
+
+    .row {
+      display: grid;
+      grid-template-columns: var(--thumb-w) minmax(0, 1fr) auto;
+      grid-template-areas:
+        "thumb who   time"
+        "thumb what  status";
+      align-items: start;
+      gap: 6px 10px;
+      padding: 10px;
+      min-height: 0;
+    }
+    .thumb       { grid-area: thumb; width: var(--thumb-w); height: var(--thumb-w); align-self: center; }
+    .who         { grid-area: who; }
+    .what        { grid-area: what; }
+    .time        { grid-area: time; flex-direction: row; align-items: baseline; gap: 8px; justify-content: flex-end; line-height: 1; align-self: start; }
+    .time-lbl    { margin-top: 0; }
+    .status-col  { grid-area: status; justify-content: flex-end; align-self: end; }
+    .badge       { padding: 4px 10px; }
+    .customer    { line-height: 1.15; }
+    .item        { -webkit-line-clamp: 3; }
+    .meta-line   { margin-top: 4px; gap: 4px; }
+
+    .page-bar    { margin-top: 10px; }
+    .empty       { padding: 40px 16px; }
+    .empty-big   { font-size: 1.5rem; }
+    .overlay-card { padding: 20px 22px; }
+    .overlay-card h1 { font-size: 1.25rem; }
   }
 </style>

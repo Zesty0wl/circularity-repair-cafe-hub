@@ -48,4 +48,17 @@ export async function adminUploadsRoutes(app: FastifyInstance): Promise<void> {
     await audit({ request, actorId: me.sub, actorType: me.role, action: 'user.avatar_updated', entityType: 'user', entityId: userId });
     return { url: saved.url };
   });
+
+  app.delete('/api/admin/uploads/avatar/:userId', async (request, reply) => {
+    const me = request.auth!;
+    const { userId } = request.params as { userId: string };
+    const [u] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    if (!u) {
+      reply.code(404).send({ error: 'User not found', code: 'user/not_found' });
+      return;
+    }
+    await db.update(users).set({ avatarUrl: null, updatedAt: new Date() }).where(eq(users.id, userId));
+    await audit({ request, actorId: me.sub, actorType: me.role, action: 'user.avatar_removed', entityType: 'user', entityId: userId });
+    return { ok: true };
+  });
 }

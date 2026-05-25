@@ -26,6 +26,9 @@ export async function adminVenuesRoutes(app: FastifyInstance): Promise<void> {
         postcode: data.postcode ?? null,
         what3words: data.what3words ?? null,
         mapUrl: data.mapUrl || null,
+        directions: data.directions ?? null,
+        parkingInfo: data.parkingInfo ?? null,
+        accessibilityInfo: data.accessibilityInfo ?? null,
         notes: data.notes ?? null,
         isHomeVenue: data.isHomeVenue ?? false,
         isActive: data.isActive ?? true,
@@ -48,7 +51,19 @@ export async function adminVenuesRoutes(app: FastifyInstance): Promise<void> {
     }
     const data = parsed.data;
     const update: any = {};
-    for (const k of ['name', 'address', 'postcode', 'what3words', 'mapUrl', 'notes', 'isHomeVenue', 'isActive']) {
+    for (const k of [
+      'name',
+      'address',
+      'postcode',
+      'what3words',
+      'mapUrl',
+      'directions',
+      'parkingInfo',
+      'accessibilityInfo',
+      'notes',
+      'isHomeVenue',
+      'isActive',
+    ]) {
       if ((data as any)[k] !== undefined) update[k] = (data as any)[k];
     }
     const [updated] = await db.update(venues).set(update).where(eq(venues.id, id)).returning();

@@ -3,6 +3,7 @@
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
   import { api } from '$lib/api';
+  import { auth } from '$lib/stores/auth';
   import CameraCapture from '$lib/components/CameraCapture.svelte';
   import { ArrowLeft, Camera as CameraIcon } from 'lucide-svelte';
 
@@ -23,6 +24,11 @@
   let cameraStage: 'during_repair' | 'completed' = 'during_repair';
   let confirming = false;
 
+  $: myId = $auth?.user.id ?? null;
+  $: status = detail?.job.status as string | undefined;
+  $: isMine = !!detail && detail.job.repairerId === myId && status === 'in_progress';
+  $: isFinished = status === 'completed' || status === 'cannot_repair';
+
   async function load() {
     detail = await api<JobDetail>(`/api/repairer/jobs/${id}`);
     if (detail.job.outcomeNotes) outcomeNotes = detail.job.outcomeNotes;
@@ -31,6 +37,22 @@
   }
 
   onMount(load);
+
+  async function claim() {
+    busy = true;
+    try {
+      await api(`/api/repairer/jobs/${id}/accept`, { method: 'PATCH', json: {} });
+      await load();
+    } finally {
+      busy = false;
+    }
+  }
+
+  async function takeOver() {
+    const owner = detail?.repairer?.displayName ?? 'another repairer';
+    if (!confirm(`Take over this job from ${owner}? They will be removed as the active repairer.`)) return;
+    await claim();
+  }
 
   async function complete() {
     busy = true;
@@ -92,7 +114,22 @@
       Customer: <strong>{detail.job.customerName ?? '—'}</strong>
       {#if detail.job.customerContact}<span class="ml-3">Contact: {detail.job.customerContact}</span>{/if}
     </div>
+    {#if status === 'in_progress' && detail.repairer}
+      <p class="mt-2 text-sm text-slate-600">Currently with: <strong>{isMine ? 'you' : detail.repairer.displayName}</strong></p>
+    {/if}
   </header>
+
+  {#if status === 'waiting'}
+    <div class="card p-4 mt-4 flex items-center justify-between gap-3 bg-amber-50">
+      <p class="text-sm text-amber-900">This repair is waiting for a repairer.</p>
+      <button class="btn-primary text-sm" disabled={busy} on:click={claim}>Claim this repair</button>
+    </div>
+  {:else if status === 'in_progress' && !isMine}
+    <div class="card p-4 mt-4 flex items-center justify-between gap-3 bg-blue-50">
+      <p class="text-sm text-blue-900">Another repairer is working on this. You can take over if needed.</p>
+      <button class="btn-primary text-sm" disabled={busy} on:click={takeOver}>Take over this job</button>
+    </div>
+  {/if}
 
   <section class="card p-5 mt-4">
     <h2 class="text-lg font-semibold">Fault</h2>
@@ -102,7 +139,9 @@
   <section class="card p-5 mt-4">
     <div class="flex justify-between items-center">
       <h2 class="text-lg font-semibold">Photos</h2>
-      <button class="btn-secondary text-sm" on:click={() => { cameraStage = 'during_repair'; showCamera = true; }}><CameraIcon size={16} /> Add photo</button>
+      {#if isMine}
+        <button class="btn-secondary text-sm" on:click={() => { cameraStage = 'during_repair'; showCamera = true; }}><CameraIcon size={16} /> Add photo</button>
+      {/if}
     </div>
     {#if detail.images.length === 0}
       <p class="mt-3 text-slate-500 text-sm">No photos yet.</p>
@@ -115,7 +154,7 @@
         {/each}
       </div>
     {/if}
-    {#if showCamera}
+    {#if showCamera && isMine}
       <div class="mt-4 flex gap-2 items-center">
         <span class="text-sm">Stage:</span>
         <select bind:value={cameraStage} class="input !py-1 !text-sm w-auto">
@@ -128,6 +167,7 @@
     {/if}
   </section>
 
+  {#if isMine}
   <section class="card p-5 mt-4 space-y-4">
     <h2 class="text-lg font-semibold">Repair details</h2>
     <div>
@@ -154,6 +194,20 @@
       <button class="btn-primary" disabled={busy} on:click={() => (confirming = true)}>Mark as complete</button>
     </div>
   </section>
+  {:else if isFinished && (detail.job.outcomeNotes || detail.job.partsUsed || detail.job.environmentalSavingKg)}
+  <section class="card p-5 mt-4 space-y-2">
+    <h2 class="text-lg font-semibold">Repair details</h2>
+    {#if detail.job.outcomeNotes}
+      <p class="text-sm"><span class="text-slate-500">Notes:</span> <span class="whitespace-pre-line">{detail.job.outcomeNotes}</span></p>
+    {/if}
+    {#if detail.job.partsUsed}
+      <p class="text-sm"><span class="text-slate-500">Parts:</span> {detail.job.partsUsed}</p>
+    {/if}
+    {#if detail.job.environmentalSavingKg}
+      <p class="text-sm"><span class="text-slate-500">Saving:</span> {detail.job.environmentalSavingKg} kg</p>
+    {/if}
+  </section>
+  {/if}
 
   {#if confirming}
     <div class="fixed inset-0 bg-slate-900/50 flex items-end sm:items-center justify-center z-50 p-4">

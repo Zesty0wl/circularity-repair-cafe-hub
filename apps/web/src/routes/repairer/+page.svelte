@@ -1,12 +1,14 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { api } from '$lib/api';
-  import { Clock, CheckCircle2, XCircle, Hourglass, History } from 'lucide-svelte';
+  import { auth } from '$lib/stores/auth';
+  import { Clock, CheckCircle2, XCircle, Hourglass, History, UserCircle2 } from 'lucide-svelte';
   import { goto } from '$app/navigation';
 
   interface Job {
     id: string; jobNumber: string; customerName: string | null; itemDescription: string;
     faultDescription: string; itemBrand: string | null; status: string; repairerId: string | null;
+    repairerName: string | null;
     createdAt: string; category: string | null; categoryIcon: string | null; categoryColour: string | null;
   }
   interface ActiveData {
@@ -21,6 +23,8 @@
   let filter: 'all' | 'waiting' | 'in_progress' | 'completed' | 'cannot_repair' = 'waiting';
   let timer: ReturnType<typeof setInterval> | null = null;
   let busyId: string | null = null;
+
+  $: myId = $auth?.user.id ?? null;
 
   async function load() {
     [data, stats] = await Promise.all([
@@ -44,6 +48,12 @@
     } finally {
       busyId = null;
     }
+  }
+
+  async function takeOver(job: Job) {
+    const owner = job.repairerName ?? 'another repairer';
+    if (!confirm(`Take over this job from ${owner}? They will be removed as the active repairer.`)) return;
+    await accept(job.id);
   }
 
   $: filteredJobs = (data?.jobs ?? []).filter((j) => filter === 'all' || j.status === filter);
@@ -86,6 +96,7 @@
       <div><p class="text-sm font-semibold pt-2">{stats?.busiestCategory ?? '—'}</p><p class="text-xs text-slate-500">Busiest category</p></div>
     </div>
     <a href="/repairer/history" class="mt-4 btn-secondary w-full"><History size={16} /> My history</a>
+    <a href="/repairer/profile" class="mt-2 btn-secondary w-full"><UserCircle2 size={16} /> My profile</a>
   </div>
 </div>
 
@@ -128,12 +139,20 @@
               {#if j.category}<span class="badge mt-2" style="background-color: {j.categoryColour}22; color: {j.categoryColour}">{j.category}</span>{/if}
               <p class="mt-2 text-sm text-slate-700 line-clamp-2">{j.faultDescription}</p>
               <p class="mt-2 text-xs text-slate-500">Customer: {j.customerName ?? '—'}</p>
+              {#if j.status === 'in_progress' && j.repairerName}
+                <p class="mt-1 text-xs text-slate-500">With: <strong>{j.repairerId === myId ? 'you' : j.repairerName}</strong></p>
+              {/if}
             </div>
             <span class="badge badge-{j.status}">{j.status.replace('_', ' ')}</span>
           </div>
-          <div class="mt-3 flex justify-end">
+          <div class="mt-3 flex justify-end gap-2">
             {#if j.status === 'waiting'}
-              <button class="btn-primary text-sm" disabled={busyId === j.id} on:click={() => accept(j.id)}>Accept this repair</button>
+              <button class="btn-primary text-sm" disabled={busyId === j.id} on:click={() => accept(j.id)}>Claim this repair</button>
+            {:else if j.status === 'in_progress' && j.repairerId === myId}
+              <a href={`/repairer/job/${j.id}`} class="btn-primary text-sm">Continue</a>
+            {:else if j.status === 'in_progress'}
+              <a href={`/repairer/job/${j.id}`} class="btn-secondary text-sm">View</a>
+              <button class="btn-primary text-sm" disabled={busyId === j.id} on:click={() => takeOver(j)}>Take over</button>
             {:else}
               <a href={`/repairer/job/${j.id}`} class="btn-secondary text-sm">View</a>
             {/if}

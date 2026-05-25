@@ -219,6 +219,28 @@ const STATEMENTS: string[] = [
   `ALTER TABLE cafes ADD COLUMN IF NOT EXISTS og_image_url TEXT`,
   `ALTER TABLE cafes ADD COLUMN IF NOT EXISTS plausible_domain TEXT`,
   `ALTER TABLE cafes ADD COLUMN IF NOT EXISTS plausible_src TEXT`,
+
+  // ── Customer self-service tracking token (additive, idempotent) ──
+  // Groups all of one customer's items at an event so they can track them via
+  // a single shareable link (`/track/<token>`).
+  `ALTER TABLE repair_jobs ADD COLUMN IF NOT EXISTS customer_token TEXT`,
+  'CREATE INDEX IF NOT EXISTS idx_repair_jobs_customer_token ON repair_jobs(customer_token)',
+
+  // ── Richer venue contact info for the public Contact page (additive) ──
+  `ALTER TABLE venues ADD COLUMN IF NOT EXISTS directions TEXT`,
+  `ALTER TABLE venues ADD COLUMN IF NOT EXISTS parking_info TEXT`,
+  `ALTER TABLE venues ADD COLUMN IF NOT EXISTS accessibility_info TEXT`,
+
+  // ── Per-repairer "feature on home page" toggle (additive, idempotent) ──
+  // Lets admins curate which volunteers appear in the home page "Meet our
+  // team" strip independently from the wider Skills & Team listing.
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS show_on_home_page BOOLEAN NOT NULL DEFAULT TRUE`,
+
+  // ── Brand primary colour for the public site (additive, idempotent) ──
+  `ALTER TABLE cafes ADD COLUMN IF NOT EXISTS primary_color TEXT`,
+
+  // ── Optional donate link shown on guest receipt + tracker pages ──
+  `ALTER TABLE cafes ADD COLUMN IF NOT EXISTS donate_url TEXT`,
 ];
 
 const DEFAULT_CATEGORIES: Array<{ name: string; icon: string; colour: string }> = [

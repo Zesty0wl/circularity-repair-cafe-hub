@@ -26,8 +26,20 @@
   type GalleryRow = { id: string; url: string; caption: string | null; sortOrder: number };
   let gallery: GalleryRow[] = [];
 
+  // Brand colour — <input type="color"> requires #rrggbb. We normalise on load
+  // and via the change handler so an empty/legacy value never reaches the
+  // native control (which otherwise logs a console error).
+  const DEFAULT_PRIMARY = '#0ea5e9';
+  const HEX_RE = /^#[0-9a-fA-F]{6}$/;
+  function normaliseHex(v: unknown): string {
+    return typeof v === 'string' && HEX_RE.test(v) ? v : DEFAULT_PRIMARY;
+  }
+  let primaryColorInput = DEFAULT_PRIMARY;
+
   async function load() {
     cafe = await api('/api/admin/settings');
+    if (cafe) cafe.primaryColor = normaliseHex(cafe.primaryColor);
+    primaryColorInput = normaliseHex(cafe?.primaryColor);
     const hp = cafe?.homePage ?? {};
     intro = { heading: hp.intro?.heading ?? '', body: hp.intro?.body ?? '' };
     howItWorks = Array.isArray(hp.howItWorks) ? hp.howItWorks.map((s: any) => ({ title: s.title ?? '', body: s.body ?? '' })) : [];
@@ -50,7 +62,8 @@
         json: {
           name: cafe.name, tagline: cafe.tagline || null, description: cafe.description || null,
           contactEmail: cafe.contactEmail, contactPhone: cafe.contactPhone || null,
-          publicUrl: cafe.publicUrl, primaryColor: cafe.primaryColor,
+          publicUrl: cafe.publicUrl, primaryColor: normaliseHex(primaryColorInput),
+          donateUrl: cafe.donateUrl || null,
           socialFacebook: cafe.socialFacebook || null, socialTwitter: cafe.socialTwitter || null,
           socialInstagram: cafe.socialInstagram || null,
         },
@@ -177,7 +190,33 @@
         <div><label class="label" for="ph">Phone</label><input id="ph" class="input" bind:value={cafe.contactPhone} /></div>
       </div>
       <div><label class="label" for="pu">Public URL</label><input id="pu" class="input" bind:value={cafe.publicUrl} /><p class="text-xs text-slate-500 mt-1">Used in QR codes and public links. Must match your reverse-proxy domain.</p></div>
-      <div><label class="label" for="pc">Primary colour</label><input id="pc" class="input w-32" type="color" bind:value={cafe.primaryColor} /></div>
+      <div>
+        <label class="label" for="du">Donate link <span class="font-normal text-slate-500">(optional)</span></label>
+        <input id="du" class="input" type="url" placeholder="https://www.justgiving.com/…" bind:value={cafe.donateUrl} />
+        <p class="text-xs text-slate-500 mt-1">Shown to guests after they check in and on their live tracker. Leave blank to hide.</p>
+      </div>
+      <div>
+        <label class="label" for="pc">Primary colour</label>
+        <div class="flex items-center gap-3">
+          <input
+            id="pc"
+            class="h-10 w-16 rounded-lg border border-slate-300 cursor-pointer p-1"
+            type="color"
+            value={primaryColorInput}
+            on:input={(e) => (primaryColorInput = normaliseHex((e.currentTarget as HTMLInputElement).value))}
+          />
+          <input
+            class="input w-32 font-mono"
+            type="text"
+            maxlength="7"
+            placeholder="#0ea5e9"
+            value={primaryColorInput}
+            on:change={(e) => (primaryColorInput = normaliseHex((e.currentTarget as HTMLInputElement).value))}
+          />
+          <button type="button" class="btn-ghost text-sm" on:click={() => (primaryColorInput = DEFAULT_PRIMARY)}>Reset</button>
+        </div>
+        <p class="text-xs text-slate-500 mt-1">Used as the brand accent. Stored as #rrggbb hex.</p>
+      </div>
       <div class="grid sm:grid-cols-3 gap-3">
         <div><label class="label" for="fb">Facebook</label><input id="fb" class="input" bind:value={cafe.socialFacebook} /></div>
         <div><label class="label" for="tw">Twitter / X</label><input id="tw" class="input" bind:value={cafe.socialTwitter} /></div>

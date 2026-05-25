@@ -47,13 +47,17 @@ hundreds of repairs, and yours to host on a £5/month VPS or a Pi in the corner.
 | -------- | ----------------------------------------------------------------- |
 | Backend  | Node 22, Fastify 4, Drizzle ORM, PostgreSQL 16, sharp, qrcode     |
 | Frontend | SvelteKit (SPA via adapter-static), Tailwind CSS, Iconify, Chart.js |
-| Infra    | Docker (multi-stage), s6-overlay, exposed on host port **5026**   |
+| Infra    | Docker (multi-stage), s6-overlay, exposed on host port **5026**; Cloudflare Tunnel for public access |
 
 ## Quick start (Docker)
 
-You'll need a Linux host (a small VPS, a home server, or a Raspberry Pi 4/5
-works well) with Docker and Docker Compose v2 installed. Everything else lives
-inside the container.
+> **Deploying to a Raspberry Pi for real use?** Skip this section and follow
+> the [**Raspberry Pi setup guide**](./docs/raspberry-pi-setup.md) — it
+> wraps everything below plus a Cloudflare Tunnel into a single
+> [`install.sh`](./install.sh) you can run on a fresh Pi.
+
+The steps below are for trying the app out on any Linux host with Docker and
+Docker Compose v2 installed. Everything else lives inside the container.
 
 ```bash
 git clone https://github.com/Zesty0wl/circularity-repair-cafe-hub.git
@@ -80,10 +84,13 @@ ssh -L 5026:127.0.0.1:5026 user@your-server
 Then open <http://127.0.0.1:5026> in your browser. The tunnel stays open as
 long as the SSH session is.
 
-**Option B — production: a public hostname behind a reverse proxy.** This is
-the recommended setup for anything you actually want to use on event day —
-see ["Deploying behind Cloudflare + nginx"](#deploying-behind-cloudflare--nginx)
-below.
+**Option B — production with a real domain.** Pick one of the deployment
+paths below:
+
+- **[Deploying to a Raspberry Pi (recommended)](#deploying-to-a-raspberry-pi-recommended)**
+  — Pi + Cloudflare Tunnel, no reverse proxy or certificates to manage.
+- **[Advanced: nginx + Cloudflare Origin Certificate](#advanced-nginx--cloudflare-origin-certificate)**
+  — for VPS or static-IP servers where you want full control.
 
 The first request bootstraps the database, runs migrations, seeds the default
 skill categories, then walks you through creating the super-admin account and
@@ -101,11 +108,36 @@ There's also a [short repairer guide](./docs/repairer-guide.md) for your
 volunteers. The docs live in this repo so they always match the version of the
 software you're running.
 
-## Deploying behind Cloudflare + nginx
+## Deploying to a Raspberry Pi (recommended)
+
+The simplest production setup is a Pi 4 or 5 in the corner of your venue (or
+your house) running this container behind a [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/).
+There's no nginx to configure, no port to forward on the router, no TLS
+certificate to renew — Cloudflare's edge handles all of it, and the tunnel
+works from behind NAT / CGNAT (common on UK home broadband).
+
+From a fresh Raspberry Pi OS Lite 64-bit install:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Zesty0wl/circularity-repair-cafe-hub/main/install.sh | bash
+```
+
+The full step-by-step guide — including prerequisites, the Cloudflare login
+flow, verification, updates and troubleshooting — is in
+**[docs/raspberry-pi-setup.md](./docs/raspberry-pi-setup.md)**.
+
+The only thing you need before you start is a Cloudflare account with your
+domain added (the free plan is fine) and proxying turned on for that domain.
+
+## Advanced: nginx + Cloudflare Origin Certificate
+
+<details>
+<summary>Click to expand — for VPS deployments or anyone who prefers a
+self-managed reverse proxy</summary>
 
 The container intentionally only listens on `127.0.0.1:5026` — it's designed to
 sit behind a reverse proxy for TLS, HTTP/2 and any host-level rate-limiting you
-want. The recommended setup (and the one used at
+want. The original setup (and the one used at
 [`repaircafe.circularity.org`](https://repaircafe.circularity.org)) is:
 
 1. **Cloudflare** in front, with the orange cloud on, set to "Full (strict)" SSL.
@@ -132,6 +164,8 @@ app issues secure cookies and rate-limits per real client IP correctly.
 > Cloudflare not your style? Any other reverse proxy works — Caddy, Traefik,
 > a hosted PaaS, etc. The only requirement is the proxy forwards the standard
 > `X-Forwarded-*` headers.
+
+</details>
 
 ## Backup & restore
 

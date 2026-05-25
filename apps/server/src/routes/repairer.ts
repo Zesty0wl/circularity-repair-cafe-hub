@@ -26,7 +26,108 @@ export async function repairerRoutes(app: FastifyInstance): Promise<void> {
       skills: user.skills,
       joinDate: user.joinDate,
       repairCountCache: user.repairCountCache,
+      showOnPublicPage: user.showOnPublicPage,
+      showOnHomePage: user.showOnHomePage,
     };
+  });
+
+  // Update your own profile. Repairers can edit their display name, bio and
+  // public-visibility toggle. Skills, role and email remain admin-only.
+  app.patch('/api/repairer/me', async (request, reply) => {
+    const me = request.auth!;
+    const body = (request.body ?? {}) as {
+      displayName?: string;
+      bio?: string | null;
+      showOnPublicPage?: boolean;
+      showOnHomePage?: boolean;
+    };
+    const update: Record<string, unknown> = { updatedAt: new Date() };
+    if (typeof body.displayName === 'string') {
+      const trimmed = body.displayName.trim();
+      if (trimmed.length < 1 || trimmed.length > 100) {
+        reply.code(400).send({ error: 'Display name must be 1–100 characters', code: 'validation/failed' });
+        return;
+      }
+      update.displayName = trimmed;
+    }
+    if ('bio' in body) {
+      if (body.bio === null || body.bio === '') {
+        update.bio = null;
+      } else if (typeof body.bio === 'string') {
+        if (body.bio.length > 2000) {
+          reply.code(400).send({ error: 'Bio is too long (max 2000 chars)', code: 'validation/failed' });
+          return;
+        }
+        update.bio = body.bio;
+      }
+    }
+    if (typeof body.showOnPublicPage === 'boolean') {
+      update.showOnPublicPage = body.showOnPublicPage;
+    }
+    if (typeof body.showOnHomePage === 'boolean') {
+      update.showOnHomePage = body.showOnHomePage;
+    }
+    const [updated] = await db.update(users).set(update).where(eq(users.id, me.sub)).returning();
+    await audit({
+      request,
+      actorId: me.sub,
+      actorType: me.role,
+      action: 'user.self_updated',
+      entityType: 'user',
+      entityId: me.sub,
+    });
+    return {
+      id: updated.id,
+      displayName: updated.displayName,
+      bio: updated.bio,
+      avatarUrl: updated.avatarUrl,
+      showOnPublicPage: updated.showOnPublicPage,
+      showOnHomePage: updated.showOnHomePage,
+    };
+  });
+
+  // Upload your own avatar. Mirrors the admin avatar endpoint but scoped to self.
+  app.post('/api/repairer/me/avatar', async (request, reply) => {
+    const me = request.auth!;
+    const file = await request.file();
+    if (!file) {
+      reply.code(400).send({ error: 'No file provided', code: 'upload/missing' });
+      return;
+    }
+    const buf = await file.toBuffer();
+    try {
+      const saved = await saveValidatedImage(buf, file.mimetype, 'profiles', {
+        maxLongestEdge: 600,
+        quality: 0.85,
+      });
+      await db.update(users).set({ avatarUrl: saved.url, updatedAt: new Date() }).where(eq(users.id, me.sub));
+      await audit({
+        request,
+        actorId: me.sub,
+        actorType: me.role,
+        action: 'user.avatar_self_updated',
+        entityType: 'user',
+        entityId: me.sub,
+      });
+      return { url: saved.url };
+    } catch (err) {
+      request.log.warn({ err }, 'avatar upload failed');
+      reply.code(400).send({ error: 'Could not process image', code: 'upload/invalid' });
+    }
+  });
+
+  app.delete('/api/repairer/me/avatar', async (request) => {
+    const me = request.auth!;
+    await db.update(users).set({ avatarUrl: null, updatedAt: new Date() }).where(eq(users.id, me.sub));
+    await audit({
+      request,
+      actorId: me.sub,
+      actorType: me.role,
+      action: 'user.avatar_self_removed',
+      entityType: 'user',
+      entityId: me.sub,
+    });
+    return { ok: true };
   });
 
   app.get('/api/repairer/active-event', async (request) => {
@@ -52,6 +153,7 @@ export async function repairerRoutes(app: FastifyInstance): Promise<void> {
         itemBrand: repairJobs.itemBrand,
         status: repairJobs.status,
         repairerId: repairJobs.repairerId,
+        repairerName: users.displayName,
         createdAt: repairJobs.createdAt,
         category: skillCategories.name,
         categoryIcon: skillCategories.icon,
@@ -59,6 +161,7 @@ export async function repairerRoutes(app: FastifyInstance): Promise<void> {
       })
       .from(repairJobs)
       .leftJoin(skillCategories, eq(skillCategories.id, repairJobs.itemCategoryId))
+      .leftJoin(users, eq(users.id, repairJobs.repairerId))
       .where(eq(repairJobs.eventId, evt.id))
       .orderBy(desc(repairJobs.createdAt));
 
@@ -114,10 +217,16 @@ export async function repairerRoutes(app: FastifyInstance): Promise<void> {
       reply.code(404).send({ error: 'Job not found', code: 'job/not_found' });
       return;
     }
-    if (existing.status !== 'waiting') {
-      reply.code(409).send({ error: 'Job is not waiting', code: 'job/not_waiting' });
+    if (existing.status === 'completed' || existing.status === 'cannot_repair') {
+      reply.code(409).send({ error: 'Job is already finished', code: 'job/already_finished' });
       return;
     }
+    if (existing.status === 'in_progress' && existing.repairerId === me.sub) {
+      // Already mine — no-op
+      return existing;
+    }
+    const isTakeover = existing.status === 'in_progress' && existing.repairerId && existing.repairerId !== me.sub;
+    const previousRepairerId = existing.repairerId;
     const [updated] = await db
       .update(repairJobs)
       .set({ status: 'in_progress', repairerId: me.sub, acceptedAt: new Date(), updatedAt: new Date() })
@@ -127,9 +236,10 @@ export async function repairerRoutes(app: FastifyInstance): Promise<void> {
       request,
       actorId: me.sub,
       actorType: me.role,
-      action: 'repair.accepted',
+      action: isTakeover ? 'repair.taken_over' : 'repair.accepted',
       entityType: 'repair_job',
       entityId: id,
+      metadata: isTakeover ? { previousRepairerId } : undefined,
     });
     return updated;
   });

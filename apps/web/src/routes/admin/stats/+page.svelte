@@ -1,139 +1,301 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount } from 'svelte';
   import { api } from '$lib/api';
+  import { CalendarDays, Wrench, Users, Leaf, Clock, CheckCircle2 } from 'lucide-svelte';
 
-  let from = '';
-  let to = '';
-  let summary: any = null;
-  let byMonth: any[] = [];
-  let byCategory: any[] = [];
-  let success: any[] = [];
-  let topRepairers: any[] = [];
-  let env: any = null;
-  let perEvent: any[] = [];
+  type Range = '3m' | '6m' | '12m' | 'all';
+  type Overview = {
+    range: Range;
+    eventCount: number;
+    repairCount: number;
+    completedCount: number;
+    cannotRepairCount: number;
+    returnedCount: number;
+    successRate: number;
+    repairerCount: number;
+    avgDurationMin: number;
+    avgRepairsPerEvent: number;
+    environmentalSavingKg: number;
+  };
+  type HeatmapDay = { day: string; events: number; repairs: number; completed: number };
+  type EventRow = {
+    id: string;
+    name: string;
+    date: string;
+    status: string;
+    venueName: string;
+    repairCount: number;
+    completedCount: number;
+    cannotRepairCount: number;
+    repairerCount: number;
+    avgDurationMin: number;
+  };
 
-  let monthlyCanvas: HTMLCanvasElement;
-  let categoryCanvas: HTMLCanvasElement;
-  let successCanvas: HTMLCanvasElement;
-  let charts: any[] = [];
+  let range: Range = '12m';
+  let overview: Overview | null = null;
+  let heatmap: HeatmapDay[] = [];
+  let events: EventRow[] = [];
+  let busy = false;
+
+  const RANGE_LABELS: Record<Range, string> = {
+    '3m': 'Last 3 months',
+    '6m': 'Last 6 months',
+    '12m': 'Last 12 months',
+    all: 'All time',
+  };
 
   async function loadAll() {
-    const q = new URLSearchParams();
-    if (from) q.set('from', from);
-    if (to) q.set('to', to);
-    const qs = q.toString() ? `?${q}` : '';
-    [summary, byMonth, byCategory, success, topRepairers, env, perEvent] = await Promise.all([
-      api(`/api/admin/stats/summary${qs}`),
-      api(`/api/admin/stats/repairs-by-month${qs}`),
-      api(`/api/admin/stats/repairs-by-category${qs}`),
-      api(`/api/admin/stats/success-rate-over-time${qs}`),
-      api(`/api/admin/stats/top-repairers${qs}`),
-      api(`/api/admin/stats/environmental-savings${qs}`),
-      api(`/api/admin/stats/jobs-per-event${qs}`),
-    ]);
-    await renderCharts();
+    busy = true;
+    try {
+      [overview, heatmap, events] = await Promise.all([
+        api<Overview>(`/api/admin/stats/overview?range=${range}`),
+        api<HeatmapDay[]>(`/api/admin/stats/heatmap`),
+        api<EventRow[]>(`/api/admin/stats/events?range=${range}`),
+      ]);
+    } finally {
+      busy = false;
+    }
   }
 
-  async function renderCharts() {
-    const Chart = (await import('chart.js/auto')).default;
-    charts.forEach((c) => c.destroy());
-    charts = [];
-    if (monthlyCanvas) {
-      charts.push(new Chart(monthlyCanvas, {
-        type: 'bar',
-        data: {
-          labels: byMonth.map((m: any) => m.month),
-          datasets: [
-            { label: 'Completed', data: byMonth.map((m) => m.completed), backgroundColor: '#0f4f3f' },
-            { label: 'Cannot repair', data: byMonth.map((m) => m.cannotRepair), backgroundColor: '#dc2626' },
-          ],
-        },
-        options: { responsive: true, scales: { x: { stacked: true }, y: { stacked: true } } },
-      }));
-    }
-    if (categoryCanvas) {
-      charts.push(new Chart(categoryCanvas, {
-        type: 'doughnut',
-        data: {
-          labels: byCategory.map((c: any) => c.category),
-          datasets: [{ data: byCategory.map((c: any) => c.count), backgroundColor: ['#0f4f3f', '#16a34a', '#f59e0b', '#3b82f6', '#a855f7', '#ec4899', '#14b8a6', '#dc2626', '#64748b', '#0ea5e9'] }],
-        },
-      }));
-    }
-    if (successCanvas) {
-      charts.push(new Chart(successCanvas, {
-        type: 'line',
-        data: {
-          labels: success.map((s: any) => s.month),
-          datasets: [{ label: 'Success rate %', data: success.map((s: any) => s.successRatePct), borderColor: '#0f4f3f', backgroundColor: 'rgba(15,79,63,.1)', fill: true, tension: 0.25 }],
-        },
-        options: { scales: { y: { min: 0, max: 100 } } },
-      }));
-    }
+  async function setRange(r: Range) {
+    range = r;
+    await loadAll();
   }
 
   onMount(loadAll);
-  onDestroy(() => charts.forEach((c) => c.destroy()));
+
+  // ── Heatmap geometry ────────────────────────────────────────────────
+  // GitHub-style: 53 columns (weeks) × 7 rows (days, Mon → Sun).
+  // We anchor on today, walk back ~365 days, then snap to the Monday
+  // before that so each column is a full ISO week.
+  type Cell = { day: HeatmapDay | null; date: Date; inRange: boolean };
+  type WeekCol = { cells: Cell[]; monthLabel: string | null };
+
+  function startOfWeek(d: Date): Date {
+    const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const dow = (x.getDay() + 6) % 7; // Mon = 0 .. Sun = 6
+    x.setDate(x.getDate() - dow);
+    return x;
+  }
+  function fmtDate(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+  function prettyDate(iso: string): string {
+    const d = new Date(iso + 'T00:00:00');
+    return d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  $: byDay = new Map<string, HeatmapDay>(heatmap.map((h) => [h.day, h]));
+  $: weeks = buildWeeks(byDay);
+
+  function buildWeeks(map: Map<string, HeatmapDay>): WeekCol[] {
+    const today = new Date();
+    const end = startOfWeek(today); // Monday of this week
+    end.setDate(end.getDate() + 7); // include this week
+    const start = new Date(end);
+    start.setDate(start.getDate() - 53 * 7);
+    const cols: WeekCol[] = [];
+    let cursor = new Date(start);
+    let lastMonth = -1;
+    while (cursor < end) {
+      const cells: Cell[] = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(cursor);
+        d.setDate(cursor.getDate() + i);
+        const iso = fmtDate(d);
+        const inRange = d <= today;
+        cells.push({ day: map.get(iso) ?? null, date: d, inRange });
+      }
+      const first = cells[0].date;
+      const showMonth = first.getMonth() !== lastMonth && first.getDate() <= 7;
+      lastMonth = first.getMonth();
+      cols.push({ cells, monthLabel: showMonth ? first.toLocaleDateString(undefined, { month: 'short' }) : null });
+      cursor = new Date(cursor);
+      cursor.setDate(cursor.getDate() + 7);
+    }
+    return cols;
+  }
+
+  // 5-step colour scale based on repair count, using the brand palette
+  // so the heatmap follows the cafe's primary colour automatically.
+  function bucket(count: number): number {
+    if (count <= 0) return 0;
+    if (count <= 3) return 1;
+    if (count <= 6) return 2;
+    if (count <= 12) return 3;
+    return 4;
+  }
+  const BUCKET_CLASS = [
+    'bg-slate-100',
+    'bg-brand-100',
+    'bg-brand-300',
+    'bg-brand-500',
+    'bg-brand-700',
+  ];
+
+  function fmtDuration(min: number): string {
+    if (!min || min <= 0) return '—';
+    if (min < 60) return `${min} min`;
+    const h = Math.floor(min / 60);
+    const m = min % 60;
+    return m === 0 ? `${h} hr` : `${h} hr ${m} min`;
+  }
 
   function exportCsv() {
-    const q = new URLSearchParams();
-    if (from) q.set('from', from);
-    if (to) q.set('to', to);
-    window.location.href = `/api/admin/repairs/export.csv?${q}`;
+    window.location.href = `/api/admin/repairs/export.csv`;
   }
 </script>
 
-<div class="flex justify-between items-center">
+<div class="flex flex-wrap items-center justify-between gap-3">
   <h1 class="text-2xl font-bold">Statistics</h1>
   <button class="btn-secondary" on:click={exportCsv}>Export raw data (CSV)</button>
 </div>
 
-<div class="card p-4 mt-4 flex items-end gap-3 text-sm flex-wrap">
-  <div><label class="label" for="fr">From</label><input id="fr" type="date" class="input" bind:value={from} /></div>
-  <div><label class="label" for="to">To</label><input id="to" type="date" class="input" bind:value={to} /></div>
-  <button class="btn-primary" on:click={loadAll}>Apply</button>
+<!-- Period selector — applies to summary cards and the events table.
+     The heatmap below always shows the last 12 months so the rhythm of
+     events stays comparable between visits. -->
+<div class="mt-4 inline-flex rounded-lg ring-1 ring-slate-200 bg-white overflow-hidden text-sm">
+  {#each (['3m','6m','12m','all'] as Range[]) as r}
+    <button
+      class="px-3 py-1.5 {range === r ? 'bg-brand-600 text-white' : 'text-slate-700 hover:bg-slate-50'}"
+      on:click={() => setRange(r)}
+      disabled={busy}
+    >
+      {RANGE_LABELS[r]}
+    </button>
+  {/each}
 </div>
 
-{#if summary}
-  <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-    <div class="card p-4 text-center"><p class="text-3xl font-bold">{summary.totalJobs}</p><p class="text-xs text-slate-500">Total jobs</p></div>
-    <div class="card p-4 text-center"><p class="text-3xl font-bold">{summary.completed}</p><p class="text-xs text-slate-500">Repaired</p></div>
-    <div class="card p-4 text-center"><p class="text-3xl font-bold">{summary.successRate}%</p><p class="text-xs text-slate-500">Success rate</p></div>
-    <div class="card p-4 text-center"><p class="text-3xl font-bold">{Number(summary.totalSavingsKg).toFixed(1)}<span class="text-base">kg</span></p><p class="text-xs text-slate-500">CO₂ saved</p></div>
+{#if overview}
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mt-4">
+    <div class="card p-4">
+      <div class="flex items-center gap-2 text-slate-500 text-xs"><CalendarDays size={14} /> Events</div>
+      <p class="text-2xl font-bold mt-1">{overview.eventCount}</p>
+      <p class="text-xs text-slate-400 mt-0.5">{overview.avgRepairsPerEvent} avg per event</p>
+    </div>
+    <div class="card p-4">
+      <div class="flex items-center gap-2 text-slate-500 text-xs"><Wrench size={14} /> Items in</div>
+      <p class="text-2xl font-bold mt-1">{overview.repairCount}</p>
+      <p class="text-xs text-slate-400 mt-0.5">{overview.completedCount} fixed</p>
+    </div>
+    <div class="card p-4">
+      <div class="flex items-center gap-2 text-slate-500 text-xs"><CheckCircle2 size={14} /> Success rate</div>
+      <p class="text-2xl font-bold mt-1">{overview.successRate}%</p>
+      <p class="text-xs text-slate-400 mt-0.5">{overview.cannotRepairCount} couldn't fix</p>
+    </div>
+    <div class="card p-4">
+      <div class="flex items-center gap-2 text-slate-500 text-xs"><Users size={14} /> Volunteers</div>
+      <p class="text-2xl font-bold mt-1">{overview.repairerCount}</p>
+      <p class="text-xs text-slate-400 mt-0.5">took on a repair</p>
+    </div>
+    <div class="card p-4">
+      <div class="flex items-center gap-2 text-slate-500 text-xs"><Clock size={14} /> Avg repair time</div>
+      <p class="text-2xl font-bold mt-1">{fmtDuration(overview.avgDurationMin)}</p>
+      <p class="text-xs text-slate-400 mt-0.5">from accept to done</p>
+    </div>
+    <div class="card p-4">
+      <div class="flex items-center gap-2 text-slate-500 text-xs"><Leaf size={14} /> CO₂ saved</div>
+      <p class="text-2xl font-bold mt-1">{overview.environmentalSavingKg.toFixed(1)}<span class="text-sm font-normal text-slate-500"> kg</span></p>
+      <p class="text-xs text-slate-400 mt-0.5">est. from completed jobs</p>
+    </div>
   </div>
 {/if}
 
-<div class="grid lg:grid-cols-2 gap-4 mt-4">
-  <div class="card p-4"><h2 class="font-semibold mb-2">Repairs by month</h2><canvas bind:this={monthlyCanvas}></canvas></div>
-  <div class="card p-4"><h2 class="font-semibold mb-2">By category</h2><canvas bind:this={categoryCanvas}></canvas></div>
-  <div class="card p-4"><h2 class="font-semibold mb-2">Success rate over time</h2><canvas bind:this={successCanvas}></canvas></div>
-  <div class="card p-4">
-    <h2 class="font-semibold mb-2">Top repairers</h2>
-    <ol class="text-sm space-y-1">
-      {#each topRepairers as r, i}
-        <li class="flex justify-between"><span>{i + 1}. {r.displayName}</span><span class="font-semibold">{r.repairs}</span></li>
+<!-- ── Activity heatmap (last 12 months) ───────────────────────────── -->
+<div class="card p-4 mt-4 overflow-x-auto">
+  <div class="flex items-baseline justify-between mb-3">
+    <h2 class="font-semibold">Activity — last 12 months</h2>
+    <p class="text-xs text-slate-500">{heatmap.length} days with events</p>
+  </div>
+  <div class="inline-block min-w-full">
+    <!-- Month labels -->
+    <div class="flex pl-7 mb-1 text-[10px] text-slate-500 select-none">
+      {#each weeks as w}
+        <div class="w-3 mr-[2px] text-left">{w.monthLabel ?? ''}</div>
       {/each}
-    </ol>
+    </div>
+    <div class="flex">
+      <!-- Day-of-week labels (Mon, Wed, Fri) -->
+      <div class="flex flex-col mr-1 text-[10px] text-slate-500 select-none" style="gap: 2px;">
+        {#each ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] as d, i}
+          <div class="h-3 leading-3">{i % 2 === 0 ? d : ''}</div>
+        {/each}
+      </div>
+      <div class="flex">
+        {#each weeks as w}
+          <div class="flex flex-col mr-[2px]" style="gap: 2px;">
+            {#each w.cells as c}
+              {#if !c.inRange}
+                <div class="w-3 h-3"></div>
+              {:else}
+                <div
+                  class="w-3 h-3 rounded-[2px] {BUCKET_CLASS[bucket(c.day?.repairs ?? 0)]}"
+                  title={c.day
+                    ? `${prettyDate(c.day.day)} — ${c.day.events} event${c.day.events === 1 ? '' : 's'}, ${c.day.repairs} repair${c.day.repairs === 1 ? '' : 's'} (${c.day.completed} fixed)`
+                    : prettyDate(fmtDate(c.date))}
+                ></div>
+              {/if}
+            {/each}
+          </div>
+        {/each}
+      </div>
+    </div>
+    <!-- Legend -->
+    <div class="flex items-center gap-2 mt-3 text-[11px] text-slate-500">
+      <span>Less</span>
+      {#each BUCKET_CLASS as cls}
+        <div class="w-3 h-3 rounded-[2px] {cls}"></div>
+      {/each}
+      <span>More</span>
+      <span class="ml-3">(intensity = repairs that day)</span>
+    </div>
   </div>
 </div>
 
-<div class="grid md:grid-cols-2 gap-4 mt-4">
-  {#if env}
-    <div class="card p-4">
-      <h2 class="font-semibold mb-2">Environmental savings</h2>
-      <p class="text-3xl font-bold text-emerald-700">{Number(env.totalKg).toFixed(1)} kg</p>
-      <p class="text-sm text-slate-600">Across {env.count} repairs</p>
+<!-- ── Events table ──────────────────────────────────────────────── -->
+<div class="card p-4 mt-4">
+  <div class="flex items-baseline justify-between mb-3">
+    <h2 class="font-semibold">Events — {RANGE_LABELS[range].toLowerCase()}</h2>
+    <p class="text-xs text-slate-500">{events.length} event{events.length === 1 ? '' : 's'}</p>
+  </div>
+  {#if events.length === 0}
+    <p class="text-sm text-slate-500 py-6 text-center">No events in this period.</p>
+  {:else}
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="text-slate-500 text-left text-xs uppercase tracking-wide">
+          <tr class="border-b border-slate-200">
+            <th class="py-2 pr-3">Date</th>
+            <th class="py-2 pr-3">Event</th>
+            <th class="py-2 pr-3">Venue</th>
+            <th class="py-2 pr-3 text-right">Items</th>
+            <th class="py-2 pr-3 text-right">Fixed</th>
+            <th class="py-2 pr-3 text-right">Volunteers</th>
+            <th class="py-2 pr-3 text-right">Avg time</th>
+            <th class="py-2"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {#each events as e}
+            <tr class="hover:bg-slate-50">
+              <td class="py-2 pr-3 text-slate-600 whitespace-nowrap">{e.date}</td>
+              <td class="py-2 pr-3 font-medium text-slate-900">{e.name}</td>
+              <td class="py-2 pr-3 text-slate-600">{e.venueName}</td>
+              <td class="py-2 pr-3 text-right">{e.repairCount}</td>
+              <td class="py-2 pr-3 text-right text-emerald-700 font-medium">{e.completedCount}</td>
+              <td class="py-2 pr-3 text-right">{e.repairerCount}</td>
+              <td class="py-2 pr-3 text-right text-slate-600">{fmtDuration(e.avgDurationMin)}</td>
+              <td class="py-2 text-right">
+                <a class="btn-ghost text-xs" href={`/admin/stats/events/${e.id}`}>Details →</a>
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
     </div>
   {/if}
-  <div class="card p-4">
-    <h2 class="font-semibold mb-2">Jobs per event</h2>
-    <table class="w-full text-sm">
-      <thead class="text-slate-600 text-left"><tr><th>Event</th><th>Date</th><th class="text-right">Jobs</th></tr></thead>
-      <tbody class="divide-y divide-slate-100">
-        {#each perEvent as e}
-          <tr><td>{e.name}</td><td>{e.date}</td><td class="text-right">{e.jobs}</td></tr>
-        {/each}
-      </tbody>
-    </table>
-  </div>
 </div>
+

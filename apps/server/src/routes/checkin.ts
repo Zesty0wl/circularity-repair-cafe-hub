@@ -1,11 +1,12 @@
 import type { FastifyInstance } from 'fastify';
 import { db } from '../db/index.js';
-import { cafes, events, repairImages, repairJobs, skillCategories, venues } from '../db/schema.js';
-import { and, eq } from 'drizzle-orm';
+import { cafes, events, repairImages, repairJobs, skillCategories, users, venues } from '../db/schema.js';
+import { and, asc, desc, eq, inArray } from 'drizzle-orm';
 import { checkInSubmitSchema } from '@circularity/shared';
 import { nextJobNumber } from '../services/jobNumber.js';
 import { audit } from '../utils/audit.js';
 import { saveValidatedImage } from '../services/imageUpload.js';
+import { randomToken } from '../utils/tokens.js';
 import { env } from '../env.js';
 
 async function loadEventByToken(token: string) {
@@ -29,7 +30,16 @@ export async function checkInRoutes(app: FastifyInstance): Promise<void> {
       reply.code(404).send({ error: 'Event not found', code: 'event/not_found' });
       return;
     }
-    const [cafe] = await db.select({ name: cafes.name, allowSkipPhoto: cafes.allowSkipPhoto, enableContactField: cafes.enableContactField }).from(cafes).limit(1);
+    const [cafe] = await db
+      .select({
+        name: cafes.name,
+        logoUrl: cafes.logoUrl,
+        allowSkipPhoto: cafes.allowSkipPhoto,
+        enableContactField: cafes.enableContactField,
+        donateUrl: cafes.donateUrl,
+      })
+      .from(cafes)
+      .limit(1);
     const cats = await db
       .select()
       .from(skillCategories)
@@ -49,7 +59,7 @@ export async function checkInRoutes(app: FastifyInstance): Promise<void> {
         name: found.venue.name,
         address: found.venue.address,
       },
-      cafe: cafe ?? { name: '', allowSkipPhoto: true, enableContactField: true },
+      cafe: cafe ?? { name: '', logoUrl: null, allowSkipPhoto: true, enableContactField: true, donateUrl: null },
       categories: cats,
     };
   });
@@ -71,6 +81,46 @@ export async function checkInRoutes(app: FastifyInstance): Promise<void> {
       return;
     }
     const data = parsed.data;
+
+    // Returning customer: look up the existing token + reuse customer details so
+    // they don't have to re-enter their name/contact/consent for each item.
+    let customerToken = data.customerToken ?? null;
+    let customerName = data.customerName ?? null;
+    let customerContact = data.customerContact ?? null;
+    let gdprConsent = data.gdprConsent === true;
+
+    if (customerToken) {
+      const [existing] = await db
+        .select({
+          customerName: repairJobs.customerName,
+          customerContact: repairJobs.customerContact,
+          gdprConsent: repairJobs.gdprConsent,
+        })
+        .from(repairJobs)
+        .where(and(eq(repairJobs.customerToken, customerToken), eq(repairJobs.eventId, found.event.id)))
+        .limit(1);
+      if (!existing) {
+        // Token is unknown for this event — treat as a fresh check-in and require
+        // the customer fields. If they aren't there, refuse rather than silently
+        // creating an anonymous job.
+        if (!customerName || !gdprConsent) {
+          reply.code(400).send({
+            error: 'Returning customer token not recognised for this event',
+            code: 'checkin/unknown_token',
+          });
+          return;
+        }
+        customerToken = randomToken(16);
+      } else {
+        customerName = existing.customerName;
+        customerContact = existing.customerContact;
+        gdprConsent = existing.gdprConsent;
+      }
+    } else {
+      // New customer — mint a token they can use to track all their items.
+      customerToken = randomToken(16);
+    }
+
     const jobNumber = await nextJobNumber();
     const [cafe] = await db.select({ dataRetentionDays: cafes.dataRetentionDays }).from(cafes).limit(1);
     const retentionDays = cafe?.dataRetentionDays ?? env.DATA_RETENTION_DEFAULT_DAYS;
@@ -82,13 +132,14 @@ export async function checkInRoutes(app: FastifyInstance): Promise<void> {
       .values({
         eventId: found.event.id,
         jobNumber,
-        customerName: data.customerName,
-        customerContact: data.customerContact ?? null,
+        customerName,
+        customerContact,
+        customerToken,
         itemDescription: data.itemDescription,
         itemCategoryId: data.itemCategoryId ?? null,
         itemBrand: data.itemBrand ?? null,
         faultDescription: data.faultDescription,
-        gdprConsent: data.gdprConsent,
+        gdprConsent,
         dataRetentionDate: retentionDate.toISOString().slice(0, 10),
       })
       .returning();
@@ -107,13 +158,14 @@ export async function checkInRoutes(app: FastifyInstance): Promise<void> {
       action: 'checkin.created',
       entityType: 'repair_job',
       entityId: job.id,
-      metadata: { eventId: found.event.id, jobNumber },
+      metadata: { eventId: found.event.id, jobNumber, returning: Boolean(data.customerToken) },
     });
 
     return {
       id: job.id,
       jobNumber: job.jobNumber,
       status: job.status,
+      customerToken,
     };
   });
 
@@ -183,5 +235,131 @@ export async function checkInRoutes(app: FastifyInstance): Promise<void> {
       request.log.warn({ err }, 'image upload failed');
       reply.code(400).send({ error: 'Could not process image', code: 'upload/invalid' });
     }
+  });
+
+  // ── Customer self-service tracking ───────────────────────────────
+  // A `customerToken` is issued at first check-in and shared across all of a
+  // customer's items at the same event. The customer can revisit this URL at
+  // any time to see the live status of every item they handed in.
+  app.get('/api/track/:customerToken', async (request, reply) => {
+    const { customerToken } = request.params as { customerToken: string };
+    if (!customerToken || customerToken.length < 8) {
+      reply.code(404).send({ error: 'Tracking link not found', code: 'track/not_found' });
+      return;
+    }
+    const rows = await db
+      .select({
+        job: {
+          id: repairJobs.id,
+          jobNumber: repairJobs.jobNumber,
+          status: repairJobs.status,
+          customerName: repairJobs.customerName,
+          itemDescription: repairJobs.itemDescription,
+          itemBrand: repairJobs.itemBrand,
+          faultDescription: repairJobs.faultDescription,
+          outcomeNotes: repairJobs.outcomeNotes,
+          createdAt: repairJobs.createdAt,
+          acceptedAt: repairJobs.acceptedAt,
+          completedAt: repairJobs.completedAt,
+        },
+        category: {
+          name: skillCategories.name,
+          icon: skillCategories.icon,
+          colour: skillCategories.colour,
+        },
+        repairer: {
+          displayName: users.displayName,
+        },
+        event: {
+          id: events.id,
+          name: events.name,
+          date: events.date,
+          startTime: events.startTime,
+          endTime: events.endTime,
+          status: events.status,
+        },
+        venue: {
+          name: venues.name,
+          address: venues.address,
+        },
+      })
+      .from(repairJobs)
+      .innerJoin(events, eq(events.id, repairJobs.eventId))
+      .innerJoin(venues, eq(venues.id, events.venueId))
+      .leftJoin(skillCategories, eq(skillCategories.id, repairJobs.itemCategoryId))
+      .leftJoin(users, eq(users.id, repairJobs.repairerId))
+      .where(eq(repairJobs.customerToken, customerToken))
+      .orderBy(desc(repairJobs.createdAt));
+
+    if (rows.length === 0) {
+      reply.code(404).send({ error: 'Tracking link not found', code: 'track/not_found' });
+      return;
+    }
+
+    const [cafe] = await db
+      .select({ name: cafes.name, logoUrl: cafes.logoUrl, donateUrl: cafes.donateUrl })
+      .from(cafes)
+      .limit(1);
+
+    // Pull the first check-in photo per job in one query so the tracker can
+    // show guests a thumbnail of what they handed in (reassuring + easier
+    // to spot their item amongst several).
+    const jobIds = rows.map((r) => r.job.id);
+    const photoByJob = new Map<string, string>();
+    if (jobIds.length > 0) {
+      const imgs = await db
+        .select({
+          jobId: repairImages.repairJobId,
+          filePath: repairImages.filePath,
+          createdAt: repairImages.createdAt,
+        })
+        .from(repairImages)
+        .where(and(inArray(repairImages.repairJobId, jobIds), eq(repairImages.stage, 'check_in')))
+        .orderBy(asc(repairImages.createdAt));
+      for (const im of imgs) {
+        if (!photoByJob.has(im.jobId)) photoByJob.set(im.jobId, im.filePath);
+      }
+    }
+
+    const first = rows[0];
+
+    // Light caching hint — page polls every minute, no harm if a tab re-fetches.
+    reply.header('Cache-Control', 'no-store');
+
+    return {
+      customerName: first.job.customerName,
+      event: first.event,
+      venue: first.venue,
+      cafe: cafe ?? { name: '', logoUrl: null, donateUrl: null },
+      jobs: rows.map((r) => {
+        // `repair_images.file_path` is stored relative to the uploads dir
+        // (see services/imageUpload.ts). Prefix `/uploads/` so the SPA can
+        // drop it straight into an <img src>.
+        const rel = photoByJob.get(r.job.id);
+        return {
+          id: r.job.id,
+          jobNumber: r.job.jobNumber,
+          status: r.job.status,
+          itemDescription: r.job.itemDescription,
+          itemBrand: r.job.itemBrand,
+          faultDescription: r.job.faultDescription,
+          outcomeNotes:
+            r.job.status === 'completed' ||
+            r.job.status === 'cannot_repair' ||
+            r.job.status === 'returned'
+              ? r.job.outcomeNotes
+              : null,
+          category: r.category?.name ? r.category : null,
+          // First name only to stay light on personal data exposed on a public link.
+          repairerFirstName: r.repairer?.displayName
+            ? r.repairer.displayName.split(' ')[0]
+            : null,
+          photoUrl: rel ? `/uploads/${rel}` : null,
+          createdAt: r.job.createdAt,
+          acceptedAt: r.job.acceptedAt,
+          completedAt: r.job.completedAt,
+        };
+      }),
+    };
   });
 }

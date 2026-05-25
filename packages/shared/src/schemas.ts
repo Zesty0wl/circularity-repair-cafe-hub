@@ -38,15 +38,26 @@ export const loginSchema = z.object({
   password: z.string().min(1),
 });
 
-export const checkInSubmitSchema = z.object({
-  customerName: z.string().min(1).max(50),
-  customerContact: z.string().max(100).optional().nullable(),
-  gdprConsent: z.literal(true),
-  itemDescription: z.string().min(1).max(200),
-  faultDescription: z.string().min(1).max(500),
-  itemCategoryId: z.string().uuid().optional().nullable(),
-  itemBrand: z.string().max(100).optional().nullable(),
-});
+export const checkInSubmitSchema = z
+  .object({
+    customerName: z.string().min(1).max(50).optional(),
+    customerContact: z.string().max(100).optional().nullable(),
+    gdprConsent: z.boolean().optional(),
+    // When set, server reuses the customer details from existing jobs with this token
+    // (the customer is adding another item from the same device/session).
+    customerToken: z.string().min(8).max(64).optional(),
+    itemDescription: z.string().min(1).max(200),
+    faultDescription: z.string().min(1).max(500),
+    itemCategoryId: z.string().uuid().optional().nullable(),
+    itemBrand: z.string().max(100).optional().nullable(),
+  })
+  .refine(
+    (v) => Boolean(v.customerToken) || (Boolean(v.customerName) && v.gdprConsent === true),
+    {
+      message: 'Provide your name and consent, or a returning customer token',
+      path: ['customerName'],
+    },
+  );
 
 export type CheckInSubmitPayload = z.infer<typeof checkInSubmitSchema>;
 
@@ -91,6 +102,9 @@ export const venueSchema = z.object({
   postcode: z.string().max(20).optional().nullable(),
   what3words: z.string().max(100).optional().nullable(),
   mapUrl: z.string().url().optional().nullable().or(z.literal('')),
+  directions: z.string().max(2000).optional().nullable(),
+  parkingInfo: z.string().max(1000).optional().nullable(),
+  accessibilityInfo: z.string().max(1000).optional().nullable(),
   notes: z.string().max(1000).optional().nullable(),
   isHomeVenue: z.boolean().optional(),
   isActive: z.boolean().optional(),
@@ -112,6 +126,7 @@ export const userCreateSchema = z.object({
   skills: z.array(z.string()).default([]),
   joinDate: z.string().optional().nullable(),
   showOnPublicPage: z.boolean().default(true),
+  showOnHomePage: z.boolean().default(true),
 });
 
 export const userUpdateSchema = userCreateSchema.partial().extend({
@@ -138,6 +153,13 @@ export const cafeSettingsSchema = z.object({
   description: z.string().max(2000).optional().nullable(),
   websiteUrl: z.string().url().optional().nullable().or(z.literal('')),
   publicUrl: z.string().url().optional(),
+  primaryColor: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/, 'Must be a #rrggbb hex colour')
+    .optional()
+    .nullable()
+    .or(z.literal('')),
+  donateUrl: z.string().url().optional().nullable().or(z.literal('')),
   contactEmail: z.string().email().optional().nullable(),
   address: z.string().max(500).optional().nullable(),
   socialLinks: z.record(z.string(), z.string()).optional(),

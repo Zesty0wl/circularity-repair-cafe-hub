@@ -18,6 +18,7 @@ export async function adminUsersRoutes(app: FastifyInstance): Promise<void> {
         role: users.role,
         isActive: users.isActive,
         showOnPublicPage: users.showOnPublicPage,
+        showOnHomePage: users.showOnHomePage,
         skills: users.skills,
         joinDate: users.joinDate,
         repairCountCache: users.repairCountCache,
@@ -67,6 +68,7 @@ export async function adminUsersRoutes(app: FastifyInstance): Promise<void> {
           skills: data.skills,
           joinDate: data.joinDate ?? new Date().toISOString().slice(0, 10),
           showOnPublicPage: data.showOnPublicPage,
+          showOnHomePage: data.showOnHomePage,
         })
         .returning();
     } catch (err: any) {
@@ -95,7 +97,7 @@ export async function adminUsersRoutes(app: FastifyInstance): Promise<void> {
       return;
     }
     const update: any = { updatedAt: new Date() };
-    for (const k of ['displayName', 'role', 'bio', 'skills', 'isActive', 'showOnPublicPage', 'joinDate']) {
+    for (const k of ['displayName', 'role', 'bio', 'skills', 'isActive', 'showOnPublicPage', 'showOnHomePage', 'joinDate']) {
       if ((data as any)[k] !== undefined) update[k] = (data as any)[k];
     }
     if (data.email !== undefined) update.email = data.email.toLowerCase();

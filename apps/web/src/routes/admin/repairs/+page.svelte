@@ -46,6 +46,31 @@
     for (const [k, v] of Object.entries(filters)) if (v) params.set(k, v);
     window.location.href = `/api/admin/repairs/export.csv?${params}`;
   }
+
+  // Repairers + admins (active only) can be assigned a job.
+  $: assignable = users
+    .filter((u) => u.isActive && (u.role === 'repairer' || u.role === 'admin' || u.role === 'super_admin'))
+    .sort((a, b) => a.displayName.localeCompare(b.displayName));
+
+  // Per-row inline reassignment. We don't reload the whole table — just patch
+  // the local row so the dropdown stays responsive on a busy event night.
+  let savingRowId: string | null = null;
+  async function assignRow(row: any, userId: string) {
+    savingRowId = row.id;
+    try {
+      await api(`/api/admin/repairs/${row.id}`, {
+        method: 'PATCH',
+        json: { repairerId: userId || null },
+      });
+      row.repairerId = userId || null;
+      row.repairerName = userId ? (assignable.find((u) => u.id === userId)?.displayName ?? null) : null;
+      data = data; // trigger reactivity
+    } catch (e: any) {
+      alert(e?.message ?? 'Could not reassign repair');
+    } finally {
+      savingRowId = null;
+    }
+  }
 </script>
 
 <div class="flex justify-between items-center">
@@ -102,7 +127,20 @@
             <td class="px-3 py-2 font-mono"><a href={`/admin/repairs/${r.id}`} class="text-brand-700 hover:underline">{r.jobNumber}</a></td>
             <td class="px-3 py-2">{r.itemDescription}</td>
             <td class="px-3 py-2">{r.customerName ?? '—'}</td>
-            <td class="px-3 py-2">{r.repairerName ?? '—'}</td>
+            <td class="px-3 py-2 min-w-[180px]">
+              <select
+                class="input input-sm py-1 text-sm w-full"
+                disabled={savingRowId === r.id}
+                value={r.repairerId ?? ''}
+                on:change={(e) => assignRow(r, (e.currentTarget as HTMLSelectElement).value)}
+                title="Assign this repair to a repairer"
+              >
+                <option value="">— Unassigned —</option>
+                {#each assignable as u}
+                  <option value={u.id}>{u.displayName}</option>
+                {/each}
+              </select>
+            </td>
             <td class="px-3 py-2"><span class="badge badge-{r.status}">{r.status.replace('_',' ')}</span></td>
           </tr>
         {:else}

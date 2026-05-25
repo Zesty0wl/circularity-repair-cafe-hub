@@ -32,3 +32,6 @@ coverage/
 *.tar.gz
 *.bak
 .cache/
+
+# Personal scratchpads
+todo.md

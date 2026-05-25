@@ -40,6 +40,8 @@ export const cafes = pgTable('cafes', {
   bannerUrl: text('banner_url'),
   websiteUrl: text('website_url'),
   publicUrl: text('public_url').notNull().default(''),
+  primaryColor: text('primary_color'),
+  donateUrl: text('donate_url'),
   contactEmail: text('contact_email'),
   address: text('address'),
   socialLinks: jsonb('social_links').default({}).notNull(),
@@ -76,6 +78,7 @@ export const users = pgTable('users', {
   role: userRoleEnum('role').notNull().default('repairer'),
   isActive: boolean('is_active').notNull().default(true),
   showOnPublicPage: boolean('show_on_public_page').notNull().default(true),
+  showOnHomePage: boolean('show_on_home_page').notNull().default(true),
   skills: text('skills').array().default([]).notNull(),
   joinDate: date('join_date'),
   repairCountCache: integer('repair_count_cache').notNull().default(0),
@@ -122,6 +125,9 @@ export const venues = pgTable('venues', {
   postcode: text('postcode'),
   what3words: text('what3words'),
   mapUrl: text('map_url'),
+  directions: text('directions'),
+  parkingInfo: text('parking_info'),
+  accessibilityInfo: text('accessibility_info'),
   notes: text('notes'),
   isHomeVenue: boolean('is_home_venue').notNull().default(false),
   isActive: boolean('is_active').notNull().default(true),
@@ -206,6 +212,7 @@ export const repairJobs = pgTable(
     jobNumber: text('job_number').notNull().unique(),
     customerName: text('customer_name'),
     customerContact: text('customer_contact'),
+    customerToken: text('customer_token'),
     itemDescription: text('item_description').notNull(),
     itemCategoryId: uuid('item_category_id').references(() => skillCategories.id),
     itemBrand: text('item_brand'),
@@ -227,6 +234,7 @@ export const repairJobs = pgTable(
     statusIdx: index('idx_repair_jobs_status').on(t.status),
     repairerIdx: index('idx_repair_jobs_repairer_id').on(t.repairerId),
     createdIdx: index('idx_repair_jobs_created_at').on(t.createdAt),
+    customerTokenIdx: index('idx_repair_jobs_customer_token').on(t.customerToken),
   })
 );
 

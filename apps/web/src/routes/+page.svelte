@@ -4,7 +4,7 @@
   import { cafe } from '$lib/stores/cafe';
   import SiteHeader from '$lib/components/SiteHeader.svelte';
   import SiteFooter from '$lib/components/SiteFooter.svelte';
-  import { Calendar, MapPin, Mail, Phone, ChevronDown } from 'lucide-svelte';
+  import { Calendar, MapPin, Mail, Phone, ChevronDown, ChevronLeft, ChevronRight, X, Heart, Package, CheckCircle2 } from 'lucide-svelte';
   import Icon from '@iconify/svelte';
   import { categoryIcon } from '$lib/categoryIcon';
 
@@ -18,7 +18,7 @@
     venue: { name: string; address: string | null; postcode: string | null };
   }
   interface SkillCategory { id: string; name: string; icon: string; colour: string; repairerCount: number }
-  interface Repairer { id: string; displayName: string; avatarUrl: string | null; skills: string[] }
+  interface Repairer { id: string; displayName: string; avatarUrl: string | null; bio: string | null; skills: string[]; joinDate: string | null; showOnHomePage?: boolean }
 
   let upcomingEvents: PublicEvent[] = [];
   let categories: SkillCategory[] = [];
@@ -44,7 +44,69 @@
   $: nextEvent = upcomingEvents[0] ?? null;
   $: hp = $cafe?.homePage ?? {};
   $: gallery = $cafe?.gallery ?? [];
+
+  // Volunteers featured in the "Meet our team" strip — anyone whose admin
+  // (or self-edit) has opted in. The field defaults to true server-side, so
+  // existing volunteers keep showing until someone explicitly opts them out.
+  $: homeRepairers = repairers.filter((r) => r.showOnHomePage !== false);
+
+  // "What to bring" can be free prose or a bullet list. We split on lines
+  // starting with -, *, • or a number (e.g. "1."). If most non-empty lines
+  // look like bullets we render a checklist; otherwise we render paragraphs.
+  function parseBringList(body: string): { items: string[]; isList: boolean; paragraphs: string[] } {
+    const lines = (body ?? '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    const bulletRe = /^(?:[-*•]|\d+[.)])\s+(.+)$/;
+    const items: string[] = [];
+    let bulletCount = 0;
+    for (const l of lines) {
+      const m = l.match(bulletRe);
+      if (m) { items.push(m[1]!.trim()); bulletCount++; }
+      else items.push(l);
+    }
+    const isList = bulletCount >= 2 && bulletCount >= lines.length - 1;
+    const paragraphs = (body ?? '').split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+    return { items, isList, paragraphs };
+  }
+  $: bring = parseBringList(hp.whatToBring?.body ?? '');
+
+  // Split the intro body into paragraphs on blank lines so the first one can
+  // be rendered as a larger "lead" and subsequent ones as supporting text.
+  $: introParagraphs = (hp.intro?.body ?? '')
+    .split(/\n\s*\n/)
+    .map((p: string) => p.trim())
+    .filter(Boolean);
+
+  // ── Lightbox state ────────────────────────────────────────────────────────
+  let lightboxIndex: number | null = null;
+
+  function openLightbox(i: number) {
+    lightboxIndex = i;
+  }
+  function closeLightbox() {
+    lightboxIndex = null;
+  }
+  function nextImage() {
+    if (lightboxIndex === null || gallery.length === 0) return;
+    lightboxIndex = (lightboxIndex + 1) % gallery.length;
+  }
+  function prevImage() {
+    if (lightboxIndex === null || gallery.length === 0) return;
+    lightboxIndex = (lightboxIndex - 1 + gallery.length) % gallery.length;
+  }
+  function handleKey(e: KeyboardEvent) {
+    if (lightboxIndex === null) return;
+    if (e.key === 'Escape') { closeLightbox(); }
+    else if (e.key === 'ArrowRight') { nextImage(); }
+    else if (e.key === 'ArrowLeft') { prevImage(); }
+  }
+
+  // Lock body scroll while the lightbox is open.
+  $: if (typeof document !== 'undefined') {
+    document.body.style.overflow = lightboxIndex === null ? '' : 'hidden';
+  }
 </script>
+
+<svelte:window on:keydown={handleKey} />
 
 <SiteHeader variant="public" />
 
@@ -73,10 +135,43 @@
     </div>
   </section>
 
-  <!-- ───────────────── Short description ────────────────────── -->
+  <!-- ───────────────── Tagline (cafe.description) ────────────────────── -->
   {#if $cafe?.description}
-    <section class="max-w-3xl mx-auto px-4 py-12 text-center">
-      <p class="text-lg leading-relaxed text-slate-700 whitespace-pre-line">{$cafe.description}</p>
+    <section class="max-w-3xl mx-auto px-4 pt-12 pb-2 text-center">
+      <p class="inline-flex items-center gap-3 text-brand-700 font-medium uppercase tracking-wide text-sm">
+        <span aria-hidden="true" class="h-px w-8 bg-brand-300"></span>
+        {$cafe.description}
+        <span aria-hidden="true" class="h-px w-8 bg-brand-300"></span>
+      </p>
+    </section>
+  {/if}
+
+  <!-- ──────────────── Intro / "What & Who" body ───────────────── -->
+  {#if hp.intro?.body || hp.intro?.heading}
+    <section class="max-w-4xl mx-auto px-4 pt-6 pb-12">
+      <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-50 via-white to-brand-50 ring-1 ring-brand-100 shadow-sm px-6 py-10 sm:px-12 sm:py-14">
+        <!-- decorative blobs -->
+        <div aria-hidden="true" class="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-brand-200/40 blur-3xl"></div>
+        <div aria-hidden="true" class="pointer-events-none absolute -bottom-20 -left-20 h-56 w-56 rounded-full bg-brand-200/30 blur-3xl"></div>
+
+        <div class="relative text-center">
+          <span class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-brand-600 text-white shadow-md">
+            <Heart size={26} />
+          </span>
+          {#if hp.intro?.heading}
+            <h2 class="mt-5 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">{hp.intro.heading}</h2>
+            <span class="mt-3 inline-block h-1 w-16 rounded-full bg-brand-500"></span>
+          {/if}
+          {#if introParagraphs.length > 0}
+            <p class="mt-6 text-xl sm:text-2xl leading-relaxed font-medium text-slate-800 whitespace-pre-line max-w-2xl mx-auto">
+              {introParagraphs[0]}
+            </p>
+            {#each introParagraphs.slice(1) as p}
+              <p class="mt-4 text-lg leading-relaxed text-slate-600 whitespace-pre-line max-w-2xl mx-auto">{p}</p>
+            {/each}
+          {/if}
+        </div>
+      </div>
     </section>
   {/if}
 
@@ -95,13 +190,6 @@
     </section>
   {/if}
 
-  <!-- ────────────── Intro / "What & Who" body ───────────────── -->
-  {#if hp.intro?.body}
-    <section class="max-w-4xl mx-auto px-4 py-12">
-      {#if hp.intro.heading}<h2 class="text-3xl font-bold tracking-tight uppercase text-slate-900 text-center">{hp.intro.heading}</h2>{/if}
-      <div class="mt-6 prose prose-slate max-w-none text-lg leading-relaxed text-slate-700 whitespace-pre-line text-center">{hp.intro.body}</div>
-    </section>
-  {/if}
 
   <!-- ──────────────── How it works steps ─────────────────────── -->
   {#if Array.isArray(hp.howItWorks) && hp.howItWorks.length > 0}
@@ -153,13 +241,18 @@
     <section class="bg-slate-50 py-14">
       <div class="max-w-6xl mx-auto px-4">
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-          {#each gallery as img}
-            <figure class="relative aspect-[4/3] overflow-hidden rounded-lg bg-slate-200 group">
+          {#each gallery as img, i}
+            <button
+              type="button"
+              on:click={() => openLightbox(i)}
+              class="relative aspect-[4/3] overflow-hidden rounded-lg bg-slate-200 group focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
+              aria-label={img.caption ? `View larger: ${img.caption}` : `View image ${i + 1} of ${gallery.length}`}
+            >
               <img src={img.url} alt={img.caption ?? ''} loading="lazy" class="w-full h-full object-cover transition-transform group-hover:scale-105" />
               {#if img.caption}
-                <figcaption class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent text-white text-xs p-2">{img.caption}</figcaption>
+                <span class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent text-white text-xs p-2 text-left line-clamp-2">{img.caption}</span>
               {/if}
-            </figure>
+            </button>
           {/each}
         </div>
       </div>
@@ -168,9 +261,41 @@
 
   <!-- ────────────────── What to bring ───────────────────────── -->
   {#if hp.whatToBring?.body}
-    <section class="max-w-3xl mx-auto px-4 py-14">
-      {#if hp.whatToBring.heading}<h2 class="text-3xl font-bold tracking-tight text-center text-slate-900 uppercase">{hp.whatToBring.heading}</h2>{/if}
-      <div class="mt-6 text-lg leading-relaxed text-slate-700 whitespace-pre-line text-center">{hp.whatToBring.body}</div>
+    <section class="max-w-4xl mx-auto px-4 py-14">
+      <div class="relative overflow-hidden rounded-3xl bg-white ring-1 ring-slate-200 shadow-sm px-6 py-10 sm:px-12 sm:py-12">
+        <div aria-hidden="true" class="pointer-events-none absolute -top-12 -right-12 h-44 w-44 rounded-full bg-brand-100/60 blur-3xl"></div>
+
+        <div class="relative">
+          <div class="flex items-center gap-4">
+            <span class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-brand-600 text-white shadow-md shrink-0">
+              <Package size={22} />
+            </span>
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-wider text-brand-700">Before you come</p>
+              {#if hp.whatToBring.heading}
+                <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">{hp.whatToBring.heading}</h2>
+              {/if}
+            </div>
+          </div>
+
+          {#if bring.isList}
+            <ul class="mt-8 grid sm:grid-cols-2 gap-x-8 gap-y-3">
+              {#each bring.items as item}
+                <li class="flex items-start gap-3 text-slate-700">
+                  <CheckCircle2 size={20} class="text-emerald-600 shrink-0 mt-0.5" />
+                  <span class="leading-snug">{item}</span>
+                </li>
+              {/each}
+            </ul>
+          {:else}
+            <div class="mt-6 space-y-4">
+              {#each bring.paragraphs as p}
+                <p class="text-lg leading-relaxed text-slate-700 whitespace-pre-line">{p}</p>
+              {/each}
+            </div>
+          {/if}
+        </div>
+      </div>
     </section>
   {/if}
 
@@ -193,19 +318,39 @@
   {/if}
 
   <!-- ──────────────────── Team ──────────────────────────────── -->
-  {#if repairers.length > 0}
+  {#if homeRepairers.length > 0}
     <section class="max-w-6xl mx-auto px-4 pb-16">
       <div class="flex items-end justify-between mb-6">
         <h2 class="text-2xl font-semibold">Meet our team</h2>
         <a href="/skills" class="text-brand-700 hover:underline text-sm">See everyone →</a>
       </div>
-      <div class="flex flex-wrap gap-3">
-        {#each repairers.slice(0, 12) as r}
-          {#if r.avatarUrl}
-            <img src={r.avatarUrl} alt={r.displayName} class="h-14 w-14 rounded-full object-cover ring-2 ring-white shadow" />
-          {:else}
-            <div class="h-14 w-14 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-semibold ring-2 ring-white shadow">{r.displayName.slice(0,2).toUpperCase()}</div>
-          {/if}
+      <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+        {#each homeRepairers.slice(0, 12) as r}
+          <a
+            href="/team/{r.id}"
+            aria-label={`View profile: ${r.displayName}`}
+            class="card p-5 block hover:shadow-md transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+          >
+            <div class="flex items-center gap-3">
+              {#if r.avatarUrl}
+                <img src={r.avatarUrl} alt="" class="h-14 w-14 rounded-full object-cover" />
+              {:else}
+                <div class="h-14 w-14 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-semibold">{r.displayName.slice(0, 2).toUpperCase()}</div>
+              {/if}
+              <div>
+                <p class="font-semibold text-brand-700">{r.displayName}</p>
+                {#if r.joinDate}<p class="text-xs text-slate-500">Joined {new Date(r.joinDate).getFullYear()}</p>{/if}
+              </div>
+            </div>
+            {#if r.bio}<p class="mt-3 text-sm text-slate-700 line-clamp-3">{r.bio}</p>{/if}
+            {#if r.skills.length > 0}
+              <div class="mt-3 flex flex-wrap gap-1">
+                {#each r.skills as s}
+                  <span class="badge bg-slate-100 text-slate-700">{s}</span>
+                {/each}
+              </div>
+            {/if}
+          </a>
         {/each}
       </div>
     </section>
@@ -246,5 +391,66 @@
     </section>
   {/if}
 </main>
+
+<!-- ────────────────────── Gallery lightbox ────────────────────── -->
+{#if lightboxIndex !== null && gallery[lightboxIndex]}
+  <div
+    class="fixed inset-0 z-50 bg-black/90 flex flex-col"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Photo viewer"
+    on:click|self={closeLightbox}
+  >
+    <!-- Top bar: counter + close -->
+    <div class="flex items-center justify-between px-4 py-3 text-white/90 text-sm">
+      <span class="font-mono tabular-nums">{lightboxIndex + 1} / {gallery.length}</span>
+      <button
+        type="button"
+        on:click={closeLightbox}
+        class="p-2 rounded-full hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/50"
+        aria-label="Close (Esc)"
+      >
+        <X size={24} />
+      </button>
+    </div>
+
+    <!-- Image + nav -->
+    <div class="relative flex-1 flex items-center justify-center min-h-0" on:click|self={closeLightbox}>
+      <img
+        src={gallery[lightboxIndex].url}
+        alt={gallery[lightboxIndex].caption ?? ''}
+        class="max-h-full max-w-full object-contain rounded"
+        on:click|stopPropagation
+      />
+      {#if gallery.length > 1}
+        <button
+          type="button"
+          on:click|stopPropagation={prevImage}
+          class="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-white/50"
+          aria-label="Previous image (←)"
+        >
+          <ChevronLeft size={28} />
+        </button>
+        <button
+          type="button"
+          on:click|stopPropagation={nextImage}
+          class="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-white/50"
+          aria-label="Next image (→)"
+        >
+          <ChevronRight size={28} />
+        </button>
+      {/if}
+    </div>
+
+    <!-- Caption -->
+    {#if gallery[lightboxIndex].caption}
+      <div class="px-6 py-4 text-center text-white text-sm sm:text-base max-w-3xl mx-auto">
+        {gallery[lightboxIndex].caption}
+      </div>
+    {:else}
+      <div class="py-4"></div>
+    {/if}
+  </div>
+{/if}
 
 <SiteFooter />

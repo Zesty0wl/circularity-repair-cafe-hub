@@ -47,6 +47,7 @@ export async function adminRepairsRoutes(app: FastifyInstance): Promise<void> {
         eventName: events.name,
         eventDate: events.date,
         category: skillCategories.name,
+        repairerId: repairJobs.repairerId,
         repairerName: users.displayName,
       })
       .from(repairJobs)

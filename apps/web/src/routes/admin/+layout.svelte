@@ -2,7 +2,7 @@
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
   import { auth, isAdmin } from '$lib/stores/auth';
-  import { LayoutDashboard, Calendar, Users, Wrench, BarChart3, Tags, MapPin, Settings, LogOut, Menu, X, MonitorPlay } from 'lucide-svelte';
+  import { LayoutDashboard, Calendar, Users, Wrench, BarChart3, Tags, MapPin, Settings, LogOut, Menu, X, MonitorPlay, UserCircle2 } from 'lucide-svelte';
   import { api } from '$lib/api';
 
   let sidebarOpen = false;
@@ -46,6 +46,9 @@
           </a>
         {/each}
       </nav>
+      <a href="/repairer/profile" class="mx-3 text-sm flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100 text-slate-700">
+        <UserCircle2 size={16} /> My profile
+      </a>
       <button on:click={logout} class="m-3 text-sm flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100 text-slate-700">
         <LogOut size={16} /> Sign out
       </button>
@@ -66,6 +69,7 @@
             </a>
           {/each}
         </nav>
+        <a href="/repairer/profile" on:click={() => (sidebarOpen = false)} class="mx-3 text-sm flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100"><UserCircle2 size={16} /> My profile</a>
         <button on:click={logout} class="m-3 text-sm flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100"><LogOut size={16} /> Sign out</button>
       </aside>
     {/if}

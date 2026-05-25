@@ -26,8 +26,8 @@ export async function adminSettingsRoutes(app: FastifyInstance): Promise<void> {
       return;
     }
     const update: any = { updatedAt: new Date() };
-    for (const k of ['name', 'tagline', 'description', 'websiteUrl', 'publicUrl', 'contactEmail', 'address', 'socialLinks']) {
-      if ((data as any)[k] !== undefined) update[k] = (data as any)[k];
+    for (const k of ['name', 'tagline', 'description', 'websiteUrl', 'publicUrl', 'contactEmail', 'address', 'socialLinks', 'primaryColor', 'donateUrl']) {
+      if ((data as any)[k] !== undefined) update[k] = (data as any)[k] === '' ? null : (data as any)[k];
     }
     const [updated] = await db.update(cafes).set(update).where(eq(cafes.id, cafe.id)).returning();
     await audit({ request, actorId: me.sub, actorType: me.role, action: 'cafe.updated', entityType: 'cafe', entityId: cafe.id });

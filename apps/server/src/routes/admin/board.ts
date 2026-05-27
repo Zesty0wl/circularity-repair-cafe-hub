@@ -32,6 +32,7 @@ export async function adminBoardRoutes(app: FastifyInstance): Promise<void> {
         name: events.name,
         date: events.date,
         status: events.status,
+        qrCodeUrl: events.qrCodeUrl,
       })
       .from(events)
       .where(and(...eventConds))

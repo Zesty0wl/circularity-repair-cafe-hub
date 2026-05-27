@@ -32,6 +32,10 @@
       api('/api/admin/users'),
       api('/api/admin/events'),
     ]);
+    // Default the event filter to the currently-active event (if any) so
+    // staff don't have to hunt for it during an event night.
+    const active = events.find((e: any) => e.status === 'active');
+    if (active) filters.eventId = active.id;
     load();
   });
 

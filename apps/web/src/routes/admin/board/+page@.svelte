@@ -5,7 +5,7 @@
   import { api } from '$lib/api';
   import {
     Maximize2, Minimize2, Volume2, VolumeX, Zap, ZapOff, ArrowLeft,
-    Image as ImageIcon, ZoomIn, ZoomOut,
+    Image as ImageIcon, ZoomIn, ZoomOut, QrCode, X,
   } from 'lucide-svelte';
 
   type Job = {
@@ -25,7 +25,7 @@
     repairerName: string | null;
     thumbnailUrl: string | null;
   };
-  type EventLite = { id: string; name: string; date: string; status: string };
+  type EventLite = { id: string; name: string; date: string; status: string; qrCodeUrl: string | null };
 
   let jobs: Job[] = [];
   let eventsList: EventLite[] = [];
@@ -42,6 +42,11 @@
   let isFullscreen = false;
   let wakeLockOn = false;
   let wakeLock: any = null;
+  // QR-code side panel for customer check-in. Persisted so a venue can
+  // leave it on once they've positioned the screen for walk-up customers.
+  let qrEnabled = true;
+  // Modal-size QR for customers far from the screen — toggled by tapping the panel.
+  let qrZoomed = false;
 
   // ───────────── Scale ─────────────
   // Default 1.0 is tuned to fit ~10 rows on a 1080p screen with the standard
@@ -221,6 +226,21 @@
       if (v) scale = clampScale(parseFloat(v));
     } catch { /* noop */ }
   }
+
+  // ─────────────────────────── QR toggle ───────────────────────────────
+  function persistQrEnabled() {
+    try { localStorage.setItem('boardQrEnabled', qrEnabled ? '1' : '0'); } catch { /* noop */ }
+  }
+  function loadQrEnabled() {
+    try {
+      const v = localStorage.getItem('boardQrEnabled');
+      if (v !== null) qrEnabled = v === '1';
+    } catch { /* noop */ }
+  }
+  function toggleQr() {
+    qrEnabled = !qrEnabled;
+    persistQrEnabled();
+  }
   function onWheelZoom(e: WheelEvent) {
     if (!(e.ctrlKey || e.metaKey)) return;
     e.preventDefault();
@@ -242,6 +262,7 @@
       return;
     }
     loadScale();
+    loadQrEnabled();
     syncPageSize();
     document.addEventListener('fullscreenchange', onFsChange);
     document.addEventListener('keydown', onKey);
@@ -285,6 +306,22 @@
     inProgress: jobs.filter((j) => j.status === 'in_progress').length,
     completed: jobs.filter((j) => j.status === 'completed').length,
   };
+
+  // Pick the event whose QR we'll display. Prefer the explicitly selected
+  // event; otherwise the first 'active' event; otherwise just the first one.
+  // We skip events that haven't had a QR generated yet.
+  $: qrEvent = (() => {
+    if (eventsList.length === 0) return null;
+    if (selectedEventId) {
+      const sel = eventsList.find((e) => e.id === selectedEventId);
+      if (sel?.qrCodeUrl) return sel;
+      return null;
+    }
+    const active = eventsList.find((e) => e.status === 'active' && e.qrCodeUrl);
+    if (active) return active;
+    return eventsList.find((e) => e.qrCodeUrl) ?? null;
+  })();
+  $: showQrPanel = qrEnabled && !!qrEvent;
 
   // ─────────────────────────── timer formatting ────────────────────────
   // Compact, big-from-a-distance "MM:SS" / "H:MM:SS" elapsed format.
@@ -409,6 +446,9 @@
       <button class="ctl" class:active={soundEnabled} on:click={() => (soundEnabled ? disableSound() : enableSound())} title="Toggle sound">
         {#if soundEnabled}<Volume2 size={18} />{:else}<VolumeX size={18} />{/if}
       </button>
+      <button class="ctl" class:active={qrEnabled} on:click={toggleQr} title="Show check-in QR code">
+        <QrCode size={18} />
+      </button>
       <button class="ctl" class:active={wakeLockOn} on:click={() => (wakeLockOn ? disableWakeLock() : enableWakeLock())} title="Keep screen awake">
         {#if wakeLockOn}<Zap size={18} />{:else}<ZapOff size={18} />{/if}
       </button>
@@ -429,63 +469,89 @@
       <p class="empty-sub">When a customer checks in, their job will appear here.</p>
     </div>
   {:else}
-    <ul class="rows">
-      {#each pageJobs as j (j.id)}
-        {@const t = timeFor(j)}
-        <li class="row status-{j.status}" class:flash={highlightIds.has(j.id)}>
-          <div class="thumb">
-            {#if j.thumbnailUrl}
-              <img src={j.thumbnailUrl} alt="" loading="lazy" />
-            {:else}
-              <div class="thumb-empty"><ImageIcon size={28} /></div>
-            {/if}
-          </div>
+    <div class="board-body" class:with-qr={showQrPanel}>
+      <div class="rows-col">
+        <ul class="rows">
+          {#each pageJobs as j (j.id)}
+            {@const t = timeFor(j)}
+            <li class="row status-{j.status}" class:flash={highlightIds.has(j.id)}>
+              <div class="thumb">
+                {#if j.thumbnailUrl}
+                  <img src={j.thumbnailUrl} alt="" loading="lazy" />
+                {:else}
+                  <div class="thumb-empty"><ImageIcon size={28} /></div>
+                {/if}
+              </div>
 
-          <div class="who">
-            <p class="customer">{j.customerName ?? 'Anonymous'}</p>
-            <p class="job-no">{j.jobNumber}</p>
-          </div>
+              <div class="who">
+                <p class="customer">{j.customerName ?? 'Anonymous'}</p>
+                <p class="job-no">{j.jobNumber}</p>
+              </div>
 
-          <div class="what">
-            <p class="item">{j.itemDescription}</p>
-            <p class="meta-line">
-              {#if j.itemBrand}<span class="brand-pill">{j.itemBrand}</span>{/if}
-              {#if j.category}
-                <span class="cat" style="background-color: {j.categoryColour ?? '#6366f1'}33; color: {j.categoryColour ?? '#a5b4fc'}">{j.category}</span>
-              {/if}
-              {#if j.repairerName}<span class="repairer-pill">{j.repairerName}</span>{/if}
-            </p>
-          </div>
+              <div class="what">
+                <p class="item">{j.itemDescription}</p>
+                <p class="meta-line">
+                  {#if j.itemBrand}<span class="brand-pill">{j.itemBrand}</span>{/if}
+                  {#if j.category}
+                    <span class="cat" style="background-color: {j.categoryColour ?? '#6366f1'}33; color: {j.categoryColour ?? '#a5b4fc'}">{j.category}</span>
+                  {/if}
+                  {#if j.repairerName}<span class="repairer-pill">{j.repairerName}</span>{/if}
+                </p>
+              </div>
 
-          <div class="time">
-            <span class="time-big">{t.primary}</span>
-            <span class="time-lbl">{t.secondary}</span>
-          </div>
+              <div class="time">
+                <span class="time-big">{t.primary}</span>
+                <span class="time-lbl">{t.secondary}</span>
+              </div>
 
-          <div class="status-col">
-            <span class="badge">{statusLabel(j.status)}</span>
-          </div>
-        </li>
-      {/each}
-    </ul>
-
-    {#if totalPages > 1}
-      <!-- Page-progress bar: visually shows the 60s countdown to the next flip.
-           Wrapped in {#key currentPage} so the bar re-mounts and the CSS
-           animation restarts cleanly when we flip pages. -->
-      <div class="page-bar">
-        {#key currentPage}
-          <div class="page-bar-fill" style="animation-duration: {PAGE_INTERVAL_MS}ms"></div>
-        {/key}
-        <div class="page-dots">
-          {#each Array(totalPages) as _, i}
-            <span class="dot" class:active={i === currentPage}></span>
+              <div class="status-col">
+                <span class="badge">{statusLabel(j.status)}</span>
+              </div>
+            </li>
           {/each}
-        </div>
+        </ul>
+
+        {#if totalPages > 1}
+          <!-- Page-progress bar: visually shows the 60s countdown to the next flip.
+               Wrapped in {#key currentPage} so the bar re-mounts and the CSS
+               animation restarts cleanly when we flip pages. -->
+          <div class="page-bar">
+            {#key currentPage}
+              <div class="page-bar-fill" style="animation-duration: {PAGE_INTERVAL_MS}ms"></div>
+            {/key}
+            <div class="page-dots">
+              {#each Array(totalPages) as _, i}
+                <span class="dot" class:active={i === currentPage}></span>
+              {/each}
+            </div>
+          </div>
+        {/if}
       </div>
-    {/if}
+
+      {#if showQrPanel && qrEvent}
+        <aside class="qr-panel">
+          <p class="qr-title">Scan to check in</p>
+          <button class="qr-img-btn" type="button" on:click={() => (qrZoomed = true)} title="Tap to enlarge">
+            <img src={qrEvent.qrCodeUrl} alt="Check-in QR code" />
+          </button>
+          <p class="qr-event">{qrEvent.name}</p>
+        </aside>
+      {/if}
+    </div>
   {/if}
 </div>
+
+{#if qrZoomed && qrEvent}
+  <!-- Full-screen overlay so customers across the room can scan. -->
+  <button type="button" class="qr-overlay" on:click={() => (qrZoomed = false)} title="Tap to close">
+    <div class="qr-overlay-inner">
+      <p class="qr-overlay-title">Scan to check in</p>
+      <img src={qrEvent.qrCodeUrl} alt="Check-in QR code" />
+      <p class="qr-overlay-event">{qrEvent.name}</p>
+      <span class="qr-overlay-close" aria-hidden="true"><X size={20} /> Tap anywhere to close</span>
+    </div>
+  </button>
+{/if}
 
 <style>
   /* This page intentionally fills the viewport and ignores the admin chrome.
@@ -682,6 +748,63 @@
     box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.6), 0 2px 8px rgba(0, 0, 0, 0.25);
   }
 
+  /* ───────────────────────── Body + QR layout ──────────────────────── */
+  .board-body { display: flex; gap: calc(16px * var(--scale)); align-items: flex-start; }
+  .rows-col   { flex: 1 1 auto; min-width: 0; }
+  .qr-panel {
+    flex: 0 0 auto;
+    width: calc(280px * var(--scale));
+    background: #1e293b;
+    border-radius: 12px;
+    padding: calc(14px * var(--scale)) calc(14px * var(--scale)) calc(12px * var(--scale));
+    display: flex; flex-direction: column; align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  }
+  .qr-title {
+    margin: 0 0 calc(10px * var(--scale));
+    font-size: calc(1.1rem * var(--scale));
+    font-weight: 700; color: #e2e8f0; letter-spacing: 0.02em;
+    text-align: center;
+  }
+  .qr-img-btn {
+    background: white; padding: calc(10px * var(--scale)); border-radius: 10px;
+    border: none; cursor: pointer; line-height: 0;
+    width: 100%;
+  }
+  .qr-img-btn img { width: 100%; height: auto; display: block; }
+  .qr-event {
+    margin: calc(10px * var(--scale)) 0 0;
+    font-size: calc(0.9rem * var(--scale));
+    color: #94a3b8; text-align: center;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;
+  }
+
+  /* Full-screen QR overlay so customers across the room can scan. */
+  .qr-overlay {
+    position: fixed; inset: 0; z-index: 60;
+    background: rgba(2, 6, 23, 0.92); backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    border: none; color: inherit; font: inherit; cursor: pointer; padding: 24px;
+  }
+  .qr-overlay-inner {
+    background: white; padding: 28px; border-radius: 16px;
+    display: flex; flex-direction: column; align-items: center;
+    max-width: min(90vw, 90vh); max-height: 90vh;
+  }
+  .qr-overlay-inner img {
+    width: min(70vmin, 720px); height: auto; display: block;
+  }
+  .qr-overlay-title {
+    margin: 0 0 16px; font-size: 1.6rem; font-weight: 700; color: #0f172a;
+  }
+  .qr-overlay-event {
+    margin: 14px 0 4px; font-size: 1.1rem; color: #334155; font-weight: 600;
+  }
+  .qr-overlay-close {
+    margin-top: 6px; display: inline-flex; gap: 6px; align-items: center;
+    color: #64748b; font-size: 0.9rem;
+  }
+
   /* ───────────────────────── Page indicator ────────────────────────── */
   .page-bar {
     margin-top: 14px;
@@ -761,6 +884,10 @@
       grid-template-columns: var(--thumb-w) minmax(140px, 1.3fr) minmax(0, 2fr) auto auto;
       gap: 10px;
     }
+    /* On tablets the side QR is still useful but should be slimmer. */
+    .qr-panel { width: 200px; padding: 10px; }
+    .qr-title { font-size: 0.95rem; margin-bottom: 8px; }
+    .qr-event { font-size: 0.78rem; margin-top: 8px; }
   }
 
   @media (max-width: 540px) {
@@ -819,5 +946,9 @@
     .empty-big   { font-size: 1.5rem; }
     .overlay-card { padding: 20px 22px; }
     .overlay-card h1 { font-size: 1.25rem; }
+
+    /* On phones, fold the QR panel below the rows so each fits the screen. */
+    .board-body { flex-direction: column; gap: 10px; }
+    .qr-panel   { width: 100%; max-width: 320px; align-self: center; padding: 10px; }
   }
 </style>

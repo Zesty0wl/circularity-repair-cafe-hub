@@ -464,9 +464,23 @@
   {/if}
 
   {#if sortedJobs.length === 0}
-    <div class="empty">
-      <p class="empty-big">No repairs yet</p>
-      <p class="empty-sub">When a customer checks in, their job will appear here.</p>
+    <div class="board-body" class:with-qr={showQrPanel}>
+      <div class="rows-col">
+        <div class="empty">
+          <p class="empty-big">No repairs yet</p>
+          <p class="empty-sub">When a customer checks in, their job will appear here.</p>
+        </div>
+      </div>
+
+      {#if showQrPanel && qrEvent}
+        <aside class="qr-panel">
+          <p class="qr-title">Scan to check in</p>
+          <button class="qr-img-btn" type="button" on:click={() => (qrZoomed = true)} title="Tap to enlarge">
+            <img src={qrEvent.qrCodeUrl} alt="Check-in QR code" />
+          </button>
+          <p class="qr-event">{qrEvent.name}</p>
+        </aside>
+      {/if}
     </div>
   {:else}
     <div class="board-body" class:with-qr={showQrPanel}>

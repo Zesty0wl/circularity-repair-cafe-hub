@@ -7,6 +7,9 @@
   // button  — full secondary button (e.g. the home "Next event" spotlight)
   // compact — icon-only, for overlaying on small date tiles
   export let variant: 'link' | 'button' | 'compact' = 'link';
+  // Optional extra classes (e.g. "flex-1" to fill a button row).
+  let className = '';
+  export { className as class };
 
   $: label = `Add ${event.name} to your calendar`;
 
@@ -21,12 +24,12 @@
     on:click|stopPropagation={add}
     aria-label={label}
     title="Add to calendar"
-    class="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-white/90 text-brand-700 ring-1 ring-black/5 shadow-sm transition hover:bg-white hover:text-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+    class="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-white/90 text-brand-700 ring-1 ring-black/5 shadow-sm transition hover:bg-white hover:text-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 {className}"
   >
     <CalendarPlus size={15} />
   </button>
 {:else if variant === 'button'}
-  <button type="button" on:click={add} aria-label={label} class="btn-secondary">
+  <button type="button" on:click={add} aria-label={label} class="btn-secondary {className}">
     <CalendarPlus size={16} /> Add to calendar
   </button>
 {:else}
@@ -34,7 +37,7 @@
     type="button"
     on:click={add}
     aria-label={label}
-    class="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 hover:text-brand-800 focus:outline-none focus-visible:underline"
+    class="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 hover:text-brand-800 focus:outline-none focus-visible:underline {className}"
   >
     <CalendarPlus size={16} class="shrink-0" /> Add to calendar
   </button>

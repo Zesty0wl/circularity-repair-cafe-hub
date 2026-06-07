@@ -4,7 +4,7 @@
   import { auth } from '$lib/stores/auth';
   import { loadCafe, loadSetupStatus } from '$lib/stores/cafe';
   import ProgressBar from '$lib/components/ProgressBar.svelte';
-  import { CheckCircle2, Wrench } from 'lucide-svelte';
+  import { CheckCircle2 } from 'lucide-svelte';
   import { onMount } from 'svelte';
 
   const TOTAL = 6;
@@ -125,8 +125,8 @@
 <main class="min-h-screen bg-slate-100 py-10 px-4">
   <div class="max-w-xl mx-auto">
     <div class="flex items-center gap-3 mb-8">
-      <span class="h-10 w-10 rounded-xl bg-brand-600 text-white inline-flex items-center justify-center"><Wrench size={20} /></span>
-      <span class="font-semibold text-lg">Circularity Repair Cafe Hub</span>
+      <img src="/brand/logo-horizontal.svg" alt="Circularity.org" class="h-9 w-auto" />
+      <span class="font-semibold text-lg text-pine">Repair Cafe Hub</span>
     </div>
     <ProgressBar current={step} total={TOTAL} />
 

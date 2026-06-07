@@ -27,6 +27,10 @@
       <img src={detail.event.qrCodeUrl} alt="QR Code" class="mt-8 w-96 h-96" />
     {/if}
     <p class="text-2xl font-semibold mt-6">Scan to check in your item for repair</p>
-    <p class="text-sm text-slate-500 mt-2">Powered by Circularity Repair Cafe Hub</p>
+    <p class="text-sm text-slate-500 mt-2 inline-flex items-center justify-center gap-1.5">
+      <span>Powered by</span>
+      <img src="/brand/logo-horizontal.svg" alt="Circularity.org" class="h-4 w-auto" />
+      <span>Repair Cafe Hub</span>
+    </p>
   </div>
 {/if}

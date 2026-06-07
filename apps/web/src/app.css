@@ -3,22 +3,36 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    /* Default brand palette — Circularity teal (#1B6B5A at 500). Stored as
+       space-separated R G B channels so Tailwind's `brand` utilities can apply
+       opacity. src/lib/brand.ts overrides these per-cafe at runtime. */
+    --brand-50: 237 243 242;
+    --brand-100: 219 231 229;
+    --brand-200: 187 211 206;
+    --brand-300: 150 187 179;
+    --brand-400: 100 154 143;
+    --brand-500: 27 107 90;
+    --brand-600: 22 88 74;
+    --brand-700: 17 68 58;
+    --brand-800: 12 48 41;
+    --brand-900: 8 30 25;
+  }
   html {
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
   }
   body {
-    @apply bg-slate-50 text-slate-900 antialiased font-sans;
-    font-feature-settings: 'cv11', 'ss01';
+    @apply bg-paper text-ink antialiased font-sans;
   }
   h1 {
-    @apply text-3xl md:text-4xl font-bold;
+    @apply text-3xl md:text-4xl font-bold font-display;
   }
   h2 {
-    @apply text-2xl md:text-3xl font-semibold;
+    @apply text-2xl md:text-3xl font-semibold font-display;
   }
   h3 {
-    @apply text-xl md:text-2xl font-semibold;
+    @apply text-xl md:text-2xl font-semibold font-display;
   }
   /* Customer-facing larger type */
   .customer-ui {

@@ -81,7 +81,7 @@ const STATEMENTS: string[] = [
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     icon TEXT NOT NULL DEFAULT 'wrench',
-    colour TEXT NOT NULL DEFAULT '#6366f1',
+    colour TEXT NOT NULL DEFAULT '#1B6B5A',
     sort_order INT NOT NULL DEFAULT 0,
     is_active BOOLEAN NOT NULL DEFAULT TRUE
   )`,

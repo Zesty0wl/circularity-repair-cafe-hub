@@ -113,7 +113,7 @@ export const skillCategories = pgTable('skill_categories', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
   icon: text('icon').notNull().default('wrench'),
-  colour: text('colour').notNull().default('#6366f1'),
+  colour: text('colour').notNull().default('#1B6B5A'),
   sortOrder: integer('sort_order').notNull().default(0),
   isActive: boolean('is_active').notNull().default(true),
 });

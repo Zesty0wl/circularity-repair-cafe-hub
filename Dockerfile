@@ -12,17 +12,21 @@ ENV PNPM_HOME=/pnpm \
 RUN apt-get update \
  && apt-get install -y --no-install-recommends ca-certificates python3 build-essential \
  && rm -rf /var/lib/apt/lists/* \
- && corepack enable && corepack prepare pnpm@9.12.0 --activate
+ && corepack enable && corepack prepare pnpm@11.3.0 --activate
 
 WORKDIR /app
 
 # Copy lockfile + manifests first for layer caching
-COPY package.json pnpm-workspace.yaml tsconfig.base.json ./
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml tsconfig.base.json ./
 COPY packages/shared/package.json ./packages/shared/
 COPY apps/server/package.json    ./apps/server/
 COPY apps/web/package.json       ./apps/web/
 
-RUN pnpm install --frozen-lockfile=false
+# Install from the committed lockfile so the dependency tree is deterministic
+# and matches local builds exactly. (Previously the lockfile wasn't copied and
+# --frozen-lockfile=false re-resolved from the registry, which is
+# non-deterministic and could leave binaries like vite unlinked.)
+RUN pnpm install --frozen-lockfile
 
 # Copy source
 COPY packages/shared ./packages/shared

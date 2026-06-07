@@ -43,7 +43,7 @@
   // Brand colour — <input type="color"> requires #rrggbb. We normalise on load
   // and via the change handler so an empty/legacy value never reaches the
   // native control (which otherwise logs a console error).
-  const DEFAULT_PRIMARY = '#0ea5e9';
+  const DEFAULT_PRIMARY = '#1B6B5A';
   const HEX_RE = /^#[0-9a-fA-F]{6}$/;
   function normaliseHex(v: unknown): string {
     return typeof v === 'string' && HEX_RE.test(v) ? v : DEFAULT_PRIMARY;
@@ -315,13 +315,13 @@
             class="input w-32 font-mono"
             type="text"
             maxlength="7"
-            placeholder="#0ea5e9"
+            placeholder="#1B6B5A"
             value={primaryColorInput}
             on:change={(e) => (primaryColorInput = normaliseHex((e.currentTarget as HTMLInputElement).value))}
           />
           <button type="button" class="btn-ghost text-sm" on:click={() => (primaryColorInput = DEFAULT_PRIMARY)}>Reset</button>
         </div>
-        <p class="text-xs text-slate-500 mt-1">Used as the brand accent. Stored as #rrggbb hex.</p>
+        <p class="text-xs text-slate-500 mt-1">Re-themes buttons, links and accents across your site. Leave at the Circularity default teal, or set your cafe's own colour. Stored as #rrggbb hex.</p>
       </div>
       <div class="grid sm:grid-cols-3 gap-3">
         <div><label class="label" for="fb">Facebook</label><input id="fb" class="input" bind:value={cafe.socialFacebook} /></div>
@@ -566,7 +566,8 @@
 
   {#if tab === 'about'}
     <div class="card p-6 mt-4 max-w-2xl text-sm space-y-2">
-      <p><strong>Circularity Repair Cafe Hub</strong></p>
+      <img src="/brand/logo-horizontal.svg" alt="Circularity.org" class="h-8 w-auto mb-1" />
+      <p><strong>Repair Cafe Hub</strong></p>
       <p>Self-hosted, open-source platform for grass-roots repair cafes.</p>
       <p>Source: <a class="text-brand-700 hover:underline" href="https://github.com/" target="_blank" rel="noopener">github.com</a></p>
       <p>Released under the MIT licence.</p>

@@ -25,14 +25,26 @@
 
 <header class="bg-white shadow-sm border-b border-slate-200 no-print sticky top-0 z-30">
   <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
-    <a href="/" class="flex items-center gap-3 text-slate-900 font-semibold text-lg min-w-0">
-      {#if $cafe?.logoUrl}
-        <img src={$cafe.logoUrl} alt="" class="h-9 w-9 rounded-lg object-contain shrink-0" />
-      {:else}
-        <span class="h-9 w-9 rounded-lg bg-brand-600 text-white inline-flex items-center justify-center shrink-0"><Wrench size={18} /></span>
-      {/if}
-      <span class="truncate">{$cafe?.name || 'Repair Cafe'}</span>
-    </a>
+    <div class="flex items-center gap-3 min-w-0">
+      <a href="/" class="flex items-center gap-3 text-slate-900 font-semibold text-lg min-w-0">
+        {#if $cafe?.logoUrl}
+          <img src={$cafe.logoUrl} alt="" class="h-9 w-9 rounded-lg object-contain shrink-0" />
+        {:else}
+          <span class="h-9 w-9 rounded-lg bg-brand-600 text-white inline-flex items-center justify-center shrink-0"><Wrench size={18} /></span>
+        {/if}
+        <span class="truncate">{$cafe?.name || 'Repair Cafe'}</span>
+      </a>
+      <span class="hidden lg:block h-8 w-px bg-slate-200 shrink-0" aria-hidden="true"></span>
+      <a
+        href="https://circularity.org"
+        target="_blank"
+        rel="noopener"
+        class="hidden lg:inline-flex items-center gap-1.5 text-xs font-normal text-slate-500 hover:text-slate-700 shrink-0"
+      >
+        <span>Powered by</span>
+        <img src="/brand/logo-horizontal.svg" alt="Circularity.org" class="h-7 w-auto" />
+      </a>
+    </div>
 
     <!-- Desktop nav -->
     <nav class="hidden md:flex items-center gap-2 text-sm">

@@ -113,7 +113,7 @@ export const venueSchema = z.object({
 export const skillCategorySchema = z.object({
   name: z.string().min(1).max(100),
   icon: z.string().max(50).default('wrench'),
-  colour: z.string().regex(/^#[0-9a-fA-F]{6}$/).default('#6366f1'),
+  colour: z.string().regex(/^#[0-9a-fA-F]{6}$/).default('#1B6B5A'),
   sortOrder: z.number().int().default(0),
   isActive: z.boolean().default(true),
 });

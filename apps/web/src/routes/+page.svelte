@@ -4,7 +4,8 @@
   import { cafe } from '$lib/stores/cafe';
   import SiteHeader from '$lib/components/SiteHeader.svelte';
   import SiteFooter from '$lib/components/SiteFooter.svelte';
-  import { Calendar, MapPin, Mail, Phone, ChevronDown, ChevronLeft, ChevronRight, X, Heart, Package, CheckCircle2 } from 'lucide-svelte';
+  import AddToCalendar from '$lib/components/AddToCalendar.svelte';
+  import { Calendar, Clock, MapPin, Mail, Phone, ChevronDown, ChevronLeft, ChevronRight, X, Heart, Package, CheckCircle2, HelpCircle } from 'lucide-svelte';
   import Icon from '@iconify/svelte';
   import { categoryIcon } from '$lib/categoryIcon';
 
@@ -35,13 +36,24 @@
   function formatDate(d: string): string {
     return new Date(d + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   }
-  function shortDate(d: string): string {
-    return new Date(d + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+  // Split a date into the pieces a calendar tile needs (day number, short
+  // month, weekday name) using the visitor's locale.
+  function dateParts(d: string) {
+    const dt = new Date(d + 'T12:00:00');
+    return {
+      day: dt.toLocaleDateString(undefined, { day: 'numeric' }),
+      monthShort: dt.toLocaleDateString(undefined, { month: 'short' }),
+      weekdayLong: dt.toLocaleDateString(undefined, { weekday: 'long' }),
+    };
   }
 
   // The same homeVenue is shown for most "When & where" sections.
   $: homeVenue = upcomingEvents[0]?.venue ?? null;
   $: nextEvent = upcomingEvents[0] ?? null;
+  // When every upcoming event shares one name (the common case for a regular
+  // monthly cafe) we hide the repetitive label on the date tiles; if some
+  // events are specially named we surface those names instead.
+  $: uniformEventName = upcomingEvents.length > 0 && upcomingEvents.every((e) => e.name === upcomingEvents[0]!.name);
   $: hp = $cafe?.homePage ?? {};
   $: gallery = $cafe?.gallery ?? [];
 
@@ -114,7 +126,7 @@
   <!-- ───────────────────────── Hero ───────────────────────── -->
   <section
     class="relative bg-gradient-to-br from-brand-700 to-brand-500 text-white"
-    style={$cafe?.bannerUrl ? `background-image: linear-gradient(rgba(49,46,129,.78), rgba(99,102,241,.78)), url('${$cafe.bannerUrl}'); background-size: cover; background-position: center;` : ''}
+    style={$cafe?.bannerUrl ? `background-image: linear-gradient(to bottom right, rgb(var(--brand-800) / .88), rgb(var(--brand-600) / .82)), url('${$cafe.bannerUrl}'); background-size: cover; background-position: center;` : ''}
   >
     <div class="max-w-6xl mx-auto px-4 py-20 md:py-28 flex flex-col md:flex-row items-start md:items-center gap-8">
       {#if $cafe?.logoUrl}
@@ -185,7 +197,10 @@
           <p class="mt-1 text-slate-600 flex items-center gap-2"><Calendar size={16} /> {formatDate(nextEvent.date)} · {nextEvent.startTime.slice(0,5)}–{nextEvent.endTime.slice(0,5)}</p>
           <p class="mt-1 text-slate-600 flex items-center gap-2"><MapPin size={16} /> {nextEvent.venue.name}</p>
         </div>
-        <a href="/events" class="btn-primary">Find out more</a>
+        <div class="flex flex-col gap-2 w-full sm:w-auto">
+          <a href="/events" class="btn-primary">Find out more</a>
+          <AddToCalendar event={nextEvent} variant="button" />
+        </div>
       </div>
     </section>
   {/if}
@@ -211,27 +226,54 @@
 
   <!-- ──────────────────── When & where ──────────────────────── -->
   {#if upcomingEvents.length > 0}
-    <section id="when" class="max-w-4xl mx-auto px-4 py-14">
-      <h2 class="text-3xl font-bold tracking-tight text-center text-slate-900 uppercase">When &amp; where</h2>
-      {#if homeVenue}
-        <p class="mt-3 text-center text-slate-600 flex items-center justify-center gap-2">
-          <MapPin size={16} /> {homeVenue.name}{#if homeVenue.address}, {homeVenue.address}{/if}{#if homeVenue.postcode} · {homeVenue.postcode}{/if}
-        </p>
-      {/if}
-      <p class="mt-6 text-center text-sm text-slate-500 uppercase tracking-wide">Upcoming dates</p>
-      <ul class="mt-4 max-w-md mx-auto divide-y divide-slate-200 border border-slate-200 rounded-lg bg-white">
-        {#each upcomingEvents as e}
-          <li class="flex items-center justify-between gap-4 px-5 py-3">
-            <div>
-              <p class="font-medium text-slate-900">{shortDate(e.date)}</p>
-              <p class="text-xs text-slate-500">{e.name}</p>
+    <section id="when" class="bg-sage/30 py-16">
+      <div class="max-w-5xl mx-auto px-4">
+        <div class="text-center">
+          <p class="text-xs font-bold uppercase tracking-[0.18em] text-clay">Mark your calendar</p>
+          <h2 class="mt-2 text-3xl md:text-4xl font-bold tracking-tight text-pine">When &amp; where</h2>
+          {#if homeVenue}
+            <p class="mt-3 text-slate-600 flex items-center justify-center gap-2">
+              <MapPin size={16} /> {homeVenue.name}{#if homeVenue.address}, {homeVenue.address}{/if}{#if homeVenue.postcode} · {homeVenue.postcode}{/if}
+            </p>
+          {/if}
+        </div>
+
+        <div class="mt-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
+          {#each upcomingEvents.slice(0, 8) as e, i}
+            {@const p = dateParts(e.date)}
+            <div
+              class="group relative rounded-2xl bg-white ring-1 ring-slate-200 overflow-hidden text-center shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 hover:ring-brand-300"
+            >
+              {#if i === 0}
+                <span class="absolute top-2 right-2 z-10 rounded-full bg-sun text-ink text-[10px] font-bold uppercase tracking-wide px-2 py-0.5">Next</span>
+              {/if}
+              <div class="absolute top-2 left-2 z-10">
+                <AddToCalendar event={e} variant="compact" />
+              </div>
+              <a href="/events" class="block">
+                <div class="bg-brand-600 text-white text-xs font-bold uppercase tracking-wider py-1.5">{p.monthShort}</div>
+                <div class="px-3 py-4">
+                  <div class="text-4xl font-bold font-display text-pine leading-none">{p.day}</div>
+                  <div class="mt-1 text-sm text-slate-500">{p.weekdayLong}</div>
+                  <div class="mt-3 inline-flex items-center gap-1 text-xs font-medium text-slate-600">
+                    <Clock size={12} class="text-clay" /> {e.startTime.slice(0,5)}–{e.endTime.slice(0,5)}
+                  </div>
+                  {#if !uniformEventName}
+                    <div class="mt-2 text-xs text-slate-500 truncate" title={e.name}>{e.name}</div>
+                  {/if}
+                </div>
+              </a>
             </div>
-            <span class="text-sm text-slate-600 font-mono tabular-nums">{e.startTime.slice(0,5)}–{e.endTime.slice(0,5)}</span>
-          </li>
-        {/each}
-      </ul>
-      <div class="text-center mt-6">
-        <a href="/events" class="btn-secondary">See full schedule</a>
+          {/each}
+        </div>
+
+        {#if upcomingEvents.length > 8}
+          <p class="mt-6 text-center text-sm text-slate-500">+ {upcomingEvents.length - 8} more {upcomingEvents.length - 8 === 1 ? 'date' : 'dates'} on the schedule</p>
+        {/if}
+
+        <div class="text-center mt-8">
+          <a href="/events" class="btn-secondary">See full schedule</a>
+        </div>
       </div>
     </section>
   {/if}
@@ -358,17 +400,30 @@
 
   <!-- ──────────────────── FAQ ──────────────────────────────── -->
   {#if Array.isArray(hp.faqs) && hp.faqs.length > 0}
-    <section class="bg-slate-50 py-14">
+    <section class="bg-sage/30 py-16">
       <div class="max-w-3xl mx-auto px-4">
-        <h2 class="text-3xl font-bold tracking-tight text-center text-slate-900 uppercase">Questions</h2>
-        <div class="mt-8 space-y-2">
+        <div class="text-center">
+          <span class="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-brand-600 text-white shadow-md">
+            <HelpCircle size={26} />
+          </span>
+          <p class="mt-4 text-xs font-bold uppercase tracking-[0.18em] text-clay">Good to know</p>
+          <h2 class="mt-2 text-3xl md:text-4xl font-bold tracking-tight text-pine">Questions</h2>
+        </div>
+        <div class="mt-10 space-y-3">
           {#each hp.faqs as faq, i}
-            <details class="bg-white rounded-lg shadow-sm group" open={openFaq === i} on:toggle={(e) => { if ((e.target as HTMLDetailsElement).open) openFaq = i; }}>
-              <summary class="cursor-pointer flex items-center justify-between gap-3 px-5 py-4 list-none">
-                <span class="font-medium text-slate-900">{faq.q}</span>
-                <ChevronDown size={18} class="text-slate-400 transition-transform group-open:rotate-180" />
+            <details
+              class="group rounded-2xl bg-white ring-1 ring-slate-200 shadow-sm transition-all hover:ring-brand-300 open:ring-2 open:ring-brand-400 open:shadow-md"
+              open={openFaq === i}
+              on:toggle={(e) => { if ((e.target as HTMLDetailsElement).open) openFaq = i; }}
+            >
+              <summary class="cursor-pointer flex items-center gap-4 px-5 py-4 list-none">
+                <span class="shrink-0 grid place-items-center h-9 w-9 rounded-full bg-sage text-pine font-bold font-display transition-colors group-open:bg-brand-600 group-open:text-white">{i + 1}</span>
+                <span class="flex-1 font-semibold text-pine">{faq.q}</span>
+                <span class="shrink-0 grid place-items-center h-8 w-8 rounded-full bg-slate-100 text-slate-500 transition-all group-open:bg-clay group-open:text-white group-open:rotate-180">
+                  <ChevronDown size={18} />
+                </span>
               </summary>
-              <div class="px-5 pb-4 text-slate-600 leading-relaxed whitespace-pre-line">{faq.a}</div>
+              <div class="px-5 pb-5 sm:pl-[4.5rem] text-slate-600 leading-relaxed whitespace-pre-line">{faq.a}</div>
             </details>
           {/each}
         </div>

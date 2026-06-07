@@ -1,10 +1,15 @@
 <script lang="ts">
   import '../app.css';
+  // Self-hosted brand fonts (Fraunces display + Mulish body). Bundled from
+  // node_modules so they load offline and comply with the app's CSP.
+  import '@fontsource-variable/fraunces/index.css';
+  import '@fontsource-variable/mulish/index.css';
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
   import { auth } from '$lib/stores/auth';
   import { cafe, loadCafe, loadSetupStatus } from '$lib/stores/cafe';
+  import { applyBrandColor } from '$lib/brand';
   import { api } from '$lib/api';
 
   let booted = false;
@@ -39,6 +44,9 @@
   // seoTitle/seoDescription override the defaults if set; otherwise we
   // synthesise from the cafe name + tagline/description.
   $: cafeName = $cafe?.name ?? 'Repair Cafe';
+  // Re-theme the UI whenever the cafe's primary colour changes. A null/unset
+  // colour falls back to the Circularity-teal defaults declared in app.css.
+  $: applyBrandColor($cafe?.primaryColor);
   $: pageTitle = $cafe?.seoTitle?.trim() || ($cafe?.tagline ? `${cafeName} — ${$cafe.tagline}` : cafeName);
   $: metaDesc = $cafe?.seoDescription?.trim() || $cafe?.description || $cafe?.tagline || '';
   $: ogImage = $cafe?.ogImageUrl || $cafe?.bannerUrl || $cafe?.logoUrl || '';

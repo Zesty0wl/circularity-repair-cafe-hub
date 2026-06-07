@@ -507,7 +507,7 @@
                 <p class="meta-line">
                   {#if j.itemBrand}<span class="brand-pill">{j.itemBrand}</span>{/if}
                   {#if j.category}
-                    <span class="cat" style="background-color: {j.categoryColour ?? '#6366f1'}33; color: {j.categoryColour ?? '#a5b4fc'}">{j.category}</span>
+                    <span class="cat" style="background-color: {j.categoryColour ?? '#1B6B5A'}33; color: {j.categoryColour ?? '#BFD6C4'}">{j.category}</span>
                   {/if}
                   {#if j.repairerName}<span class="repairer-pill">{j.repairerName}</span>{/if}
                 </p>
@@ -612,7 +612,7 @@
   .brand { font-weight: 700; font-size: 1.1rem; line-height: 1.1; margin: 0; }
   .sub { color: #94a3b8; font-size: 0.85rem; margin: 2px 0 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .page-pill {
-    background: rgba(99, 102, 241, 0.25); color: #c7d2fe;
+    background: rgb(var(--brand-500) / 0.3); color: rgb(var(--brand-200));
     padding: 2px 8px; border-radius: 999px; font-size: 0.78rem; font-variant-numeric: tabular-nums;
   }
 
@@ -630,14 +630,14 @@
   }
   .ctl:hover:not(:disabled) { background: rgba(148, 163, 184, 0.22); }
   .ctl:disabled { opacity: 0.4; cursor: not-allowed; }
-  .ctl.active { background: rgba(99, 102, 241, 0.35); color: white; }
+  .ctl.active { background: rgb(var(--brand-500) / 0.45); color: white; }
   select.ctl { padding-right: 24px; }
 
   .scale-group {
     display: inline-flex; align-items: center; gap: 6px;
     background: rgba(148, 163, 184, 0.10); border-radius: 8px; padding: 0 6px;
   }
-  .scale-range { width: 110px; accent-color: #6366f1; }
+  .scale-range { width: 110px; accent-color: rgb(var(--brand-400)); }
   .scale-pct {
     font-variant-numeric: tabular-nums; font-size: 0.85rem; color: #cbd5e1;
     min-width: 42px; text-align: right; padding-right: 4px;
@@ -830,7 +830,7 @@
   }
   .page-bar-fill::after {
     content: ''; position: absolute; inset: 0;
-    background: linear-gradient(90deg, #6366f1, #38bdf8);
+    background: linear-gradient(90deg, rgb(var(--brand-500)), rgb(var(--brand-300)));
     transform-origin: left center;
     animation-name: shrinkBar;
     animation-timing-function: linear;
@@ -845,7 +845,7 @@
   .dot {
     width: 8px; height: 8px; border-radius: 50%; background: rgba(148, 163, 184, 0.3);
   }
-  .dot.active { background: #6366f1; }
+  .dot.active { background: rgb(var(--brand-400)); }
 
   /* Audio-enable / loading overlay */
   .overlay {
@@ -863,7 +863,7 @@
   .overlay-card p  { margin: 0; color: #cbd5e1; line-height: 1.4; }
   .enable-pill {
     display: inline-block; margin-top: 18px;
-    background: #6366f1; color: white;
+    background: rgb(var(--brand-500)); color: white;
     padding: 10px 22px; border-radius: 999px; font-weight: 600;
   }
 

@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Circularity.org — Brand Book &amp; Design Brief</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Mulish:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* ---- Core palette ---- */
+  --teal:#1B6B5A;   /* Forest Teal  — primary            */
+  --pine:#0E3D33;   /* Deep Pine    — dark / headings     */
+  --clay:#D2683F;   /* Terracotta   — secondary          */
+  --sun:#F3B43E;    /* Sunflower    — accent             */
+  --sage:#BFD6C4;   /* Sage         — tint / surfaces     */
+  --paper:#FBF7EF;  /* Paper        — background          */
+  --ink:#1C2622;    /* Ink          — body text           */
+  --stone:#6E7B73;  /* Stone        — muted text/borders  */
+  --white:#FFFFFF;
+  --sage-soft:#E4EEE7;
+  --paper-2:#F4EEE2;
+
+  /* ---- Type ---- */
+  --font-display:'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-body:'Mulish', system-ui, -apple-system, sans-serif;
+
+  /* ---- Radius (everything leans toward the circle) ---- */
+  --r-sm:10px; --r-md:18px; --r-lg:28px; --r-pill:999px;
+
+  /* ---- Shadow ---- */
+  --shadow-sm:0 1px 2px rgba(14,61,51,.06), 0 2px 8px rgba(14,61,51,.05);
+  --shadow-md:0 10px 30px rgba(14,61,51,.10);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--font-body);
+  background:var(--paper);
+  color:var(--ink);
+  line-height:1.6;
+  font-size:17px;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+img{max-width:100%}
+
+/* layout */
+.wrap{max-width:1080px;margin:0 auto;padding:0 28px}
+section{padding:84px 0;position:relative}
+section + section{border-top:1px solid rgba(14,61,51,.08)}
+.eyebrow{
+  font-size:13px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--clay);margin-bottom:18px;display:flex;align-items:center;gap:10px;
+}
+.eyebrow::before{content:"";width:26px;height:2px;background:var(--clay);border-radius:2px}
+h1,h2,h3,h4{font-family:var(--font-display);font-weight:600;color:var(--pine);line-height:1.08;letter-spacing:-.01em}
+h2{font-size:clamp(34px,5vw,52px);margin-bottom:22px}
+h3{font-size:26px;margin-bottom:12px;letter-spacing:-.005em}
+h4{font-size:19px;font-weight:700;margin-bottom:8px;font-family:var(--font-body);letter-spacing:0;color:var(--teal)}
+p{margin-bottom:16px;max-width:64ch}
+p.lead{font-size:21px;color:#33403a}
+a{color:var(--teal);text-decoration:none}
+strong{font-weight:800;color:var(--pine)}
+.muted{color:var(--stone)}
+.grid{display:grid;gap:24px}
+.cols-2{grid-template-columns:repeat(2,1fr)}
+.cols-3{grid-template-columns:repeat(3,1fr)}
+.cols-4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:820px){.cols-2,.cols-3,.cols-4{grid-template-columns:1fr}}
+
+.card{background:var(--white);border:1px solid rgba(14,61,51,.08);border-radius:var(--r-lg);padding:30px;box-shadow:var(--shadow-sm)}
+
+/* ============ HERO ============ */
+.hero{
+  background:
+    radial-gradient(120% 90% at 12% -10%, var(--sage-soft) 0%, transparent 55%),
+    radial-gradient(90% 80% at 100% 0%, #fdeede 0%, transparent 50%),
+    var(--paper);
+  padding:0;overflow:hidden;
+}
+.hero-inner{padding:96px 0 90px;position:relative}
+.hero .ring-deco{position:absolute;right:-160px;top:-80px;width:520px;height:520px;opacity:.5;pointer-events:none}
+.hero-logo{width:min(520px,86vw);margin-bottom:40px;display:block}
+.hero h1{font-size:clamp(44px,8vw,86px);font-weight:600;color:var(--pine);max-width:16ch;letter-spacing:-.02em}
+.hero h1 em{font-style:italic;color:var(--teal);font-weight:500}
+.hero .tagline{font-size:clamp(20px,3vw,27px);color:var(--clay);font-family:var(--font-display);font-style:italic;margin:22px 0 0;font-weight:500}
+.hero .sub{margin-top:26px;max-width:54ch;font-size:19px;color:#33403a}
+.doc-meta{margin-top:40px;display:flex;gap:30px;flex-wrap:wrap;font-size:14px;color:var(--stone)}
+.doc-meta b{color:var(--pine);font-weight:800;display:block;font-size:13px;letter-spacing:.04em;text-transform:uppercase;margin-bottom:2px}
+
+/* TOC */
+.toc{display:flex;flex-wrap:wrap;gap:10px;margin-top:46px}
+.toc a{
+  font-size:13px;font-weight:700;letter-spacing:.02em;background:var(--white);
+  border:1px solid rgba(14,61,51,.12);padding:9px 16px;border-radius:var(--r-pill);
+  color:var(--pine);transition:.18s;
+}
+.toc a:hover{background:var(--teal);color:#fff;border-color:var(--teal);transform:translateY(-2px)}
+
+/* essence chips */
+.essence{display:flex;flex-wrap:wrap;gap:14px;margin-top:8px}
+.chip{background:var(--sage-soft);color:var(--pine);font-weight:700;padding:10px 20px;border-radius:var(--r-pill);font-size:15px}
+
+/* values */
+.value h3{display:flex;align-items:baseline;gap:12px}
+.value .num{font-family:var(--font-display);font-size:16px;color:var(--clay);font-weight:600}
+.value .ic{width:44px;height:44px;margin-bottom:16px}
+
+/* voice table */
+.vt{display:grid;grid-template-columns:1fr 1fr;gap:0;border-radius:var(--r-md);overflow:hidden;border:1px solid rgba(14,61,51,.1)}
+.vt > div{padding:20px 24px}
+.vt .head{font-weight:800;font-size:13px;letter-spacing:.1em;text-transform:uppercase;background:var(--pine);color:#fff}
+.vt .head.no{background:var(--clay)}
+.vt .yes{background:var(--sage-soft)}
+.vt .no{background:#fbe9e0}
+.vt .row{border-top:1px solid rgba(14,61,51,.08)}
+.vt .row.no{border-color:rgba(210,104,63,.2)}
+
+/* logo showcase */
+.logo-stage{background:var(--white);border-radius:var(--r-lg);padding:48px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(14,61,51,.08);min-height:180px}
+.logo-stage.teal{background:var(--teal)}
+.logo-stage.pine{background:var(--pine)}
+.logo-stage.clay{background:var(--clay)}
+.logo-stage.photo{background:linear-gradient(135deg,#2c473c,#16302a)}
+.logo-stage svg{max-width:100%;height:auto}
+.stage-label{font-size:13px;color:var(--stone);margin-top:10px;font-weight:600}
+
+.dos .item{display:flex;gap:14px;align-items:flex-start;margin-bottom:14px}
+.tick,.cross{flex:0 0 24px;height:24px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:14px;color:#fff;margin-top:2px}
+.tick{background:var(--teal)}.cross{background:var(--clay)}
+
+/* clear space diagram */
+.clearspace{position:relative;background:var(--paper-2);border-radius:var(--r-md);padding:40px;display:flex;justify-content:center;border:1px dashed rgba(14,61,51,.25)}
+
+/* colour swatches */
+.swatch{border-radius:var(--r-md);overflow:hidden;border:1px solid rgba(14,61,51,.08);background:#fff}
+.swatch .chiparea{height:120px;display:flex;align-items:flex-end;padding:14px}
+.swatch .meta{padding:14px 16px}
+.swatch .name{font-weight:800;color:var(--pine);font-size:16px}
+.swatch .hex{font-family:var(--font-body);font-weight:700;font-size:13px;letter-spacing:.04em;color:var(--stone);text-transform:uppercase}
+.swatch .role{font-size:13px;color:var(--stone);margin-top:6px}
+.dotpill{font-size:11px;font-weight:800;padding:3px 9px;border-radius:var(--r-pill);background:rgba(255,255,255,.85);color:var(--pine)}
+
+/* type specimens */
+.specimen{background:#fff;border:1px solid rgba(14,61,51,.08);border-radius:var(--r-lg);padding:34px}
+.specimen .big{font-family:var(--font-display);font-size:72px;line-height:1;color:var(--pine);font-weight:600}
+.specimen .alpha{font-family:var(--font-display);font-size:24px;color:var(--teal);margin-top:18px;word-spacing:2px}
+.specimen .label{font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--clay);margin-bottom:18px}
+.scale-row{display:flex;align-items:baseline;gap:18px;padding:12px 0;border-bottom:1px dotted rgba(14,61,51,.15)}
+.scale-row .tag{font-size:12px;font-family:var(--font-body);font-weight:700;color:var(--stone);width:120px;flex:0 0 120px}
+
+/* icons */
+.iconcell{display:flex;flex-direction:column;align-items:center;gap:10px;padding:22px 8px;background:#fff;border:1px solid rgba(14,61,51,.08);border-radius:var(--r-md)}
+.iconcell span{font-size:12px;color:var(--stone);font-weight:600}
+.iconcell svg{width:38px;height:38px}
+
+/* components demo */
+.btn{font-family:var(--font-body);font-weight:800;font-size:16px;border:none;border-radius:var(--r-pill);padding:14px 28px;cursor:pointer;transition:.18s;display:inline-flex;align-items:center;gap:9px}
+.btn-primary{background:var(--teal);color:#fff}
+.btn-primary:hover{background:var(--pine)}
+.btn-accent{background:var(--sun);color:var(--ink)}
+.btn-accent:hover{filter:brightness(.95)}
+.btn-outline{background:transparent;color:var(--teal);box-shadow:inset 0 0 0 2px var(--teal)}
+.btn-outline:hover{background:var(--teal);color:#fff}
+.pill{display:inline-block;font-size:13px;font-weight:700;padding:7px 16px;border-radius:var(--r-pill)}
+.pill.teal{background:var(--sage-soft);color:var(--pine)}
+.pill.clay{background:#fbe4d9;color:#9c3f1d}
+.pill.sun{background:#fdeec6;color:#8a6210}
+.input{font-family:var(--font-body);font-size:16px;padding:13px 18px;border-radius:var(--r-pill);border:1.5px solid rgba(14,61,51,.2);width:100%;background:#fff}
+.input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 4px rgba(27,107,90,.15)}
+
+.demo-card{border-radius:var(--r-lg);overflow:hidden;border:1px solid rgba(14,61,51,.08);background:#fff;box-shadow:var(--shadow-sm)}
+.demo-card .top{height:130px;background:linear-gradient(135deg,var(--teal),#16302a);position:relative;display:grid;place-items:center}
+.demo-card .body{padding:24px}
+
+/* code block */
+pre{background:var(--pine);color:#e8f0ec;border-radius:var(--r-md);padding:26px;overflow:auto;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:13.5px;line-height:1.7}
+pre .c{color:#7fae9f}
+pre .k{color:var(--sun)}
+pre .v{color:#bfe0d4}
+.copyhint{font-size:13px;color:var(--stone);margin-bottom:10px;font-weight:600}
+
+/* photo treatment demo */
+.photo-circle{aspect-ratio:1;border-radius:50%;background:linear-gradient(135deg,#3a5a4d,#1d3a31);display:grid;place-items:center;color:rgba(255,255,255,.5);font-size:13px;border:6px solid var(--sun)}
+.photo-loz{aspect-ratio:1.4;border-radius:140px;background:linear-gradient(135deg,#caa44a,#a9742f);display:grid;place-items:center;color:rgba(255,255,255,.65);font-size:13px}
+
+/* footer */
+footer{background:var(--pine);color:#cfe0d8;padding:64px 0 56px;border:0}
+footer h3{color:#fff}
+footer a{color:var(--sage)}
+.assetlist{list-style:none;margin-top:8px}
+.assetlist li{padding:9px 0;border-bottom:1px solid rgba(255,255,255,.1);font-size:14.5px;display:flex;justify-content:space-between;gap:16px}
+.assetlist code{color:var(--sun);font-family:ui-monospace,monospace;font-size:13px}
+
+.note{background:var(--sage-soft);border-left:4px solid var(--teal);padding:18px 22px;border-radius:0 var(--r-md) var(--r-md) 0;margin:20px 0;font-size:15.5px}
+.note b{color:var(--pine)}
+.divider-ring{display:flex;justify-content:center;padding:30px 0}
+.divider-ring svg{width:46px;opacity:.55}
+</style>
+</head>
+<body>
+
+<!-- ============================== HERO ============================== -->
+<header class="hero">
+  <div class="ring-deco">
+    <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+      <path d="M 97.59 46.32 A 40 40 0 1 1 73.68 22.41" fill="none" stroke="#BFD6C4" stroke-width="14" stroke-linecap="round"/>
+      <circle cx="88.28" cy="31.72" r="8.6" fill="#D2683F"/>
+    </svg>
+  </div>
+  <div class="wrap hero-inner">
+    <!-- Primary horizontal logo -->
+    <svg class="hero-logo" viewBox="0 0 660 150" xmlns="http://www.w3.org/2000/svg" aria-label="Circularity.org">
+      <g transform="translate(8,15)">
+        <path d="M 97.59 46.32 A 40 40 0 1 1 73.68 22.41" fill="none" stroke="#1B6B5A" stroke-width="14" stroke-linecap="round"/>
+        <circle cx="88.28" cy="31.72" r="8.6" fill="#D2683F"/>
+      </g>
+      <text x="156" y="98" font-family="Fraunces, Georgia, serif" font-weight="600" font-size="60" letter-spacing="-1.2" fill="#0E3D33">Circularity<tspan font-size="31" font-weight="500" letter-spacing="0" fill="#D2683F" dx="2">.org</tspan></text>
+    </svg>
+
+    <h1>Spaces and places for people to <em>connect</em>.</h1>
+    <p class="tagline">"Changing minds from Me to We."</p>
+    <p class="sub">This is the brand book and design brief for Circularity.org. It defines the logo, colour, type, voice and components so that every new project, page and asset shares one coherent, warm and unmistakably human identity.</p>
+
+    <div class="doc-meta">
+      <div><b>For</b>Circularity.org · Reg. Charity 1197109</div>
+      <div><b>Location</b>Woodville, South Derbyshire, DE11</div>
+      <div><b>Use</b>Hand to AI agents and designers as the single source of truth</div>
+      <div><b>Version</b>1.0</div>
+    </div>
+
+    <nav class="toc">
+      <a href="#strategy">Strategy</a>
+      <a href="#personality">Personality</a>
+      <a href="#voice">Voice</a>
+      <a href="#logo">Logo</a>
+      <a href="#colour">Colour</a>
+      <a href="#type">Typography</a>
+      <a href="#icons">Iconography</a>
+      <a href="#graphic">Graphic language</a>
+      <a href="#components">Components</a>
+      <a href="#tokens">Design tokens</a>
+      <a href="#assets">Asset index</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ============================== STRATEGY ============================== -->
+<section id="strategy">
+  <div class="wrap">
+    <div class="eyebrow">01 · Brand strategy</div>
+    <h2>Who Circularity is</h2>
+    <p class="lead">Circularity is a South Derbyshire community charity that creates spaces and places where people connect: to each other, to nature, and to themselves.</p>
+    <div class="grid cols-2" style="margin-top:30px">
+      <div>
+        <p>Through a community managed library hub, a monthly Repair Café, the Grow project, the Wellbeing Wagon, a podcast and a studio, Circularity helps people find new hobbies, meet new friends, learn for life and improve their community. The work is practical and local, but the idea behind it is bigger: moving from a culture of "Me" to a culture of "We".</p>
+        <p>The name carries three meanings at once, and the whole identity is built on them: the <strong>circular economy</strong> of repairing, reusing and growing; the <strong>cycles of nature</strong> the Grow project celebrates; and the <strong>circle of community</strong> that always has room for one more person.</p>
+      </div>
+      <div class="card">
+        <h4>Positioning statement</h4>
+        <p style="font-family:var(--font-display);font-size:21px;color:var(--pine);line-height:1.4;margin:0">For people who want to belong and to make their corner of the world a little better, Circularity is the community charity that turns everyday acts of repairing, growing and gathering into real human connection.</p>
+        <div class="essence" style="margin-top:24px">
+          <span class="chip">Connection</span>
+          <span class="chip">Circularity</span>
+          <span class="chip">Community</span>
+          <span class="chip">Me to We</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="note" style="margin-top:36px"><b>The single thought:</b> The circle is open. There is always space for you. Everything we design should feel like an invitation in, never a wall to get past.</div>
+  </div>
+</section>
+
+<!-- ============================== PERSONALITY + VALUES ============================== -->
+<section id="personality">
+  <div class="wrap">
+    <div class="eyebrow">02 · Personality &amp; values</div>
+    <h2>Warm, grounded, hopeful, together</h2>
+    <p class="lead">If Circularity were a person, they would be the neighbour who puts the kettle on, knows how to fix your lamp, has seeds to spare, and genuinely wants to hear how you are.</p>
+
+    <div class="grid cols-4" style="margin-top:40px">
+      <div class="card">
+        <h4>Warm</h4>
+        <p style="font-size:15px;margin:0">Welcoming and unpretentious. A safe space, a cup of tea, a friendly face. We lower the barrier to taking part.</p>
+      </div>
+      <div class="card">
+        <h4>Grounded</h4>
+        <p style="font-size:15px;margin:0">Practical and hands-on. Real things, made and mended by real people in a real place. We do, we do not just talk.</p>
+      </div>
+      <div class="card">
+        <h4>Hopeful</h4>
+        <p style="font-size:15px;margin:0">Curious and optimistic. Lifelong learning, creativity and the belief that small actions add up to change.</p>
+      </div>
+      <div class="card">
+        <h4>Together</h4>
+        <p style="font-size:15px;margin:0">Collaborative and inclusive. Everyone has something to give and something to gain. Me becomes We.</p>
+      </div>
+    </div>
+
+    <h3 style="margin-top:60px">The Four C's</h3>
+    <p class="muted" style="margin-top:-4px">The values at the heart of everything Circularity builds.</p>
+    <div class="grid cols-2" style="margin-top:24px">
+      <div class="value card">
+        <h3><span class="num">01</span> Creative</h3>
+        <p style="margin:0">Making, music, growing, repairing and storytelling. We give people room to make and to imagine something better.</p>
+      </div>
+      <div class="value card">
+        <h3><span class="num">02</span> Compassionate</h3>
+        <p style="margin:0">We meet people where they are, with kindness and without judgement. Wellbeing comes first.</p>
+      </div>
+      <div class="value card">
+        <h3><span class="num">03</span> Collaborative</h3>
+        <p style="margin:0">We work with our community, our partners and other charities. The best things happen when we share.</p>
+      </div>
+      <div class="value card">
+        <h3><span class="num">04</span> Community</h3>
+        <p style="margin:0">Local, rooted and open to all. We strengthen the ties that hold a place together.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== VOICE ============================== -->
+<section id="voice">
+  <div class="wrap">
+    <div class="eyebrow">03 · Voice &amp; tone</div>
+    <h2>We talk like a good neighbour</h2>
+    <p class="lead">Plain, warm and welcoming. We speak as "we" and to "you". We ask questions, we invite, and we never talk down.</p>
+
+    <div class="grid cols-2" style="margin-top:30px;margin-bottom:40px">
+      <div class="card">
+        <h4>Principles</h4>
+        <p style="font-size:15.5px;margin:0">
+          Lead with an invitation, not an instruction. Use short, plain sentences. Prefer everyday words over jargon. Be specific about the real thing on offer (a cup of tea, a seed, a mended kettle). Celebrate people by name and credit local contributors. Keep it encouraging and hopeful, never guilt-driven.
+        </p>
+      </div>
+      <div class="card">
+        <h4>Signature lines</h4>
+        <p style="font-family:var(--font-display);font-size:18px;color:var(--pine);line-height:1.5;margin:0">
+          "What brings you here?"<br>
+          "Changing minds from Me to We."<br>
+          "Come along and have a chat."<br>
+          "You do not need any experience, just come as you are."
+        </p>
+      </div>
+    </div>
+
+    <div class="vt">
+      <div class="head">Say this</div>
+      <div class="head no">Not this</div>
+      <div class="yes row">Come along and have a chat, no experience needed.</div>
+      <div class="no row">Applicants must register prior to attendance.</div>
+      <div class="yes row">There is always room for one more.</div>
+      <div class="no row">Spaces are subject to availability and demand.</div>
+      <div class="yes row">We grow flowers, fruit and veg together.</div>
+      <div class="no row">We facilitate horticultural engagement opportunities.</div>
+      <div class="yes row">Bring something to mend and we will fix it together.</div>
+      <div class="no row">Utilise our repair provision to extend product lifecycles.</div>
+    </div>
+    <div class="note"><b>Writing rule for all Circularity copy:</b> never use em dashes. Use commas, colons, brackets or a new sentence instead. Keep punctuation as warm and plain as the words.</div>
+  </div>
+</section>
+
+<!-- ============================== LOGO ============================== -->
+<section id="logo">
+  <div class="wrap">
+    <div class="eyebrow">04 · The logo</div>
+    <h2>The Open Circle</h2>
+    <p class="lead">The mark is a circle drawn as an open ring, with a single dot resting in the opening. The circle is the cycle, the community and the circular economy. The opening is the invitation. The dot is you: the "Me" stepping into the "We", and the seed that grows.</p>
+
+    <div class="grid cols-2" style="margin-top:36px">
+      <div>
+        <div class="logo-stage">
+          <svg viewBox="0 0 660 150" xmlns="http://www.w3.org/2000/svg" style="max-width:440px">
+            <g transform="translate(8,15)"><path d="M 97.59 46.32 A 40 40 0 1 1 73.68 22.41" fill="none" stroke="#1B6B5A" stroke-width="14" stroke-linecap="round"/><circle cx="88.28" cy="31.72" r="8.6" fill="#D2683F"/></g>
+            <text x="156" y="98" font-family="Fraunces, Georgia, serif" font-weight="600" font-size="60" letter-spacing="-1.2" fill="#0E3D33">Circularity<tspan font-size="31" font-weight="500" fill="#D2683F" dx="2">.org</tspan></text>
+          </svg>
+        </div>
+        <div class="stage-label">Primary horizontal lockup · use this wherever space allows</div>
+      </div>
+      <div>
+        <div class="logo-stage">
+          <svg viewBox="0 0 400 188" xmlns="http://www.w3.org/2000/svg" style="max-width:250px">
+            <g transform="translate(140,-2)"><path d="M 97.59 46.32 A 40 40 0 1 1 73.68 22.41" fill="none" stroke="#1B6B5A" stroke-width="14" stroke-linecap="round"/><circle cx="88.28" cy="31.72" r="8.6" fill="#D2683F"/></g>
+            <text x="200" y="172" text-anchor="middle" font-family="Fraunces, Georgia, serif" font-weight="600" font-size="54" letter-spacing="-1.2" fill="#0E3D33">Circularity<tspan font-size="28" font-weight="500" fill="#D2683F" dx="2">.org</tspan></text>
+          </svg>
+        </div>
+        <div class="stage-label">Stacked lockup · for square and centred placements</div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:56px">Colourways</h3>
+    <div class="grid cols-4" style="margin-top:20px">
+      <div>
+        <div class="logo-stage" style="min-height:150px">
+          <svg viewBox="0 0 120 120" style="width:84px"><path d="M 97.59 46.32 A 40 40 0 1 1 73.68 22.41" fill="none" stroke="#1B6B5A" stroke-width="14" stroke-linecap="round"/><circle cx="88.28" cy="31.72" r="8.6" fill="#D2683F"/></svg>
+        </div>
+        <div class="stage-label">Duotone mark · default</div>
+      </div>
+      <div>
+        <div class="logo-stage teal" style="min-height:150px">
+          <svg viewBox="0 0 120 120" style="width:84px"><path d="M 97.59 46.32 A 40 40 0 1 1 73.68 22.41" fill="none" stroke="#FFFFFF" stroke-width="14" stroke-linecap="round"/><circle cx="88.28" cy="31.72" r="8.6" fill="#FFFFFF"/></svg>
+        </div>
+        <div class="stage-label">Reversed white · on teal/pine/photos</div>
+      </div>
+      <div>
+        <div class="logo-stage" style="min-height:150px">
+          <svg viewBox="0 0 120 120" style="width:84px"><path d="M 97.59 46.32 A 40 40 0 1 1 73.68 22.41" fill="none" stroke="#1C2622" stroke-width="14" stroke-linecap="round"/><circle cx="88.28" cy="31.72" r="8.6" fill="#1C2622"/></svg>
+        </div>
+        <div class="stage-label">Mono ink · single-colour print</div>
+      </div>
+      <div>
+        <div class="logo-stage" style="min-height:150px;background:var(--teal)">
+          <svg viewBox="0 0 120 120" style="width:84px"><rect width="120" height="120" rx="28" fill="#FBF7EF"/><g transform="translate(60,60) scale(0.74) translate(-60,-60)"><path d="M 97.59 46.32 A 40 40 0 1 1 73.68 22.41" fill="none" stroke="#1B6B5A" stroke-width="14" stroke-linecap="round"/><circle cx="88.28" cy="31.72" r="8.6" fill="#D2683F"/></g></svg>
+        </div>
+        <div class="stage-label">App icon / favicon</div>
+      </div>
+    </div>
+
+    <div class="grid cols-2" style="margin-top:56px">
+      <div>
+        <h3>Clear space &amp; minimum size</h3>
+        <div class="clearspace">
+          <svg viewBox="0 0 120 120" style="width:120px"><path d="M 97.59 46.32 A 40 40 0 1 1 73.68 22.41" fill="none" stroke="#1B6B5A" stroke-width="14" stroke-linecap="round"/><circle cx="88.28" cy="31.72" r="8.6" fill="#D2683F"/></svg>
+        </div>
+        <p style="margin-top:16px;font-size:15px">Keep clear space around the logo equal to the diameter of the dot on all sides. Never crowd it with text or other marks. Minimum sizes: <strong>24px</strong> for the mark on screen, <strong>140px</strong> wide for the horizontal lockup, and <strong>10mm</strong> high in print.</p>
+      </div>
+      <div class="dos">
+        <h3>Do &amp; do not</h3>
+        <div class="item"><span class="tick">✓</span><div>Keep the opening and dot intact. They carry the whole idea.</div></div>
+        <div class="item"><span class="tick">✓</span><div>Use the reversed white version on busy or dark photos.</div></div>
+        <div class="item"><span class="tick">✓</span><div>Give the mark room to breathe.</div></div>
+        <div class="item"><span class="cross">✕</span><div>Do not close the ring, rotate it, or recolour the dot at random.</div></div>
+        <div class="item"><span class="cross">✕</span><div>Do not stretch, add shadows, gradients or outlines.</div></div>
+        <div class="item"><span class="cross">✕</span><div>Do not place the duotone mark on a clashing colour. Switch to reversed white instead.</div></div>
+      </div>
+    </div>
+    <div class="note"><b>Production note:</b> the supplied lockup SVGs set the word "Circularity" in Fraunces with a serif fallback. For final master artwork, convert the wordmark to outlines so it renders identically everywhere. The mark itself is pure vector and needs no conversion.</div>
+  </div>
+</section>
+
+<!-- ============================== COLOUR ============================== -->
+<section id="colour">
+  <div class="wrap">
+    <div class="eyebrow">05 · Colour</div>
+    <h2>A warm, natural palette</h2>
+    <p class="lead">Forest teal leads, grounded by terracotta and lifted by sunflower, all resting on warm paper. The palette feels like a community garden and a well-loved library, not a corporate office.</p>
+
+    <div class="grid cols-4" style="margin-top:36px">
+      <div class="swatch"><div class="chiparea" style="background:#1B6B5A"><span class="dotpill">Primary</span></div><div class="meta"><div class="name">Forest Teal</div><div class="hex">#1B6B5A · rgb 27 107 90</div><div class="role">Primary brand colour. Buttons, headers, the mark.</div></div></div>
+      <div class="swatch"><div class="chiparea" style="background:#0E3D33"><span class="dotpill">Dark</span></div><div class="meta"><div class="name">Deep Pine</div><div class="hex">#0E3D33 · rgb 14 61 51</div><div class="role">Headings, dark surfaces, hover states.</div></div></div>
+      <div class="swatch"><div class="chiparea" style="background:#D2683F"><span class="dotpill">Secondary</span></div><div class="meta"><div class="name">Terracotta</div><div class="hex">#D2683F · rgb 210 104 63</div><div class="role">Warmth, the dot, highlights, links of emphasis.</div></div></div>
+      <div class="swatch"><div class="chiparea" style="background:#F3B43E"><span class="dotpill" style="color:#1C2622">Accent</span></div><div class="meta"><div class="name">Sunflower</div><div class="hex">#F3B43E · rgb 243 180 62</div><div class="role">Energy and optimism. Sparing accents and CTAs.</div></div></div>
+
+      <div class="swatch"><div class="chiparea" style="background:#BFD6C4"><span class="dotpill">Tint</span></div><div class="meta"><div class="name">Sage</div><div class="hex">#BFD6C4 · rgb 191 214 196</div><div class="role">Soft surfaces, panels, tags, dividers.</div></div></div>
+      <div class="swatch"><div class="chiparea" style="background:#FBF7EF;border-bottom:1px solid #eee"><span class="dotpill">Base</span></div><div class="meta"><div class="name">Paper</div><div class="hex">#FBF7EF · rgb 251 247 239</div><div class="role">Default background. Warm, calm, like paper.</div></div></div>
+      <div class="swatch"><div class="chiparea" style="background:#1C2622"><span class="dotpill">Text</span></div><div class="meta"><div class="name">Ink</div><div class="hex">#1C2622 · rgb 28 38 34</div><div class="role">Body text. A warm near-black, never pure black.</div></div></div>
+      <div class="swatch"><div class="chiparea" style="background:#6E7B73"><span class="dotpill">Muted</span></div><div class="meta"><div class="name">Stone</div><div class="hex">#6E7B73 · rgb 110 123 115</div><div class="role">Captions, secondary text, borders.</div></div></div>
+    </div>
+
+    <h3 style="margin-top:56px">Proportion &amp; accessibility</h3>
+    <div class="grid cols-2" style="margin-top:20px">
+      <div class="card">
+        <h4>The 60 / 25 / 15 rule</h4>
+        <div style="display:flex;height:46px;border-radius:var(--r-pill);overflow:hidden;margin:14px 0">
+          <div style="flex:60;background:#FBF7EF"></div>
+          <div style="flex:25;background:#1B6B5A"></div>
+          <div style="flex:9;background:#D2683F"></div>
+          <div style="flex:6;background:#F3B43E"></div>
+        </div>
+        <p style="font-size:15px;margin:0">Roughly 60% paper and neutrals, 25% teal and pine, and 15% split between terracotta and sunflower as accents. Let the warm neutral breathe. The brights are seasoning, not the meal.</p>
+      </div>
+      <div class="card">
+        <h4>Tested contrast pairings</h4>
+        <p style="font-size:14.5px;margin:0">
+          <strong>Ink on Paper</strong> 13:1, passes AAA. Use for all body text.<br>
+          <strong>White on Forest Teal</strong> 6.3:1, passes AA. Safe for buttons and normal text.<br>
+          <strong>Ink on Sunflower</strong> 8.4:1, passes AAA. Always pair sunflower with ink, never white.<br>
+          <strong>White on Terracotta</strong> 3.6:1, large text and buttons only. Use ink for small text on terracotta.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== TYPOGRAPHY ============================== -->
+<section id="type">
+  <div class="wrap">
+    <div class="eyebrow">06 · Typography</div>
+    <h2>Fraunces meets Mulish</h2>
+    <p class="lead">A characterful, slightly literary serif for headlines, paired with a clean and friendly sans for everything else. Warm and human, but easy to read for everyone.</p>
+
+    <div class="grid cols-2" style="margin-top:36px">
+      <div class="specimen">
+        <div class="label">Display · Fraunces</div>
+        <div class="big">Aa</div>
+        <div class="alpha">ABCDEFGHIJKLM<br>abcdefghijklm 1234567890</div>
+        <p style="margin-top:20px;font-size:14.5px">Use for headlines, big statements and pull quotes. Weights 400 to 600. A soft, "old-style" serif with optical sizing that feels crafted and welcoming. Lean into its italic for warmth in taglines.</p>
+      </div>
+      <div class="specimen">
+        <div class="label" style="color:var(--teal)">Body &amp; UI · Mulish</div>
+        <div class="big" style="font-family:var(--font-body);font-weight:800">Aa</div>
+        <div class="alpha" style="font-family:var(--font-body);font-size:21px">ABCDEFGHIJKLM<br>abcdefghijklm 1234567890</div>
+        <p style="margin-top:20px;font-size:14.5px">Use for body copy, navigation, buttons, labels and captions. Weights 400, 600, 700 and 800. Rounded, even and highly legible at small sizes. The dependable everyday voice.</p>
+      </div>
+    </div>
+
+    <h3 style="margin-top:56px">Type scale</h3>
+    <div class="card" style="margin-top:16px">
+      <div class="scale-row"><span class="tag">Display / H1</span><span style="font-family:var(--font-display);font-size:46px;font-weight:600;color:var(--pine)">Changing minds</span></div>
+      <div class="scale-row"><span class="tag">H2 / Section</span><span style="font-family:var(--font-display);font-size:34px;font-weight:600;color:var(--pine)">From Me to We</span></div>
+      <div class="scale-row"><span class="tag">H3 / Sub</span><span style="font-family:var(--font-display);font-size:25px;font-weight:600;color:var(--pine)">Repair, grow, gather</span></div>
+      <div class="scale-row"><span class="tag">Lead / Intro</span><span style="font-size:21px;color:#33403a">Spaces and places to connect.</span></div>
+      <div class="scale-row"><span class="tag">Body</span><span style="font-size:17px">There is always room for one more at Circularity.</span></div>
+      <div class="scale-row" style="border:0"><span class="tag">Caption / Label</span><span style="font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--stone)">Woodville · DE11</span></div>
+    </div>
+
+    <div class="note" style="margin-top:30px">
+      <b>Embed (Google Fonts):</b> add this to the document head.
+      <pre style="margin-top:12px"><span class="c">&lt;!-- in &lt;head&gt; --&gt;</span>
+&lt;link rel="preconnect" href="https://fonts.googleapis.com"&gt;
+&lt;link href="https://fonts.googleapis.com/css2?family=<span class="k">Fraunces</span>:opsz,wght@9..144,400;9..144,500;9..144,600&amp;family=<span class="k">Mulish</span>:wght@400;600;700;800&amp;display=swap" rel="stylesheet"&gt;</pre>
+      <p style="margin:8px 0 0;font-size:14px">Alternative all-sans pairing if a serif is ever unsuitable: <strong>Bricolage Grotesque</strong> for display with <strong>Mulish</strong> for body.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== ICONOGRAPHY ============================== -->
+<section id="icons">
+  <div class="wrap">
+    <div class="eyebrow">07 · Iconography</div>
+    <h2>Rounded, friendly, drawn on the circle</h2>
+    <p class="lead">Icons use a single 2px stroke at 24px, with round caps and round joins. They feel like they belong to the same family as the mark: soft, open and approachable. One colour at a time, usually pine or teal.</p>
+
+    <div class="grid cols-4" style="margin-top:34px">
+      <div class="iconcell">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#1B6B5A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V6a2 2 0 0 1 2-2h6v15H6a2 2 0 0 0-2 2z"/><path d="M20 19V6a2 2 0 0 0-2-2h-6v15h6a2 2 0 0 1 2 2z"/></svg>
+        <span>Hub / Library</span>
+      </div>
+      <div class="iconcell">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#1B6B5A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4l-5 5a2 2 0 1 0 2.8 2.8l5-5a4 4 0 0 0 5.4-5.4l-2.3 2.3-2.1-.5-.5-2.1z"/></svg>
+        <span>Repair Café</span>
+      </div>
+      <div class="iconcell">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#1B6B5A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c0-5 0-8 0-8M12 13c-4 0-7-2-7-7 5 0 7 3 7 7zM12 13c4 0 7-3 7-8-5 0-7 4-7 8z"/></svg>
+        <span>Grow</span>
+      </div>
+      <div class="iconcell">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#1B6B5A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9h11a3 3 0 0 1 0 6h-1M5 9v6a3 3 0 0 0 3 3h4a3 3 0 0 0 3-3M8 4v2M11 4v2"/></svg>
+        <span>Wellbeing Wagon</span>
+      </div>
+      <div class="iconcell">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#1B6B5A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+        <span>Podcast</span>
+      </div>
+      <div class="iconcell">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#1B6B5A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l10-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="16" cy="16" r="3"/></svg>
+        <span>Music / Studio</span>
+      </div>
+      <div class="iconcell">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#1B6B5A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="10" r="2.4"/><path d="M3 20c0-3 2.7-5 6-5s6 2 6 5M15 19c0-2 .5-3.4 2-4 2.6 0 4 1.8 4 4"/></svg>
+        <span>Community</span>
+      </div>
+      <div class="iconcell">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#1B6B5A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"/></svg>
+        <span>Donate / Care</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== GRAPHIC LANGUAGE ============================== -->
+<section id="graphic">
+  <div class="wrap">
+    <div class="eyebrow">08 · Graphic language &amp; photography</div>
+    <h2>The arc, the dots, the circle</h2>
+    <p class="lead">Beyond the logo, the brand draws on three repeatable devices: the arc as a frame and divider, clusters of dots as people, and the circle as a window onto real life.</p>
+
+    <div class="grid cols-3" style="margin-top:34px">
+      <div class="card" style="overflow:hidden">
+        <h4>The arc</h4>
+        <svg viewBox="0 0 200 90" style="width:100%;margin:8px 0"><path d="M10 80 A 90 90 0 0 1 190 80" fill="none" stroke="#1B6B5A" stroke-width="10" stroke-linecap="round"/><circle cx="190" cy="80" r="7" fill="#D2683F"/></svg>
+        <p style="font-size:14.5px;margin:0">Crop the ring to underline headings, divide sections, or sweep across the foot of a page. Always end an arc with a dot.</p>
+      </div>
+      <div class="card">
+        <h4>Dot clusters</h4>
+        <svg viewBox="0 0 200 90" style="width:100%;margin:8px 0"><circle cx="40" cy="45" r="12" fill="#1B6B5A"/><circle cx="78" cy="30" r="9" fill="#D2683F"/><circle cx="95" cy="60" r="13" fill="#F3B43E"/><circle cx="130" cy="40" r="10" fill="#0E3D33"/><circle cx="160" cy="58" r="8" fill="#BFD6C4"/></svg>
+        <p style="font-size:14.5px;margin:0">Groups of dots in brand colours stand for people gathering. Use as a light pattern or to mark community stats.</p>
+      </div>
+      <div class="card">
+        <h4>Circle windows</h4>
+        <div style="display:flex;gap:10px;margin:8px 0"><div class="photo-circle" style="width:70px;border-width:4px">photo</div><div class="photo-circle" style="width:70px;border-width:4px;border-color:#1B6B5A">photo</div></div>
+        <p style="font-size:14.5px;margin:0">Mask photography into circles or soft lozenges, optionally ringed in a brand colour, so images echo the mark.</p>
+      </div>
+    </div>
+
+    <h3 style="margin-top:56px">Photography direction</h3>
+    <div class="grid cols-2" style="margin-top:18px">
+      <div>
+        <p>Real people in a real place, never sterile stock. Warm natural light, candid moments, and hands at work: mending, planting, pouring tea, turning pages. Lean into greens and earth tones so images sit happily beside the palette. Credit local photographers, as the current site does.</p>
+        <div style="display:flex;gap:14px;margin-top:16px">
+          <div class="photo-circle">growing</div>
+          <div class="photo-loz">repairing</div>
+        </div>
+      </div>
+      <div class="card">
+        <h4>Quick checklist</h4>
+        <div class="item dos" style="display:block">
+          <p style="margin:0 0 8px;font-size:15px"><strong>Yes:</strong> candid, warm light, hands and faces, local settings, activity in progress.</p>
+          <p style="margin:0;font-size:15px"><strong>No:</strong> flat studio stock, cold blue tones, staged handshakes, empty corporate spaces.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== COMPONENTS ============================== -->
+<section id="components">
+  <div class="wrap">
+    <div class="eyebrow">09 · UI components</div>
+    <h2>Building blocks</h2>
+    <p class="lead">Generous radii everywhere, so buttons, cards and inputs all echo the circle. These patterns give an agent a consistent kit to build pages, apps and emails from.</p>
+
+    <div class="grid cols-2" style="margin-top:34px">
+      <div class="card">
+        <h4>Buttons</h4>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:14px">
+          <button class="btn btn-primary">Donate</button>
+          <button class="btn btn-accent">Get involved</button>
+          <button class="btn btn-outline">Learn more</button>
+        </div>
+        <p style="font-size:13.5px;color:var(--stone);margin:16px 0 0">Pill shape, weight 800. Primary = teal, hover to pine. Accent = sunflower with ink text. Outline = 2px teal inset.</p>
+      </div>
+      <div class="card">
+        <h4>Tags &amp; pills</h4>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
+          <span class="pill teal">Repair Café</span>
+          <span class="pill clay">Grow</span>
+          <span class="pill sun">Free</span>
+          <span class="pill teal">Safe space</span>
+        </div>
+        <h4 style="margin-top:22px">Input</h4>
+        <input class="input" placeholder="Your email address" style="margin-top:6px">
+      </div>
+    </div>
+
+    <h3 style="margin-top:46px">Card pattern</h3>
+    <div class="grid cols-3" style="margin-top:18px">
+      <div class="demo-card">
+        <div class="top"><svg viewBox="0 0 120 120" style="width:60px"><path d="M 97.59 46.32 A 40 40 0 1 1 73.68 22.41" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round"/><circle cx="88.28" cy="31.72" r="8.6" fill="#D2683F"/></svg></div>
+        <div class="body"><span class="pill teal">Hub</span><h3 style="font-size:21px;margin:12px 0 6px">Woodville Library</h3><p style="font-size:14.5px;margin:0;color:#33403a">A community managed library, repair café and safe space on Hartshorne Road.</p></div>
+      </div>
+      <div class="demo-card">
+        <div class="top" style="background:linear-gradient(135deg,#D2683F,#a9491f)"></div>
+        <div class="body"><span class="pill clay">Grow</span><h3 style="font-size:21px;margin:12px 0 6px">In the garden</h3><p style="font-size:14.5px;margin:0;color:#33403a">Grow flowers, fruit and veg together. No experience needed, just come along.</p></div>
+      </div>
+      <div class="demo-card">
+        <div class="top" style="background:linear-gradient(135deg,#F3B43E,#d6921a)"></div>
+        <div class="body"><span class="pill sun">Wagon</span><h3 style="font-size:21px;margin:12px 0 6px">Wellbeing Wagon</h3><p style="font-size:14.5px;margin:0;color:#33403a">A cup of tea, a chat and a friendly face. Available for partners to hire.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== TOKENS ============================== -->
+<section id="tokens">
+  <div class="wrap">
+    <div class="eyebrow">10 · Design tokens</div>
+    <h2>Copy-paste foundation</h2>
+    <p class="lead">Drop these straight into any project so every build shares the same colours, type, radius and spacing. Both CSS custom properties and a Tailwind config are provided.</p>
+
+    <h3 style="margin-top:34px">CSS custom properties</h3>
+    <p class="copyhint">Paste into your root stylesheet.</p>
+<pre><span class="c">/* Circularity.org — design tokens v1.0 */</span>
+:root{
+  <span class="c">/* colour */</span>
+  <span class="k">--color-teal</span>:   <span class="v">#1B6B5A</span>;
+  <span class="k">--color-pine</span>:   <span class="v">#0E3D33</span>;
+  <span class="k">--color-clay</span>:   <span class="v">#D2683F</span>;
+  <span class="k">--color-sun</span>:    <span class="v">#F3B43E</span>;
+  <span class="k">--color-sage</span>:   <span class="v">#BFD6C4</span>;
+  <span class="k">--color-paper</span>:  <span class="v">#FBF7EF</span>;
+  <span class="k">--color-ink</span>:    <span class="v">#1C2622</span>;
+  <span class="k">--color-stone</span>:  <span class="v">#6E7B73</span>;
+  <span class="k">--color-white</span>:  <span class="v">#FFFFFF</span>;
+
+  <span class="c">/* type */</span>
+  <span class="k">--font-display</span>: <span class="v">'Fraunces', Georgia, serif</span>;
+  <span class="k">--font-body</span>:    <span class="v">'Mulish', system-ui, sans-serif</span>;
+
+  <span class="c">/* radius — lean toward the circle */</span>
+  <span class="k">--radius-sm</span>:  <span class="v">10px</span>;
+  <span class="k">--radius-md</span>:  <span class="v">18px</span>;
+  <span class="k">--radius-lg</span>:  <span class="v">28px</span>;
+  <span class="k">--radius-pill</span>:<span class="v">999px</span>;
+
+  <span class="c">/* spacing scale */</span>
+  <span class="k">--space-1</span>:<span class="v">4px</span>;  <span class="k">--space-2</span>:<span class="v">8px</span>;
+  <span class="k">--space-3</span>:<span class="v">16px</span>; <span class="k">--space-4</span>:<span class="v">24px</span>;
+  <span class="k">--space-5</span>:<span class="v">40px</span>; <span class="k">--space-6</span>:<span class="v">64px</span>;
+
+  <span class="c">/* shadow */</span>
+  <span class="k">--shadow-sm</span>:<span class="v">0 2px 8px rgba(14,61,51,.06)</span>;
+  <span class="k">--shadow-md</span>:<span class="v">0 10px 30px rgba(14,61,51,.10)</span>;
+}</pre>
+
+    <h3 style="margin-top:40px">Tailwind config</h3>
+    <p class="copyhint">Extend your theme.</p>
+<pre><span class="c">// tailwind.config.js</span>
+theme: { extend: {
+  <span class="k">colors</span>: {
+    teal:<span class="v">'#1B6B5A'</span>, pine:<span class="v">'#0E3D33'</span>, clay:<span class="v">'#D2683F'</span>,
+    sun:<span class="v">'#F3B43E'</span>, sage:<span class="v">'#BFD6C4'</span>, paper:<span class="v">'#FBF7EF'</span>,
+    ink:<span class="v">'#1C2622'</span>, stone:<span class="v">'#6E7B73'</span>,
+  },
+  <span class="k">fontFamily</span>: {
+    display:[<span class="v">'Fraunces'</span>,<span class="v">'Georgia'</span>,<span class="v">'serif'</span>],
+    body:[<span class="v">'Mulish'</span>,<span class="v">'system-ui'</span>,<span class="v">'sans-serif'</span>],
+  },
+  <span class="k">borderRadius</span>: { pill:<span class="v">'999px'</span>, lg:<span class="v">'28px'</span> },
+}}</pre>
+  </div>
+</section>
+
+<div class="divider-ring"><svg viewBox="0 0 120 120"><path d="M 97.59 46.32 A 40 40 0 1 1 73.68 22.41" fill="none" stroke="#1B6B5A" stroke-width="14" stroke-linecap="round"/><circle cx="88.28" cy="31.72" r="8.6" fill="#D2683F"/></svg></div>
+
+<!-- ============================== ASSET INDEX / HANDOFF ============================== -->
+<footer id="assets">
+  <div class="wrap">
+    <div class="eyebrow" style="color:var(--sun)">11 · Asset index &amp; handoff</div>
+    <h2 style="color:#fff">What ships with this brief</h2>
+    <div class="grid cols-2" style="margin-top:24px">
+      <div>
+        <h3>SVG logo files</h3>
+        <ul class="assetlist">
+          <li><span>Primary horizontal lockup</span><code>logo-horizontal.svg</code></li>
+          <li><span>Reversed horizontal (white)</span><code>logo-horizontal-white.svg</code></li>
+          <li><span>Stacked lockup</span><code>logo-stacked.svg</code></li>
+          <li><span>Stacked reversed (white)</span><code>logo-stacked-white.svg</code></li>
+          <li><span>Mark, duotone</span><code>logo-mark.svg</code></li>
+          <li><span>Mark, reversed white</span><code>logo-mark-white.svg</code></li>
+          <li><span>Mark, mono ink</span><code>logo-mark-ink.svg</code></li>
+          <li><span>App icon / favicon</span><code>favicon.svg</code></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Notes for the AI agent</h3>
+        <p style="color:#cfe0d8;font-size:15.5px">Treat this document as the single source of truth. Use the design tokens verbatim. Default to Paper backgrounds with Ink text, Forest Teal as the primary action colour, and Fraunces for headlines over Mulish body. Keep everything pill-rounded. End decorative arcs with a dot. Mask photos into circles where it helps. And in every piece of writing, never use an em dash.</p>
+        <p style="color:#cfe0d8;font-size:15.5px;margin:0">When in doubt, ask one question: does this feel like an open invitation in? If yes, it is on brand.</p>
+      </div>
+    </div>
+    <div style="margin-top:48px;padding-top:24px;border-top:1px solid rgba(255,255,255,.15);display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px;font-size:13.5px;color:#9fc0b3">
+      <span>Circularity.org · Registered Charity 1197109 · 1 Hartshorne Road, Woodville, DE11 7JB</span>
+      <span>Brand book v1.0</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

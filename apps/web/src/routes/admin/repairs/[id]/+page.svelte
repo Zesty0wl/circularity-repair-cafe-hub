@@ -1,5 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores';
+  import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
   import { api } from '$lib/api';
   import { auth } from '$lib/stores/auth';
@@ -12,6 +13,7 @@
   let claiming = false;
   let assigning = false;
   let assignError = '';
+  let deleting = false;
 
   $: myId = $auth?.user.id ?? null;
   $: status = detail?.job?.status as string | undefined;
@@ -112,6 +114,21 @@
       assigning = false;
     }
   }
+
+  // Permanently delete the repair (and its photos). Irreversible, so we confirm
+  // first and then return to the list once the server has removed it.
+  async function deleteRepair() {
+    if (!detail) return;
+    if (!confirm(`Permanently delete repair ${detail.job.jobNumber}? This also removes its photos and cannot be undone.`)) return;
+    deleting = true;
+    try {
+      await api(`/api/admin/repairs/${id}`, { method: 'DELETE' });
+      await goto('/admin/repairs');
+    } catch (e: any) {
+      alert(e?.message ?? 'Could not delete repair');
+      deleting = false;
+    }
+  }
 </script>
 
 {#if detail}
@@ -205,4 +222,16 @@
       </div>
     </section>
   {/if}
+
+  <section class="mt-8 max-w-2xl">
+    <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 p-4">
+      <div class="min-w-0">
+        <p class="font-semibold text-rose-900">Delete this repair</p>
+        <p class="text-sm text-rose-700">Permanently removes this repair record and any photos. This cannot be undone.</p>
+      </div>
+      <button class="btn-danger shrink-0" disabled={deleting} on:click={deleteRepair}>
+        {deleting ? 'Deleting…' : 'Delete repair'}
+      </button>
+    </div>
+  </section>
 {/if}

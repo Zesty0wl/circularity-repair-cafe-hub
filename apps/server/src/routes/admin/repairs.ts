@@ -4,6 +4,7 @@ import { events, repairImages, repairJobs, skillCategories, users } from '../../
 import { and, count, desc, eq, ilike, or, sql } from 'drizzle-orm';
 import { repairUpdateSchema } from '@circularity/shared';
 import { audit } from '../../utils/audit.js';
+import { deleteImage } from '../../services/imageUpload.js';
 
 export async function adminRepairsRoutes(app: FastifyInstance): Promise<void> {
   app.get('/api/admin/repairs', async (request) => {
@@ -112,6 +113,41 @@ export async function adminRepairsRoutes(app: FastifyInstance): Promise<void> {
     const [updated] = await db.update(repairJobs).set(update).where(eq(repairJobs.id, id)).returning();
     await audit({ request, actorId: me.sub, actorType: me.role, action: 'repair.admin_updated', entityType: 'repair_job', entityId: id });
     return updated;
+  });
+
+  app.delete('/api/admin/repairs/:id', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const me = request.auth!;
+    const [job] = await db
+      .select({ id: repairJobs.id, jobNumber: repairJobs.jobNumber })
+      .from(repairJobs)
+      .where(eq(repairJobs.id, id))
+      .limit(1);
+    if (!job) {
+      reply.code(404).send({ error: 'Repair not found', code: 'repair/not_found' });
+      return;
+    }
+    // Grab the image paths before the rows disappear so we can remove the files
+    // from disk. The repair_images rows themselves are removed by the DB via the
+    // foreign-key ON DELETE CASCADE when the job is deleted.
+    const images = await db
+      .select({ filePath: repairImages.filePath })
+      .from(repairImages)
+      .where(eq(repairImages.repairJobId, id));
+    await db.delete(repairJobs).where(eq(repairJobs.id, id));
+    for (const img of images) {
+      await deleteImage(img.filePath);
+    }
+    await audit({
+      request,
+      actorId: me.sub,
+      actorType: me.role,
+      action: 'repair.deleted',
+      entityType: 'repair_job',
+      entityId: id,
+      metadata: { jobNumber: job.jobNumber, images: images.length },
+    });
+    return { ok: true };
   });
 
   // CSV export

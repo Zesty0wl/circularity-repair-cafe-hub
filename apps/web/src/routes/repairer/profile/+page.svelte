@@ -180,13 +180,14 @@
         <span>
           <span class="font-medium flex items-center gap-2">
             {#if showOnPublicPage}
-              <Eye size={16} class="text-emerald-600" /> Show me on the public team page
+              <Eye size={16} class="text-emerald-600" />
             {:else}
-              <EyeOff size={16} class="text-slate-400" /> Hide me from the public team page
+              <EyeOff size={16} class="text-slate-400" />
             {/if}
+            Show me on the public team page
           </span>
           <span class="block text-xs text-slate-500 mt-1">
-            When hidden, your public profile returns "not found" and your card doesn't appear in the team listings.
+            When off, your public profile returns "not found" and your card doesn't appear in the team listings.
           </span>
         </span>
       </label>
@@ -196,10 +197,11 @@
         <span>
           <span class="font-medium flex items-center gap-2">
             {#if showOnHomePage && showOnPublicPage}
-              <Eye size={16} class="text-emerald-600" /> Feature me on the home page
+              <Eye size={16} class="text-emerald-600" />
             {:else}
-              <EyeOff size={16} class="text-slate-400" /> Don't feature me on the home page
+              <EyeOff size={16} class="text-slate-400" />
             {/if}
+            Feature me on the home page
           </span>
           <span class="block text-xs text-slate-500 mt-1">
             {#if !showOnPublicPage}Turn on "Show me on the public team page" first.{:else}When off, you still appear on the team listing but not on the home page "Meet our team" strip.{/if}

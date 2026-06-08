@@ -9,7 +9,8 @@ const envSchema = z.object({
   DATABASE_URL: z.string().default('postgresql://circularity:circularity@127.0.0.1:5432/circularity'),
   UPLOADS_DIR: z.string().default('/data/uploads'),
   CONFIG_DIR: z.string().default('/data/config'),
-  PUBLIC_DIR: z.string().default('/app/public'),
+  // adapter-node build output dir for the web app (contains handler.js).
+  WEB_BUILD_DIR: z.string().default('/app/web'),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
   TRUST_PROXY: z.string().default('cloudflare'),
   MAX_UPLOAD_SIZE_MB: z.coerce.number().int().positive().default(10),

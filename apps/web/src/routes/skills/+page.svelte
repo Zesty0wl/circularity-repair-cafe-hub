@@ -1,10 +1,9 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { api } from '$lib/api';
   import SiteHeader from '$lib/components/SiteHeader.svelte';
   import SiteFooter from '$lib/components/SiteFooter.svelte';
   import Icon from '@iconify/svelte';
   import { categoryIcon } from '$lib/categoryIcon';
+  import type { PageData } from './$types';
 
   interface SkillCategory { id: string; name: string; icon: string; colour: string; repairerCount: number }
   interface Repairer { id: string; displayName: string; avatarUrl: string | null; bio: string | null; skills: string[]; joinDate: string | null }
@@ -12,11 +11,9 @@
   let categories: SkillCategory[] = [];
   let repairers: Repairer[] = [];
 
-  onMount(async () => {
-    const r = await api<{ categories: SkillCategory[]; repairers: Repairer[] }>('/api/public/skills').catch(() => ({ categories: [], repairers: [] }));
-    categories = r.categories;
-    repairers = r.repairers;
-  });
+  export let data: PageData;
+  $: categories = (data.categories ?? []) as SkillCategory[];
+  $: repairers = (data.repairers ?? []) as Repairer[];
 </script>
 
 <SiteHeader variant="public" />

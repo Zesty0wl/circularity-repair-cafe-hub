@@ -58,6 +58,9 @@ ENV DEBIAN_FRONTEND=noninteractive \
     UPLOADS_DIR=/data/uploads \
     DATABASE_URL=postgresql://circularity:circularity@127.0.0.1:5432/circularity \
     PORT=3000 \
+    WEB_BUILD_DIR=/app/web \
+    PROTOCOL_HEADER=x-forwarded-proto \
+    HOST_HEADER=x-forwarded-host \
     S6_KEEP_ENV=1 \
     S6_BEHAVIOUR_IF_STAGE2_FAILS=2 \
     S6_VERBOSITY=1
@@ -94,7 +97,10 @@ RUN set -eux; \
 # App
 WORKDIR /app
 COPY --from=builder /app/server-bundle           /app/server
-COPY --from=builder /app/apps/web/build          /app/public
+# SvelteKit (adapter-node) build output. Self-contained (Rollup-bundled), so it
+# needs no node_modules at runtime. The server imports /app/web/handler.js to
+# serve the SSR pages + client assets in-process.
+COPY --from=builder /app/apps/web/build          /app/web
 
 # s6-overlay services + bootstrap scripts (force exec bit so it works regardless of host umask)
 COPY --chmod=755 docker/s6-rc.d        /etc/s6-overlay/s6-rc.d

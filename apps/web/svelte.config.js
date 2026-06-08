@@ -1,16 +1,18 @@
-import adapter from '@sveltejs/adapter-static';
+import adapter from '@sveltejs/adapter-node';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
   preprocess: vitePreprocess(),
   kit: {
+    // adapter-node builds a self-contained Node server (build/handler.js +
+    // build/client). The Fastify server imports handler.js at runtime and
+    // delegates all non-/api requests to it, so the public pages are now
+    // genuinely server-rendered (real HTML + JSON-LD) instead of an empty SPA
+    // shell. See apps/server/src/index.ts (serveSveltePage / notFoundHandler).
     adapter: adapter({
-      pages: 'build',
-      assets: 'build',
-      fallback: 'index.html',
+      out: 'build',
       precompress: false,
-      strict: false,
     }),
     prerender: { entries: [] },
     alias: {

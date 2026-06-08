@@ -70,6 +70,48 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
     }));
   });
 
+  // Single published event — backs the crawlable /events/:id detail page. Past
+  // events still resolve (so the page keeps ranking after the date); cancelled
+  // or unpublished events 404.
+  app.get('/api/public/events/:id', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    if (!/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(id)) {
+      reply.code(404).send({ error: 'Not found', code: 'event/not_found' });
+      return;
+    }
+    const [row] = await db
+      .select({
+        id: events.id,
+        name: events.name,
+        description: events.description,
+        date: events.date,
+        startTime: events.startTime,
+        endTime: events.endTime,
+        status: events.status,
+        venueName: venues.name,
+        venueAddress: venues.address,
+        venuePostcode: venues.postcode,
+      })
+      .from(events)
+      .innerJoin(venues, eq(venues.id, events.venueId))
+      .where(and(eq(events.id, id), eq(events.isPublished, true), ne(events.status, 'cancelled')))
+      .limit(1);
+    if (!row) {
+      reply.code(404).send({ error: 'Not found', code: 'event/not_found' });
+      return;
+    }
+    return {
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      date: row.date,
+      startTime: row.startTime,
+      endTime: row.endTime,
+      status: row.status,
+      venue: { name: row.venueName, address: row.venueAddress, postcode: row.venuePostcode },
+    };
+  });
+
   app.get('/api/public/skills', async () => {
     const cats = await db
       .select()

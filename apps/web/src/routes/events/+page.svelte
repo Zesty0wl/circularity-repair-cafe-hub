@@ -1,12 +1,9 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { fade, scale } from 'svelte/transition';
-  import { quintOut } from 'svelte/easing';
   import { api } from '$lib/api';
   import SiteHeader from '$lib/components/SiteHeader.svelte';
   import SiteFooter from '$lib/components/SiteFooter.svelte';
-  import AddToCalendar from '$lib/components/AddToCalendar.svelte';
-  import { Clock, MapPin, CalendarDays, CalendarX2, ArrowUpRight, History, ChevronRight, X } from 'lucide-svelte';
+  import { Clock, MapPin, CalendarDays, CalendarX2, History, ChevronRight } from 'lucide-svelte';
+  import type { PageData } from './$types';
 
   interface Venue { name: string; address: string | null; postcode: string | null }
   interface PublicEvent {
@@ -23,15 +20,10 @@
   let upcoming: PublicEvent[] = [];
   let past: PublicEvent[] = [];
   let showPast = false;
-  let loading = true;
+  let loading = false;
 
-  // The event whose details modal is currently open (null = closed).
-  let selected: PublicEvent | null = null;
-
-  onMount(async () => {
-    upcoming = (await api<PublicEvent[]>('/api/public/events').catch(() => [])) ?? [];
-    loading = false;
-  });
+  export let data: PageData;
+  $: upcoming = (data.upcoming ?? []) as PublicEvent[];
 
   async function loadPast() {
     showPast = true;
@@ -40,45 +32,26 @@
     past = all.filter((e) => e.date < today).reverse();
   }
 
-  function openEvent(e: PublicEvent) {
-    selected = e;
-  }
-  function closeEvent() {
-    selected = null;
-  }
-  function handleKey(e: KeyboardEvent) {
-    if (selected && e.key === 'Escape') closeEvent();
-  }
-
-  // Lock body scroll while the modal is open.
-  $: if (typeof document !== 'undefined') {
-    document.body.style.overflow = selected ? 'hidden' : '';
-  }
-
   // Split a date into the pieces a calendar tile needs (day number, short
   // month, weekday name) using the visitor's locale.
   function dateParts(d: string) {
-    const dt = new Date(d + 'T12:00:00');
+    const dt = new Date(d + 'T12:00:00Z');
     return {
-      day: dt.toLocaleDateString(undefined, { day: 'numeric' }),
-      monthShort: dt.toLocaleDateString(undefined, { month: 'short' }),
-      weekdayLong: dt.toLocaleDateString(undefined, { weekday: 'long' }),
+      day: dt.toLocaleDateString('en-GB', { day: 'numeric', timeZone: 'UTC' }),
+      monthShort: dt.toLocaleDateString('en-GB', { month: 'short', timeZone: 'UTC' }),
+      weekdayLong: dt.toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'UTC' }),
     };
   }
 
   // Full, human-friendly date for the expanded modal.
   function fullDate(d: string): string {
-    return new Date(d + 'T12:00:00').toLocaleDateString(undefined, {
+    return new Date(d + 'T12:00:00Z').toLocaleDateString('en-GB', {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
       year: 'numeric',
+      timeZone: 'UTC',
     });
-  }
-
-  function mapsUrl(v: Venue): string {
-    const parts = [v.name, v.address, v.postcode].filter(Boolean);
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(parts.join(', '))}`;
   }
 
   // When every upcoming event shares one venue (the common case for a regular
@@ -86,12 +59,7 @@
   $: uniformVenue = upcoming.length > 0 && upcoming.every((e) => e.venue.name === upcoming[0]!.venue.name)
     ? upcoming[0]!.venue
     : null;
-
-  // True when the open modal is the soonest upcoming event (gets a "Next" badge).
-  $: selectedIsNext = !!selected && upcoming[0]?.id === selected.id;
 </script>
-
-<svelte:window on:keydown={handleKey} />
 
 <SiteHeader variant="public" />
 
@@ -136,10 +104,8 @@
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {#each upcoming as evt, i}
           {@const p = dateParts(evt.date)}
-          <button
-            type="button"
-            on:click={() => openEvent(evt)}
-            aria-haspopup="dialog"
+          <a
+            href={`/events/${evt.id}`}
             aria-label={`${evt.name}, ${fullDate(evt.date)} — view details`}
             class="group relative flex items-center gap-3 rounded-2xl bg-white ring-1 ring-slate-200 p-3 pr-2 text-left shadow-sm transition-all hover:shadow-md hover:ring-brand-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
           >
@@ -164,7 +130,7 @@
               {/if}
             </div>
             <ChevronRight size={18} class="shrink-0 text-slate-300 transition-colors group-hover:text-brand-500" />
-          </button>
+          </a>
         {/each}
       </div>
     {/if}
@@ -185,15 +151,17 @@
           <ul class="mt-5 divide-y divide-slate-100">
             {#each past as evt}
               {@const p = dateParts(evt.date)}
-              <li class="flex items-center gap-4 py-3">
-                <div class="shrink-0 w-12 rounded-lg bg-slate-100 py-1.5 text-center">
-                  <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500">{p.monthShort}</div>
-                  <div class="text-lg font-bold font-display text-slate-700 leading-none">{p.day}</div>
-                </div>
-                <div class="min-w-0">
-                  <p class="font-medium text-slate-800 truncate">{evt.name}</p>
-                  <p class="text-sm text-slate-500 truncate">{evt.venue.name}</p>
-                </div>
+              <li>
+                <a href={`/events/${evt.id}`} class="flex items-center gap-4 py-3 group focus:outline-none">
+                  <div class="shrink-0 w-12 rounded-lg bg-slate-100 py-1.5 text-center">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500">{p.monthShort}</div>
+                    <div class="text-lg font-bold font-display text-slate-700 leading-none">{p.day}</div>
+                  </div>
+                  <div class="min-w-0">
+                    <p class="font-medium text-slate-800 truncate group-hover:text-brand-700">{evt.name}</p>
+                    <p class="text-sm text-slate-500 truncate">{evt.venue.name}</p>
+                  </div>
+                </a>
               </li>
             {/each}
           </ul>
@@ -202,81 +170,5 @@
     </div>
   </section>
 </main>
-
-<!-- ───────────────────────── Event details modal ───────────────────────── -->
-{#if selected}
-  {@const p = dateParts(selected.date)}
-  <div
-    class="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="event-modal-title"
-  >
-    <!-- Backdrop -->
-    <button
-      type="button"
-      class="absolute inset-0 bg-ink/60 backdrop-blur-sm cursor-default"
-      aria-label="Close details"
-      on:click={closeEvent}
-      transition:fade={{ duration: 150 }}
-    ></button>
-
-    <!-- Panel -->
-    <div
-      class="relative w-full sm:max-w-md max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl bg-white shadow-2xl"
-      transition:scale={{ duration: 200, start: 0.96, opacity: 0, easing: quintOut }}
-    >
-      <!-- Header band -->
-      <div class="relative bg-gradient-to-br from-brand-700 to-brand-600 text-white p-6 pb-5">
-        <button
-          type="button"
-          on:click={closeEvent}
-          class="absolute top-3 right-3 p-2 rounded-full text-white/80 hover:text-white hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
-          aria-label="Close (Esc)"
-        >
-          <X size={20} />
-        </button>
-        {#if selectedIsNext}
-          <span class="inline-block mb-2 rounded-full bg-sun text-ink text-[10px] font-bold uppercase tracking-wide px-2 py-0.5">Next event</span>
-        {/if}
-        <div class="flex items-center gap-4 pr-8">
-          <div class="shrink-0 w-16 rounded-2xl bg-white/15 ring-1 ring-white/20 text-center py-2">
-            <div class="text-[11px] font-bold uppercase tracking-wider text-brand-100">{p.monthShort}</div>
-            <div class="text-3xl font-bold font-display leading-none">{p.day}</div>
-          </div>
-          <div class="min-w-0">
-            <h2 id="event-modal-title" class="text-xl font-bold font-display leading-tight">{selected.name}</h2>
-            <p class="mt-1 text-sm text-brand-100">{fullDate(selected.date)}</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Body -->
-      <div class="p-6 space-y-4">
-        <div class="space-y-2.5 text-slate-700">
-          <p class="flex items-center gap-2.5">
-            <Clock size={18} class="text-clay shrink-0" />
-            <span>{selected.startTime.slice(0,5)}–{selected.endTime.slice(0,5)}</span>
-          </p>
-          <p class="flex items-start gap-2.5">
-            <MapPin size={18} class="text-clay shrink-0 mt-0.5" />
-            <span>{selected.venue.name}{#if selected.venue.address}<br />{selected.venue.address}{/if}{#if selected.venue.postcode} · {selected.venue.postcode}{/if}</span>
-          </p>
-        </div>
-
-        {#if selected.description}
-          <p class="text-slate-600 leading-relaxed whitespace-pre-line border-t border-slate-100 pt-4">{selected.description}</p>
-        {/if}
-
-        <div class="flex flex-col sm:flex-row gap-2 pt-2">
-          <a href={mapsUrl(selected.venue)} target="_blank" rel="noopener" class="btn-secondary flex-1">
-            <MapPin size={16} /> Get directions <ArrowUpRight size={14} />
-          </a>
-          <AddToCalendar event={selected} variant="button" class="flex-1" />
-        </div>
-      </div>
-    </div>
-  </div>
-{/if}
 
 <SiteFooter />

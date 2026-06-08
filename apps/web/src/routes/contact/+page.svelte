@@ -1,10 +1,9 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { api } from '$lib/api';
   import { cafe } from '$lib/stores/cafe';
   import SiteHeader from '$lib/components/SiteHeader.svelte';
   import SiteFooter from '$lib/components/SiteFooter.svelte';
   import { Mail, MapPin, Navigation, Locate, Car, Accessibility, Info, Globe } from 'lucide-svelte';
+  import type { PageData } from './$types';
 
   interface Venue {
     name: string;
@@ -19,9 +18,8 @@
   }
   let venue: Venue | null = null;
 
-  onMount(async () => {
-    venue = await api<Venue | null>('/api/public/venue').catch(() => null);
-  });
+  export let data: PageData;
+  $: venue = (data.venue ?? null) as Venue | null;
 
   // Build a Google Maps directions URL from the venue name + address.
   // We deliberately use the universal `maps.google.com` URL (rather than a

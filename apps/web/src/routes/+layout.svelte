@@ -5,78 +5,90 @@
   import '@fontsource-variable/fraunces/index.css';
   import '@fontsource-variable/mulish/index.css';
   import { onMount } from 'svelte';
-  import { goto } from '$app/navigation';
+  import { browser } from '$app/environment';
   import { page } from '$app/stores';
   import { auth } from '$lib/stores/auth';
-  import { cafe, loadCafe, loadSetupStatus } from '$lib/stores/cafe';
+  import { cafe, setupCompleted } from '$lib/stores/cafe';
   import { applyBrandColor } from '$lib/brand';
   import { api } from '$lib/api';
+  import { serializeJsonLd, type PageSeo } from '@circularity/shared';
+  import type { LayoutData } from './$types';
 
-  let booted = false;
+  export let data: LayoutData;
 
-  onMount(async () => {
-    const completed = await loadSetupStatus();
-    if (!completed && !$page.url.pathname.startsWith('/setup')) {
-      goto('/setup', { replaceState: true });
-      booted = true;
-      return;
-    }
-    if (completed && $page.url.pathname === '/setup') {
-      goto('/admin/dashboard', { replaceState: true });
-    }
-    if (completed) {
-      await loadCafe();
-      // Try silent refresh to restore session
-      try {
-        const body = await api<{ accessToken: string; user: any }>('/api/auth/refresh', {
-          method: 'POST',
-          autoRefresh: false,
-        });
-        auth.set({ accessToken: body.accessToken, user: body.user });
-      } catch {
-        // not authed
-      }
-    }
-    booted = true;
-  });
+  // Keep the module-level stores in sync with the (server-)loaded data so the
+  // many child components that read $cafe keep working. The cafe is a
+  // per-deployment singleton (one row), so writing it during SSR is safe —
+  // every concurrent request resolves to the same value. The auth store is the
+  // opposite: it is per-user and is therefore ONLY ever set on the client
+  // (see onMount) so it can never leak between SSR requests.
+  $: cafe.set(data.cafe);
+  $: setupCompleted.set(data.setupCompleted);
 
-  // ── Derive SEO/meta values from the cafe profile. ───────────────
-  // seoTitle/seoDescription override the defaults if set; otherwise we
-  // synthesise from the cafe name + tagline/description.
-  $: cafeName = $cafe?.name ?? 'Repair Cafe';
   // Re-theme the UI whenever the cafe's primary colour changes. A null/unset
   // colour falls back to the Circularity-teal defaults declared in app.css.
-  $: applyBrandColor($cafe?.primaryColor);
-  $: pageTitle = $cafe?.seoTitle?.trim() || ($cafe?.tagline ? `${cafeName} — ${$cafe.tagline}` : cafeName);
-  $: metaDesc = $cafe?.seoDescription?.trim() || $cafe?.description || $cafe?.tagline || '';
-  $: ogImage = $cafe?.ogImageUrl || $cafe?.bannerUrl || $cafe?.logoUrl || '';
-  $: faviconHref = $cafe?.faviconUrl || '/favicon.svg';
-  $: canonicalUrl = $page.url.origin + $page.url.pathname;
+  // Guarded to the browser because applyBrandColor touches document.
+  $: if (browser) applyBrandColor(data.cafe?.primaryColor ?? null);
+
+  onMount(async () => {
+    // Restore the session — client-only (see note above about the auth store).
+    try {
+      const body = await api<{ accessToken: string; user: any }>('/api/auth/refresh', {
+        method: 'POST',
+        autoRefresh: false,
+      });
+      auth.set({ accessToken: body.accessToken, user: body.user });
+    } catch {
+      // not authed
+    }
+  });
+
+  // ── SEO/meta — centralised here so every route emits exactly one of each ──
+  // tag (SvelteKit only de-dupes <title>, not <meta>). Public pages return a
+  // per-route `seo` from their load (see packages/shared buildSeo); the layout
+  // renders it, falling back to cafe-derived defaults for routes without one.
+  $: c = data.cafe;
+  $: cafeName = c?.name ?? 'Repair Café';
+  $: seo = ($page.data as { seo?: PageSeo }).seo ?? null;
+  $: origin = $page.url.origin;
+  $: pageTitle = seo?.title || c?.seoTitle?.trim() || cafeName;
+  $: metaDesc = seo?.description || c?.seoDescription?.trim() || c?.description || c?.tagline || '';
+  $: ogType = seo?.ogType || 'website';
+  // og:image must be absolute for crawlers/social cards.
+  $: ogImageRaw = seo?.ogImage || c?.ogImageUrl || c?.bannerUrl || c?.logoUrl || '';
+  $: ogImage = ogImageRaw ? (/^https?:\/\//i.test(ogImageRaw) ? ogImageRaw : origin + ogImageRaw) : '';
+  $: faviconHref = c?.faviconUrl || '/favicon.svg';
+  $: canonicalUrl = seo?.canonical || origin + $page.url.pathname;
+  // Operational areas (admin/check-in/etc.) carry no SEO value and are already
+  // blocked in robots.txt; emit noindex too as defence in depth.
+  $: operational = /^\/(admin|checkin|repairer|login|reset|setup|track)(\/|$)/.test($page.url.pathname);
+  $: noindex = seo?.noindex === true || operational;
+  $: jsonLdScript = serializeJsonLd(seo?.jsonLd ?? null);
   // Plausible only loads when both fields are configured. Domain matches the
   // site name registered in Plausible; src is the script URL (e.g.
   // https://plausible.io/js/script.js or a self-hosted instance).
-  $: plausibleEnabled = Boolean($cafe?.plausibleDomain && $cafe?.plausibleSrc);
+  $: plausibleEnabled = Boolean(c?.plausibleDomain && c?.plausibleSrc);
 </script>
 
 <svelte:head>
   <title>{pageTitle}</title>
   {#if metaDesc}<meta name="description" content={metaDesc} />{/if}
+  {#if noindex}<meta name="robots" content="noindex, nofollow" />{/if}
   <link rel="icon" href={faviconHref} />
   <!-- Open Graph / Twitter -->
   <meta property="og:title" content={pageTitle} />
   {#if metaDesc}<meta property="og:description" content={metaDesc} />{/if}
-  <meta property="og:type" content="website" />
+  <meta property="og:type" content={ogType} />
   <meta property="og:url" content={canonicalUrl} />
+  <meta property="og:site_name" content={cafeName} />
   {#if ogImage}<meta property="og:image" content={ogImage} />{/if}
   <meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />
   <link rel="canonical" href={canonicalUrl} />
+  <!-- Structured data (schema.org @graph) for the current route. -->
+  {#if jsonLdScript}{@html jsonLdScript}{/if}
   {#if plausibleEnabled}
-    <script defer data-domain={$cafe?.plausibleDomain} src={$cafe?.plausibleSrc}></script>
+    <script defer data-domain={c?.plausibleDomain} src={c?.plausibleSrc}></script>
   {/if}
 </svelte:head>
 
-{#if booted}
-  <slot />
-{:else}
-  <div class="min-h-screen flex items-center justify-center text-slate-400">Loading…</div>
-{/if}
+<slot />

@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { api } from '$lib/api';
   import { cafe } from '$lib/stores/cafe';
   import SiteHeader from '$lib/components/SiteHeader.svelte';
   import SiteFooter from '$lib/components/SiteFooter.svelte';
@@ -8,6 +6,7 @@
   import { Calendar, Clock, MapPin, Mail, Phone, ChevronDown, ChevronLeft, ChevronRight, X, Heart, Package, CheckCircle2, HelpCircle } from 'lucide-svelte';
   import Icon from '@iconify/svelte';
   import { categoryIcon } from '$lib/categoryIcon';
+  import type { PageData } from './$types';
 
   interface PublicEvent {
     id: string;
@@ -26,24 +25,23 @@
   let repairers: Repairer[] = [];
   let openFaq = -1;
 
-  onMount(async () => {
-    upcomingEvents = (await api<PublicEvent[]>('/api/public/events').catch(() => [])) ?? [];
-    const skills = await api<{ categories: SkillCategory[]; repairers: Repairer[] }>('/api/public/skills').catch(() => ({ categories: [], repairers: [] }));
-    categories = skills.categories;
-    repairers = skills.repairers;
-  });
+  export let data: PageData;
+  $: upcomingEvents = (data.upcomingEvents ?? []) as PublicEvent[];
+  $: categories = (data.categories ?? []) as SkillCategory[];
+  $: repairers = (data.repairers ?? []) as Repairer[];
 
   function formatDate(d: string): string {
-    return new Date(d + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    return new Date(d + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
   }
   // Split a date into the pieces a calendar tile needs (day number, short
-  // month, weekday name) using the visitor's locale.
+  // month, weekday name). Anchored at UTC noon + a fixed locale so the server
+  // and client render identical text (no hydration mismatch).
   function dateParts(d: string) {
-    const dt = new Date(d + 'T12:00:00');
+    const dt = new Date(d + 'T12:00:00Z');
     return {
-      day: dt.toLocaleDateString(undefined, { day: 'numeric' }),
-      monthShort: dt.toLocaleDateString(undefined, { month: 'short' }),
-      weekdayLong: dt.toLocaleDateString(undefined, { weekday: 'long' }),
+      day: dt.toLocaleDateString('en-GB', { day: 'numeric', timeZone: 'UTC' }),
+      monthShort: dt.toLocaleDateString('en-GB', { month: 'short', timeZone: 'UTC' }),
+      weekdayLong: dt.toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'UTC' }),
     };
   }
 
@@ -56,6 +54,7 @@
   $: uniformEventName = upcomingEvents.length > 0 && upcomingEvents.every((e) => e.name === upcomingEvents[0]!.name);
   $: hp = $cafe?.homePage ?? {};
   $: gallery = $cafe?.gallery ?? [];
+  $: cafeName = $cafe?.name ?? 'Repair Café';
 
   // Volunteers featured in the "Meet our team" strip — anyone whose admin
   // (or self-edit) has opted in. The field defaults to true server-side, so
@@ -119,6 +118,11 @@
 </script>
 
 <svelte:window on:keydown={handleKey} />
+
+<svelte:head>
+  <!-- Preload the hero banner (the LCP image) so it paints sooner. -->
+  {#if $cafe?.bannerUrl}<link rel="preload" as="image" href={$cafe.bannerUrl} fetchpriority="high" />{/if}
+</svelte:head>
 
 <SiteHeader variant="public" />
 
@@ -290,7 +294,7 @@
               class="relative aspect-[4/3] overflow-hidden rounded-lg bg-slate-200 group focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
               aria-label={img.caption ? `View larger: ${img.caption}` : `View image ${i + 1} of ${gallery.length}`}
             >
-              <img src={img.url} alt={img.caption ?? ''} loading="lazy" class="w-full h-full object-cover transition-transform group-hover:scale-105" />
+              <img src={img.url} alt={img.caption || `${cafeName} repair café`} loading="lazy" class="w-full h-full object-cover transition-transform group-hover:scale-105" />
               {#if img.caption}
                 <span class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent text-white text-xs p-2 text-left line-clamp-2">{img.caption}</span>
               {/if}

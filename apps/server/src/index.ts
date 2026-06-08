@@ -3,10 +3,11 @@ import multipart from '@fastify/multipart';
 import staticPlugin from '@fastify/static';
 import path from 'node:path';
 import fs from 'node:fs';
+import { pathToFileURL } from 'node:url';
+import type { IncomingMessage, ServerResponse } from 'node:http';
 import { env } from './env.js';
 import { runMigrations } from './db/migrate.js';
-import { db } from './db/index.js';
-import { cafes } from './db/schema.js';
+import { getSeoData, renderRobots, renderSitemap, resolveOrigin } from './services/seo.js';
 import authPlugin from './plugins/auth.js';
 import securityPlugin from './plugins/security.js';
 import { healthRoutes } from './routes/health.js';
@@ -16,6 +17,15 @@ import { publicRoutes } from './routes/public.js';
 import { checkInRoutes } from './routes/checkin.js';
 import { repairerRoutes } from './routes/repairer.js';
 import { adminRoutes } from './routes/admin/index.js';
+
+// Shape of the SvelteKit (adapter-node) request handler: a connect-style
+// middleware that takes the raw Node req/res plus a `next` callback.
+type SvelteHandler = (
+  req: IncomingMessage,
+  res: ServerResponse,
+  next: (err?: unknown) => void,
+) => void;
+
 
 const trustProxyValue = env.TRUST_PROXY === 'true' ? true : env.TRUST_PROXY === 'false' ? false : env.TRUST_PROXY;
 
@@ -67,98 +77,57 @@ async function start(): Promise<void> {
   await app.register(adminRoutes);
 
   // Setup-required gate. If setup not completed, JSON API responses redirect through 409 on most endpoints,
-  // but the SPA itself handles the redirect to /setup based on /api/setup/status.
+  // but the web app itself handles the redirect to /setup based on /api/setup/status.
 
-  // SPA static assets — must be last so it does not catch /api routes
-  if (fs.existsSync(env.PUBLIC_DIR)) {
-    await app.register(staticPlugin, {
-      root: env.PUBLIC_DIR,
-      prefix: '/',
-      decorateReply: false,
-      wildcard: false,
-      // Don't auto-serve index.html on '/'; we render it through serveSpaIndex
-      // below so crawlers see proper SEO meta tags inlined from the database.
-      index: false,
-    });
-
-    const indexPath = path.join(env.PUBLIC_DIR, 'index.html');
-    const escapeHtml = (s: string): string =>
-      s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-
-    // Cache the cafe row briefly so crawlers/page loads don't hammer Postgres.
-    let cachedCafe: any = null;
-    let cacheExpires = 0;
-    async function getCachedCafe(): Promise<any> {
-      const now = Date.now();
-      if (now < cacheExpires && cachedCafe) return cachedCafe;
-      const [row] = await db.select().from(cafes).limit(1);
-      cachedCafe = row ?? null;
-      cacheExpires = now + 30_000;
-      return cachedCafe;
+  // ── SvelteKit SSR ──────────────────────────────────────────────────────────
+  // The web app is built with @sveltejs/adapter-node. Its handler serves the
+  // server-rendered pages and the client assets (/_app/...). We load it at
+  // runtime from the build output so the server's TypeScript build does not
+  // depend on the web build being present (in dev, vite serves the web).
+  const handlerPath = path.join(env.WEB_BUILD_DIR, 'handler.js');
+  let svelteHandler: SvelteHandler | null = null;
+  if (fs.existsSync(handlerPath)) {
+    try {
+      const mod = (await import(pathToFileURL(handlerPath).href)) as { handler: SvelteHandler };
+      svelteHandler = mod.handler;
+      app.log.info(`SvelteKit SSR handler loaded (${handlerPath})`);
+    } catch (err) {
+      app.log.error({ err }, 'Failed to load SvelteKit SSR handler');
     }
-
-    // Inject server-rendered SEO tags into the SPA shell so social/search
-    // crawlers (which often don't execute JavaScript) see proper metadata.
-    // The client-side <svelte:head> still updates on SPA navigation.
-    async function serveSpaIndex(request: any, reply: any): Promise<void> {
-      if (!fs.existsSync(indexPath)) {
-        reply.code(404).send({ error: 'Not found', code: 'not_found' });
-        return;
-      }
-      let html = fs.readFileSync(indexPath, 'utf8');
-      try {
-        const cafe = await getCachedCafe();
-        if (cafe) {
-          const name = cafe.name || 'Repair Cafe';
-          const title = (cafe.seoTitle || (cafe.tagline ? `${name} — ${cafe.tagline}` : name)).slice(0, 200);
-          const desc = (cafe.seoDescription || cafe.description || cafe.tagline || '').slice(0, 300);
-          const ogImg = cafe.ogImageUrl || cafe.bannerUrl || cafe.logoUrl || '';
-          const favicon = cafe.faviconUrl || '/favicon.svg';
-          const fwdProto = request.headers['x-forwarded-proto'];
-          const fwdHost = request.headers['x-forwarded-host'];
-          const proto = (Array.isArray(fwdProto) ? fwdProto[0] : fwdProto) || (request as any).protocol || 'https';
-          const host = (Array.isArray(fwdHost) ? fwdHost[0] : fwdHost) || request.headers.host || '';
-          const canonical = `${proto}://${host}${request.url.split('?')[0]}`;
-          const tags = [
-            `<title>${escapeHtml(title)}</title>`,
-            desc ? `<meta name="description" content="${escapeHtml(desc)}" />` : '',
-            `<meta property="og:title" content="${escapeHtml(title)}" />`,
-            desc ? `<meta property="og:description" content="${escapeHtml(desc)}" />` : '',
-            `<meta property="og:type" content="website" />`,
-            `<meta property="og:url" content="${escapeHtml(canonical)}" />`,
-            ogImg ? `<meta property="og:image" content="${escapeHtml(ogImg.startsWith('http') ? ogImg : proto + '://' + host + ogImg)}" />` : '',
-            `<meta name="twitter:card" content="${ogImg ? 'summary_large_image' : 'summary'}" />`,
-            `<link rel="canonical" href="${escapeHtml(canonical)}" />`,
-            cafe.plausibleDomain && cafe.plausibleSrc
-              ? `<script defer data-domain="${escapeHtml(cafe.plausibleDomain)}" src="${escapeHtml(cafe.plausibleSrc)}"></script>`
-              : '',
-          ].filter(Boolean).join('\n    ');
-          // Replace the static <link rel="icon"> with the configured favicon
-          // and inject our SEO block right before </head>. The SPA's own
-          // <svelte:head> will then layer on top once JS hydrates.
-          html = html.replace(/<link rel="icon"[^>]*>/i, `<link rel="icon" href="${escapeHtml(favicon)}" />`);
-          html = html.replace('</head>', `    ${tags}\n  </head>`);
-        }
-      } catch (err) {
-        request.log.warn({ err }, 'SEO injection failed; serving raw index.html');
-      }
-      reply.type('text/html').send(html);
-    }
-
-    // Explicit handler for the root so we get SEO injection on '/'.
-    app.get('/', serveSpaIndex);
-
-    // SPA fallback: any unknown non-/api route returns index.html
-    app.setNotFoundHandler((request, reply) => {
-      if (request.url.startsWith('/api/') || request.url.startsWith('/uploads/')) {
-        reply.code(404).send({ error: 'Not found', code: 'not_found' });
-        return;
-      }
-      void serveSpaIndex(request, reply);
-    });
   } else {
-    app.log.warn(`PUBLIC_DIR ${env.PUBLIC_DIR} does not exist; serving API only`);
+    app.log.warn(`SvelteKit handler not found at ${handlerPath}; serving API only (dev uses vite).`);
   }
+
+  // robots.txt + sitemap.xml are generated from live data by the server (they
+  // are not SvelteKit routes), so register them explicitly to take precedence.
+  app.get('/robots.txt', async (request, reply) => {
+    const data = await getSeoData();
+    void reply.type('text/plain').send(renderRobots(resolveOrigin(request, data.cafe)));
+  });
+  app.get('/sitemap.xml', async (request, reply) => {
+    const data = await getSeoData();
+    void reply.type('application/xml').send(renderSitemap(data, resolveOrigin(request, data.cafe)));
+  });
+
+  // Anything that isn't an explicit API / uploads / robots / sitemap route is a
+  // page (or client asset) — hand it to the SvelteKit handler. Unknown /api and
+  // /uploads paths still return a JSON 404.
+  app.setNotFoundHandler((request, reply) => {
+    const url = request.raw.url ?? '';
+    if (url.startsWith('/api/') || url.startsWith('/uploads/') || !svelteHandler) {
+      void reply.code(404).send({ error: 'Not found', code: 'not_found' });
+      return;
+    }
+    // Detach Fastify from the response and let SvelteKit write to it directly.
+    reply.hijack();
+    svelteHandler(request.raw, reply.raw, (err?: unknown) => {
+      if (err) request.log.error({ err }, 'SSR handler error');
+      if (!reply.raw.headersSent) {
+        reply.raw.statusCode = err ? 500 : 404;
+        reply.raw.end(err ? 'Internal Server Error' : 'Not Found');
+      }
+    });
+  });
 
   await app.listen({ host: env.HOST, port: env.PORT });
   app.log.info(`Circularity Hub listening on ${env.HOST}:${env.PORT}`);

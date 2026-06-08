@@ -1,12 +1,10 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { page } from '$app/stores';
-  import { api } from '$lib/api';
   import SiteHeader from '$lib/components/SiteHeader.svelte';
   import SiteFooter from '$lib/components/SiteFooter.svelte';
   import Icon from '@iconify/svelte';
   import { categoryIcon } from '$lib/categoryIcon';
   import { ArrowLeft, Wrench, Calendar } from 'lucide-svelte';
+  import type { PageData } from './$types';
 
   interface Skill { id: string; name: string; colour: string; icon: string }
   interface Repairer {
@@ -19,32 +17,14 @@
     skills: Skill[];
   }
 
-  let repairer: Repairer | null = null;
-  let notFound = false;
-  let loading = true;
-
-  $: id = $page.params.id;
-
-  async function load() {
-    loading = true;
-    notFound = false;
-    try {
-      repairer = await api<Repairer>(`/api/public/repairers/${id}`);
-    } catch (e: any) {
-      if (e?.status === 404 || /not_found/i.test(String(e?.message ?? ''))) {
-        notFound = true;
-      } else {
-        throw e;
-      }
-    } finally {
-      loading = false;
-    }
-  }
-  onMount(load);
+  export let data: PageData;
+  $: repairer = (data.repairer ?? null) as Repairer | null;
+  $: notFound = data.notFound;
+  const loading = false;
 
   function joinedDisplay(d: string | null): string {
     if (!d) return '';
-    return new Date(d).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+    return new Date(d).toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' });
   }
   function initials(name: string): string {
     return name
@@ -56,13 +36,6 @@
       .toUpperCase();
   }
 </script>
-
-<svelte:head>
-  <title>{repairer ? `${repairer.displayName} · Volunteer repairer` : 'Volunteer repairer'}</title>
-  {#if repairer?.bio}
-    <meta name="description" content={repairer.bio.slice(0, 160)} />
-  {/if}
-</svelte:head>
 
 <SiteHeader variant="public" />
 

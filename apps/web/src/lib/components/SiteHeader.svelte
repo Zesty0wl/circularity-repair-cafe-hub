@@ -65,6 +65,7 @@
       {:else if user}
         {#if variant === 'repairer'}
           <a href="/repairer" class="px-3 py-2 rounded-lg hover:bg-slate-100">Dashboard</a>
+          <a href="/repairer/checkin" class="px-3 py-2 rounded-lg hover:bg-slate-100 whitespace-nowrap">Register a repair</a>
           <a href="/repairer/profile" class="px-3 py-2 rounded-lg hover:bg-slate-100">My profile</a>
         {/if}
         <span class="text-slate-600">{user.displayName}</span>
@@ -116,6 +117,7 @@
         {:else if user}
           {#if variant === 'repairer'}
             <a href="/repairer" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">Dashboard</a>
+            <a href="/repairer/checkin" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">Register a repair</a>
             <a href="/repairer/profile" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">My profile</a>
             <div class="h-px bg-slate-200 my-2"></div>
           {/if}

@@ -1,9 +1,13 @@
 import type { FastifyInstance } from 'fastify';
 import { db } from '../db/index.js';
-import { events, repairImages, repairJobs, skillCategories, users, venues } from '../db/schema.js';
+import { cafes, events, repairImages, repairJobs, skillCategories, users, venues } from '../db/schema.js';
 import { and, asc, count, desc, eq, sql } from 'drizzle-orm';
+import { assistedCheckInSchema } from '@circularity/shared';
 import { saveValidatedImage } from '../services/imageUpload.js';
+import { nextJobNumber } from '../services/jobNumber.js';
+import { randomToken } from '../utils/tokens.js';
 import { audit } from '../utils/audit.js';
+import { env } from '../env.js';
 
 export async function repairerRoutes(app: FastifyInstance): Promise<void> {
   app.addHook('preHandler', app.requireRole('super_admin', 'admin', 'repairer'));
@@ -180,6 +184,80 @@ export async function repairerRoutes(app: FastifyInstance): Promise<void> {
     };
   });
 
+  // Staff-assisted check-in. Lets a logged-in repairer register an item on
+  // behalf of a walk-in who can't use the QR self-service flow (e.g. no phone).
+  // The job is created against the *active* event — the same one the dashboard
+  // shows — so it drops straight into the shared queue everyone is watching.
+  app.post('/api/repairer/checkin', async (request, reply) => {
+    const me = request.auth!;
+    const parsed = assistedCheckInSchema.safeParse(request.body);
+    if (!parsed.success) {
+      reply.code(400).send({ error: 'Validation failed', code: 'validation/failed', details: parsed.error.flatten() });
+      return;
+    }
+    const data = parsed.data;
+
+    const [activeEvent] = await db
+      .select()
+      .from(events)
+      .where(eq(events.status, 'active'))
+      .orderBy(asc(events.date))
+      .limit(1);
+    if (!activeEvent) {
+      reply.code(400).send({ error: 'There is no active event to check in to', code: 'event/not_active' });
+      return;
+    }
+
+    const customerName = data.customerName?.trim() || null;
+    const customerContact = data.customerContact?.trim() || null;
+    // Only record consent when we are actually storing something personal.
+    const hasPii = Boolean(customerName) || Boolean(customerContact);
+    const gdprConsent = hasPii ? data.gdprConsent === true : false;
+    // Mint a tracking token like the public flow so the item still has a stable
+    // tracker, even though a device-less customer will rely on the job number.
+    const customerToken = randomToken(16);
+
+    const jobNumber = await nextJobNumber();
+    const [cafe] = await db.select({ dataRetentionDays: cafes.dataRetentionDays }).from(cafes).limit(1);
+    const retentionDays = cafe?.dataRetentionDays ?? env.DATA_RETENTION_DEFAULT_DAYS;
+    const retentionDate = new Date();
+    retentionDate.setDate(retentionDate.getDate() + retentionDays);
+
+    const [job] = await db
+      .insert(repairJobs)
+      .values({
+        eventId: activeEvent.id,
+        jobNumber,
+        customerName,
+        customerContact,
+        customerToken,
+        itemDescription: data.itemDescription,
+        itemCategoryId: data.itemCategoryId ?? null,
+        itemBrand: data.itemBrand ?? null,
+        faultDescription: data.faultDescription,
+        gdprConsent,
+        dataRetentionDate: retentionDate.toISOString().slice(0, 10),
+      })
+      .returning();
+
+    await audit({
+      request,
+      actorId: me.sub,
+      actorType: me.role,
+      action: 'checkin.assisted',
+      entityType: 'repair_job',
+      entityId: job.id,
+      metadata: { eventId: activeEvent.id, jobNumber },
+    });
+
+    return {
+      id: job.id,
+      jobNumber: job.jobNumber,
+      status: job.status,
+      customerToken,
+    };
+  });
+
   app.get('/api/repairer/jobs/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
     const rows = await db
@@ -331,7 +409,12 @@ export async function repairerRoutes(app: FastifyInstance): Promise<void> {
     const { id } = request.params as { id: string };
     const me = request.auth!;
     const stageQuery = (request.query as { stage?: string }).stage;
-    const stage = stageQuery === 'completed' ? 'completed' : stageQuery === 'during_repair' ? 'during_repair' : 'during_repair';
+    const stage =
+      stageQuery === 'completed'
+        ? 'completed'
+        : stageQuery === 'check_in'
+          ? 'check_in'
+          : 'during_repair';
     const file = await request.file();
     if (!file) {
       reply.code(400).send({ error: 'No file provided', code: 'upload/missing' });

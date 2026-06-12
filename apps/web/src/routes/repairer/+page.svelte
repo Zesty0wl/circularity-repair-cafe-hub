@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { api } from '$lib/api';
   import { auth } from '$lib/stores/auth';
-  import { Clock, CheckCircle2, XCircle, Hourglass, History, UserCircle2 } from 'lucide-svelte';
+  import { Clock, CheckCircle2, XCircle, Hourglass, History, UserCircle2, UserPlus } from 'lucide-svelte';
   import { goto } from '$app/navigation';
 
   interface Job {
@@ -80,6 +80,7 @@
           <div class="rounded-lg bg-rose-50 text-rose-800 p-2"><p class="text-xs">Couldn't</p><p class="text-2xl font-bold">{data.counts.cannot_repair}</p></div>
         </div>
       {/if}
+      <a href="/repairer/checkin" class="mt-4 btn-primary w-full"><UserPlus size={16} /> Register a repair for a visitor</a>
     </div>
   {:else}
     <div class="card p-5">

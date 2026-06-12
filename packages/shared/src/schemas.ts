@@ -61,6 +61,32 @@ export const checkInSubmitSchema = z
 
 export type CheckInSubmitPayload = z.infer<typeof checkInSubmitSchema>;
 
+// Staff-assisted check-in: a logged-in repairer registering an item on behalf
+// of a walk-in (e.g. someone without a phone). Name and contact are optional;
+// consent is only required when some personal detail is actually captured.
+export const assistedCheckInSchema = z
+  .object({
+    customerName: z.string().max(50).optional().nullable(),
+    customerContact: z.string().max(100).optional().nullable(),
+    gdprConsent: z.boolean().optional(),
+    itemDescription: z.string().min(1).max(200),
+    faultDescription: z.string().min(1).max(500),
+    itemCategoryId: z.string().uuid().optional().nullable(),
+    itemBrand: z.string().max(100).optional().nullable(),
+  })
+  .refine(
+    (v) => {
+      const hasPii = Boolean(v.customerName?.trim()) || Boolean(v.customerContact?.trim());
+      return !hasPii || v.gdprConsent === true;
+    },
+    {
+      message: 'Please confirm the customer is happy for their details to be stored',
+      path: ['gdprConsent'],
+    },
+  );
+
+export type AssistedCheckInPayload = z.infer<typeof assistedCheckInSchema>;
+
 export const recurrenceRuleSchema = z.object({
   frequency: z.enum(['weekly', 'biweekly', 'monthly']),
   interval: z.number().int().positive().default(1).optional(),

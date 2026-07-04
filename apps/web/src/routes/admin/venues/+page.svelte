@@ -108,7 +108,7 @@
           {#if !v.isActive}<span class="badge bg-slate-100 text-slate-600 ml-2">Inactive</span>{/if}
         </p>
         <p class="text-sm text-slate-600 truncate">
-          {[v.address, v.postcode].filter(Boolean).join(', ') || '—'}
+          {[v.address, v.postcode].filter(Boolean).join(', ') || '-'}
         </p>
       </div>
       <div class="flex gap-2 shrink-0">
@@ -144,7 +144,7 @@
             placeholder="Street, town"
             bind:value={editing.address}
           ></textarea>
-          <p class="text-xs text-slate-500 mt-1">Free-form — use line breaks for street / town.</p>
+          <p class="text-xs text-slate-500 mt-1">Free-form. Use line breaks for street and town.</p>
         </div>
         <div>
           <label class="label" for="vp">Postcode</label>
@@ -177,7 +177,7 @@
           class="input"
           rows="4"
           maxlength="2000"
-          placeholder={'e.g. "Use the side entrance off Main Street; we\'re in the upstairs hall — follow the signs."'}
+          placeholder={'e.g. "Use the side entrance off Main Street; we\'re in the upstairs hall. Follow the signs."'}
           bind:value={editing.directions}
         ></textarea>
       </div>

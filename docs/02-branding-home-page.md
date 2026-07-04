@@ -80,8 +80,8 @@ and social-media previews:
   your URL on Facebook, LinkedIn, Slack, X, WhatsApp, etc. Aim for ~1200×630.
   Falls back to your banner if blank.
 
-These tags are rendered **server-side** as well as in the SPA, so social
-crawlers (which usually don't run JavaScript) see them properly.
+These tags are rendered **server-side**, so social crawlers (which usually
+don't run JavaScript) see them properly.
 
 ## Optional: Plausible analytics
 

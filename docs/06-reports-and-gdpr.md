@@ -129,15 +129,24 @@ historical statistics stay accurate.
 
 ### Honouring a "right to be forgotten" request
 
-Until automated DSAR tooling lands, the practical flow is:
+Until automated DSAR tooling lands, you have two options.
+
+**Redact — keeps your impact stats (usually the right choice).** This wipes
+the personal data but keeps the anonymous repair record:
 
 1. Find the customer in `/admin/repairs` (search by name or job number).
 2. Open each of their jobs and **edit** the `customerName` and
    `customerContact` to blank or `redacted`.
 3. Note the request and date in the job's admin notes.
+4. If they want their **item photos** deleted too, remove the photos from
+   the job's photos panel.
 
-If they want their **item photos** deleted too, open each job and remove
-the photos from the photos panel.
+**Delete — removes the record entirely.** If they want all trace gone, open
+each job and use the **Delete repair** button in the danger zone at the bottom
+of the page. This permanently removes the repair record *and* its photos and
+logs the deletion in the audit log. A deleted repair no longer counts towards
+your statistics, so prefer redaction unless full deletion is specifically
+requested.
 
 ### What's *not* personal data
 

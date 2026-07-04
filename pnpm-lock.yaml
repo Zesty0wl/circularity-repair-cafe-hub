@@ -104,6 +104,9 @@ importers:
       '@fontsource-variable/fraunces':
         specifier: ^5.2.9
         version: 5.2.9
+      '@fontsource-variable/hanken-grotesk':
+        specifier: ^5.2.8
+        version: 5.2.8
       '@fontsource-variable/mulish':
         specifier: ^5.2.8
         version: 5.2.8
@@ -799,6 +802,9 @@ packages:
 
   '@fontsource-variable/fraunces@5.2.9':
     resolution: {integrity: sha512-Y6IjunlN9Ni723np+GIgAaKzCDBrPRrqNi01TZxHs5wtHYROWFM9W6yiT+/gGwSjWIRD18oX17kD/BRWekc/Lw==}
+
+  '@fontsource-variable/hanken-grotesk@5.2.8':
+    resolution: {integrity: sha512-K7hu09ZKReBc7EifRLeM4K94NZBrxFEg0nGcISmVwlFQOJo4EmYkLXTWEwr5JcNW4z2hr5zy8vLS2sxC8JDmrQ==}
 
   '@fontsource-variable/mulish@5.2.8':
     resolution: {integrity: sha512-WK2SG2nQhQD+9dPOEw6V6tFgs8b5SodnUB5fuPOLj+2HIR2uPlwj+sUHMfMDGkz57us6xhEiJDaxRy8omad/DA==}
@@ -3144,6 +3150,8 @@ snapshots:
       glob: 10.5.0
 
   '@fontsource-variable/fraunces@5.2.9': {}
+
+  '@fontsource-variable/hanken-grotesk@5.2.8': {}
 
   '@fontsource-variable/mulish@5.2.8': {}
 

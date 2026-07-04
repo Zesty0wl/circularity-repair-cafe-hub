@@ -1,15 +1,17 @@
 <script lang="ts">
   import '../app.css';
-  // Self-hosted brand fonts (Fraunces display + Mulish body). Bundled from
-  // node_modules so they load offline and comply with the app's CSP.
+  // Self-hosted brand fonts. Every selectable family is bundled from
+  // node_modules so they load offline and comply with the app's CSP; the
+  // cafe's font choice just repoints the --font-* CSS variables.
   import '@fontsource-variable/fraunces/index.css';
   import '@fontsource-variable/mulish/index.css';
+  import '@fontsource-variable/hanken-grotesk/index.css';
   import { onMount } from 'svelte';
   import { browser } from '$app/environment';
   import { page } from '$app/stores';
   import { auth } from '$lib/stores/auth';
   import { cafe, setupCompleted } from '$lib/stores/cafe';
-  import { applyBrandColor } from '$lib/brand';
+  import { applyBranding, brandingCss } from '$lib/brand';
   import { api } from '$lib/api';
   import { serializeJsonLd, type PageSeo } from '@circularity/shared';
   import type { LayoutData } from './$types';
@@ -25,10 +27,12 @@
   $: cafe.set(data.cafe);
   $: setupCompleted.set(data.setupCompleted);
 
-  // Re-theme the UI whenever the cafe's primary colour changes. A null/unset
-  // colour falls back to the Circularity-teal defaults declared in app.css.
-  // Guarded to the browser because applyBrandColor touches document.
-  $: if (browser) applyBrandColor(data.cafe?.primaryColor ?? null);
+  // Re-theme the UI whenever the cafe's branding changes. Unset colours/fonts
+  // fall back to the Circularity defaults declared in app.css. Guarded to the
+  // browser because applyBranding touches document; SSR is covered by the
+  // inline <style> below so the first paint is already themed (no flash).
+  $: if (browser) applyBranding(data.cafe);
+  $: brandStyle = brandingCss(data.cafe);
 
   onMount(async () => {
     // Restore the session — client-only (see note above about the auth store).
@@ -72,6 +76,11 @@
 
 <svelte:head>
   <title>{pageTitle}</title>
+  <!-- Inline the per-cafe branding CSS variables during SSR so the first paint
+       is already themed (no flash of the default palette). The tag name is
+       assembled at runtime so Svelte's preprocessor does not mistake this for
+       the component's own scoped style block and try to compile it as CSS. -->
+  {#if brandStyle}{@html `<${'style'}>${brandStyle}</${'style'}>`}{/if}
   {#if metaDesc}<meta name="description" content={metaDesc} />{/if}
   {#if noindex}<meta name="robots" content="noindex, nofollow" />{/if}
   <link rel="icon" href={faviconHref} />

@@ -160,7 +160,7 @@
         value={detail.job.repairerId ?? ''}
         on:change={(e) => assignTo((e.currentTarget as HTMLSelectElement).value)}
       >
-        <option value="">— Unassigned —</option>
+        <option value="">Unassigned</option>
         {#each assignableUsers as u}
           <option value={u.id}>
             {u.displayName}{u.id === myId ? ' (you)' : ''}{u.role !== 'repairer' ? ` · ${u.role.replace('_', ' ')}` : ''}
@@ -184,7 +184,7 @@
     <div>
       <label class="label" for="cat">Category</label>
       <select id="cat" class="input" bind:value={form.categoryId}>
-        <option value="">—</option>
+        <option value="">No category</option>
         {#each categories as c}<option value={c.id}>{c.name}</option>{/each}
       </select>
     </div>

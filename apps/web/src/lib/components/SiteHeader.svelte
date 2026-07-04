@@ -42,7 +42,7 @@
         class="hidden lg:inline-flex items-center gap-1.5 text-xs font-normal text-slate-500 hover:text-slate-700 shrink-0"
       >
         <span>Powered by</span>
-        <img src="/brand/logo-horizontal.svg" alt="Circularity.org" class="h-7 w-auto" />
+        <img src="/brand/logo-wordmark.svg" alt="Circularity.org" class="h-7 w-auto" />
       </a>
     </div>
 

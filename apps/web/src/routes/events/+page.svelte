@@ -73,7 +73,7 @@
       <p class="mt-5 text-xs font-bold uppercase tracking-[0.18em] text-clay">What's on</p>
       <h1 class="mt-2 !text-pine">Upcoming events</h1>
       <span class="mt-3 inline-block h-1 w-16 rounded-full bg-brand-500"></span>
-      <p class="mt-4 text-lg text-slate-600 max-w-xl mx-auto">Bring an item to repair — we'll do our best to fix it together.</p>
+      <p class="mt-4 text-lg text-slate-600 max-w-xl mx-auto">Bring an item to repair. We'll do our best to fix it together.</p>
       {#if uniformVenue}
         <p class="mt-4 inline-flex items-center gap-2 rounded-full bg-white/70 ring-1 ring-sage/60 px-4 py-1.5 text-sm text-slate-700">
           <MapPin size={15} class="text-clay shrink-0" />
@@ -97,7 +97,7 @@
           <CalendarX2 size={26} />
         </span>
         <h3 class="mt-4 !text-pine">No events scheduled just yet</h3>
-        <p class="mt-2 text-slate-600">We're planning the next session — check back soon, or get in touch to be the first to know.</p>
+        <p class="mt-2 text-slate-600">We're planning the next session. Check back soon, or get in touch to be the first to know.</p>
         <a href="/contact" class="btn-secondary mt-6">Contact us</a>
       </div>
     {:else}
@@ -106,7 +106,7 @@
           {@const p = dateParts(evt.date)}
           <a
             href={`/events/${evt.id}`}
-            aria-label={`${evt.name}, ${fullDate(evt.date)} — view details`}
+            aria-label={`${evt.name}, ${fullDate(evt.date)}, view details`}
             class="group relative flex items-center gap-3 rounded-2xl bg-white ring-1 ring-slate-200 p-3 pr-2 text-left shadow-sm transition-all hover:shadow-md hover:ring-brand-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
           >
             {#if i === 0}

@@ -27,6 +27,9 @@ export interface CafeInfo {
   homePage: HomePageContent;
   gallery: GalleryImage[];
   primaryColor: string | null;
+  accentColor: string | null;
+  headingFont: string | null;
+  bodyFont: string | null;
   donateUrl: string | null;
   // SEO + analytics (all optional)
   faviconUrl: string | null;

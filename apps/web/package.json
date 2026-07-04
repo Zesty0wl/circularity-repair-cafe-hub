@@ -11,6 +11,7 @@
   "dependencies": {
     "@circularity/shared": "workspace:*",
     "@fontsource-variable/fraunces": "^5.2.9",
+    "@fontsource-variable/hanken-grotesk": "^5.2.8",
     "@fontsource-variable/mulish": "^5.2.8",
     "@iconify/svelte": "^4.2.0",
     "chart.js": "^4.4.6",

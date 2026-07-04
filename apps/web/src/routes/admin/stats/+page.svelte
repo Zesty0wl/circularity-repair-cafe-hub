@@ -137,7 +137,7 @@
   ];
 
   function fmtDuration(min: number): string {
-    if (!min || min <= 0) return '—';
+    if (!min || min <= 0) return '-';
     if (min < 60) return `${min} min`;
     const h = Math.floor(min / 60);
     const m = min % 60;
@@ -154,7 +154,7 @@
   <button class="btn-secondary" on:click={exportCsv}>Export raw data (CSV)</button>
 </div>
 
-<!-- Period selector — applies to summary cards and the events table.
+<!-- Period selector. Applies to summary cards and the events table.
      The heatmap below always shows the last 12 months so the rhythm of
      events stays comparable between visits. -->
 <div class="mt-4 inline-flex rounded-lg ring-1 ring-slate-200 bg-white overflow-hidden text-sm">
@@ -207,7 +207,7 @@
 <!-- ── Activity heatmap (last 12 months) ───────────────────────────── -->
 <div class="card p-4 mt-4 overflow-x-auto">
   <div class="flex items-baseline justify-between mb-3">
-    <h2 class="font-semibold">Activity — last 12 months</h2>
+    <h2 class="font-semibold">Activity in the last 12 months</h2>
     <p class="text-xs text-slate-500">{heatmap.length} days with events</p>
   </div>
   <div class="inline-block min-w-full">
@@ -234,7 +234,7 @@
                 <div
                   class="w-3 h-3 rounded-[2px] {BUCKET_CLASS[bucket(c.day?.repairs ?? 0)]}"
                   title={c.day
-                    ? `${prettyDate(c.day.day)} — ${c.day.events} event${c.day.events === 1 ? '' : 's'}, ${c.day.repairs} repair${c.day.repairs === 1 ? '' : 's'} (${c.day.completed} fixed)`
+                    ? `${prettyDate(c.day.day)}: ${c.day.events} event${c.day.events === 1 ? '' : 's'}, ${c.day.repairs} repair${c.day.repairs === 1 ? '' : 's'} (${c.day.completed} fixed)`
                     : prettyDate(fmtDate(c.date))}
                 ></div>
               {/if}
@@ -258,7 +258,7 @@
 <!-- ── Events table ──────────────────────────────────────────────── -->
 <div class="card p-4 mt-4">
   <div class="flex items-baseline justify-between mb-3">
-    <h2 class="font-semibold">Events — {RANGE_LABELS[range].toLowerCase()}</h2>
+    <h2 class="font-semibold">Events ({RANGE_LABELS[range].toLowerCase()})</h2>
     <p class="text-xs text-slate-500">{events.length} event{events.length === 1 ? '' : 's'}</p>
   </div>
   {#if events.length === 0}

@@ -169,7 +169,7 @@
           class="input"
           rows="6"
           maxlength="2000"
-          placeholder={'A few sentences about you — what you love fixing, how you got into it, anything that makes you human.'}
+          placeholder={'A few sentences about you. What you love fixing, how you got into it, anything that makes you human.'}
           bind:value={bio}
         ></textarea>
         <p class="text-xs text-slate-500 mt-1">{bio.length}/2000 characters</p>

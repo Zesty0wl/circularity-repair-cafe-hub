@@ -143,7 +143,7 @@
       <p class="mt-2 text-slate-700">It's now in the queue for this event.</p>
       <p class="mt-6 text-sm uppercase tracking-wide text-slate-500">Job number</p>
       <p class="text-6xl font-extrabold text-brand-700 mt-1 tracking-wide">{created.jobNumber}</p>
-      <p class="mt-5 text-slate-600">Write this number on the item's tag and let the customer know it — that's how we'll match the item back to them.</p>
+      <p class="mt-5 text-slate-600">Write this number on the item's tag and let the customer know it. That's how we'll match the item back to them.</p>
       {#if photoWarning}<p class="mt-4 text-sm text-amber-700">{photoWarning}</p>{/if}
       <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
         <button type="button" class="btn-primary" on:click={registerAnother}>
@@ -213,7 +213,7 @@
       <!-- Customer (optional) -->
       <fieldset class="border-t border-slate-200 pt-5">
         <legend class="text-sm font-semibold text-slate-700">About the customer <span class="font-normal text-slate-400">(optional)</span></legend>
-        <p class="text-sm text-slate-500 mt-1">Leave blank to register the item anonymously — the job number is enough to find them.</p>
+        <p class="text-sm text-slate-500 mt-1">Leave blank to register the item anonymously. The job number is enough to find them.</p>
         <div class="mt-4 grid sm:grid-cols-2 gap-4">
           <div>
             <label class="label" for="cn">First name</label>

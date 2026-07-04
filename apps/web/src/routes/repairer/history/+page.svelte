@@ -35,7 +35,7 @@
             <td class="px-3 py-2">{r.eventDate}</td>
             <td class="px-3 py-2 font-mono">{r.jobNumber}</td>
             <td class="px-3 py-2">{r.itemDescription}</td>
-            <td class="px-3 py-2">{r.category ?? '—'}</td>
+            <td class="px-3 py-2">{r.category ?? '-'}</td>
             <td class="px-3 py-2"><span class="badge badge-{r.status}">{r.status.replace('_', ' ')}</span></td>
           </tr>
         {/each}

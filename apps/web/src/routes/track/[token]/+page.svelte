@@ -157,7 +157,7 @@
       </div>
 
       {#if data.cafe.donateUrl}
-        <!-- Donate prompt — kept subtle, easy to scroll past, and only shown when the cafe has set a link. -->
+        <!-- Donate prompt. Kept subtle, easy to scroll past, and only shown when the cafe has set a link. -->
         <a
           href={data.cafe.donateUrl}
           target="_blank"
@@ -180,7 +180,7 @@
           <div class="card p-5">
             <div class="flex items-start gap-3">
               {#if job.photoUrl}
-                <!-- Photo of the item the guest handed in — reassuring + helps spot their item -->
+                <!-- Photo of the item the guest handed in. Reassuring and helps spot their item -->
                 <a href={job.photoUrl} target="_blank" rel="noopener" class="shrink-0">
                   <img
                     src={job.photoUrl}

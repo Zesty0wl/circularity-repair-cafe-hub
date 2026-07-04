@@ -395,7 +395,7 @@
         {:else}
           <div class="card p-8 text-center">
             <span class="h-16 w-16 mx-auto rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center"><CheckCircle2 size={32} /></span>
-            <h1 class="text-3xl font-bold mt-5">Got it — we're on it!</h1>
+            <h1 class="text-3xl font-bold mt-5">Got it, we're on it!</h1>
             <p class="mt-3 text-slate-700 text-lg">Your repair has been sent to our team.</p>
             <p class="mt-4 text-sm uppercase tracking-wide text-slate-500">Your job number</p>
             <p class="text-5xl font-extrabold text-brand-700 mt-1 tracking-wide">{createdJob.jobNumber}</p>
@@ -408,7 +408,7 @@
                   <Sparkles size={18} /> Track your repair, live
                 </h2>
                 <p class="mt-1 text-sm text-brand-900/80">
-                  Save this link — it shows the status of every item you check in today.
+                  Save this link. It shows the status of every item you check in today.
                 </p>
                 <a
                   href={trackingUrl}
@@ -457,7 +457,7 @@
               <h2 class="text-lg font-semibold flex items-center gap-2"><Sparkles size={18} /> Want to add a photo?</h2>
               <p class="mt-1 text-sm text-slate-600">A photo helps our repairers see what they'll be working on while you wait.</p>
               {#if uploadedThumb}
-                <div class="mt-3 text-sm text-emerald-700 flex items-center gap-1"><CheckCircle2 size={16} /> Photo uploaded — thanks!</div>
+                <div class="mt-3 text-sm text-emerald-700 flex items-center gap-1"><CheckCircle2 size={16} /> Photo uploaded, thanks!</div>
                 <img src={uploadedThumb} alt="Uploaded" class="mt-2 w-32 h-32 rounded-lg object-cover" />
               {:else}
                 <div class="mt-3"><CameraCapture on:capture={onCapture} maxLongestEdge={1200} quality={0.8} /></div>

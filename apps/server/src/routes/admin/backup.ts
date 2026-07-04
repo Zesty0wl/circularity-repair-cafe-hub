@@ -152,7 +152,7 @@ export async function adminBackupRoutes(app: FastifyInstance): Promise<void> {
 
         request.log.warn(
           { manifest: result.manifest },
-          'restore completed — process will exit so s6 restarts node',
+          'restore completed, process will exit so s6 restarts node',
         );
 
         reply.send({

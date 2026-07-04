@@ -39,7 +39,7 @@ export async function adminStatsRoutes(app: FastifyInstance): Promise<void> {
         COUNT(rj.id) FILTER (WHERE rj.status = 'cannot_repair')::int AS cannot_repair,
         COUNT(rj.id) FILTER (WHERE rj.status = 'returned')::int AS returned,
         COUNT(DISTINCT rj.repairer_id) FILTER (WHERE rj.repairer_id IS NOT NULL)::int AS repairer_count,
-        COALESCE(SUM(rj.environmental_saving_kg), 0)::float AS savings_kg,
+        COALESCE(SUM(rj.environmental_saving_kg) FILTER (WHERE rj.status = 'completed'), 0)::float AS savings_kg,
         COALESCE(AVG(EXTRACT(EPOCH FROM (rj.completed_at - rj.accepted_at)) / 60.0)
                  FILTER (WHERE rj.accepted_at IS NOT NULL AND rj.completed_at IS NOT NULL), 0)::float AS avg_duration_min
       FROM events e
@@ -163,7 +163,7 @@ export async function adminStatsRoutes(app: FastifyInstance): Promise<void> {
         COUNT(*) FILTER (WHERE status = 'cannot_repair')::int AS cannot_repair,
         COUNT(*) FILTER (WHERE status = 'returned')::int AS returned,
         COUNT(*) FILTER (WHERE status IN ('waiting','in_progress'))::int AS open_count,
-        COALESCE(SUM(environmental_saving_kg), 0)::float AS savings_kg,
+        COALESCE(SUM(environmental_saving_kg) FILTER (WHERE status = 'completed'), 0)::float AS savings_kg,
         COALESCE(AVG(EXTRACT(EPOCH FROM (completed_at - accepted_at)) / 60.0)
                  FILTER (WHERE accepted_at IS NOT NULL AND completed_at IS NOT NULL), 0)::float AS avg_duration_min,
         COALESCE(SUM(EXTRACT(EPOCH FROM (completed_at - accepted_at)) / 60.0)

@@ -94,7 +94,7 @@
     <div class="mt-3 grid grid-cols-3 text-center">
       <div><p class="text-2xl font-bold">{stats?.total ?? 0}</p><p class="text-xs text-slate-500">My repairs</p></div>
       <div><p class="text-2xl font-bold">{stats?.successRate ?? 0}%</p><p class="text-xs text-slate-500">Success rate</p></div>
-      <div><p class="text-sm font-semibold pt-2">{stats?.busiestCategory ?? '—'}</p><p class="text-xs text-slate-500">Busiest category</p></div>
+      <div><p class="text-sm font-semibold pt-2">{stats?.busiestCategory ?? '-'}</p><p class="text-xs text-slate-500">Busiest category</p></div>
     </div>
     <a href="/repairer/history" class="mt-4 btn-secondary w-full"><History size={16} /> My history</a>
     <a href="/repairer/profile" class="mt-2 btn-secondary w-full"><UserCircle2 size={16} /> My profile</a>
@@ -109,7 +109,7 @@
         <a href={`/repairer/job/${j.id}`} class="card p-4 hover:bg-slate-50">
           <p class="text-xs text-slate-500">{j.jobNumber}</p>
           <p class="font-semibold">{j.itemDescription}</p>
-          <p class="text-sm text-slate-600">{j.customerName ?? '—'}</p>
+          <p class="text-sm text-slate-600">{j.customerName ?? '-'}</p>
         </a>
       {/each}
     </div>
@@ -139,7 +139,7 @@
               {#if j.itemBrand}<p class="text-sm text-slate-500">{j.itemBrand}</p>{/if}
               {#if j.category}<span class="badge mt-2" style="background-color: {j.categoryColour}22; color: {j.categoryColour}">{j.category}</span>{/if}
               <p class="mt-2 text-sm text-slate-700 line-clamp-2">{j.faultDescription}</p>
-              <p class="mt-2 text-xs text-slate-500">Customer: {j.customerName ?? '—'}</p>
+              <p class="mt-2 text-xs text-slate-500">Customer: {j.customerName ?? '-'}</p>
               {#if j.status === 'in_progress' && j.repairerName}
                 <p class="mt-1 text-xs text-slate-500">With: <strong>{j.repairerId === myId ? 'you' : j.repairerName}</strong></p>
               {/if}

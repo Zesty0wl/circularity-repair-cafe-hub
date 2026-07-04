@@ -24,6 +24,9 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
       homePage: cafe.homePage,
       gallery,
       primaryColor: cafe.primaryColor,
+      accentColor: cafe.accentColor,
+      headingFont: cafe.headingFont,
+      bodyFont: cafe.bodyFont,
       donateUrl: cafe.donateUrl,
       // ── SEO + analytics surfaced for the SPA <head> ────────────
       faviconUrl: cafe.faviconUrl,

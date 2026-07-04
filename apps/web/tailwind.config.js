@@ -19,8 +19,23 @@ export default {
           800: 'rgb(var(--brand-800) / <alpha-value>)',
           900: 'rgb(var(--brand-900) / <alpha-value>)',
         },
-        // Fixed Circularity brand colours (not per-cafe themeable).
-        pine: '#0E3D33',
+        // The `accent` scale themes call-to-action buttons independently of the
+        // brand colour (defaults to the same teal — see app.css / brand.ts).
+        accent: {
+          50: 'rgb(var(--accent-50) / <alpha-value>)',
+          100: 'rgb(var(--accent-100) / <alpha-value>)',
+          200: 'rgb(var(--accent-200) / <alpha-value>)',
+          300: 'rgb(var(--accent-300) / <alpha-value>)',
+          400: 'rgb(var(--accent-400) / <alpha-value>)',
+          500: 'rgb(var(--accent-500) / <alpha-value>)',
+          600: 'rgb(var(--accent-600) / <alpha-value>)',
+          700: 'rgb(var(--accent-700) / <alpha-value>)',
+          800: 'rgb(var(--accent-800) / <alpha-value>)',
+          900: 'rgb(var(--accent-900) / <alpha-value>)',
+        },
+        // Fixed Circularity brand colours (not per-cafe themeable), except
+        // `pine` which follows the brand colour so headings re-theme with it.
+        pine: 'rgb(var(--brand-700) / <alpha-value>)',
         clay: '#D2683F',
         sun: '#F3B43E',
         sage: '#BFD6C4',
@@ -28,11 +43,12 @@ export default {
         ink: '#1C2622',
       },
       fontFamily: {
-        // Mulish for body/UI, Fraunces for display headings — self-hosted via
-        // @fontsource-variable (see +layout.svelte) so they work offline and
-        // satisfy the app's strict CSP.
-        sans: ['"Mulish Variable"', 'Mulish', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        display: ['"Fraunces Variable"', 'Fraunces', 'Georgia', '"Times New Roman"', 'serif'],
+        // Body/UI (`sans`) and display headings (`display`) read CSS variables
+        // so a cafe can switch typeface; defaults (Circularity Mulish/Fraunces)
+        // and every selectable family are self-hosted via @fontsource-variable
+        // (see +layout.svelte) to work offline and satisfy the app's CSP.
+        sans: ['var(--font-sans)'],
+        display: ['var(--font-display)'],
       },
     },
   },

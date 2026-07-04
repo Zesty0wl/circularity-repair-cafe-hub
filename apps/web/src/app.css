@@ -17,6 +17,24 @@
     --brand-700: 17 68 58;
     --brand-800: 12 48 41;
     --brand-900: 8 30 25;
+    /* Accent (call-to-action) palette. Defaults to the same teal as the brand
+       so a cafe that sets only a brand colour gets matching buttons; a cafe
+       that sets its own `accentColor` (e.g. Woodville orange) overrides these
+       via src/lib/brand.ts while the brand colour stays for links/headings. */
+    --accent-50: 237 243 242;
+    --accent-100: 219 231 229;
+    --accent-200: 187 211 206;
+    --accent-300: 150 187 179;
+    --accent-400: 100 154 143;
+    --accent-500: 27 107 90;
+    --accent-600: 22 88 74;
+    --accent-700: 17 68 58;
+    --accent-800: 12 48 41;
+    --accent-900: 8 30 25;
+    /* Typefaces. Default to Circularity's Fraunces (display) + Mulish (body);
+       a cafe can repoint these to another bundled family via its font choice. */
+    --font-display: 'Fraunces Variable', Fraunces, Georgia, 'Times New Roman', serif;
+    --font-sans: 'Mulish Variable', Mulish, ui-sans-serif, system-ui, sans-serif;
   }
   html {
     -webkit-text-size-adjust: 100%;
@@ -51,7 +69,7 @@
     @apply inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-brand-500 disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .btn-primary {
-    @apply btn bg-brand-600 text-white hover:bg-brand-700;
+    @apply btn bg-accent-600 text-white hover:bg-accent-700;
   }
   .btn-secondary {
     @apply btn bg-white text-slate-800 ring-1 ring-slate-300 hover:bg-slate-50;

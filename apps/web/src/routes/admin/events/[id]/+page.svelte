@@ -147,7 +147,7 @@
             <tr>
               <td class="px-3 py-2 font-mono">{j.jobNumber}</td>
               <td class="px-3 py-2">{j.itemDescription}</td>
-              <td class="px-3 py-2">{j.customerName ?? '—'}</td>
+              <td class="px-3 py-2">{j.customerName ?? '-'}</td>
               <td class="px-3 py-2"><span class="badge badge-{j.status}">{j.status}</span></td>
             </tr>
           {:else}

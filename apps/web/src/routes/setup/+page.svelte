@@ -3,17 +3,31 @@
   import { api } from '$lib/api';
   import { auth } from '$lib/stores/auth';
   import { loadCafe, loadSetupStatus } from '$lib/stores/cafe';
+  import { FONT_OPTIONS } from '@circularity/shared';
   import ProgressBar from '$lib/components/ProgressBar.svelte';
   import { CheckCircle2 } from 'lucide-svelte';
   import { onMount } from 'svelte';
 
-  const TOTAL = 6;
+  const TOTAL = 7;
   let step = 1;
 
   let admin = { displayName: '', email: '', password: '', confirm: '' };
   let cafe = { name: '', tagline: '', contactEmail: '', websiteUrl: '', description: '' };
   let venue = { name: '', addressLine1: '', addressLine2: '', town: '', postcode: '', notes: '' };
   let publicUrl = '';
+
+  // Branding — all optional; unset falls back to the Circularity defaults.
+  const HEX_RE = /^#[0-9a-fA-F]{6}$/;
+  function normaliseHex(v: unknown, fallback: string): string {
+    return typeof v === 'string' && HEX_RE.test(v) ? v : fallback;
+  }
+  let brand = {
+    primaryColor: '#1B6B5A',
+    accentEnabled: false,
+    accentColor: '#ED6A42',
+    headingFont: '',
+    bodyFont: '',
+  };
 
   let busy = false;
   let error = '';
@@ -96,6 +110,10 @@
           contactEmail: cafe.contactEmail.trim() || null,
           websiteUrl: cafe.websiteUrl.trim() || null,
           description: cafe.description.trim() || null,
+          primaryColor: normaliseHex(brand.primaryColor, '#1B6B5A'),
+          accentColor: brand.accentEnabled ? normaliseHex(brand.accentColor, '#ED6A42') : null,
+          headingFont: brand.headingFont || null,
+          bodyFont: brand.bodyFont || null,
         },
         venue: {
           name: venue.name.trim(),
@@ -208,7 +226,7 @@
             </div>
           </div>
           <div>
-            <label class="label" for="vno">Notes (parking, accessibility — optional)</label>
+            <label class="label" for="vno">Notes (parking, accessibility, optional)</label>
             <textarea id="vno" class="input" rows="3" bind:value={venue.notes}></textarea>
           </div>
         </div>
@@ -227,6 +245,49 @@
           </div>
         </div>
       {:else if step === 6}
+        <h1 class="text-3xl font-bold">Your branding</h1>
+        <p class="mt-2 text-slate-600">Make the hub yours. You can change any of this later under Admin → Settings, and upload your logo there too.</p>
+        <div class="mt-6 space-y-5">
+          <div>
+            <span class="label">Brand colour</span>
+            <div class="flex items-center gap-3">
+              <input class="h-10 w-16 rounded-lg border border-slate-300 cursor-pointer p-1" type="color" bind:value={brand.primaryColor} />
+              <input class="input w-32 font-mono" type="text" maxlength="7" bind:value={brand.primaryColor} />
+            </div>
+            <p class="text-xs text-slate-500 mt-1">Used for links, headings and accents. Pick a colour dark enough to read as text.</p>
+          </div>
+          <div>
+            <span class="label">Accent / button colour</span>
+            <label class="flex items-center gap-2 text-sm text-slate-700 mb-2">
+              <input type="checkbox" class="h-4 w-4 rounded border-slate-300 text-brand-600" bind:checked={brand.accentEnabled} />
+              Use a separate colour for call-to-action buttons
+            </label>
+            {#if brand.accentEnabled}
+              <div class="flex items-center gap-3">
+                <input class="h-10 w-16 rounded-lg border border-slate-300 cursor-pointer p-1" type="color" bind:value={brand.accentColor} />
+                <input class="input w-32 font-mono" type="text" maxlength="7" bind:value={brand.accentColor} />
+              </div>
+            {/if}
+            <p class="text-xs text-slate-500 mt-1">Optional. Handy when your brand colour is dark but you want a brighter call-to-action button.</p>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="label" for="shf">Heading font</label>
+              <select id="shf" class="input" bind:value={brand.headingFont}>
+                <option value="">Default (Fraunces)</option>
+                {#each FONT_OPTIONS as f}<option value={f.value}>{f.label}</option>{/each}
+              </select>
+            </div>
+            <div>
+              <label class="label" for="sbf">Body font</label>
+              <select id="sbf" class="input" bind:value={brand.bodyFont}>
+                <option value="">Default (Mulish)</option>
+                {#each FONT_OPTIONS as f}<option value={f.value}>{f.label}</option>{/each}
+              </select>
+            </div>
+          </div>
+        </div>
+      {:else if step === 7}
         <h1 class="text-3xl font-bold">Ready</h1>
         <p class="mt-2 text-slate-600">Review your setup:</p>
         <dl class="mt-6 space-y-2 text-sm">
@@ -244,12 +305,12 @@
         <p class="mt-4 text-sm text-rose-600">{error}</p>
       {/if}
 
-      {#if step > 1 && step < 6}
+      {#if step > 1 && step < 7}
         <div class="mt-8 flex justify-between">
           <button class="btn-ghost" type="button" on:click={prev}>Back</button>
           <button class="btn-primary" type="button" on:click={next}>Next</button>
         </div>
-      {:else if step === 6}
+      {:else if step === 7}
         <div class="mt-3"><button class="btn-ghost" type="button" on:click={prev}>Back</button></div>
       {/if}
     </div>

@@ -239,6 +239,14 @@ const STATEMENTS: string[] = [
   // ── Brand primary colour for the public site (additive, idempotent) ──
   `ALTER TABLE cafes ADD COLUMN IF NOT EXISTS primary_color TEXT`,
 
+  // ── Accent (call-to-action) colour + typeface choices (additive) ──
+  // Let a cafe theme its buttons separately from its brand/text colour and
+  // pick a display + body typeface. All optional; null falls back to the
+  // Circularity defaults baked into the web app.
+  `ALTER TABLE cafes ADD COLUMN IF NOT EXISTS accent_color TEXT`,
+  `ALTER TABLE cafes ADD COLUMN IF NOT EXISTS heading_font TEXT`,
+  `ALTER TABLE cafes ADD COLUMN IF NOT EXISTS body_font TEXT`,
+
   // ── Optional donate link shown on guest receipt + tracker pages ──
   `ALTER TABLE cafes ADD COLUMN IF NOT EXISTS donate_url TEXT`,
 ];
@@ -265,8 +273,8 @@ const DEFAULT_HOME_PAGE = {
     heading: 'What & Who',
     body:
       'We are a volunteer-powered Repair Cafe designed to help our community ' +
-      'repair, reuse, and recycle. Bring along your broken or damaged item — small ' +
-      'electronics, clothing, bikes, furniture, toys — and our skilled volunteers ' +
+      'repair, reuse, and recycle. Bring along your broken or damaged item (small ' +
+      'electronics, clothing, bikes, furniture, toys) and our skilled volunteers ' +
       'will do their best to fix it with you, for free.\n\n' +
       'It is also a great place to meet, drink tea, and learn a few repair skills. ' +
       'New volunteer repairers are always welcome.',
@@ -282,7 +290,7 @@ const DEFAULT_HOME_PAGE = {
     body:
       '• The item you want repaired (and any unusual cables, batteries, or parts)\n' +
       '• Any tools or attachments specific to it\n' +
-      '• Your patience — repairs take time, and we work alongside you, not for you',
+      '• Your patience. Repairs take time, and we work alongside you, not for you',
   },
   faqs: [
     {

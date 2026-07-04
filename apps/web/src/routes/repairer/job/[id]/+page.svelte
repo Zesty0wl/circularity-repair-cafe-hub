@@ -111,7 +111,7 @@
       <span class="badge badge-{detail.job.status}">{detail.job.status.replace('_', ' ')}</span>
     </div>
     <div class="mt-3 text-sm text-slate-600">
-      Customer: <strong>{detail.job.customerName ?? '—'}</strong>
+      Customer: <strong>{detail.job.customerName ?? '-'}</strong>
       {#if detail.job.customerContact}<span class="ml-3">Contact: {detail.job.customerContact}</span>{/if}
     </div>
     {#if status === 'in_progress' && detail.repairer}
@@ -186,7 +186,7 @@
       <label class="label" for="oc">Outcome</label>
       <select id="oc" class="input" bind:value={outcome}>
         <option value="completed">Repaired successfully</option>
-        <option value="cannot_repair">Could not repair — see notes</option>
+        <option value="cannot_repair">Could not repair (see notes)</option>
       </select>
     </div>
     <div class="flex justify-between gap-2">

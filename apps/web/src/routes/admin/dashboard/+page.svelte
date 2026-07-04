@@ -51,6 +51,7 @@
         </div>
       {/if}
       <div class="mt-5 flex flex-wrap gap-2">
+        <a href="/repairer/checkin" class="btn-primary">Add a repair</a>
         <a href={`/admin/events/${data.activeEvent.id}`} class="btn-secondary">View event</a>
         <button on:click={() => endEvent(data.activeEvent.id)} class="btn-danger">End event</button>
       </div>

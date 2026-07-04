@@ -473,7 +473,7 @@ export function buildSeo(opts: BuildSeoOptions): PageSeo {
       title = `What We Repair | ${name}`;
       description = clamp(
         categories.length
-          ? `Discover what our volunteers can help fix at ${name} — ${categories.slice(0, 10).join(', ')}. Free community repairs.`
+          ? `Discover what our volunteers can help fix at ${name}: ${categories.slice(0, 10).join(', ')}. Free community repairs.`
           : `Discover what our volunteers can help fix at ${name}. Free community repairs, every session.`,
         300,
       );

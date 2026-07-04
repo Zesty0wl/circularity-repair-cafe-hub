@@ -33,9 +33,11 @@ hundreds of repairs, and yours to host on a £5/month VPS or a Pi in the corner.
   and after photos.
 - **Admin** — events (one-off and recurring), venues, skill categories, repairers,
   full repair history, CSV export, statistics dashboard.
-- **SEO + analytics** — server-rendered Open Graph / Twitter tags so previews work
-  in Facebook / LinkedIn / Slack, optional [Plausible](https://plausible.io)
-  integration, configurable favicon and meta description — all from the admin UI.
+- **SEO + analytics** — every public page is server-rendered with Open Graph /
+  Twitter tags and schema.org structured data, plus an auto-generated sitemap,
+  so previews work in Facebook / LinkedIn / Slack and events can surface as rich
+  results. Optional [Plausible](https://plausible.io) integration; configurable
+  favicon and meta description — all from the admin UI.
 - **Privacy by design** — bcrypt passwords, JWT + httpOnly refresh cookies,
   rate-limited login, CSP headers, configurable PII retention with one-click purge.
 - **Single container** — Node 22 + Fastify + PostgreSQL 16, supervised by
@@ -46,7 +48,7 @@ hundreds of repairs, and yours to host on a £5/month VPS or a Pi in the corner.
 | Layer    | Tech                                                              |
 | -------- | ----------------------------------------------------------------- |
 | Backend  | Node 22, Fastify 4, Drizzle ORM, PostgreSQL 16, sharp, qrcode     |
-| Frontend | SvelteKit (SPA via adapter-static), Tailwind CSS, Iconify, Chart.js |
+| Frontend | SvelteKit (SSR via adapter-node), Tailwind CSS, Iconify, Chart.js |
 | Infra    | Docker (multi-stage), s6-overlay, exposed on host port **5026**; Cloudflare Tunnel for public access |
 
 ## Quick start (Docker)
@@ -202,7 +204,7 @@ docker exec -i circularity-repair-cafe-hub \
 ```
 apps/
   server/    Fastify backend, Drizzle migrations, REST API
-  web/       SvelteKit SPA (adapter-static)
+  web/       SvelteKit app (server-rendered via adapter-node)
 packages/
   shared/    Shared Zod schemas / TypeScript types
 docker/      cont-init scripts and s6-rc service definitions

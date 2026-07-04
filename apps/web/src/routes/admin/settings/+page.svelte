@@ -4,6 +4,7 @@
   import { api } from '$lib/api';
   import { auth } from '$lib/stores/auth';
   import { loadCafe } from '$lib/stores/cafe';
+  import { FONT_OPTIONS } from '@circularity/shared';
   import { Trash2, Plus, ArrowUp, ArrowDown, Download, Upload, AlertTriangle } from 'lucide-svelte';
 
   let cafe: any = null;
@@ -50,10 +51,22 @@
   }
   let primaryColorInput = DEFAULT_PRIMARY;
 
+  // Accent (button) colour is optional — when disabled, call-to-action buttons
+  // follow the brand colour. Font choices default to the Circularity typefaces
+  // (empty string = use default).
+  let accentEnabled = false;
+  let accentColorInput = DEFAULT_PRIMARY;
+  let headingFontInput = '';
+  let bodyFontInput = '';
+
   async function load() {
     cafe = await api('/api/admin/settings');
     if (cafe) cafe.primaryColor = normaliseHex(cafe.primaryColor);
     primaryColorInput = normaliseHex(cafe?.primaryColor);
+    accentEnabled = Boolean(cafe?.accentColor);
+    accentColorInput = normaliseHex(cafe?.accentColor ?? cafe?.primaryColor);
+    headingFontInput = cafe?.headingFont ?? '';
+    bodyFontInput = cafe?.bodyFont ?? '';
     const hp = cafe?.homePage ?? {};
     intro = { heading: hp.intro?.heading ?? '', body: hp.intro?.body ?? '' };
     howItWorks = Array.isArray(hp.howItWorks) ? hp.howItWorks.map((s: any) => ({ title: s.title ?? '', body: s.body ?? '' })) : [];
@@ -77,6 +90,9 @@
           name: cafe.name, tagline: cafe.tagline || null, description: cafe.description || null,
           contactEmail: cafe.contactEmail, contactPhone: cafe.contactPhone || null,
           publicUrl: cafe.publicUrl, primaryColor: normaliseHex(primaryColorInput),
+          accentColor: accentEnabled ? normaliseHex(accentColorInput) : null,
+          headingFont: headingFontInput || null,
+          bodyFont: bodyFontInput || null,
           donateUrl: cafe.donateUrl || null,
           socialFacebook: cafe.socialFacebook || null, socialTwitter: cafe.socialTwitter || null,
           socialInstagram: cafe.socialInstagram || null,
@@ -261,7 +277,7 @@
         throw new Error(msg);
       }
       const body = await res.json();
-      restoreInfo = `Restored backup from ${body?.manifest?.appVersion ?? 'unknown'} (${body?.manifest?.counts?.users ?? '?'} users, ${body?.manifest?.counts?.events ?? '?'} events). The app is restarting — you will need to sign back in.`;
+      restoreInfo = `Restored backup from ${body?.manifest?.appVersion ?? 'unknown'} (${body?.manifest?.counts?.users ?? '?'} users, ${body?.manifest?.counts?.events ?? '?'} events). The app is restarting. You will need to sign back in.`;
       // The server restarts in ~1s; wait a bit longer then bounce to /login.
       setTimeout(() => { window.location.href = '/login'; }, 4000);
     } catch (err: any) {
@@ -321,7 +337,50 @@
           />
           <button type="button" class="btn-ghost text-sm" on:click={() => (primaryColorInput = DEFAULT_PRIMARY)}>Reset</button>
         </div>
-        <p class="text-xs text-slate-500 mt-1">Re-themes buttons, links and accents across your site. Leave at the Circularity default teal, or set your cafe's own colour. Stored as #rrggbb hex.</p>
+        <p class="text-xs text-slate-500 mt-1">Used for links, headings, focus states and text accents across your site. Leave at the Circularity default teal, or set your cafe's own colour. Stored as #rrggbb hex.</p>
+      </div>
+      <div>
+        <span class="label">Accent / button colour</span>
+        <label class="flex items-center gap-2 text-sm text-slate-700 mb-2">
+          <input type="checkbox" class="h-4 w-4 rounded border-slate-300 text-brand-600" bind:checked={accentEnabled} />
+          Use a separate colour for call-to-action buttons
+        </label>
+        {#if accentEnabled}
+          <div class="flex items-center gap-3">
+            <input
+              id="ac"
+              class="h-10 w-16 rounded-lg border border-slate-300 cursor-pointer p-1"
+              type="color"
+              value={accentColorInput}
+              on:input={(e) => (accentColorInput = normaliseHex((e.currentTarget as HTMLInputElement).value))}
+            />
+            <input
+              class="input w-32 font-mono"
+              type="text"
+              maxlength="7"
+              placeholder="#ED6A42"
+              value={accentColorInput}
+              on:change={(e) => (accentColorInput = normaliseHex((e.currentTarget as HTMLInputElement).value))}
+            />
+          </div>
+        {/if}
+        <p class="text-xs text-slate-500 mt-1">Buttons use this colour instead of the brand colour. Useful when your brand colour is dark (best for text) but you want a brighter call-to-action. Keep button labels bold and 16px+ for contrast.</p>
+      </div>
+      <div class="grid sm:grid-cols-2 gap-3">
+        <div>
+          <label class="label" for="hf">Heading font</label>
+          <select id="hf" class="input" bind:value={headingFontInput}>
+            <option value="">Default (Fraunces)</option>
+            {#each FONT_OPTIONS as f}<option value={f.value}>{f.label}</option>{/each}
+          </select>
+        </div>
+        <div>
+          <label class="label" for="bf">Body font</label>
+          <select id="bf" class="input" bind:value={bodyFontInput}>
+            <option value="">Default (Mulish)</option>
+            {#each FONT_OPTIONS as f}<option value={f.value}>{f.label}</option>{/each}
+          </select>
+        </div>
       </div>
       <div class="grid sm:grid-cols-3 gap-3">
         <div><label class="label" for="fb">Facebook</label><input id="fb" class="input" bind:value={cafe.socialFacebook} /></div>
@@ -350,14 +409,14 @@
 
   {#if tab === 'home'}
     <div class="card p-6 mt-4 max-w-3xl space-y-6">
-      <p class="text-sm text-slate-600">All sections are optional — leave anything blank to hide it from the home page.</p>
+      <p class="text-sm text-slate-600">All sections are optional. Leave anything blank to hide it from the home page.</p>
 
       <section>
         <h2 class="font-semibold">Intro / About section</h2>
         <p class="text-xs text-slate-500 mt-0.5">Like the “What &amp; Who” paragraph at the top of your page.</p>
         <div class="mt-2 space-y-2">
           <input class="input" placeholder="Heading (e.g. What & Who)" bind:value={intro.heading} />
-          <textarea class="input" rows="6" placeholder="Body text — blank lines start a new paragraph." bind:value={intro.body}></textarea>
+          <textarea class="input" rows="6" placeholder="Body text. Blank lines start a new paragraph." bind:value={intro.body}></textarea>
         </div>
       </section>
 
@@ -381,7 +440,7 @@
 
       <section>
         <h2 class="font-semibold">What to bring</h2>
-        <p class="text-xs text-slate-500 mt-0.5">Customer guidance — bullet points work well (start each line with “• ”).</p>
+        <p class="text-xs text-slate-500 mt-0.5">Customer guidance. Bullet points work well (start each line with “• ”).</p>
         <div class="mt-2 space-y-2">
           <input class="input" placeholder="Heading (e.g. What to bring)" bind:value={whatToBring.heading} />
           <textarea class="input" rows="5" placeholder="One line per bullet." bind:value={whatToBring.body}></textarea>
@@ -461,7 +520,7 @@
         <p class="text-xs text-slate-500 -mt-1">How your home page appears in Google results and on social shares.</p>
         <div>
           <label class="label" for="st">Page title</label>
-          <input id="st" class="input" maxlength="70" bind:value={cafe.seoTitle} placeholder={cafe.tagline ? `${cafe.name} — ${cafe.tagline}` : cafe.name} />
+          <input id="st" class="input" maxlength="70" bind:value={cafe.seoTitle} placeholder={cafe.tagline ? `${cafe.name}: ${cafe.tagline}` : cafe.name} />
           <p class="text-xs text-slate-500 mt-1">Leave blank to auto-generate from cafe name + tagline. ~60 chars works best.</p>
         </div>
         <div>
@@ -522,7 +581,7 @@
     <div class="mt-4 max-w-2xl space-y-4">
       <div class="card p-6 space-y-3">
         <h2 class="font-semibold flex items-center gap-2"><Download class="w-4 h-4" /> Download a backup</h2>
-        <p class="text-sm text-slate-600">Creates a zip containing the entire database (all tables including audit log) plus every uploaded photo and branding asset. Keep this somewhere safe — anyone with the file can restore your cafe's data.</p>
+        <p class="text-sm text-slate-600">Creates a zip containing the entire database (all tables including audit log) plus every uploaded photo and branding asset. Keep this somewhere safe. Anyone with the file can restore your cafe's data.</p>
         {#if backupInfo}
           <p class="text-xs text-slate-500">App version <span class="font-mono">{backupInfo.appVersion}</span> · backup format v{backupInfo.backupFormatVersion}</p>
         {/if}
@@ -543,7 +602,7 @@
           <ul class="list-disc ml-5 mt-1 space-y-0.5">
             <li>All users, events, repair jobs, photos and settings are replaced with the backup's contents.</li>
             <li>You will be signed out and must log in with credentials from the backup.</li>
-            <li>The app restarts as part of the restore — give it ~10 seconds before refreshing.</li>
+            <li>The app restarts as part of the restore. Give it about 10 seconds before refreshing.</li>
           </ul>
         </div>
         <div>

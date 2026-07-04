@@ -100,6 +100,15 @@ export async function adminRepairsRoutes(app: FastifyInstance): Promise<void> {
       return;
     }
     const data = parsed.data;
+    const [existing] = await db
+      .select({ status: repairJobs.status })
+      .from(repairJobs)
+      .where(eq(repairJobs.id, id))
+      .limit(1);
+    if (!existing) {
+      reply.code(404).send({ error: 'Repair not found', code: 'repair/not_found' });
+      return;
+    }
     const update: any = { updatedAt: new Date() };
     for (const k of ['status', 'repairerId', 'outcomeNotes', 'partsUsed', 'customerName', 'customerContact', 'itemDescription', 'faultDescription', 'itemCategoryId', 'itemBrand']) {
       if ((data as any)[k] !== undefined) update[k] = (data as any)[k];
@@ -107,8 +116,15 @@ export async function adminRepairsRoutes(app: FastifyInstance): Promise<void> {
     if (data.environmentalSavingKg !== undefined) {
       update.environmentalSavingKg = data.environmentalSavingKg !== null ? String(data.environmentalSavingKg) : null;
     }
-    if (data.status === 'completed' || data.status === 'cannot_repair') {
-      update.completedAt = new Date();
+    // Stamp completed_at only when the job actually *transitions* into a terminal
+    // state (completed / cannot_repair). Re-saving an already-terminal job (e.g.
+    // to tweak notes) must NOT push completed_at forward — that inflated the
+    // reported repair durations. Reopening to a non-terminal state clears it.
+    if (data.status !== undefined) {
+      const wasTerminal = existing.status === 'completed' || existing.status === 'cannot_repair';
+      const nowTerminal = data.status === 'completed' || data.status === 'cannot_repair';
+      if (nowTerminal && !wasTerminal) update.completedAt = new Date();
+      else if (!nowTerminal && wasTerminal) update.completedAt = null;
     }
     const [updated] = await db.update(repairJobs).set(update).where(eq(repairJobs.id, id)).returning();
     await audit({ request, actorId: me.sub, actorType: me.role, action: 'repair.admin_updated', entityType: 'repair_job', entityId: id });

@@ -16,6 +16,10 @@ export interface PublicCafe {
   contactEmail: string | null;
   address: string | null;
   socialLinks: Record<string, string>;
+  primaryColor: string | null;
+  accentColor: string | null;
+  headingFont: string | null;
+  bodyFont: string | null;
 }
 
 export interface PublicEvent {

@@ -63,7 +63,7 @@
   onMount(load);
 
   function fmtDuration(min: number | null | undefined): string {
-    if (!min || min <= 0) return '—';
+    if (!min || min <= 0) return '-';
     if (min < 60) return `${min} min`;
     const h = Math.floor(min / 60);
     const m = min % 60;
@@ -223,10 +223,10 @@
                       {j.categoryName}
                     </span>
                   {:else}
-                    <span class="text-slate-400">—</span>
+                    <span class="text-slate-400">-</span>
                   {/if}
                 </td>
-                <td class="py-2 pr-3 text-slate-600">{j.repairerName ?? '—'}</td>
+                <td class="py-2 pr-3 text-slate-600">{j.repairerName ?? '-'}</td>
                 <td class="py-2 pr-3">
                   <span class="badge badge-{j.status} inline-flex items-center gap-1">
                     {#if j.status === 'waiting'}<Hourglass size={11} />{/if}

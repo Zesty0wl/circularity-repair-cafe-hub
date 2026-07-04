@@ -7,7 +7,7 @@
 
 <div class="w-full">
   <div class="flex justify-between text-xs text-slate-600 mb-1">
-    <span>Step {current} of {total}{label ? ` — ${label}` : ''}</span>
+    <span>Step {current} of {total}{label ? `: ${label}` : ''}</span>
     <span>{pct}%</span>
   </div>
   <div class="h-2 bg-slate-200 rounded-full overflow-hidden">

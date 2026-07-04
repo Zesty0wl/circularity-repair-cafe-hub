@@ -34,14 +34,14 @@
         class="inline-flex items-center gap-2 hover:text-slate-700"
       >
         <span>Powered by</span>
-        <img src="/brand/logo-horizontal.svg" alt="Circularity.org" class="h-8 w-auto" />
+        <img src="/brand/logo-wordmark.svg" alt="Circularity.org" class="h-8 w-auto" />
       </a>
       <a
         href="https://github.com/Zesty0wl/circularity-repair-cafe-hub"
         target="_blank"
         rel="noopener"
         class="inline-flex items-center gap-2 hover:text-slate-700"
-        aria-label="Repair Café Hub — open source on GitHub"
+        aria-label="Repair Café Hub, open source on GitHub"
       >
         <svg viewBox="0 0 98 96" class="h-5 w-5 shrink-0" aria-hidden="true" focusable="false">
           <path

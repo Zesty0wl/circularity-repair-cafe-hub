@@ -77,9 +77,12 @@
   }
 </script>
 
-<div class="flex justify-between items-center">
+<div class="flex justify-between items-center gap-2">
   <h1 class="text-2xl font-bold">Repairs</h1>
-  <button class="btn-secondary" on:click={exportCsv}>Export CSV</button>
+  <div class="flex gap-2">
+    <a href="/repairer/checkin" class="btn-primary">Add a repair</a>
+    <button class="btn-secondary" on:click={exportCsv}>Export CSV</button>
+  </div>
 </div>
 
 <div class="card p-4 mt-4 grid sm:grid-cols-2 md:grid-cols-4 gap-3 text-sm">
@@ -130,7 +133,7 @@
             <td class="px-3 py-2 whitespace-nowrap">{r.eventDate}</td>
             <td class="px-3 py-2 font-mono"><a href={`/admin/repairs/${r.id}`} class="text-brand-700 hover:underline">{r.jobNumber}</a></td>
             <td class="px-3 py-2">{r.itemDescription}</td>
-            <td class="px-3 py-2">{r.customerName ?? '—'}</td>
+            <td class="px-3 py-2">{r.customerName ?? '-'}</td>
             <td class="px-3 py-2 min-w-[180px]">
               <select
                 class="input input-sm py-1 text-sm w-full"
@@ -139,7 +142,7 @@
                 on:change={(e) => assignRow(r, (e.currentTarget as HTMLSelectElement).value)}
                 title="Assign this repair to a repairer"
               >
-                <option value="">— Unassigned —</option>
+                <option value="">Unassigned</option>
                 {#each assignable as u}
                   <option value={u.id}>{u.displayName}</option>
                 {/each}

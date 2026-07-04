@@ -50,7 +50,8 @@ export async function adminDashboardRoutes(app: FastifyInstance): Promise<void> 
     const [{ totalEvents }] = await db.select({ totalEvents: count() }).from(events);
     const [{ totalSavings }] = await db
       .select({ totalSavings: sum(repairJobs.environmentalSavingKg) })
-      .from(repairJobs);
+      .from(repairJobs)
+      .where(eq(repairJobs.status, 'completed'));
     const [{ activeRepairers }] = await db
       .select({ activeRepairers: count() })
       .from(users)

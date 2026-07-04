@@ -9,6 +9,49 @@ export const passwordSchema = z
 
 export const emailSchema = z.string().email('Please enter a valid email address');
 
+// A #rrggbb hex colour. Used for the per-cafe brand + accent colours.
+export const hexColorSchema = z
+  .string()
+  .regex(/^#[0-9a-fA-F]{6}$/, 'Must be a #rrggbb hex colour');
+
+// Selectable, self-hosted typefaces a cafe can pick for its display + body
+// text. Every option is bundled with the web app (see +layout.svelte imports)
+// so the choice only switches which family the CSS variables point at — it
+// never loads a third-party/CDN font (the app's CSP forbids that).
+export const FONT_OPTIONS = [
+  {
+    value: 'fraunces',
+    label: 'Fraunces (elegant serif)',
+    stack: '"Fraunces Variable", Fraunces, Georgia, "Times New Roman", serif',
+  },
+  {
+    value: 'mulish',
+    label: 'Mulish (clean sans)',
+    stack: '"Mulish Variable", Mulish, ui-sans-serif, system-ui, sans-serif',
+  },
+  {
+    value: 'hanken',
+    label: 'Hanken Grotesk (modern sans)',
+    stack: '"Hanken Grotesk Variable", "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif',
+  },
+  {
+    value: 'system',
+    label: 'System sans',
+    stack: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif',
+  },
+] as const;
+
+export type FontChoice = (typeof FONT_OPTIONS)[number]['value'];
+
+const FONT_VALUES = FONT_OPTIONS.map((f) => f.value) as [FontChoice, ...FontChoice[]];
+
+export const fontChoiceSchema = z.enum(FONT_VALUES);
+
+/** Map a font choice to its CSS `font-family` stack. */
+export const FONT_STACKS = Object.fromEntries(
+  FONT_OPTIONS.map((f) => [f.value, f.stack]),
+) as Record<FontChoice, string>;
+
 export const setupCompleteSchema = z.object({
   admin: z.object({
     displayName: z.string().min(1).max(100),
@@ -21,6 +64,11 @@ export const setupCompleteSchema = z.object({
     contactEmail: z.string().email().optional().nullable(),
     websiteUrl: z.string().url().optional().nullable(),
     description: z.string().max(2000).optional().nullable(),
+    // Optional branding captured in the onboarding wizard.
+    primaryColor: hexColorSchema.optional().nullable().or(z.literal('')),
+    accentColor: hexColorSchema.optional().nullable().or(z.literal('')),
+    headingFont: fontChoiceSchema.optional().nullable().or(z.literal('')),
+    bodyFont: fontChoiceSchema.optional().nullable().or(z.literal('')),
   }),
   venue: z.object({
     name: z.string().min(1).max(200),
@@ -179,12 +227,10 @@ export const cafeSettingsSchema = z.object({
   description: z.string().max(2000).optional().nullable(),
   websiteUrl: z.string().url().optional().nullable().or(z.literal('')),
   publicUrl: z.string().url().optional(),
-  primaryColor: z
-    .string()
-    .regex(/^#[0-9a-fA-F]{6}$/, 'Must be a #rrggbb hex colour')
-    .optional()
-    .nullable()
-    .or(z.literal('')),
+  primaryColor: hexColorSchema.optional().nullable().or(z.literal('')),
+  accentColor: hexColorSchema.optional().nullable().or(z.literal('')),
+  headingFont: fontChoiceSchema.optional().nullable().or(z.literal('')),
+  bodyFont: fontChoiceSchema.optional().nullable().or(z.literal('')),
   donateUrl: z.string().url().optional().nullable().or(z.literal('')),
   contactEmail: z.string().email().optional().nullable(),
   address: z.string().max(500).optional().nullable(),

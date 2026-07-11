@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { db } from '../../db/index.js';
 import { auditLog, events, repairJobs, users, venues } from '../../db/schema.js';
 import { and, asc, count, desc, eq, ne, sql, sum } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 
 export async function adminDashboardRoutes(app: FastifyInstance): Promise<void> {
   app.get('/api/admin/dashboard', async () => {
@@ -57,10 +58,32 @@ export async function adminDashboardRoutes(app: FastifyInstance): Promise<void> 
       .from(users)
       .where(eq(users.isActive, true));
 
-    // Recent activity
+    // Recent activity. Join in the actor and the affected repair, event or
+    // user so the dashboard can say who did what. Sign-ins are left out
+    // because they would crowd out the useful entries.
+    const actor = alias(users, 'actor');
+    const targetUser = alias(users, 'target_user');
     const recent = await db
-      .select()
+      .select({
+        id: auditLog.id,
+        action: auditLog.action,
+        entityType: auditLog.entityType,
+        entityId: auditLog.entityId,
+        actorType: auditLog.actorType,
+        actorName: actor.displayName,
+        jobNumber: repairJobs.jobNumber,
+        itemDescription: repairJobs.itemDescription,
+        eventName: events.name,
+        targetUserName: targetUser.displayName,
+        metadata: auditLog.metadata,
+        createdAt: auditLog.createdAt,
+      })
       .from(auditLog)
+      .leftJoin(actor, eq(actor.id, auditLog.actorId))
+      .leftJoin(repairJobs, and(eq(auditLog.entityType, 'repair_job'), eq(repairJobs.id, auditLog.entityId)))
+      .leftJoin(events, and(eq(auditLog.entityType, 'event'), eq(events.id, auditLog.entityId)))
+      .leftJoin(targetUser, and(eq(auditLog.entityType, 'user'), eq(targetUser.id, auditLog.entityId)))
+      .where(ne(auditLog.action, 'auth.login'))
       .orderBy(desc(auditLog.createdAt))
       .limit(10);
 

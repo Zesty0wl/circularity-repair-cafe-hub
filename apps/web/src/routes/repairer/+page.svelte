@@ -73,11 +73,11 @@
       <h2 class="text-lg font-semibold">{data.event.name}</h2>
       <p class="text-slate-600 text-sm">{data.event.venueName} · {data.event.startTime.slice(0,5)}–{data.event.endTime.slice(0,5)}</p>
       {#if data.counts}
-        <div class="mt-4 grid grid-cols-4 gap-2 text-center">
-          <div class="rounded-lg bg-amber-50 text-amber-800 p-2"><p class="text-xs">Waiting</p><p class="text-2xl font-bold">{data.counts.waiting}</p></div>
-          <div class="rounded-lg bg-blue-50 text-blue-800 p-2"><p class="text-xs">In progress</p><p class="text-2xl font-bold">{data.counts.in_progress}</p></div>
-          <div class="rounded-lg bg-emerald-50 text-emerald-800 p-2"><p class="text-xs">Done</p><p class="text-2xl font-bold">{data.counts.completed}</p></div>
-          <div class="rounded-lg bg-rose-50 text-rose-800 p-2"><p class="text-xs">Couldn't</p><p class="text-2xl font-bold">{data.counts.cannot_repair}</p></div>
+        <div class="mt-4 grid grid-cols-2 gap-2 text-center">
+          <div class="rounded-xl bg-slate-50 p-3 flex flex-col"><p class="text-xs text-slate-600 flex items-center justify-center gap-1.5"><span class="status-dot status-dot-waiting"></span>Waiting</p><p class="mt-auto text-2xl font-bold text-slate-900">{data.counts.waiting}</p></div>
+          <div class="rounded-xl bg-slate-50 p-3 flex flex-col"><p class="text-xs text-slate-600 flex items-center justify-center gap-1.5"><span class="status-dot status-dot-in_progress"></span>In progress</p><p class="mt-auto text-2xl font-bold text-slate-900">{data.counts.in_progress}</p></div>
+          <div class="rounded-xl bg-slate-50 p-3 flex flex-col"><p class="text-xs text-slate-600 flex items-center justify-center gap-1.5"><span class="status-dot status-dot-completed"></span>Done</p><p class="mt-auto text-2xl font-bold text-slate-900">{data.counts.completed}</p></div>
+          <div class="rounded-xl bg-slate-50 p-3 flex flex-col"><p class="text-xs text-slate-600 flex items-center justify-center gap-1.5"><span class="status-dot status-dot-cannot_repair"></span>Cannot repair</p><p class="mt-auto text-2xl font-bold text-slate-900">{data.counts.cannot_repair}</p></div>
         </div>
       {/if}
       <a href="/repairer/checkin" class="mt-4 btn-primary w-full"><UserPlus size={16} /> Register a repair for a visitor</a>
@@ -91,10 +91,10 @@
 
   <div class="card p-5">
     <h2 class="text-lg font-semibold">My stats</h2>
-    <div class="mt-3 grid grid-cols-3 text-center">
-      <div><p class="text-2xl font-bold">{stats?.total ?? 0}</p><p class="text-xs text-slate-500">My repairs</p></div>
-      <div><p class="text-2xl font-bold">{stats?.successRate ?? 0}%</p><p class="text-xs text-slate-500">Success rate</p></div>
-      <div><p class="text-sm font-semibold pt-2">{stats?.busiestCategory ?? '-'}</p><p class="text-xs text-slate-500">Busiest category</p></div>
+    <div class="mt-3 grid grid-cols-3 gap-2 text-center">
+      <div class="flex flex-col"><p class="text-2xl font-bold text-slate-900">{stats?.total ?? 0}</p><p class="mt-auto text-xs text-slate-500">My repairs</p></div>
+      <div class="flex flex-col"><p class="text-2xl font-bold text-slate-900">{stats?.successRate ?? 0}%</p><p class="mt-auto text-xs text-slate-500">Success rate</p></div>
+      <div class="flex flex-col"><p class="text-sm font-semibold text-slate-900 leading-snug">{stats?.busiestCategory ?? '-'}</p><p class="mt-auto text-xs text-slate-500">Busiest category</p></div>
     </div>
     <a href="/repairer/history" class="mt-4 btn-secondary w-full"><History size={16} /> My history</a>
     <a href="/repairer/profile" class="mt-2 btn-secondary w-full"><UserCircle2 size={16} /> My profile</a>
@@ -117,11 +117,11 @@
 {/if}
 
 <section class="mt-8">
-  <div class="flex items-center justify-between mb-3">
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
     <h2 class="text-lg font-semibold">Job queue</h2>
-    <div class="flex gap-1 text-sm">
+    <div class="flex flex-wrap gap-1 text-sm">
       {#each ['waiting', 'in_progress', 'completed', 'cannot_repair', 'all'] as f}
-        <button class="px-3 py-1 rounded-full {filter === f ? 'bg-brand-600 text-white' : 'bg-white ring-1 ring-slate-200 text-slate-700'}" on:click={() => (filter = f)}>{f.replace('_', ' ')}</button>
+        <button class="px-3 py-1 rounded-full whitespace-nowrap {filter === f ? 'bg-brand-600 text-white' : 'bg-white ring-1 ring-slate-200 text-slate-700'}" on:click={() => (filter = f)}>{f.replace('_', ' ')}</button>
       {/each}
     </div>
   </div>
@@ -133,7 +133,7 @@
       {#each filteredJobs as j}
         <article class="card p-4">
           <div class="flex justify-between items-start gap-3">
-            <div>
+            <div class="min-w-0">
               <p class="text-xs text-slate-500">{j.jobNumber} · <Clock class="inline" size={12} /> {fmtTime(j.createdAt)}</p>
               <h3 class="font-semibold mt-1">{j.itemDescription}</h3>
               {#if j.itemBrand}<p class="text-sm text-slate-500">{j.itemBrand}</p>{/if}
@@ -144,7 +144,7 @@
                 <p class="mt-1 text-xs text-slate-500">With: <strong>{j.repairerId === myId ? 'you' : j.repairerName}</strong></p>
               {/if}
             </div>
-            <span class="badge badge-{j.status}">{j.status.replace('_', ' ')}</span>
+            <span class="badge badge-{j.status} shrink-0">{j.status.replace('_', ' ')}</span>
           </div>
           <div class="mt-3 flex justify-end gap-2">
             {#if j.status === 'waiting'}

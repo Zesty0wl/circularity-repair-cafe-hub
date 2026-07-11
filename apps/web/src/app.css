@@ -80,6 +80,11 @@
   .btn-danger {
     @apply btn bg-red-600 text-white hover:bg-red-700;
   }
+  /* Quiet destructive action. Use where a solid red button would draw too
+     much attention, for example on a dashboard the user sees every day. */
+  .btn-danger-outline {
+    @apply btn bg-white text-red-700 ring-1 ring-red-200 hover:bg-red-50;
+  }
   .btn-lg {
     @apply px-7 py-4 text-lg;
   }
@@ -101,8 +106,15 @@
   .badge-cannot_repair { @apply bg-rose-100 text-rose-800; }
   .badge-returned { @apply bg-slate-100 text-slate-800; }
   .badge-scheduled { @apply bg-slate-100 text-slate-800; }
-  .badge-active { @apply bg-emerald-100 text-emerald-800; }
+  .badge-active { @apply bg-brand-100 text-brand-800; }
   .badge-cancelled { @apply bg-rose-100 text-rose-800; }
+  /* Small colour dots that mark a repair status next to its label. Colour is
+     never the only signal: a text label always sits beside the dot. */
+  .status-dot { @apply inline-block h-2 w-2 rounded-full; }
+  .status-dot-waiting { @apply bg-amber-500; }
+  .status-dot-in_progress { @apply bg-blue-500; }
+  .status-dot-completed { @apply bg-emerald-500; }
+  .status-dot-cannot_repair { @apply bg-rose-500; }
 }
 
 @media print {

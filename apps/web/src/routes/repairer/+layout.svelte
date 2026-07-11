@@ -2,9 +2,13 @@
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
   import { auth } from '$lib/stores/auth';
+  import { restoreSession } from '$lib/api';
   import SiteHeader from '$lib/components/SiteHeader.svelte';
 
-  onMount(() => {
+  onMount(async () => {
+    // Wait for the session restore before deciding the user is signed out,
+    // otherwise every page refresh bounces signed-in users to /login.
+    await restoreSession();
     if (!$auth) {
       goto('/login');
     }

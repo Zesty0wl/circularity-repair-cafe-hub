@@ -26,6 +26,19 @@ async function refreshAccessToken(): Promise<void> {
   return refreshing;
 }
 
+let restoring: Promise<void> | null = null;
+
+/**
+ * Restore the session from the refresh cookie after a full page load.
+ * Runs at most once per page load and never rejects. The auth store only
+ * lives in memory, so protected layouts must await this before they decide
+ * to send the user to /login.
+ */
+export function restoreSession(): Promise<void> {
+  if (!restoring) restoring = refreshAccessToken().catch(() => {});
+  return restoring;
+}
+
 export interface ApiOptions extends RequestInit {
   json?: unknown;
   formData?: FormData;

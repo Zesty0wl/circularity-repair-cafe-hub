@@ -9,10 +9,9 @@
   import { onMount } from 'svelte';
   import { browser } from '$app/environment';
   import { page } from '$app/stores';
-  import { auth } from '$lib/stores/auth';
   import { cafe, setupCompleted } from '$lib/stores/cafe';
   import { applyBranding, brandingCss } from '$lib/brand';
-  import { api } from '$lib/api';
+  import { restoreSession } from '$lib/api';
   import { serializeJsonLd, type PageSeo } from '@circularity/shared';
   import type { LayoutData } from './$types';
 
@@ -34,17 +33,11 @@
   $: if (browser) applyBranding(data.cafe);
   $: brandStyle = brandingCss(data.cafe);
 
-  onMount(async () => {
-    // Restore the session — client-only (see note above about the auth store).
-    try {
-      const body = await api<{ accessToken: string; user: any }>('/api/auth/refresh', {
-        method: 'POST',
-        autoRefresh: false,
-      });
-      auth.set({ accessToken: body.accessToken, user: body.user });
-    } catch {
-      // not authed
-    }
+  onMount(() => {
+    // Restore the session, client-only (see note above about the auth store).
+    // Protected layouts await the same promise before they redirect to
+    // /login, so a page refresh no longer bounces signed-in users there.
+    restoreSession();
   });
 
   // ── SEO/meta — centralised here so every route emits exactly one of each ──

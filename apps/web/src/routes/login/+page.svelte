@@ -1,13 +1,24 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
-  import { api } from '$lib/api';
-  import { auth } from '$lib/stores/auth';
+  import { onMount } from 'svelte';
+  import { api, restoreSession } from '$lib/api';
+  import { auth, type AuthUser } from '$lib/stores/auth';
   import { LogIn } from 'lucide-svelte';
 
   let email = '';
   let password = '';
   let busy = false;
   let error = '';
+
+  function destinationFor(user: AuthUser): string {
+    return user.role === 'repairer' ? '/repairer' : '/admin/dashboard';
+  }
+
+  onMount(async () => {
+    // If the user still has a valid session, skip the form.
+    await restoreSession();
+    if ($auth) goto(destinationFor($auth.user));
+  });
 
   async function submit(e: SubmitEvent) {
     e.preventDefault();
@@ -21,8 +32,7 @@
         autoRefresh: false,
       });
       auth.set({ accessToken: body.accessToken, user: body.user });
-      const dest = body.user.role === 'repairer' ? '/repairer' : '/admin/dashboard';
-      goto(dest);
+      goto(destinationFor(body.user));
     } catch (err: any) {
       error = err?.message || 'Could not sign in';
     } finally {

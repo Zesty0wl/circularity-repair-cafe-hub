@@ -3,11 +3,14 @@
   import { onMount } from 'svelte';
   import { auth, isAdmin } from '$lib/stores/auth';
   import { LayoutDashboard, Calendar, Users, Wrench, BarChart3, Tags, MapPin, Settings, LogOut, Menu, X, MonitorPlay, UserCircle2 } from 'lucide-svelte';
-  import { api } from '$lib/api';
+  import { api, restoreSession } from '$lib/api';
 
   let sidebarOpen = false;
 
-  onMount(() => {
+  onMount(async () => {
+    // Wait for the session restore before deciding the user is signed out,
+    // otherwise every page refresh bounces signed-in users to /login.
+    await restoreSession();
     if (!$auth || !isAdmin($auth)) {
       goto('/login');
     }

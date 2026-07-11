@@ -5,7 +5,7 @@ import cookie from '@fastify/cookie';
 import { env } from '../env.js';
 import { db } from '../db/index.js';
 import { refreshTokens, users } from '../db/schema.js';
-import { and, eq, gt } from 'drizzle-orm';
+import { and, eq, gt, lt } from 'drizzle-orm';
 import { hashToken, randomToken } from '../utils/tokens.js';
 
 export interface JWTPayload {
@@ -25,6 +25,7 @@ declare module 'fastify' {
       accessToken: string;
       refreshToken: string;
     }>;
+    signAccessToken: (user: { id: string; email: string; role: 'super_admin' | 'admin' | 'repairer'; displayName: string }) => string;
     revokeRefreshToken: (rawToken: string) => Promise<void>;
   }
   interface FastifyRequest {
@@ -83,14 +84,20 @@ const authPlugin = fp(async (app: FastifyInstance) => {
   );
 
   app.decorate(
-    'issueTokens',
-    async (user: { id: string; email: string; role: 'super_admin' | 'admin' | 'repairer'; displayName: string }) => {
-      const accessToken = app.jwt.sign({
+    'signAccessToken',
+    (user: { id: string; email: string; role: 'super_admin' | 'admin' | 'repairer'; displayName: string }) =>
+      app.jwt.sign({
         sub: user.id,
         email: user.email,
         role: user.role,
         displayName: user.displayName,
-      });
+      })
+  );
+
+  app.decorate(
+    'issueTokens',
+    async (user: { id: string; email: string; role: 'super_admin' | 'admin' | 'repairer'; displayName: string }) => {
+      const accessToken = app.signAccessToken(user);
       const refreshToken = randomToken(32);
       const expiresAt = new Date(Date.now() + env.REFRESH_TOKEN_DAYS * 24 * 60 * 60 * 1000);
       await db.insert(refreshTokens).values({
@@ -111,13 +118,24 @@ const authPlugin = fp(async (app: FastifyInstance) => {
 export default authPlugin;
 export { REFRESH_COOKIE };
 
+// Only rotate a refresh token once a day. Rotating on every call breaks
+// concurrent tabs: two tabs refresh at the same time, the first one wins,
+// and the second one gets logged out.
+const ROTATE_AFTER_MS = 24 * 60 * 60 * 1000;
+// After a rotation, the old token stays valid for a short grace window so
+// requests that were already in flight with it still succeed.
+const ROTATE_GRACE_MS = 60 * 1000;
+
 export async function rotateRefreshToken(rawToken: string): Promise<{
   user: { id: string; email: string; role: 'super_admin' | 'admin' | 'repairer'; displayName: string };
+  /** New refresh token to set as the cookie, or null to keep the current one. */
+  newToken: string | null;
 } | null> {
   const tokenHash = hashToken(rawToken);
   const rows = await db
     .select({
       tokenId: refreshTokens.id,
+      createdAt: refreshTokens.createdAt,
       userId: users.id,
       email: users.email,
       role: users.role,
@@ -130,14 +148,32 @@ export async function rotateRefreshToken(rawToken: string): Promise<{
     .limit(1);
   const row = rows[0];
   if (!row || !row.isActive) return null;
-  // Rotate: delete old token; caller will issue new
-  await db.delete(refreshTokens).where(eq(refreshTokens.id, row.tokenId));
-  return {
-    user: {
-      id: row.userId,
-      email: row.email,
-      role: row.role,
-      displayName: row.displayName,
-    },
+  const user = {
+    id: row.userId,
+    email: row.email,
+    role: row.role,
+    displayName: row.displayName,
   };
+
+  if (Date.now() - row.createdAt.getTime() < ROTATE_AFTER_MS) {
+    return { user, newToken: null };
+  }
+
+  // Rotate: issue a fresh token with a full lifetime, shorten the old one to
+  // the grace window, and clean up this user's expired tokens.
+  const newToken = randomToken(32);
+  const expiresAt = new Date(Date.now() + env.REFRESH_TOKEN_DAYS * 24 * 60 * 60 * 1000);
+  await db.insert(refreshTokens).values({
+    userId: row.userId,
+    tokenHash: hashToken(newToken),
+    expiresAt,
+  });
+  await db
+    .update(refreshTokens)
+    .set({ expiresAt: new Date(Date.now() + ROTATE_GRACE_MS) })
+    .where(eq(refreshTokens.id, row.tokenId));
+  await db
+    .delete(refreshTokens)
+    .where(and(eq(refreshTokens.userId, row.userId), lt(refreshTokens.expiresAt, new Date())));
+  return { user, newToken };
 }

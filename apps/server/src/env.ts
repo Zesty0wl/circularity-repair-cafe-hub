@@ -15,7 +15,7 @@ const envSchema = z.object({
   TRUST_PROXY: z.string().default('cloudflare'),
   MAX_UPLOAD_SIZE_MB: z.coerce.number().int().positive().default(10),
   SESSION_MAX_AGE_HOURS: z.coerce.number().int().positive().default(4),
-  REFRESH_TOKEN_DAYS: z.coerce.number().int().positive().default(30),
+  REFRESH_TOKEN_DAYS: z.coerce.number().int().positive().default(365),
   DATA_RETENTION_DEFAULT_DAYS: z.coerce.number().int().positive().default(365),
   EVENT_GENERATION_MONTHS: z.coerce.number().int().positive().default(12),
   TZ: z.string().default('UTC'),

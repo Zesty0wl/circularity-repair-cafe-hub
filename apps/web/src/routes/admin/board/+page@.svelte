@@ -2,7 +2,7 @@
   import { onDestroy, onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { auth, isAdmin } from '$lib/stores/auth';
-  import { api } from '$lib/api';
+  import { api, restoreSession } from '$lib/api';
   import {
     Maximize2, Minimize2, Volume2, VolumeX, Zap, ZapOff, ArrowLeft,
     Image as ImageIcon, ZoomIn, ZoomOut, QrCode, X,
@@ -256,7 +256,10 @@
   }
 
   // ──────────────────────────── lifecycle ──────────────────────────────
-  onMount(() => {
+  onMount(async () => {
+    // Wait for the session restore before deciding the user is signed out,
+    // otherwise every page refresh bounces signed-in users to /login.
+    await restoreSession();
     if (!$auth || !isAdmin($auth)) {
       goto('/login');
       return;

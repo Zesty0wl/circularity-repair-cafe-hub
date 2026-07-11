@@ -99,15 +99,17 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       reply.code(401).send({ error: 'Session expired', code: 'auth/expired' });
       return;
     }
-    const tokens = await app.issueTokens(result.user);
-    reply.setCookie(REFRESH_COOKIE, tokens.refreshToken, {
+    const accessToken = app.signAccessToken(result.user);
+    // Re-set the cookie even when the token is not rotated so the browser
+    // expiry slides forward on every visit.
+    reply.setCookie(REFRESH_COOKIE, result.newToken ?? raw, {
       httpOnly: true,
       sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 24 * env.REFRESH_TOKEN_DAYS,
     });
     return {
-      accessToken: tokens.accessToken,
+      accessToken,
       user: {
         id: result.user.id,
         email: result.user.email,

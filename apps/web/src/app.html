@@ -7,6 +7,12 @@
     <!-- theme-color is emitted by the root layout too, because it follows the
          cafe's own colour rather than a fixed one. -->
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- The site has one fixed light palette and no dark mode. Without this,
+         Chrome's automatic dark theme decides it may darken the page for
+         itself, which turns whole sections near-black. "only light" is the
+         explicit opt out. Declared here as well as in app.css so it applies
+         before the stylesheet loads. -->
+    <meta name="color-scheme" content="only light" />
     %sveltekit.head%
   </head>
   <body data-sveltekit-preload-data="hover">

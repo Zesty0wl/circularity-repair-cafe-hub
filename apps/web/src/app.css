@@ -37,6 +37,8 @@
     --font-sans: 'Mulish Variable', Mulish, ui-sans-serif, system-ui, sans-serif;
   }
   html {
+    /* See app.html: opt out of the browser darkening this page for us. */
+    color-scheme: only light;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
     /* Stop the grey flash mobile browsers paint on tapped links and cards.

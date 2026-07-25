@@ -1,0 +1,90 @@
+// ==========================================================================
+// Repair Cafe Woodville - Design Tokens (SCSS)
+// Mirrors tokens.css. Use $rc-* variables or the $rc-tokens map.
+// ==========================================================================
+
+// Brand palette
+$rc-orange:     #ED6A42;
+$rc-orange-600: #C95A38;
+$rc-orange-700: #A64A2E;
+$rc-orange-200: #F7BCAA;
+$rc-orange-100: #FCE4DD;
+$rc-orange-50:  #FEF5F2;
+$rc-navy:       #2D2E82;
+$rc-navy-600:   #26276E;
+$rc-navy-700:   #20205B;
+$rc-navy-200:   #A0A1C7;
+$rc-navy-100:   #D9D9E8;
+$rc-navy-50:    #F0F0F6;
+$rc-sky:        #698AC6;
+$rc-sky-600:    #5975A8;
+$rc-sky-100:    #E4EAF5;
+$rc-sand:       #DBC19A;
+$rc-sand-600:   #BAA483;
+$rc-sand-100:   #F9F4ED;
+$rc-stone:      #E6E2DB;
+$rc-stone-600:  #C4C0BA;
+$rc-stone-200:  #F4F2EF;
+$rc-stone-100:  #FAFAF9;
+$rc-ink:        #231F20;
+$rc-white:      #FFFFFF;
+$rc-violet:     #9300FF; // optional Woodville accent - see AGENTS.md
+$rc-violet-600: #7D00D9;
+$rc-violet-100: #ECD1FF;
+
+// Semantic
+$rc-color-text:         $rc-ink;
+$rc-color-text-strong:  $rc-navy;
+$rc-color-text-muted:   #6B6864;
+$rc-color-accent:       $rc-orange;
+$rc-color-brand:        $rc-navy;
+$rc-color-border:       $rc-stone;
+
+// Type
+$rc-font-display: ("Hanken Grotesk", "Arial Black", "Helvetica Neue", Arial, sans-serif);
+$rc-font-body:    ("Hanken Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif);
+$rc-weight-light: 300;
+$rc-weight-black: 900;
+
+// Type scale
+$rc-text-xs:   0.75rem;
+$rc-text-sm:   0.875rem;
+$rc-text-base: 1rem;
+$rc-text-lg:   1.25rem;
+$rc-text-xl:   1.563rem;
+$rc-text-2xl:  1.953rem;
+$rc-text-3xl:  2.441rem;
+$rc-text-4xl:  3.052rem;
+$rc-text-5xl:  3.815rem;
+
+// Space (4px grid)
+$rc-space-1: 0.25rem;
+$rc-space-2: 0.5rem;
+$rc-space-3: 0.75rem;
+$rc-space-4: 1rem;
+$rc-space-5: 1.5rem;
+$rc-space-6: 2rem;
+$rc-space-7: 3rem;
+$rc-space-8: 4rem;
+
+// Radius
+$rc-radius-sm:   4px;
+$rc-radius-md:   8px;
+$rc-radius-lg:   16px;
+$rc-radius-pill: 999px;
+
+// Elevation
+$rc-shadow-sm: 0 1px 3px rgba(35, 31, 32, 0.08);
+$rc-shadow-md: 0 4px 8px rgba(35, 31, 32, 0.08);
+$rc-shadow-lg: 0 12px 24px rgba(35, 31, 32, 0.10);
+
+// Convenience map for programmatic access
+$rc-tokens: (
+  "orange": $rc-orange,
+  "navy":   $rc-navy,
+  "sky":    $rc-sky,
+  "sand":   $rc-sand,
+  "stone":  $rc-stone,
+  "ink":    $rc-ink,
+  "violet": $rc-violet,
+);

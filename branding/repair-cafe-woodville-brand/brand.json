@@ -1,0 +1,103 @@
+{
+  "name": "Repair Cafe Woodville",
+  "shortName": "Repair Cafe",
+  "parentOrg": "Circularity",
+  "version": "1.0.0",
+  "updated": "2026-07-04",
+  "description": "Brand system for Repair Cafe Woodville, a volunteer-run community repair event supported by the charity Circularity. This manifest is the machine-readable index; read AGENTS.md for narrative rules.",
+  "tagline": "Toss it? No way!",
+  "mission": "Fix broken items together with skilled local repairers, learn new skills, save money, and keep things out of landfill.",
+
+  "colors": {
+    "primary":   { "name": "Repair Cafe Orange", "hex": "#ED6A42", "role": "accent, graphic, primary CTA", "textUse": false, "note": "3.12:1 on white - accent only, never body text" },
+    "secondary": { "name": "Repair Cafe Navy",   "hex": "#2D2E82", "role": "brand, headings, body text on light", "textUse": true, "note": "11.51:1 on white" },
+    "ink":       { "name": "Ink",   "hex": "#231F20", "role": "long-form body copy", "textUse": true },
+    "sky":       { "name": "Sky",   "hex": "#698AC6", "role": "supporting decorative blue" },
+    "sand":      { "name": "Sand",  "hex": "#DBC19A", "role": "warm neutral accent" },
+    "stone":     { "name": "Stone", "hex": "#E6E2DB", "role": "neutral backgrounds / surfaces" },
+    "white":     { "name": "White", "hex": "#FFFFFF", "role": "reversed logo on dark/busy, surfaces" },
+    "violet":    { "name": "Woodville Violet", "hex": "#9300FF", "role": "OPTIONAL location accent", "note": "Appears in the supplied Woodville wordmark instead of navy. Deviation from the master guidelines. Do not mix with navy in one lockup." }
+  },
+
+  "typography": {
+    "displayFont": "Hanken Grotesk",
+    "displayWeight": 900,
+    "displayCase": "uppercase",
+    "displayRule": "Titles are Hanken Grotesk Black, UPPERCASE ONLY. For numbers in titles, use a capital I for the numeral 1.",
+    "bodyFont": "Hanken Grotesk",
+    "bodyWeight": 300,
+    "webfontSource": "https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500;600;900&display=swap",
+    "fallbackStack": "Hanken Grotesk, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Arial, sans-serif"
+  },
+
+  "logos": {
+    "primaryStamp": "assets/logos/repair-cafe-stamp.svg",
+    "primaryStampWhite": "assets/logos/repair-cafe-stamp-white.svg",
+    "wordmark": "assets/logos/repair-cafe-wordmark.svg",
+    "wordmarkWhite": "assets/logos/repair-cafe-wordmark-white.svg",
+    "locationWoodville": "assets/logos/repair-cafe-woodville-primary.png",
+    "supportedByCircularity": "assets/logos/circularity-supported-by.svg",
+    "circularityWhite": "assets/logos/circularity-text-white.svg",
+    "circularityDark": "assets/logos/circularity-text-dark.svg",
+    "rules": {
+      "reversedOn": "Use the white logo on dark or busy backgrounds.",
+      "clearspace": "Keep clear space around any logo equal to the height of the letter R in REPAIR.",
+      "minWidthStampPx": 48,
+      "minWidthWordmarkPx": 120,
+      "supportedByPlacement": "Include the Supported by Circularity logo at the foot of any marketing material, especially off-site assets."
+    }
+  },
+
+  "icons": {
+    "style": "line, 1.75px stroke, round caps, currentColor, orange circle wrapper optional",
+    "sprite": "assets/icons/icons-sprite.svg",
+    "set": ["wrench", "coffee", "heart", "lego", "tshirt", "bicycle", "plug", "smiley", "picnic"]
+  },
+
+  "voice": {
+    "personality": ["warm", "practical", "community-minded", "encouraging", "plain-spoken"],
+    "do": [
+      "Use active, encouraging language.",
+      "Lead with the human benefit: skills, savings, less waste, community.",
+      "Be specific about what happens at an event."
+    ],
+    "dont": [
+      "Do not lecture or shame people for throwing things away.",
+      "Do not use corporate jargon or hype.",
+      "Do not use em dashes."
+    ],
+    "keyMessages": [
+      "Repair Cafes are volunteer-run community events where you can fix your broken items with skilled local repairers, learning new skills as you go.",
+      "Every Repair Cafe is powered by volunteers, and we are always looking for new repairers to share their skills and help keep items out of landfill.",
+      "Repairing together saves money, reduces waste, keeps things in use for longer, and brings people together.",
+      "With more than 2,500 Repair Cafes worldwide, find your nearest event and help create a more circular future."
+    ],
+    "ctas": ["Book a repair", "Bring something to fix", "Volunteer as a repairer", "Find your next event"]
+  },
+
+  "assets": {
+    "tokensCss": "tokens/tokens.css",
+    "tokensScss": "tokens/tokens.scss",
+    "tokensJson": "tokens/design-tokens.json",
+    "tailwind": "tokens/tailwind.config.js",
+    "componentCss": "css/repair-cafe.css",
+    "agentGuide": "AGENTS.md",
+    "showcase": "examples/index.html",
+    "appliedExample": "examples/event-landing.html"
+  },
+
+  "accessibility": {
+    "targetLevel": "WCAG 2.1 AA",
+    "bodyTextColors": ["#231F20", "#2D2E82"],
+    "neverBodyText": ["#ED6A42", "#DBC19A", "#E6E2DB"],
+    "contrast": {
+      "navy-on-white": 11.51,
+      "ink-on-white": 16.3,
+      "white-on-navy": 11.51,
+      "white-on-orange": 3.12,
+      "orange-on-white": 3.12,
+      "white-on-violet": 5.7
+    },
+    "orangeButtonRule": "White text on an orange fill only reaches AA-large (3.12:1). Keep label text bold and at least 16px. For text-dense or small controls prefer the navy button."
+  }
+}

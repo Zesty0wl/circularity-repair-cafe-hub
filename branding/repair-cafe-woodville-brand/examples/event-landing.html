@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Repair Cafe Woodville - Free community repair, every other Saturday</title>
+<link rel="stylesheet" href="../css/repair-cafe.css">
+<style>
+  .lp-top { display:flex; justify-content:space-between; align-items:center; padding-block:var(--rc-space-4); }
+  .lp-wordmark { font-family:var(--rc-font-display); font-weight:900; text-transform:uppercase; line-height:.9; font-size:1.3rem; letter-spacing:1px; }
+  .lp-hero { background:
+      radial-gradient(90% 120% at 100% 0%, var(--rc-orange-100), transparent 55%),
+      var(--rc-color-bg-warm);
+    border-radius:var(--rc-radius-xl); padding:var(--rc-space-8) var(--rc-space-6); }
+  .lp-hero h1 { font-size:clamp(2.6rem,7vw,4.5rem); }
+  .lp-steps { counter-reset:step; }
+  .lp-step { display:flex; gap:var(--rc-space-4); align-items:flex-start; }
+  .lp-step__n { counter-increment:step; flex:none; width:44px; height:44px; border-radius:50%; background:var(--rc-navy); color:#fff; display:grid; place-content:center; font-family:var(--rc-font-display); font-weight:900; }
+  .lp-step__n::before { content:counter(step); }
+</style>
+</head>
+<body class="rc rc-scope">
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+<symbol id="rc-icon-wrench" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5a3.8 3.8 0 0 0-4.9 4.9L4 16l4 4 5.6-5.6a3.8 3.8 0 0 0 4.9-4.9l-2.3 2.3-2.1-.5-.5-2.1 2.3-2.3z"/></symbol>
+<symbol id="rc-icon-coffee" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h11v5a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4V8z"/><path d="M16 9h1.8a2.2 2.2 0 0 1 0 4.4H16"/><path d="M8 3.2c-.5.7-.5 1.3 0 2M11.5 3.2c-.5.7-.5 1.3 0 2"/><path d="M4 20.5h13"/></symbol>
+<symbol id="rc-icon-lego" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="9" width="15" height="9.5" rx="1"/><path d="M8.5 9V7.2a1.3 1.3 0 0 1 2.6 0V9M12.9 9V7.2a1.3 1.3 0 0 1 2.6 0V9"/></symbol>
+<symbol id="rc-icon-tshirt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 4L5 6.2 3 9.5l2.8 1.8L7 9.8V20h10V9.8l1.2 1.5L21 9.5l-2-3.3L15.5 4a3.5 3.5 0 0 1-7 0z"/></symbol>
+<symbol id="rc-icon-bicycle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="16" r="3.4"/><circle cx="18" cy="16" r="3.4"/><path d="M6 16l3.5-6h5l3.5 6M9.5 10h6.5M9.5 10l2 6h6.5"/><path d="M13.5 7.2h2.3"/></symbol>
+<symbol id="rc-icon-plug" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v4M15 3v4"/><path d="M7 7h10v3a5 5 0 0 1-5 5 5 5 0 0 1-5-5V7z"/><path d="M12 15v5"/></symbol>
+<symbol id="rc-icon-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.3-9.2-8.6C1.2 8.2 3 4.8 6.2 4.8c1.9 0 3.2 1 3.8 2.3.6-1.3 1.9-2.3 3.8-2.3 3.2 0 5 3.4 3.4 6.6C19 15.7 12 20 12 20z"/></symbol>
+</svg>
+
+<div class="rc-container">
+  <header class="lp-top">
+    <div class="lp-wordmark"><span class="rc-text-brand">REPAIR</span> <span class="rc-text-accent">CAFE</span> <span class="rc-text-muted" style="font-weight:400;">Woodville</span></div>
+    <a class="rc-btn rc-btn--primary rc-btn--sm" href="#book">Book a repair</a>
+  </header>
+
+  <main>
+    <section class="lp-hero">
+      <span class="rc-badge rc-badge--solid" style="margin-bottom:var(--rc-space-4);">Next event · Sat 12 July</span>
+      <h1 class="rc-title" style="margin-bottom:var(--rc-space-4);">Don't bin it.<br>Bring it.</h1>
+      <p class="rc-lead" style="max-width:48ch;">Free community repair in the heart of Woodville. Our skilled local volunteers will help you fix the things you love, and show you how as you go.</p>
+      <div style="display:flex; gap:var(--rc-space-3); flex-wrap:wrap; margin-top:var(--rc-space-5);">
+        <a class="rc-btn rc-btn--primary rc-btn--lg" href="#book">Book a repair</a>
+        <a class="rc-btn rc-btn--outline rc-btn--lg" href="#volunteer">Volunteer as a repairer</a>
+      </div>
+    </section>
+
+    <section class="rc-section">
+      <p class="rc-eyebrow rc-center">What you can bring</p>
+      <h2 class="rc-title rc-title--2 rc-center">Bring one thing to fix</h2>
+      <div class="rc-grid rc-grid--auto" style="margin-top:var(--rc-space-6);">
+        <div class="rc-card rc-center"><span class="rc-icon-circle"><svg class="rc-icon" aria-hidden="true"><use href="#rc-icon-plug"/></svg></span><h3 class="rc-title rc-title--4" style="margin-top:var(--rc-space-3);">ELECTRICALS</h3><p class="rc-small" style="margin:0;">Lamps, toasters, radios, kettles.</p></div>
+        <div class="rc-card rc-center"><span class="rc-icon-circle"><svg class="rc-icon" aria-hidden="true"><use href="#rc-icon-tshirt"/></svg></span><h3 class="rc-title rc-title--4" style="margin-top:var(--rc-space-3);">TEXTILES</h3><p class="rc-small" style="margin:0;">Hems, zips, buttons, small tears.</p></div>
+        <div class="rc-card rc-center"><span class="rc-icon-circle"><svg class="rc-icon" aria-hidden="true"><use href="#rc-icon-bicycle"/></svg></span><h3 class="rc-title rc-title--4" style="margin-top:var(--rc-space-3);">BIKES</h3><p class="rc-small" style="margin:0;">Brakes, gears, punctures, tune-ups.</p></div>
+        <div class="rc-card rc-center"><span class="rc-icon-circle"><svg class="rc-icon" aria-hidden="true"><use href="#rc-icon-lego"/></svg></span><h3 class="rc-title rc-title--4" style="margin-top:var(--rc-space-3);">TOYS</h3><p class="rc-small" style="margin:0;">Wobbles, wires, and worn-out bits.</p></div>
+      </div>
+    </section>
+
+    <section class="rc-section rc-bg-navy" style="border-radius:var(--rc-radius-xl); padding-inline:var(--rc-space-6);">
+      <div class="rc-container">
+        <p class="rc-eyebrow" style="color:var(--rc-orange-200);">How it works</p>
+        <h2 class="rc-title rc-title--2" style="color:#fff;">Three easy steps</h2>
+        <div class="lp-steps rc-stack" style="margin-top:var(--rc-space-5); max-width:640px;">
+          <div class="lp-step"><div class="lp-step__n"></div><div><strong style="color:#fff;">Book your slot.</strong><p class="rc-small" style="color:var(--rc-navy-100); margin:2px 0 0;">Tell us what needs fixing so we can match you with the right repairer.</p></div></div>
+          <div class="lp-step"><div class="lp-step__n"></div><div><strong style="color:#fff;">Come along.</strong><p class="rc-small" style="color:var(--rc-navy-100); margin:2px 0 0;">Bring your item, grab a coffee, and sit with a repairer while they work.</p></div></div>
+          <div class="lp-step"><div class="lp-step__n"></div><div><strong style="color:#fff;">Learn as you go.</strong><p class="rc-small" style="color:var(--rc-navy-100); margin:2px 0 0;">Pick up the skills to keep your things going for longer at home.</p></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="rc-section">
+      <p class="rc-eyebrow">Upcoming</p>
+      <h2 class="rc-title rc-title--2">Next events</h2>
+      <div class="rc-grid rc-grid--2" style="margin-top:var(--rc-space-5);">
+        <div class="rc-event"><div class="rc-event__date"><span class="day">12</span><span class="mon">Jul</span></div><div><strong class="rc-text-brand">Repair Cafe Woodville</strong><p class="rc-small" style="margin:2px 0 0;">10:00 to 13:00 · Woodville Community Managed Library</p></div></div>
+        <div class="rc-event"><div class="rc-event__date"><span class="day">26</span><span class="mon">Jul</span></div><div><strong class="rc-text-brand">Repair Cafe Woodville</strong><p class="rc-small" style="margin:2px 0 0;">10:00 to 13:00 · Woodville Community Managed Library</p></div></div>
+      </div>
+    </section>
+
+    <section id="book" class="rc-section">
+      <div class="rc-card rc-card--warm" style="max-width:560px; margin-inline:auto;">
+        <h2 class="rc-title rc-title--3">BOOK A REPAIR</h2>
+        <p>Tell us what you would like to bring. We will confirm your slot by email.</p>
+        <div class="rc-field"><label class="rc-label" for="name">Your name</label><input class="rc-input" id="name" type="text" placeholder="Jane Smith"></div>
+        <div class="rc-field"><label class="rc-label" for="email">Email</label><input class="rc-input" id="email" type="email" placeholder="jane@example.com"></div>
+        <div class="rc-field"><label class="rc-label" for="item">What needs fixing?</label><textarea class="rc-textarea" id="item" rows="3" placeholder="A table lamp that flickers when I switch it on"></textarea></div>
+        <button class="rc-btn rc-btn--primary" style="width:100%;">Book my slot</button>
+      </div>
+    </section>
+
+    <section id="volunteer" class="rc-section rc-center">
+      <span class="rc-icon-circle" style="margin-bottom:var(--rc-space-3);"><svg class="rc-icon" aria-hidden="true"><use href="#rc-icon-heart"/></svg></span>
+      <h2 class="rc-title rc-title--2">Could you lend a hand?</h2>
+      <p class="rc-lead" style="max-width:52ch; margin-inline:auto;">You don't need to be an expert. We always need people on the welcome desk and making the teas, as well as repairers.</p>
+      <a class="rc-btn rc-btn--brand rc-btn--lg" href="#" style="margin-top:var(--rc-space-4);">Join the team</a>
+    </section>
+  </main>
+</div>
+
+<footer class="rc-footer">
+  <div class="rc-container" style="display:flex; justify-content:space-between; gap:var(--rc-space-6); flex-wrap:wrap; align-items:flex-end;">
+    <div>
+      <div class="lp-wordmark" style="color:#fff; font-size:1.5rem;">REPAIR<br>CAFE</div>
+      <p class="rc-small" style="color:var(--rc-navy-100); margin-top:var(--rc-space-3);">Woodville Community Managed Library<br>Toss it? No way.</p>
+    </div>
+    <div class="rc-supported">
+      <span class="rc-supported__label" style="color:var(--rc-navy-100);">Supported by</span>
+      <img class="rc-supported__mark" src="../assets/logos/circularity-text-white.svg" alt="Circularity">
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

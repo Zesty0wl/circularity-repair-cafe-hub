@@ -1,0 +1,261 @@
+/* ==========================================================================
+   Repair Cafe Woodville - Component & Utility Library
+   Depends on tokens.css (import it first, or @import below).
+   All values reference var(--rc-*). No raw hex in here.
+   ========================================================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500;600;900&display=swap");
+@import url("../tokens/tokens.css");
+
+/* --------------------------------------------------------------------------
+   Base
+   -------------------------------------------------------------------------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+body.rc, .rc-scope {
+  margin: 0;
+  font-family: var(--rc-font-body);
+  font-weight: var(--rc-weight-light);
+  font-size: var(--rc-text-base);
+  line-height: var(--rc-leading-normal);
+  color: var(--rc-color-text);
+  background: var(--rc-color-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.rc-scope a { color: var(--rc-color-text-link); text-underline-offset: 3px; }
+.rc-scope a:hover { color: var(--rc-color-text-link-hover); }
+
+/* --------------------------------------------------------------------------
+   Typography
+   Titles: Hanken Grotesk Black, UPPERCASE only.
+   -------------------------------------------------------------------------- */
+.rc-title {
+  font-family: var(--rc-font-display);
+  font-weight: var(--rc-weight-black);
+  text-transform: uppercase;
+  letter-spacing: var(--rc-tracking-title);
+  line-height: var(--rc-leading-tight);
+  color: var(--rc-color-text-strong);
+  margin: 0 0 var(--rc-space-4);
+}
+.rc-title--hero  { font-size: var(--rc-text-5xl); }
+.rc-title--1     { font-size: var(--rc-text-4xl); }
+.rc-title--2     { font-size: var(--rc-text-3xl); }
+.rc-title--3     { font-size: var(--rc-text-2xl); }
+.rc-title--4     { font-size: var(--rc-text-xl); }
+.rc-title--accent { color: var(--rc-color-accent); }
+.rc-title--inverse { color: var(--rc-color-text-inverse); }
+
+/* Eyebrow / label - the one place tracking goes wide */
+.rc-eyebrow {
+  font-family: var(--rc-font-display);
+  font-weight: var(--rc-weight-black);
+  text-transform: uppercase;
+  letter-spacing: var(--rc-tracking-wide);
+  font-size: var(--rc-text-sm);
+  color: var(--rc-color-accent);
+  margin: 0 0 var(--rc-space-2);
+}
+
+.rc-lead { font-size: var(--rc-text-lg); line-height: var(--rc-leading-normal); }
+.rc-body { font-size: var(--rc-text-base); }
+.rc-small, .rc-meta { font-size: var(--rc-text-sm); color: var(--rc-color-text-muted); }
+.rc-scope p { margin: 0 0 var(--rc-space-4); max-width: 68ch; }
+
+/* --------------------------------------------------------------------------
+   Layout helpers
+   -------------------------------------------------------------------------- */
+.rc-container { width: 100%; max-width: var(--rc-container-xl); margin-inline: auto; padding-inline: var(--rc-space-5); }
+.rc-container--md { max-width: var(--rc-container-md); }
+.rc-section { padding-block: var(--rc-space-8); }
+.rc-stack > * + * { margin-top: var(--rc-space-4); }
+.rc-grid { display: grid; gap: var(--rc-space-5); }
+.rc-grid--2 { grid-template-columns: repeat(2, 1fr); }
+.rc-grid--3 { grid-template-columns: repeat(3, 1fr); }
+.rc-grid--auto { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+@media (max-width: 720px) {
+  .rc-grid--2, .rc-grid--3 { grid-template-columns: 1fr; }
+}
+
+/* --------------------------------------------------------------------------
+   Buttons
+   Primary (orange) is accent-only: keep label bold and >=16px for contrast.
+   Brand (navy) is the accessible high-emphasis alternative.
+   -------------------------------------------------------------------------- */
+.rc-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--rc-space-2);
+  font-family: var(--rc-font-body);
+  font-weight: var(--rc-weight-semibold);
+  font-size: var(--rc-text-base);
+  line-height: 1;
+  padding: var(--rc-space-3) var(--rc-space-5);
+  border-radius: var(--rc-radius-pill);
+  border: 2px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background var(--rc-duration-base) var(--rc-ease-standard),
+              color var(--rc-duration-base) var(--rc-ease-standard),
+              transform var(--rc-duration-fast) var(--rc-ease-standard);
+}
+.rc-btn:active { transform: translateY(1px); }
+.rc-btn:focus-visible {
+  outline: 3px solid var(--rc-color-focus-ring);
+  outline-offset: 2px;
+}
+
+.rc-btn--primary { background: var(--rc-color-accent); color: var(--rc-color-accent-contrast); font-weight: 700; }
+.rc-btn--primary:hover { background: var(--rc-color-accent-hover); color: #fff; }
+
+.rc-btn--brand { background: var(--rc-color-brand); color: var(--rc-color-text-inverse); }
+.rc-btn--brand:hover { background: var(--rc-color-brand-hover); }
+
+.rc-btn--outline { background: transparent; color: var(--rc-color-brand); border-color: var(--rc-color-brand); }
+.rc-btn--outline:hover { background: var(--rc-color-brand); color: var(--rc-color-text-inverse); }
+
+.rc-btn--ghost { background: transparent; color: var(--rc-color-text-strong); }
+.rc-btn--ghost:hover { background: var(--rc-color-bg-muted); }
+
+.rc-btn--inverse { background: var(--rc-white); color: var(--rc-color-brand); }
+.rc-btn--inverse:hover { background: var(--rc-stone-100); }
+
+.rc-btn--sm { padding: var(--rc-space-2) var(--rc-space-4); font-size: var(--rc-text-sm); }
+.rc-btn--lg { padding: var(--rc-space-4) var(--rc-space-6); font-size: var(--rc-text-lg); }
+.rc-btn[disabled], .rc-btn--disabled { opacity: .5; pointer-events: none; }
+
+/* --------------------------------------------------------------------------
+   Badges / pills
+   -------------------------------------------------------------------------- */
+.rc-badge {
+  display: inline-flex; align-items: center; gap: var(--rc-space-1);
+  font-size: var(--rc-text-xs); font-weight: var(--rc-weight-semibold);
+  text-transform: uppercase; letter-spacing: var(--rc-tracking-wide);
+  padding: var(--rc-space-1) var(--rc-space-3);
+  border-radius: var(--rc-radius-pill);
+  background: var(--rc-orange-100); color: var(--rc-orange-700);
+}
+.rc-badge--navy  { background: var(--rc-navy-100); color: var(--rc-navy); }
+.rc-badge--sky   { background: var(--rc-sky-100);  color: var(--rc-sky-600); }
+.rc-badge--sand  { background: var(--rc-sand-100); color: var(--rc-sand-600); }
+.rc-badge--solid { background: var(--rc-color-accent); color: #fff; }
+
+/* --------------------------------------------------------------------------
+   Cards
+   -------------------------------------------------------------------------- */
+.rc-card {
+  background: var(--rc-color-surface);
+  border: 1px solid var(--rc-color-border);
+  border-radius: var(--rc-radius-lg);
+  padding: var(--rc-space-5);
+  box-shadow: var(--rc-shadow-sm);
+}
+.rc-card--warm { background: var(--rc-color-bg-warm); border-color: var(--rc-sand); }
+.rc-card--navy { background: var(--rc-color-surface-navy); color: var(--rc-color-text-inverse); border-color: transparent; }
+.rc-card--navy .rc-title { color: var(--rc-white); }
+.rc-card--accent-top { border-top: 4px solid var(--rc-color-accent); }
+
+/* Event card - the community workhorse */
+.rc-event {
+  display: grid; grid-template-columns: 84px 1fr; gap: var(--rc-space-4);
+  align-items: center;
+  background: var(--rc-color-surface);
+  border: 1px solid var(--rc-color-border);
+  border-radius: var(--rc-radius-lg);
+  padding: var(--rc-space-4);
+}
+.rc-event__date {
+  display: grid; place-content: center; text-align: center;
+  aspect-ratio: 1; border-radius: var(--rc-radius-md);
+  background: var(--rc-navy); color: #fff;
+}
+.rc-event__date .day { font-family: var(--rc-font-display); font-weight: 900; font-size: var(--rc-text-2xl); line-height: 1; }
+.rc-event__date .mon { font-size: var(--rc-text-xs); text-transform: uppercase; letter-spacing: var(--rc-tracking-wide); }
+
+/* --------------------------------------------------------------------------
+   Callouts / alerts
+   -------------------------------------------------------------------------- */
+.rc-callout {
+  border-left: 4px solid var(--rc-color-accent);
+  background: var(--rc-orange-50);
+  padding: var(--rc-space-4) var(--rc-space-5);
+  border-radius: 0 var(--rc-radius-md) var(--rc-radius-md) 0;
+}
+.rc-callout--info    { border-color: var(--rc-color-info);    background: var(--rc-color-info-bg); }
+.rc-callout--success { border-color: var(--rc-color-success); background: var(--rc-color-success-bg); }
+.rc-callout--warning { border-color: var(--rc-color-warning); background: var(--rc-color-warning-bg); }
+.rc-callout--danger  { border-color: var(--rc-color-danger);  background: var(--rc-color-danger-bg); }
+
+/* --------------------------------------------------------------------------
+   Forms
+   -------------------------------------------------------------------------- */
+.rc-field { display: grid; gap: var(--rc-space-2); margin-bottom: var(--rc-space-4); }
+.rc-label { font-size: var(--rc-text-sm); font-weight: var(--rc-weight-semibold); color: var(--rc-color-text-strong); }
+.rc-input, .rc-select, .rc-textarea {
+  font-family: var(--rc-font-body); font-size: var(--rc-text-base); color: var(--rc-color-text);
+  background: var(--rc-white);
+  padding: var(--rc-space-3) var(--rc-space-4);
+  border: 1.5px solid var(--rc-color-border-strong);
+  border-radius: var(--rc-radius-md);
+  transition: border-color var(--rc-duration-base) var(--rc-ease-standard),
+              box-shadow var(--rc-duration-base) var(--rc-ease-standard);
+}
+.rc-input:focus, .rc-select:focus, .rc-textarea:focus {
+  outline: none; border-color: var(--rc-color-accent);
+  box-shadow: 0 0 0 3px var(--rc-orange-100);
+}
+.rc-input::placeholder { color: var(--rc-color-text-muted); }
+
+/* --------------------------------------------------------------------------
+   Navigation & footer
+   -------------------------------------------------------------------------- */
+.rc-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--rc-space-5); padding: var(--rc-space-4) 0;
+}
+.rc-nav__links { display: flex; gap: var(--rc-space-5); align-items: center; list-style: none; margin: 0; padding: 0; }
+.rc-nav__links a { text-decoration: none; font-weight: var(--rc-weight-medium); color: var(--rc-color-text-strong); }
+.rc-nav__links a:hover { color: var(--rc-color-accent); }
+
+.rc-footer {
+  background: var(--rc-navy); color: var(--rc-navy-100);
+  padding-block: var(--rc-space-7);
+}
+.rc-footer a { color: var(--rc-white); }
+
+/* --------------------------------------------------------------------------
+   Icons & logo lockups
+   -------------------------------------------------------------------------- */
+.rc-icon { width: 1.5rem; height: 1.5rem; display: inline-block; vertical-align: middle; color: var(--rc-color-accent); }
+.rc-icon-circle {
+  display: inline-grid; place-content: center;
+  width: 3.5rem; height: 3.5rem; border-radius: var(--rc-radius-full);
+  border: 2px solid var(--rc-color-accent); color: var(--rc-color-accent);
+}
+.rc-icon-circle .rc-icon { width: 1.75rem; height: 1.75rem; }
+
+.rc-logo { display: inline-block; }
+.rc-logo--stamp { width: 96px; height: 96px; }
+.rc-logo--wordmark { width: 200px; height: auto; }
+.rc-supported { display: inline-flex; flex-direction: column; gap: var(--rc-space-1); }
+.rc-supported__label { font-size: var(--rc-text-xs); text-transform: uppercase; letter-spacing: var(--rc-tracking-wide); color: var(--rc-color-text-muted); }
+.rc-supported__mark { width: 140px; height: auto; }
+
+/* --------------------------------------------------------------------------
+   Utilities
+   -------------------------------------------------------------------------- */
+.rc-bg-white { background: var(--rc-white); }
+.rc-bg-stone { background: var(--rc-color-bg-muted); }
+.rc-bg-warm  { background: var(--rc-color-bg-warm); }
+.rc-bg-navy  { background: var(--rc-navy); color: var(--rc-color-text-inverse); }
+.rc-bg-navy .rc-title { color: #fff; }
+.rc-text-accent { color: var(--rc-color-accent); }
+.rc-text-brand  { color: var(--rc-color-brand); }
+.rc-text-muted  { color: var(--rc-color-text-muted); }
+.rc-center { text-align: center; }
+.rc-divider { height: 1px; background: var(--rc-color-border); border: 0; margin-block: var(--rc-space-6); }
+
+.rc-sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}

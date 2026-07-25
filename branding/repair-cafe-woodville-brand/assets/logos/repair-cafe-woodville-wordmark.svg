@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 260" role="img" aria-label="Repair Cafe Woodville">
+<defs><style><![CDATA[@import url("https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@900&display=swap");
+.rc-wm{font-family:'Hanken Grotesk','Arial Black',Arial,sans-serif;font-weight:900;font-size:118px;letter-spacing:2px;}
+.rc-loc{font-family:'Hanken Grotesk','Arial Black',Arial,sans-serif;font-weight:900;font-size:70px;}]]></style></defs>
+<text class="rc-wm" x="8" y="112"><tspan fill="#ED6A42">R</tspan><tspan fill="#9300FF">E</tspan><tspan fill="#ED6A42">P</tspan><tspan fill="#9300FF">A</tspan><tspan fill="#ED6A42">I</tspan><tspan fill="#9300FF">R</tspan></text>
+<text class="rc-wm" x="8" y="236"><tspan fill="#ED6A42">C</tspan><tspan fill="#9300FF">A</tspan><tspan fill="#ED6A42">F</tspan><tspan fill="#ED6A42">E</tspan></text>
+<text class="rc-loc" x="430" y="236" fill="#ED6A42">Woodville</text>
+</svg>

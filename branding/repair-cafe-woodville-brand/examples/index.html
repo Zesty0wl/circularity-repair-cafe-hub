@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Repair Cafe Woodville - Brand Pack</title>
+<link rel="stylesheet" href="../css/repair-cafe.css">
+<style>
+  /* Showcase-only layout. Everything references brand tokens. */
+  .sc-nav { position: sticky; top: 0; z-index: var(--rc-z-sticky); background: rgba(255,255,255,.9); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rc-color-border); }
+  .sc-wordmark { font-family: var(--rc-font-display); font-weight: 900; text-transform: uppercase; line-height: .92; font-size: 1.35rem; letter-spacing: 1px; }
+  .sc-hero { background:
+      radial-gradient(120% 90% at 85% 10%, var(--rc-orange-50), transparent 60%),
+      var(--rc-color-bg-warm); }
+  .sc-hero-title { font-size: clamp(3rem, 9vw, 6rem); }
+  .sc-stamp { width: 190px; height: 190px; border: 9px solid var(--rc-orange); border-radius: 50%; display: grid; place-content: center; text-align: center; transform: rotate(-8deg); flex: none; }
+  .sc-stamp b { display: block; font-family: var(--rc-font-display); font-weight: 900; text-transform: uppercase; line-height: 1; font-size: 2.3rem; }
+  .sc-swatch { border-radius: var(--rc-radius-md); overflow: hidden; border: 1px solid var(--rc-color-border); }
+  .sc-swatch__chip { height: 96px; }
+  .sc-swatch__meta { padding: var(--rc-space-3); background: #fff; }
+  .sc-swatch__meta code { font-family: var(--rc-font-mono); font-size: var(--rc-text-sm); color: var(--rc-color-text-strong); }
+  .sc-tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; }
+  .sc-tag--pass { background: var(--rc-color-success-bg); color: var(--rc-color-success); }
+  .sc-tag--large { background: var(--rc-color-warning-bg); color: var(--rc-color-warning); }
+  .sc-specimen { display: flex; align-items: baseline; gap: var(--rc-space-4); border-bottom: 1px dashed var(--rc-color-border); padding-block: var(--rc-space-3); flex-wrap: wrap; }
+  .sc-specimen .lbl { font-family: var(--rc-font-mono); font-size: var(--rc-text-xs); color: var(--rc-color-text-muted); width: 130px; flex: none; }
+  .sc-do, .sc-dont { border-radius: var(--rc-radius-md); padding: var(--rc-space-4); }
+  .sc-do { background: var(--rc-color-success-bg); }
+  .sc-dont { background: var(--rc-color-danger-bg); }
+  .sc-do h4, .sc-dont h4 { margin: 0 0 var(--rc-space-2); font-family: var(--rc-font-display); text-transform: uppercase; letter-spacing: .04em; font-size: var(--rc-text-sm); }
+  .sc-do h4 { color: var(--rc-color-success); }
+  .sc-dont h4 { color: var(--rc-color-danger); }
+  .sc-panel-navy { background: var(--rc-navy); border-radius: var(--rc-radius-lg); padding: var(--rc-space-6); color: #fff; }
+  .sc-num { font-family: var(--rc-font-display); font-weight: 900; color: var(--rc-orange); font-size: var(--rc-text-lg); margin-right: var(--rc-space-2); }
+</style>
+</head>
+<body class="rc rc-scope">
+
+<!-- Inlined icon sprite so the page works when opened from disk -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+<symbol id="rc-icon-wrench" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5a3.8 3.8 0 0 0-4.9 4.9L4 16l4 4 5.6-5.6a3.8 3.8 0 0 0 4.9-4.9l-2.3 2.3-2.1-.5-.5-2.1 2.3-2.3z"/></symbol>
+<symbol id="rc-icon-coffee" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h11v5a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4V8z"/><path d="M16 9h1.8a2.2 2.2 0 0 1 0 4.4H16"/><path d="M8 3.2c-.5.7-.5 1.3 0 2M11.5 3.2c-.5.7-.5 1.3 0 2"/><path d="M4 20.5h13"/></symbol>
+<symbol id="rc-icon-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.3-9.2-8.6C1.2 8.2 3 4.8 6.2 4.8c1.9 0 3.2 1 3.8 2.3.6-1.3 1.9-2.3 3.8-2.3 3.2 0 5 3.4 3.4 6.6C19 15.7 12 20 12 20z"/></symbol>
+<symbol id="rc-icon-lego" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="9" width="15" height="9.5" rx="1"/><path d="M8.5 9V7.2a1.3 1.3 0 0 1 2.6 0V9M12.9 9V7.2a1.3 1.3 0 0 1 2.6 0V9"/></symbol>
+<symbol id="rc-icon-tshirt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 4L5 6.2 3 9.5l2.8 1.8L7 9.8V20h10V9.8l1.2 1.5L21 9.5l-2-3.3L15.5 4a3.5 3.5 0 0 1-7 0z"/></symbol>
+<symbol id="rc-icon-bicycle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="16" r="3.4"/><circle cx="18" cy="16" r="3.4"/><path d="M6 16l3.5-6h5l3.5 6M9.5 10h6.5M9.5 10l2 6h6.5"/><path d="M13.5 7.2h2.3"/></symbol>
+<symbol id="rc-icon-plug" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v4M15 3v4"/><path d="M7 7h10v3a5 5 0 0 1-5 5 5 5 0 0 1-5-5V7z"/><path d="M12 15v5"/></symbol>
+<symbol id="rc-icon-smiley" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.2"/><path d="M8.6 14.2a4.2 4.2 0 0 0 6.8 0"/><path d="M9 9.6h.01M15 9.6h.01"/></symbol>
+<symbol id="rc-icon-picnic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M6.5 7l-2.5 12M17.5 7l2.5 12M8.2 7l-1.4 12M15.8 7l1.4 12M6 13.5h12"/></symbol>
+</svg>
+
+<!-- NAV -->
+<header class="sc-nav">
+  <div class="rc-container rc-nav">
+    <div class="sc-wordmark"><span class="rc-text-brand">REPAIR</span><br><span class="rc-text-accent">CAFE</span></div>
+    <nav aria-label="Sections">
+      <ul class="rc-nav__links">
+        <li><a href="#logos">Logos</a></li>
+        <li><a href="#colour">Colour</a></li>
+        <li><a href="#type">Type</a></li>
+        <li><a href="#icons">Icons</a></li>
+        <li><a href="#components">Components</a></li>
+        <li><a href="#voice">Voice</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="sc-hero rc-section">
+  <div class="rc-container" style="display:flex; gap:var(--rc-space-7); align-items:center; flex-wrap:wrap;">
+    <div style="flex:1; min-width:320px;">
+      <p class="rc-eyebrow">Brand pack · v1.0.0</p>
+      <h1 class="rc-title sc-hero-title" style="margin-bottom:var(--rc-space-4);">Toss it?<br>No way!</h1>
+      <p class="rc-lead" style="max-width:52ch;">The complete brand system for Repair Cafe Woodville. Built for AI coding agents and for people. Fix things together, learn new skills, keep them out of landfill.</p>
+      <div style="display:flex; gap:var(--rc-space-3); flex-wrap:wrap; margin-top:var(--rc-space-5);">
+        <a class="rc-btn rc-btn--primary rc-btn--lg" href="#components">See the components</a>
+        <a class="rc-btn rc-btn--outline rc-btn--lg" href="event-landing.html">View a live page</a>
+      </div>
+    </div>
+    <div class="sc-stamp" aria-label="Repair Cafe stamp">
+      <div>
+        <b class="rc-text-brand">Repair</b>
+        <b class="rc-text-accent">Cafe</b>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LOGOS -->
+<section id="logos" class="rc-section">
+  <div class="rc-container">
+    <p class="rc-eyebrow">01 · Identity</p>
+    <h2 class="rc-title rc-title--1">Logos</h2>
+    <p class="rc-lead" style="max-width:60ch;">Four versions cover every context. Keep clear space around any logo equal to the height of the R in REPAIR. Use the white logo on dark or busy backgrounds.</p>
+
+    <div class="rc-grid rc-grid--auto" style="margin-top:var(--rc-space-6);">
+      <div class="rc-card rc-center">
+        <div class="sc-stamp" style="width:130px;height:130px;border-width:7px;margin:0 auto var(--rc-space-4);">
+          <div><b class="rc-text-brand" style="font-size:1.5rem;">Repair</b><b class="rc-text-accent" style="font-size:1.5rem;">Cafe</b></div>
+        </div>
+        <p class="rc-meta" style="margin:0;"><strong>Primary - Stamp.</strong> Avatars, stickers, favicons.</p>
+      </div>
+
+      <div class="rc-card rc-center">
+        <div class="sc-wordmark" style="font-size:2.4rem; margin:var(--rc-space-4) 0 var(--rc-space-5);">
+          <span class="rc-text-brand">RE</span><span class="rc-text-accent">P</span><span class="rc-text-brand">A</span><span class="rc-text-accent">I</span><span class="rc-text-brand">R</span><br>
+          <span class="rc-text-accent">C</span><span class="rc-text-brand">A</span><span class="rc-text-accent">F</span><span class="rc-text-brand">E</span>
+        </div>
+        <p class="rc-meta" style="margin:0;"><strong>Secondary - Wordmark.</strong> Headers and print.</p>
+      </div>
+
+      <div class="rc-card rc-center">
+        <img src="../assets/logos/repair-cafe-woodville-primary.png" alt="Repair Cafe Woodville location lockup" style="max-width:100%; height:auto; margin:var(--rc-space-3) 0;">
+        <p class="rc-meta" style="margin:0;"><strong>Location mark.</strong> The Woodville lockup (violet variant).</p>
+      </div>
+
+      <div class="rc-card rc-card--navy rc-center">
+        <div class="sc-wordmark" style="font-size:2.4rem; color:#fff; margin:var(--rc-space-4) 0 var(--rc-space-5);">
+          REPAIR<br>CAFE
+        </div>
+        <p class="rc-small" style="margin:0; color:var(--rc-navy-100);"><strong style="color:#fff;">Reversed - White.</strong> On dark or busy backgrounds.</p>
+      </div>
+    </div>
+
+    <div class="rc-callout rc-callout--warning" style="margin-top:var(--rc-space-6);">
+      <strong>Heads up.</strong> The guidelines name navy as the secondary colour, but the supplied Woodville lockup uses electric violet. This pack keeps navy canonical and offers violet as an optional Woodville accent. Pick one direction to stay consistent.
+    </div>
+  </div>
+</section>
+
+<!-- COLOUR -->
+<section id="colour" class="rc-section rc-bg-stone">
+  <div class="rc-container">
+    <p class="rc-eyebrow">02 · Colour</p>
+    <h2 class="rc-title rc-title--1">Palette</h2>
+    <p class="rc-lead" style="max-width:62ch;">Orange leads as the accent. Navy carries text and structure. Neutrals keep it warm. Contrast tags show what is safe for text on white.</p>
+
+    <div class="rc-grid rc-grid--auto" style="margin-top:var(--rc-space-6);">
+      <div class="sc-swatch"><div class="sc-swatch__chip" style="background:#ED6A42"></div><div class="sc-swatch__meta"><strong>Orange</strong><br><code>#ED6A42</code><br><span class="sc-tag sc-tag--large">Accent only · AA large</span></div></div>
+      <div class="sc-swatch"><div class="sc-swatch__chip" style="background:#2D2E82"></div><div class="sc-swatch__meta"><strong>Navy</strong><br><code>#2D2E82</code><br><span class="sc-tag sc-tag--pass">Text · AAA 11.5:1</span></div></div>
+      <div class="sc-swatch"><div class="sc-swatch__chip" style="background:#231F20"></div><div class="sc-swatch__meta"><strong>Ink</strong><br><code>#231F20</code><br><span class="sc-tag sc-tag--pass">Body text · AAA 16.3:1</span></div></div>
+      <div class="sc-swatch"><div class="sc-swatch__chip" style="background:#698AC6"></div><div class="sc-swatch__meta"><strong>Sky</strong><br><code>#698AC6</code><br><span class="sc-tag sc-tag--large">Decorative</span></div></div>
+      <div class="sc-swatch"><div class="sc-swatch__chip" style="background:#DBC19A"></div><div class="sc-swatch__meta"><strong>Sand</strong><br><code>#DBC19A</code><br><span class="sc-tag sc-tag--large">Warm accent</span></div></div>
+      <div class="sc-swatch"><div class="sc-swatch__chip" style="background:#E6E2DB"></div><div class="sc-swatch__meta"><strong>Stone</strong><br><code>#E6E2DB</code><br><span class="sc-tag sc-tag--large">Backgrounds</span></div></div>
+      <div class="sc-swatch"><div class="sc-swatch__chip" style="background:#FFFFFF; border-bottom:1px solid var(--rc-color-border)"></div><div class="sc-swatch__meta"><strong>White</strong><br><code>#FFFFFF</code><br><span class="sc-tag sc-tag--pass">Surface</span></div></div>
+      <div class="sc-swatch"><div class="sc-swatch__chip" style="background:#9300FF"></div><div class="sc-swatch__meta"><strong>Woodville Violet</strong><br><code>#9300FF</code><br><span class="sc-tag sc-tag--large">Optional accent</span></div></div>
+    </div>
+
+    <div class="rc-grid rc-grid--2" style="margin-top:var(--rc-space-6);">
+      <div class="sc-do"><h4>Do</h4><p style="margin:0;">Set body text in ink or navy. Use orange for buttons, icons, and highlights. Reverse to white on navy or on photos.</p></div>
+      <div class="sc-dont"><h4>Don't</h4><p style="margin:0;">Set paragraphs or small labels in orange, sand, or stone on white. It fails contrast and gets hard to read.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- TYPE -->
+<section id="type" class="rc-section">
+  <div class="rc-container">
+    <p class="rc-eyebrow">03 · Typography</p>
+    <h2 class="rc-title rc-title--1">Hanken Grotesk</h2>
+    <p class="rc-lead" style="max-width:62ch;">One family, two jobs. Titles are Black and UPPERCASE. Body is Light. The contrast between the two is the type personality, so keep it.</p>
+
+    <div style="margin-top:var(--rc-space-6);">
+      <div class="sc-specimen"><span class="lbl">Hero / 61px</span><span class="rc-title" style="font-size:var(--rc-text-5xl); margin:0;">FIX IT TODAY</span></div>
+      <div class="sc-specimen"><span class="lbl">Title 1 / 49px</span><span class="rc-title" style="font-size:var(--rc-text-4xl); margin:0;">EVERY SATURDAY</span></div>
+      <div class="sc-specimen"><span class="lbl">Title 2 / 39px</span><span class="rc-title" style="font-size:var(--rc-text-3xl); margin:0;">BRING SOMETHING</span></div>
+      <div class="sc-specimen"><span class="lbl">Title 3 / 31px</span><span class="rc-title" style="font-size:var(--rc-text-2xl); margin:0;">MEET THE REPAIRERS</span></div>
+      <div class="sc-specimen"><span class="lbl">Eyebrow / 14px</span><span class="rc-eyebrow" style="margin:0;">Volunteer led</span></div>
+      <div class="sc-specimen"><span class="lbl">Lead / 20px</span><span class="rc-lead" style="margin:0;">Light weight carries the reading. It stays calm and open.</span></div>
+      <div class="sc-specimen"><span class="lbl">Body / 16px</span><span class="rc-body" style="margin:0;">Body copy is Hanken Grotesk Light. Comfortable line length, generous line height, plain words.</span></div>
+    </div>
+
+    <div class="rc-callout" style="margin-top:var(--rc-space-6);">
+      <strong>Brand quirk.</strong> In titles, write the numeral 1 as a capital I. So <span class="rc-title" style="font-size:1.1rem;">PART I</span>, not "Part 1". Body copy and dates use normal numerals.
+    </div>
+  </div>
+</section>
+
+<!-- ICONS -->
+<section id="icons" class="rc-section rc-bg-warm">
+  <div class="rc-container">
+    <p class="rc-eyebrow">04 · Icons</p>
+    <h2 class="rc-title rc-title--1">Icon set</h2>
+    <p class="rc-lead" style="max-width:60ch;">Line icons, 1.75px stroke, round caps. They inherit colour, so the orange ring is a wrapper you add. Nine cover the common repair categories.</p>
+
+    <div style="display:flex; flex-wrap:wrap; gap:var(--rc-space-6); margin-top:var(--rc-space-6);">
+      <figure style="margin:0; text-align:center;"><span class="rc-icon-circle"><svg class="rc-icon" aria-hidden="true"><use href="#rc-icon-wrench"/></svg></span><figcaption class="rc-meta" style="margin-top:6px;">wrench</figcaption></figure>
+      <figure style="margin:0; text-align:center;"><span class="rc-icon-circle"><svg class="rc-icon" aria-hidden="true"><use href="#rc-icon-coffee"/></svg></span><figcaption class="rc-meta" style="margin-top:6px;">coffee</figcaption></figure>
+      <figure style="margin:0; text-align:center;"><span class="rc-icon-circle"><svg class="rc-icon" aria-hidden="true"><use href="#rc-icon-heart"/></svg></span><figcaption class="rc-meta" style="margin-top:6px;">heart</figcaption></figure>
+      <figure style="margin:0; text-align:center;"><span class="rc-icon-circle"><svg class="rc-icon" aria-hidden="true"><use href="#rc-icon-lego"/></svg></span><figcaption class="rc-meta" style="margin-top:6px;">lego</figcaption></figure>
+      <figure style="margin:0; text-align:center;"><span class="rc-icon-circle"><svg class="rc-icon" aria-hidden="true"><use href="#rc-icon-tshirt"/></svg></span><figcaption class="rc-meta" style="margin-top:6px;">tshirt</figcaption></figure>
+      <figure style="margin:0; text-align:center;"><span class="rc-icon-circle"><svg class="rc-icon" aria-hidden="true"><use href="#rc-icon-bicycle"/></svg></span><figcaption class="rc-meta" style="margin-top:6px;">bicycle</figcaption></figure>
+      <figure style="margin:0; text-align:center;"><span class="rc-icon-circle"><svg class="rc-icon" aria-hidden="true"><use href="#rc-icon-plug"/></svg></span><figcaption class="rc-meta" style="margin-top:6px;">plug</figcaption></figure>
+      <figure style="margin:0; text-align:center;"><span class="rc-icon-circle"><svg class="rc-icon" aria-hidden="true"><use href="#rc-icon-smiley"/></svg></span><figcaption class="rc-meta" style="margin-top:6px;">smiley</figcaption></figure>
+      <figure style="margin:0; text-align:center;"><span class="rc-icon-circle"><svg class="rc-icon" aria-hidden="true"><use href="#rc-icon-picnic"/></svg></span><figcaption class="rc-meta" style="margin-top:6px;">picnic</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<!-- COMPONENTS -->
+<section id="components" class="rc-section">
+  <div class="rc-container">
+    <p class="rc-eyebrow">05 · Components</p>
+    <h2 class="rc-title rc-title--1">Building blocks</h2>
+
+    <h3 class="rc-title rc-title--4" style="margin-top:var(--rc-space-6);">Buttons</h3>
+    <div style="display:flex; gap:var(--rc-space-3); flex-wrap:wrap; align-items:center;">
+      <button class="rc-btn rc-btn--primary">Book a repair</button>
+      <button class="rc-btn rc-btn--brand">Volunteer</button>
+      <button class="rc-btn rc-btn--outline">Find an event</button>
+      <button class="rc-btn rc-btn--ghost">Learn more</button>
+    </div>
+
+    <h3 class="rc-title rc-title--4" style="margin-top:var(--rc-space-6);">Badges</h3>
+    <div style="display:flex; gap:var(--rc-space-3); flex-wrap:wrap; align-items:center;">
+      <span class="rc-badge">Free entry</span>
+      <span class="rc-badge rc-badge--navy">Volunteer led</span>
+      <span class="rc-badge rc-badge--sky">All welcome</span>
+      <span class="rc-badge rc-badge--sand">Refreshments</span>
+      <span class="rc-badge rc-badge--solid">This Saturday</span>
+    </div>
+
+    <h3 class="rc-title rc-title--4" style="margin-top:var(--rc-space-6);">Cards and events</h3>
+    <div class="rc-grid rc-grid--3" style="margin-top:var(--rc-space-4);">
+      <article class="rc-card rc-card--accent-top">
+        <span class="rc-icon-circle" style="margin-bottom:var(--rc-space-3);"><svg class="rc-icon" aria-hidden="true"><use href="#rc-icon-wrench"/></svg></span>
+        <h4 class="rc-title rc-title--4">SMALL APPLIANCES</h4>
+        <p style="margin:0;">Toasters, lamps, radios. Our repairers will take a look and get them working again.</p>
+      </article>
+      <article class="rc-card rc-card--warm">
+        <span class="rc-icon-circle" style="margin-bottom:var(--rc-space-3);"><svg class="rc-icon" aria-hidden="true"><use href="#rc-icon-tshirt"/></svg></span>
+        <h4 class="rc-title rc-title--4">TEXTILES</h4>
+        <p style="margin:0;">Hems, buttons, zips, and tears. Bring the clothes you love back to life.</p>
+      </article>
+      <article class="rc-card rc-card--navy">
+        <span class="rc-icon-circle" style="margin-bottom:var(--rc-space-3); border-color:#fff; color:#fff;"><svg class="rc-icon" aria-hidden="true"><use href="#rc-icon-bicycle"/></svg></span>
+        <h4 class="rc-title rc-title--4">BIKES</h4>
+        <p style="margin:0; color:var(--rc-navy-100);">Brakes, gears, punctures, and a safety check before you ride off.</p>
+      </article>
+    </div>
+
+    <div class="rc-grid rc-grid--2" style="margin-top:var(--rc-space-5);">
+      <div class="rc-event">
+        <div class="rc-event__date"><span class="day">12</span><span class="mon">Jul</span></div>
+        <div>
+          <strong class="rc-text-brand">Repair Cafe Woodville</strong>
+          <p class="rc-small" style="margin:2px 0 0;">10:00 to 13:00 · Woodville Community Managed Library</p>
+        </div>
+      </div>
+      <div class="rc-event">
+        <div class="rc-event__date"><span class="day">26</span><span class="mon">Jul</span></div>
+        <div>
+          <strong class="rc-text-brand">Repair Cafe Woodville</strong>
+          <p class="rc-small" style="margin:2px 0 0;">10:00 to 13:00 · Woodville Community Managed Library</p>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="rc-title rc-title--4" style="margin-top:var(--rc-space-6);">Callouts</h3>
+    <div class="rc-stack">
+      <div class="rc-callout"><strong>Good to know.</strong> Bring one item per visit so everyone gets a turn.</div>
+      <div class="rc-callout rc-callout--success"><strong>Fixed.</strong> Last month we repaired 38 items and saved them from landfill.</div>
+      <div class="rc-callout rc-callout--info"><strong>New repairer?</strong> No experience needed to help on the welcome desk.</div>
+    </div>
+
+    <h3 class="rc-title rc-title--4" style="margin-top:var(--rc-space-6);">Form</h3>
+    <div class="rc-card" style="max-width:520px;">
+      <div class="rc-field">
+        <label class="rc-label" for="nm">Your name</label>
+        <input class="rc-input" id="nm" type="text" placeholder="Jane Smith">
+      </div>
+      <div class="rc-field">
+        <label class="rc-label" for="it">What needs fixing?</label>
+        <input class="rc-input" id="it" type="text" placeholder="A table lamp that won't switch on">
+      </div>
+      <button class="rc-btn rc-btn--primary" style="width:100%;">Book a repair</button>
+    </div>
+  </div>
+</section>
+
+<!-- VOICE -->
+<section id="voice" class="rc-section rc-bg-stone">
+  <div class="rc-container">
+    <p class="rc-eyebrow">06 · Voice</p>
+    <h2 class="rc-title rc-title--1">How we sound</h2>
+    <p class="rc-lead" style="max-width:60ch;">Warm, practical, and encouraging. We lead with what people get: new skills, money saved, less waste, good company. We never lecture.</p>
+
+    <div class="rc-grid rc-grid--2" style="margin-top:var(--rc-space-6);">
+      <div>
+        <h3 class="rc-title rc-title--4">Key messages</h3>
+        <p><span class="sc-num">I.</span>Repair Cafes are volunteer-run community events where you can fix your broken items with skilled local repairers, learning new skills as you go.</p>
+        <p><span class="sc-num">2.</span>Every Repair Cafe is powered by volunteers, and we are always looking for new repairers to share their skills.</p>
+        <p><span class="sc-num">3.</span>Repairing together saves money, reduces waste, keeps things in use for longer, and brings people together.</p>
+        <p><span class="sc-num">4.</span>With more than 2,500 Repair Cafes worldwide, find your nearest event and help create a more circular future.</p>
+      </div>
+      <div>
+        <div class="sc-do" style="margin-bottom:var(--rc-space-4);"><h4>Do say</h4><p style="margin:0;">"Bring something to fix." "Learn as you go." "Everyone welcome." Specific, active, kind.</p></div>
+        <div class="sc-dont"><h4>Don't say</h4><p style="margin:0;">"Stop being wasteful." Corporate hype. Anything with an em dash. Keep it human.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="rc-footer">
+  <div class="rc-container" style="display:flex; justify-content:space-between; gap:var(--rc-space-6); flex-wrap:wrap; align-items:flex-end;">
+    <div>
+      <div class="sc-wordmark" style="color:#fff; font-size:1.6rem;">REPAIR<br>CAFE</div>
+      <p class="rc-small" style="color:var(--rc-navy-100); margin-top:var(--rc-space-3);">Woodville Community Managed Library<br>Every other Saturday, 10:00 to 13:00</p>
+    </div>
+    <div class="rc-supported">
+      <span class="rc-supported__label" style="color:var(--rc-navy-100);">Supported by</span>
+      <img class="rc-supported__mark" src="../assets/logos/circularity-text-white.svg" alt="Circularity">
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

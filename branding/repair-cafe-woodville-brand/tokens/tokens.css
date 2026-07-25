@@ -1,0 +1,221 @@
+/* ==========================================================================
+   Repair Cafe Woodville - Design Tokens (CSS Custom Properties)
+   Single source of truth for colour, type, space, radius, shadow, motion.
+   Load this first. Everything else references var(--rc-*).
+   Brand system v1.0.0 · Supported by Circularity
+   ========================================================================== */
+
+:root {
+  /* ----------------------------------------------------------------------
+     1. BRAND COLOUR - raw palette (from the "TOSS IT? NO WAY!" guidelines)
+     Never hard-code these hex values in components. Reference the var.
+     ---------------------------------------------------------------------- */
+
+  /* Orange - the primary brand colour. Graphic / accent use only.
+     Fails AA for body text on white (3.12:1). Never set body copy in orange. */
+  --rc-orange:      #ED6A42;
+  --rc-orange-600:  #C95A38; /* hover / pressed on orange fills */
+  --rc-orange-700:  #A64A2E; /* deep accent, borders on light */
+  --rc-orange-200:  #F7BCAA; /* tint */
+  --rc-orange-100:  #FCE4DD; /* soft fill / badge background */
+  --rc-orange-50:   #FEF5F2; /* faint wash */
+
+  /* Navy - secondary brand colour and the TEXT workhorse (11.51:1 on white). */
+  --rc-navy:        #2D2E82;
+  --rc-navy-600:    #26276E;
+  --rc-navy-700:    #20205B;
+  --rc-navy-200:    #A0A1C7;
+  --rc-navy-100:    #D9D9E8;
+  --rc-navy-50:     #F0F0F6;
+
+  /* Sky - supporting cool blue. Decorative / large elements. */
+  --rc-sky:         #698AC6;
+  --rc-sky-600:     #5975A8;
+  --rc-sky-100:     #E4EAF5;
+
+  /* Sand - warm neutral accent. Backgrounds, dividers, warmth. */
+  --rc-sand:        #DBC19A;
+  --rc-sand-600:    #BAA483;
+  --rc-sand-100:    #F9F4ED;
+
+  /* Stone - the neutral system. Backgrounds and surfaces. */
+  --rc-stone:       #E6E2DB;
+  --rc-stone-600:   #C4C0BA;
+  --rc-stone-200:   #F4F2EF;
+  --rc-stone-100:   #FAFAF9;
+
+  /* Ink - near-black for long-form body text (16.3:1 on white). */
+  --rc-ink:         #231F20;
+  --rc-white:       #FFFFFF;
+
+  /* Woodville Violet - OPTIONAL location accent.
+     NOTE: the Woodville wordmark supplied by the designer uses this instead
+     of navy. It deviates from the master guidelines. Use only for the
+     Woodville location lockup, or adopt it consciously. Do not mix with navy
+     in the same lockup. See AGENTS.md § Colour deviations. */
+  --rc-violet:      #9300FF;
+  --rc-violet-600:  #7D00D9;
+  --rc-violet-100:  #ECD1FF;
+
+  /* ----------------------------------------------------------------------
+     2. SEMANTIC COLOUR - reference these in UI, not the raw palette above.
+     Swap these to re-theme (e.g. a violet Woodville variant) without
+     touching component code.
+     ---------------------------------------------------------------------- */
+
+  /* Surfaces & backgrounds */
+  --rc-color-bg:            var(--rc-white);
+  --rc-color-bg-subtle:     var(--rc-stone-100);
+  --rc-color-bg-muted:      var(--rc-stone);
+  --rc-color-bg-warm:       var(--rc-sand-100);
+  --rc-color-surface:       var(--rc-white);
+  --rc-color-surface-navy:  var(--rc-navy);   /* dark / busy background */
+  --rc-color-overlay:       rgba(35, 31, 32, 0.55);
+
+  /* Text */
+  --rc-color-text:          var(--rc-ink);    /* body copy */
+  --rc-color-text-strong:   var(--rc-navy);   /* headings, emphasis */
+  --rc-color-text-muted:    #6B6864;          /* captions, meta */
+  --rc-color-text-inverse:  var(--rc-white);  /* on navy / on orange fills */
+  --rc-color-text-link:     var(--rc-navy);
+  --rc-color-text-link-hover: var(--rc-orange-700);
+
+  /* Brand actions */
+  --rc-color-accent:            var(--rc-orange);
+  --rc-color-accent-hover:      var(--rc-orange-600);
+  --rc-color-accent-contrast:   var(--rc-white); /* text on orange - use bold >=16px */
+  --rc-color-brand:             var(--rc-navy);
+  --rc-color-brand-hover:       var(--rc-navy-600);
+
+  /* Borders & lines */
+  --rc-color-border:        var(--rc-stone);
+  --rc-color-border-strong: var(--rc-stone-600);
+  --rc-color-border-accent: var(--rc-orange);
+  --rc-color-focus-ring:    var(--rc-orange);
+
+  /* Functional / status - tuned to sit with the brand palette */
+  --rc-color-success:       #2E7D5B;
+  --rc-color-success-bg:    #E4F1EB;
+  --rc-color-warning:       #B5761B;
+  --rc-color-warning-bg:    #FBEFD9;
+  --rc-color-danger:        #C4372B;
+  --rc-color-danger-bg:     #FBE6E3;
+  --rc-color-info:          var(--rc-navy);
+  --rc-color-info-bg:       var(--rc-navy-50);
+
+  /* ----------------------------------------------------------------------
+     3. TYPOGRAPHY
+     Display / titles: Hanken Grotesk Black, UPPERCASE ONLY.
+     Body: Hanken Grotesk Light.
+     ---------------------------------------------------------------------- */
+  --rc-font-display: "Hanken Grotesk", "Arial Black", "Helvetica Neue", Arial, sans-serif;
+  --rc-font-body:    "Hanken Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --rc-font-mono:    ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+
+  --rc-weight-light:    300; /* body copy */
+  --rc-weight-regular:  400;
+  --rc-weight-medium:   500;
+  --rc-weight-semibold: 600;
+  --rc-weight-black:    900; /* titles only */
+
+  /* Type scale (1.250 major third, 16px base) */
+  --rc-text-xs:   0.75rem;   /* 12px */
+  --rc-text-sm:   0.875rem;  /* 14px */
+  --rc-text-base: 1rem;      /* 16px */
+  --rc-text-lg:   1.25rem;   /* 20px */
+  --rc-text-xl:   1.563rem;  /* 25px */
+  --rc-text-2xl:  1.953rem;  /* 31px */
+  --rc-text-3xl:  2.441rem;  /* 39px */
+  --rc-text-4xl:  3.052rem;  /* 49px */
+  --rc-text-5xl:  3.815rem;  /* 61px */
+
+  --rc-leading-tight:   1.05; /* stacked black titles */
+  --rc-leading-snug:    1.2;
+  --rc-leading-normal:  1.6;  /* body copy */
+  --rc-leading-relaxed: 1.75;
+
+  --rc-tracking-title:  0.01em;  /* black caps titles */
+  --rc-tracking-normal: 0;
+  --rc-tracking-wide:   0.08em;  /* eyebrows / labels */
+
+  /* ----------------------------------------------------------------------
+     4. SPACE - 4px base grid
+     ---------------------------------------------------------------------- */
+  --rc-space-0:   0;
+  --rc-space-1:   0.25rem;  /* 4  */
+  --rc-space-2:   0.5rem;   /* 8  */
+  --rc-space-3:   0.75rem;  /* 12 */
+  --rc-space-4:   1rem;     /* 16 */
+  --rc-space-5:   1.5rem;   /* 24 */
+  --rc-space-6:   2rem;     /* 32 */
+  --rc-space-7:   3rem;     /* 48 */
+  --rc-space-8:   4rem;     /* 64 */
+  --rc-space-9:   6rem;     /* 96 */
+  --rc-space-10:  8rem;     /* 128 */
+
+  /* ----------------------------------------------------------------------
+     5. RADIUS - the brand skews geometric. Keep radii modest.
+     The primary logo stamp is a full circle; pills use it deliberately.
+     ---------------------------------------------------------------------- */
+  --rc-radius-none: 0;
+  --rc-radius-sm:   4px;
+  --rc-radius-md:   8px;
+  --rc-radius-lg:   16px;
+  --rc-radius-xl:   24px;
+  --rc-radius-pill: 999px;
+  --rc-radius-full: 50%;
+
+  /* ----------------------------------------------------------------------
+     6. ELEVATION
+     ---------------------------------------------------------------------- */
+  --rc-shadow-sm: 0 1px 2px rgba(35, 31, 32, 0.06), 0 1px 3px rgba(35, 31, 32, 0.08);
+  --rc-shadow-md: 0 4px 8px rgba(35, 31, 32, 0.08), 0 2px 4px rgba(35, 31, 32, 0.06);
+  --rc-shadow-lg: 0 12px 24px rgba(35, 31, 32, 0.10), 0 4px 8px rgba(35, 31, 32, 0.06);
+  --rc-shadow-accent: 0 8px 20px rgba(237, 106, 66, 0.28);
+
+  /* ----------------------------------------------------------------------
+     7. MOTION
+     ---------------------------------------------------------------------- */
+  --rc-ease-standard:  cubic-bezier(0.2, 0, 0.1, 1);
+  --rc-ease-emphasis:  cubic-bezier(0.34, 1.56, 0.64, 1);
+  --rc-duration-fast:  120ms;
+  --rc-duration-base:  200ms;
+  --rc-duration-slow:  360ms;
+
+  /* ----------------------------------------------------------------------
+     8. LAYOUT
+     ---------------------------------------------------------------------- */
+  --rc-container-sm: 640px;
+  --rc-container-md: 768px;
+  --rc-container-lg: 1024px;
+  --rc-container-xl: 1200px;
+  --rc-z-base:    1;
+  --rc-z-sticky:  100;
+  --rc-z-overlay: 1000;
+  --rc-z-modal:   1100;
+  --rc-z-toast:   1200;
+}
+
+/* --------------------------------------------------------------------------
+   OPTIONAL THEME: Woodville Violet lockup.
+   Add class="rc-theme-woodville" on a wrapper to re-point the brand colour
+   from navy to the designer's electric violet. This changes brand/text-strong,
+   NOT the orange accent. See AGENTS.md before using.
+   -------------------------------------------------------------------------- */
+.rc-theme-woodville {
+  --rc-color-brand:       var(--rc-violet);
+  --rc-color-brand-hover: var(--rc-violet-600);
+  --rc-color-text-strong: var(--rc-violet);
+  --rc-color-text-link:   var(--rc-violet);
+  --rc-color-info:        var(--rc-violet);
+  --rc-color-info-bg:     var(--rc-violet-100);
+}
+
+/* Respect user motion preferences globally. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --rc-duration-fast: 0ms;
+    --rc-duration-base: 0ms;
+    --rc-duration-slow: 0ms;
+  }
+}

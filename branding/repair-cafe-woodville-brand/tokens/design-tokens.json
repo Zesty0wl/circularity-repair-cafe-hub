@@ -1,0 +1,117 @@
+{
+  "$schema": "https://tr.designtokens.org/format/",
+  "$description": "Repair Cafe Woodville brand design tokens. W3C Design Tokens Community Group format. Compatible with Style Dictionary and Tokens Studio.",
+  "brand": {
+    "$description": "Raw palette from the official guidelines. Prefer semantic tokens for UI.",
+    "orange":     { "$type": "color", "$value": "#ED6A42", "$description": "Primary brand colour. Graphic/accent only. Fails AA for body text on white." },
+    "orange-600": { "$type": "color", "$value": "#C95A38" },
+    "orange-700": { "$type": "color", "$value": "#A64A2E" },
+    "orange-200": { "$type": "color", "$value": "#F7BCAA" },
+    "orange-100": { "$type": "color", "$value": "#FCE4DD" },
+    "orange-50":  { "$type": "color", "$value": "#FEF5F2" },
+    "navy":       { "$type": "color", "$value": "#2D2E82", "$description": "Secondary brand colour and primary text colour. 11.51:1 on white." },
+    "navy-600":   { "$type": "color", "$value": "#26276E" },
+    "navy-700":   { "$type": "color", "$value": "#20205B" },
+    "navy-200":   { "$type": "color", "$value": "#A0A1C7" },
+    "navy-100":   { "$type": "color", "$value": "#D9D9E8" },
+    "navy-50":    { "$type": "color", "$value": "#F0F0F6" },
+    "sky":        { "$type": "color", "$value": "#698AC6" },
+    "sky-600":    { "$type": "color", "$value": "#5975A8" },
+    "sky-100":    { "$type": "color", "$value": "#E4EAF5" },
+    "sand":       { "$type": "color", "$value": "#DBC19A" },
+    "sand-600":   { "$type": "color", "$value": "#BAA483" },
+    "sand-100":   { "$type": "color", "$value": "#F9F4ED" },
+    "stone":      { "$type": "color", "$value": "#E6E2DB" },
+    "stone-600":  { "$type": "color", "$value": "#C4C0BA" },
+    "stone-200":  { "$type": "color", "$value": "#F4F2EF" },
+    "stone-100":  { "$type": "color", "$value": "#FAFAF9" },
+    "ink":        { "$type": "color", "$value": "#231F20", "$description": "Near-black for long-form body text. 16.3:1 on white." },
+    "white":      { "$type": "color", "$value": "#FFFFFF" },
+    "violet":     { "$type": "color", "$value": "#9300FF", "$description": "OPTIONAL Woodville location accent. Deviates from the master navy. See AGENTS.md." },
+    "violet-600": { "$type": "color", "$value": "#7D00D9" },
+    "violet-100": { "$type": "color", "$value": "#ECD1FF" }
+  },
+  "color": {
+    "$description": "Semantic tokens - reference these in UI, not brand.* raw values.",
+    "bg":            { "$type": "color", "$value": "{brand.white}" },
+    "bg-subtle":     { "$type": "color", "$value": "{brand.stone-100}" },
+    "bg-muted":      { "$type": "color", "$value": "{brand.stone}" },
+    "bg-warm":       { "$type": "color", "$value": "{brand.sand-100}" },
+    "surface":       { "$type": "color", "$value": "{brand.white}" },
+    "surface-navy":  { "$type": "color", "$value": "{brand.navy}" },
+    "text":          { "$type": "color", "$value": "{brand.ink}" },
+    "text-strong":   { "$type": "color", "$value": "{brand.navy}" },
+    "text-muted":    { "$type": "color", "$value": "#6B6864" },
+    "text-inverse":  { "$type": "color", "$value": "{brand.white}" },
+    "accent":        { "$type": "color", "$value": "{brand.orange}" },
+    "accent-hover":  { "$type": "color", "$value": "{brand.orange-600}" },
+    "brand":         { "$type": "color", "$value": "{brand.navy}" },
+    "border":        { "$type": "color", "$value": "{brand.stone}" },
+    "focus-ring":    { "$type": "color", "$value": "{brand.orange}" },
+    "success":       { "$type": "color", "$value": "#2E7D5B" },
+    "warning":       { "$type": "color", "$value": "#B5761B" },
+    "danger":        { "$type": "color", "$value": "#C4372B" },
+    "info":          { "$type": "color", "$value": "{brand.navy}" }
+  },
+  "font": {
+    "family": {
+      "display": { "$type": "fontFamily", "$value": ["Hanken Grotesk", "Arial Black", "Helvetica Neue", "Arial", "sans-serif"] },
+      "body":    { "$type": "fontFamily", "$value": ["Hanken Grotesk", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "Arial", "sans-serif"] },
+      "mono":    { "$type": "fontFamily", "$value": ["ui-monospace", "SF Mono", "Menlo", "Consolas", "monospace"] }
+    },
+    "weight": {
+      "light":    { "$type": "fontWeight", "$value": 300, "$description": "Body copy" },
+      "regular":  { "$type": "fontWeight", "$value": 400 },
+      "medium":   { "$type": "fontWeight", "$value": 500 },
+      "semibold": { "$type": "fontWeight", "$value": 600 },
+      "black":    { "$type": "fontWeight", "$value": 900, "$description": "Titles only, UPPERCASE" }
+    }
+  },
+  "fontSize": {
+    "xs":   { "$type": "dimension", "$value": "0.75rem" },
+    "sm":   { "$type": "dimension", "$value": "0.875rem" },
+    "base": { "$type": "dimension", "$value": "1rem" },
+    "lg":   { "$type": "dimension", "$value": "1.25rem" },
+    "xl":   { "$type": "dimension", "$value": "1.563rem" },
+    "2xl":  { "$type": "dimension", "$value": "1.953rem" },
+    "3xl":  { "$type": "dimension", "$value": "2.441rem" },
+    "4xl":  { "$type": "dimension", "$value": "3.052rem" },
+    "5xl":  { "$type": "dimension", "$value": "3.815rem" }
+  },
+  "lineHeight": {
+    "tight":   { "$type": "number", "$value": 1.05 },
+    "snug":    { "$type": "number", "$value": 1.2 },
+    "normal":  { "$type": "number", "$value": 1.6 },
+    "relaxed": { "$type": "number", "$value": 1.75 }
+  },
+  "space": {
+    "1":  { "$type": "dimension", "$value": "0.25rem" },
+    "2":  { "$type": "dimension", "$value": "0.5rem" },
+    "3":  { "$type": "dimension", "$value": "0.75rem" },
+    "4":  { "$type": "dimension", "$value": "1rem" },
+    "5":  { "$type": "dimension", "$value": "1.5rem" },
+    "6":  { "$type": "dimension", "$value": "2rem" },
+    "7":  { "$type": "dimension", "$value": "3rem" },
+    "8":  { "$type": "dimension", "$value": "4rem" },
+    "9":  { "$type": "dimension", "$value": "6rem" },
+    "10": { "$type": "dimension", "$value": "8rem" }
+  },
+  "radius": {
+    "sm":   { "$type": "dimension", "$value": "4px" },
+    "md":   { "$type": "dimension", "$value": "8px" },
+    "lg":   { "$type": "dimension", "$value": "16px" },
+    "xl":   { "$type": "dimension", "$value": "24px" },
+    "pill": { "$type": "dimension", "$value": "999px" },
+    "full": { "$type": "dimension", "$value": "50%" }
+  },
+  "shadow": {
+    "sm": { "$type": "shadow", "$value": { "offsetX": "0", "offsetY": "1px", "blur": "3px", "spread": "0", "color": "rgba(35,31,32,0.08)" } },
+    "md": { "$type": "shadow", "$value": { "offsetX": "0", "offsetY": "4px", "blur": "8px", "spread": "0", "color": "rgba(35,31,32,0.08)" } },
+    "lg": { "$type": "shadow", "$value": { "offsetX": "0", "offsetY": "12px", "blur": "24px", "spread": "0", "color": "rgba(35,31,32,0.10)" } }
+  },
+  "duration": {
+    "fast": { "$type": "duration", "$value": "120ms" },
+    "base": { "$type": "duration", "$value": "200ms" },
+    "slow": { "$type": "duration", "$value": "360ms" }
+  }
+}

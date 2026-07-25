@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 260" role="img" aria-label="Repair Cafe">
+<defs><style><![CDATA[@import url("https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@900&display=swap");
+.rc-wm{font-family:'Hanken Grotesk','Arial Black',Arial,sans-serif;font-weight:900;font-size:118px;letter-spacing:2px;}]]></style></defs>
+<text class="rc-wm" x="8" y="112"><tspan fill="#2D2E82">R</tspan><tspan fill="#ED6A42">E</tspan><tspan fill="#2D2E82">P</tspan><tspan fill="#ED6A42">A</tspan><tspan fill="#2D2E82">I</tspan><tspan fill="#ED6A42">R</tspan></text>
+<text class="rc-wm" x="8" y="236"><tspan fill="#ED6A42">C</tspan><tspan fill="#2D2E82">A</tspan><tspan fill="#ED6A42">F</tspan><tspan fill="#2D2E82">E</tspan></text>
+</svg>

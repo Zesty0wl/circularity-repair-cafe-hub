@@ -6,7 +6,7 @@
   import { categoryIcon } from '$lib/categoryIcon';
   import { ArrowLeft, Wrench, CheckCircle2, XCircle, PackageX, Hourglass, Clock, Users, Leaf } from 'lucide-svelte';
 
-  type Status = 'waiting' | 'in_progress' | 'completed' | 'cannot_repair' | 'returned';
+  type Status = 'waiting' | 'in_progress' | 'completed' | 'cannot_repair' | 'awaiting_return' | 'returned';
 
   interface Detail {
     event: {
@@ -76,12 +76,13 @@
       case 'in_progress': return 'In progress';
       case 'completed': return 'Fixed';
       case 'cannot_repair': return "Couldn't fix";
+      case 'awaiting_return': return 'Awaiting return';
       case 'returned': return 'Returned';
     }
   }
 </script>
 
-<a href="/admin/stats" class="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700">
+<a href="/admin/stats" class="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-brand-700">
   <ArrowLeft size={14} /> Back to statistics
 </a>
 
@@ -138,7 +139,7 @@
   <div class="grid md:grid-cols-2 gap-4 mt-4">
     <!-- Volunteers -->
     <div class="card p-4">
-      <h2 class="font-semibold mb-3">Volunteers</h2>
+      <h2 class="text-lg font-semibold mb-3">Volunteers</h2>
       {#if detail.repairers.length === 0}
         <p class="text-sm text-slate-500 py-4 text-center">No repairs taken on yet.</p>
       {:else}
@@ -159,7 +160,7 @@
 
     <!-- Categories -->
     <div class="card p-4">
-      <h2 class="font-semibold mb-3">Item categories</h2>
+      <h2 class="text-lg font-semibold mb-3">Item categories</h2>
       {#if detail.categories.length === 0}
         <p class="text-sm text-slate-500 py-4 text-center">No items yet.</p>
       {:else}
@@ -187,31 +188,31 @@
   </div>
 
   <!-- Job list -->
-  <div class="card p-4 mt-4">
-    <h2 class="font-semibold mb-3">All repairs</h2>
+  <section class="mt-6">
+    <h2 class="text-lg font-semibold mb-2">All repairs</h2>
     {#if detail.jobs.length === 0}
-      <p class="text-sm text-slate-500 py-6 text-center">No items checked in.</p>
+      <div class="card p-6 text-center text-sm text-slate-500">No items checked in.</div>
     {:else}
-      <div class="overflow-x-auto">
+      <div class="card overflow-x-auto">
         <table class="w-full text-sm">
-          <thead class="text-slate-500 text-left text-xs uppercase tracking-wide">
-            <tr class="border-b border-slate-200">
-              <th class="py-2 pr-3">#</th>
-              <th class="py-2 pr-3">Item</th>
-              <th class="py-2 pr-3">Category</th>
-              <th class="py-2 pr-3">Volunteer</th>
-              <th class="py-2 pr-3">Status</th>
-              <th class="py-2 pr-3 text-right">Time</th>
+          <thead class="bg-slate-50 text-left text-slate-600">
+            <tr>
+              <th class="px-3 py-2">#</th>
+              <th class="px-3 py-2">Item</th>
+              <th class="px-3 py-2">Category</th>
+              <th class="px-3 py-2">Volunteer</th>
+              <th class="px-3 py-2">Status</th>
+              <th class="px-3 py-2 text-right">Time</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
             {#each detail.jobs as j}
-              <tr class="hover:bg-slate-50">
-                <td class="py-2 pr-3 font-mono text-xs text-slate-500">{j.jobNumber}</td>
-                <td class="py-2 pr-3 text-slate-900">
+              <tr>
+                <td class="px-3 py-2 font-mono text-xs text-slate-500">{j.jobNumber}</td>
+                <td class="px-3 py-2 text-slate-900">
                   {j.itemDescription}{#if j.itemBrand} <span class="text-slate-500">· {j.itemBrand}</span>{/if}
                 </td>
-                <td class="py-2 pr-3 text-slate-600">
+                <td class="px-3 py-2 text-slate-600">
                   {#if j.categoryName}
                     <span class="inline-flex items-center gap-1">
                       <span
@@ -226,8 +227,8 @@
                     <span class="text-slate-400">-</span>
                   {/if}
                 </td>
-                <td class="py-2 pr-3 text-slate-600">{j.repairerName ?? '-'}</td>
-                <td class="py-2 pr-3">
+                <td class="px-3 py-2 text-slate-600">{j.repairerName ?? '-'}</td>
+                <td class="px-3 py-2">
                   <span class="badge badge-{j.status} inline-flex items-center gap-1">
                     {#if j.status === 'waiting'}<Hourglass size={11} />{/if}
                     {#if j.status === 'in_progress'}<Clock size={11} />{/if}
@@ -237,12 +238,12 @@
                     {statusLabel(j.status)}
                   </span>
                 </td>
-                <td class="py-2 pr-3 text-right text-slate-600 whitespace-nowrap">{fmtDuration(j.durationMin)}</td>
+                <td class="px-3 py-2 text-right text-slate-600 whitespace-nowrap">{fmtDuration(j.durationMin)}</td>
               </tr>
             {/each}
           </tbody>
         </table>
       </div>
     {/if}
-  </div>
+  </section>
 {/if}

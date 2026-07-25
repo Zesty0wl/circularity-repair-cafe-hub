@@ -2,8 +2,19 @@
   import { cafe } from '$lib/stores/cafe';
   import SiteHeader from '$lib/components/SiteHeader.svelte';
   import SiteFooter from '$lib/components/SiteFooter.svelte';
-  import { Mail, MapPin, Navigation, Locate, Car, Accessibility, Info, Globe } from 'lucide-svelte';
+  import PageHeader from '$lib/components/PageHeader.svelte';
+  import AddToCalendar from '$lib/components/AddToCalendar.svelte';
+  import { Mail, MapPin, Navigation, Locate, Car, Accessibility, Info, Globe, CalendarDays, Clock, Heart } from 'lucide-svelte';
   import type { PageData } from './$types';
+
+  interface PublicEvent {
+    id: string;
+    name: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+    venue: { name: string; postcode: string | null };
+  }
 
   interface Venue {
     name: string;
@@ -20,6 +31,13 @@
 
   export let data: PageData;
   $: venue = (data.venue ?? null) as Venue | null;
+  $: nextEvent = ((data.upcoming ?? []) as PublicEvent[])[0] ?? null;
+
+  function fullDate(d: string): string {
+    return new Date(d + 'T12:00:00Z').toLocaleDateString('en-GB', {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC',
+    });
+  }
 
   // Build a Google Maps directions URL from the venue name + address.
   // We deliberately use the universal `maps.google.com` URL (rather than a
@@ -63,15 +81,37 @@
 
 <SiteHeader variant="public" />
 
-<main class="max-w-3xl mx-auto px-4 py-12 space-y-6">
-  <header>
-    <h1>Get in touch</h1>
-    {#if $cafe?.tagline}<p class="mt-2 text-slate-600 text-lg">{$cafe.tagline}</p>{/if}
-  </header>
+<main>
+  <PageHeader
+    eyebrow="Contact"
+    title="Get in touch"
+    lede="Come along to a session, or reach us before you visit."
+  >
+    <Mail size={22} slot="icon" />
+  </PageHeader>
+
+  <div class="max-w-3xl mx-auto px-4 py-16 md:py-24 space-y-6">
+  <!-- When to come, before where to come: it is the question people ask
+       first, and the venue is no use without a date. -->
+  {#if nextEvent}
+    <div class="card p-6">
+      <p class="kicker">Next session</p>
+      <p class="mt-2 flex items-start gap-2 text-xl font-semibold text-pine">
+        <CalendarDays size={22} class="shrink-0 mt-0.5 text-clay" /> <span>{fullDate(nextEvent.date)}</span>
+      </p>
+      <p class="mt-1 ml-8 flex items-center gap-2 text-slate-700">
+        <Clock size={16} class="text-clay shrink-0" /> {nextEvent.startTime.slice(0,5)}–{nextEvent.endTime.slice(0,5)}
+      </p>
+      <div class="mt-5 flex flex-wrap gap-2">
+        <AddToCalendar event={nextEvent} variant="button" class="!py-2" />
+        <a href="/events" class="btn-secondary !py-2">See all dates</a>
+      </div>
+    </div>
+  {/if}
 
   {#if $cafe?.contactEmail}
-    <a href="mailto:{$cafe.contactEmail}" class="card p-6 block hover:shadow-md transition-shadow">
-      <p class="text-sm text-slate-500 uppercase tracking-wide">Email us</p>
+    <a href="mailto:{$cafe.contactEmail}" class="card-link p-6">
+      <p class="kicker">Email us</p>
       <p class="mt-2 inline-flex items-center gap-2 text-xl font-semibold text-brand-700">
         <Mail size={20} /> {$cafe.contactEmail}
       </p>
@@ -82,7 +122,7 @@
     <!-- Find us -->
     <div class="card p-6 space-y-4">
       <div>
-        <p class="text-sm text-slate-500 uppercase tracking-wide">Find us</p>
+        <p class="kicker">Find us</p>
         <p class="mt-2 inline-flex items-start gap-2 text-xl font-semibold">
           <MapPin size={22} class="shrink-0 mt-1" /> <span>{venue.name}</span>
         </p>
@@ -98,12 +138,14 @@
           href={w3wLink(venue.what3words)}
           target="_blank"
           rel="noopener"
-          class="inline-flex items-center gap-2 rounded-lg bg-rose-50 ring-1 ring-rose-200 px-3 py-2 text-sm font-medium text-rose-800 hover:bg-rose-100"
+          class="inline-flex items-center gap-2 rounded-lg bg-slate-50 ring-1 ring-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
         >
-          <Locate size={16} />
-          <span class="font-mono">{w3wDisplay(venue.what3words)}</span>
-          <span class="text-rose-600">·</span>
-          <span class="text-rose-700">pin-precise location</span>
+          <Locate size={16} class="text-rose-600 shrink-0" />
+          <span class="font-mono"><span class="text-rose-600">///</span>{venue.what3words.replace(/^\/+/, '').trim()}</span>
+          <!-- The explanation is helpful but not essential, so it drops away
+               on a phone rather than wrapping to a second line. -->
+          <span class="hidden sm:inline text-slate-400">·</span>
+          <span class="hidden sm:inline">pin-precise location</span>
         </a>
       {/if}
 
@@ -116,6 +158,13 @@
         >
           <Navigation size={18} /> Get directions
         </a>
+        <!-- A map link that cannot be embedded becomes a button here, so all
+             the venue actions stay on one row. -->
+        {#if venue.mapUrl && !isEmbeddableMap(venue.mapUrl)}
+          <a href={venue.mapUrl} target="_blank" rel="noopener" class="btn-secondary !py-2">
+            <MapPin size={16} /> View on map
+          </a>
+        {/if}
         {#if $cafe?.websiteUrl}
           <a href={$cafe.websiteUrl} target="_blank" rel="noopener" class="btn-secondary !py-2">
             <Globe size={16} /> Visit our website
@@ -123,52 +172,41 @@
         {/if}
       </div>
 
-      {#if venue.mapUrl}
-        {#if isEmbeddableMap(venue.mapUrl)}
-          <iframe
-            src={venue.mapUrl}
-            title="Map of {venue.name}"
-            loading="lazy"
-            referrerpolicy="no-referrer-when-downgrade"
-            class="w-full h-64 sm:h-80 rounded-lg border border-slate-200"
-          ></iframe>
-        {:else}
-          <a
-            href={venue.mapUrl}
-            target="_blank"
-            rel="noopener"
-            class="btn-secondary !py-2 inline-flex"
-          >
-            <MapPin size={16} /> View on map
-          </a>
-        {/if}
+      {#if venue.mapUrl && isEmbeddableMap(venue.mapUrl)}
+        <iframe
+          src={venue.mapUrl}
+          title="Map of {venue.name}"
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          class="w-full h-64 sm:h-80 rounded-xl border border-slate-200"
+        ></iframe>
       {/if}
     </div>
 
     {#if venue.directions}
       <div class="card p-6">
-        <p class="text-sm text-slate-500 uppercase tracking-wide flex items-center gap-2"><Info size={14} /> How to find us</p>
+        <p class="kicker flex items-center gap-2"><Info size={14} /> How to find us</p>
         <p class="mt-3 text-slate-700 whitespace-pre-line leading-relaxed">{venue.directions}</p>
       </div>
     {/if}
 
     {#if venue.parkingInfo}
       <div class="card p-6">
-        <p class="text-sm text-slate-500 uppercase tracking-wide flex items-center gap-2"><Car size={14} /> Parking &amp; transport</p>
+        <p class="kicker flex items-center gap-2"><Car size={14} /> Parking &amp; transport</p>
         <p class="mt-3 text-slate-700 whitespace-pre-line leading-relaxed">{venue.parkingInfo}</p>
       </div>
     {/if}
 
     {#if venue.accessibilityInfo}
       <div class="card p-6">
-        <p class="text-sm text-slate-500 uppercase tracking-wide flex items-center gap-2"><Accessibility size={14} /> Accessibility</p>
+        <p class="kicker flex items-center gap-2"><Accessibility size={14} /> Accessibility</p>
         <p class="mt-3 text-slate-700 whitespace-pre-line leading-relaxed">{venue.accessibilityInfo}</p>
       </div>
     {/if}
 
     {#if venue.notes}
       <div class="card p-6">
-        <p class="text-sm text-slate-500 uppercase tracking-wide">Good to know</p>
+        <p class="kicker">Good to know</p>
         <p class="mt-3 text-slate-700 whitespace-pre-line leading-relaxed">{venue.notes}</p>
       </div>
     {/if}
@@ -176,7 +214,7 @@
 
   {#if $cafe?.socialLinks && Object.values($cafe.socialLinks).some((v) => v)}
     <div class="card p-6">
-      <p class="text-sm text-slate-500 uppercase tracking-wide">Find us online</p>
+      <p class="kicker">Find us online</p>
       <ul class="mt-3 space-y-2">
         {#each Object.entries($cafe.socialLinks) as [k, v]}
           {#if v}
@@ -190,6 +228,19 @@
       </ul>
     </div>
   {/if}
+
+  {#if $cafe?.donateUrl}
+    <div class="card p-6">
+      <p class="kicker">Support us</p>
+      <p class="mt-2 text-slate-700 leading-relaxed">
+        Repairs are free. Donations pay for the tools, the room and the tea, and they keep the sessions running.
+      </p>
+      <a href={$cafe.donateUrl} target="_blank" rel="noopener" class="btn-secondary !py-2 mt-5">
+        <Heart size={18} /> Make a donation
+      </a>
+    </div>
+  {/if}
+  </div>
 </main>
 
 <SiteFooter />

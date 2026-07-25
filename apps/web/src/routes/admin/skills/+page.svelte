@@ -61,7 +61,7 @@
 
 <h1 class="text-2xl font-bold">Skill categories</h1>
 
-<div class="card p-4 mt-4 flex gap-2 items-end max-w-2xl">
+<div class="card p-4 mt-4 flex flex-col sm:flex-row gap-3 sm:items-end max-w-2xl">
   <div class="flex-1"><label class="label" for="nm">Name</label><input id="nm" class="input" bind:value={newName} /></div>
   <div class="flex-1"><label class="label" for="ds">Description</label><input id="ds" class="input" bind:value={newDesc} /></div>
   <button class="btn-primary" on:click={add}><Plus size={16} /> Add</button>
@@ -80,7 +80,7 @@
         {#if c.description}<p class="text-xs text-slate-500">{c.description}</p>{/if}
       </div>
       <button class="badge {c.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'}" on:click={() => toggleActive(c)}>{c.isActive ? 'Active' : 'Hidden'}</button>
-      <button class="text-rose-600 p-1" on:click={() => del(c)}><Trash2 size={16} /></button>
+      <button class="p-2 rounded-lg text-rose-600 hover:bg-rose-50" aria-label={`Delete ${c.name}`} on:click={() => del(c)}><Trash2 size={16} /></button>
     </li>
   {/each}
 </ul>

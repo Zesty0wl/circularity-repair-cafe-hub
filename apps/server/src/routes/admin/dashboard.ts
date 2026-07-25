@@ -27,6 +27,7 @@ export async function adminDashboardRoutes(app: FastifyInstance): Promise<void> 
         in_progress: jobs.filter((j) => j.status === 'in_progress').length,
         completed: jobs.filter((j) => j.status === 'completed').length,
         cannot_repair: jobs.filter((j) => j.status === 'cannot_repair').length,
+        awaiting_return: jobs.filter((j) => j.status === 'awaiting_return').length,
       };
       activeEvent = { ...evt, venueName: activeRows[0].venue.name };
     }

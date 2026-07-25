@@ -17,7 +17,8 @@
 
 {#if $auth}
   <SiteHeader variant="repairer" user={$auth.user} />
-  <main class="max-w-5xl mx-auto px-4 py-6">
+  <!-- Same max width as the header, so page content lines up with the logo. -->
+  <main class="max-w-6xl mx-auto px-4 py-6 md:py-8">
     <slot />
   </main>
 {/if}

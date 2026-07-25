@@ -14,7 +14,7 @@
     customerName: string | null;
     itemDescription: string;
     itemBrand: string | null;
-    status: 'waiting' | 'in_progress' | 'completed' | 'cannot_repair' | 'returned';
+    status: 'waiting' | 'in_progress' | 'completed' | 'cannot_repair' | 'awaiting_return' | 'returned';
     createdAt: string;
     acceptedAt: string | null;
     completedAt: string | null;
@@ -684,6 +684,7 @@
   .row.status-in_progress   { border-left-color: #38bdf8; }
   .row.status-completed     { border-left-color: #34d399; opacity: 0.85; }
   .row.status-cannot_repair { border-left-color: #f472b6; opacity: 0.75; }
+  .row.status-awaiting_return { border-left-color: #a78bfa; opacity: 0.85; }
   .row.status-returned      { border-left-color: #94a3b8; opacity: 0.6; }
 
   .thumb {
@@ -749,6 +750,7 @@
   .status-in_progress   .badge { background: rgba(56, 189, 248, 0.30); color: #bae6fd; }
   .status-completed     .badge { background: rgba(52, 211, 153, 0.30); color: #a7f3d0; }
   .status-cannot_repair .badge { background: rgba(244, 114, 182, 0.30); color: #fbcfe8; }
+  .status-awaiting_return .badge { background: rgba(167, 139, 250, 0.30); color: #ddd6fe; }
   .status-returned      .badge { background: rgba(148, 163, 184, 0.30); color: #cbd5e1; }
 
   /* Flash animation for newly arrived rows */

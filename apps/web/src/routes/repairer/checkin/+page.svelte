@@ -131,7 +131,7 @@
     </div>
   {:else if !activeEvent}
     <div class="card p-8 text-center mt-4">
-      <span class="h-14 w-14 mx-auto rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center"><CalendarOff size={26} /></span>
+      <span class="h-12 w-12 mx-auto rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center"><CalendarOff size={22} /></span>
       <h1 class="text-2xl font-bold mt-4">No active event</h1>
       <p class="mt-2 text-slate-700">An admin needs to start (activate) today's event before you can register repairs.</p>
       <a href="/repairer" class="btn-secondary mt-6">Back to dashboard</a>
@@ -142,7 +142,7 @@
       <h1 class="text-3xl font-bold mt-5">Repair registered</h1>
       <p class="mt-2 text-slate-700">It's now in the queue for this event.</p>
       <p class="mt-6 text-sm uppercase tracking-wide text-slate-500">Job number</p>
-      <p class="text-6xl font-extrabold text-brand-700 mt-1 tracking-wide">{created.jobNumber}</p>
+      <p class="text-5xl font-extrabold text-brand-700 mt-1 tracking-wide">{created.jobNumber}</p>
       <p class="mt-5 text-slate-600">Write this number on the item's tag and let the customer know it. That's how we'll match the item back to them.</p>
       {#if photoWarning}<p class="mt-4 text-sm text-amber-700">{photoWarning}</p>{/if}
       <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
@@ -168,11 +168,11 @@
             {#each categories as cat}
               <button
                 type="button"
-                class="card p-3 text-center transition-colors {itemCategoryId === cat.id ? 'ring-2 ring-brand-600 bg-brand-50' : 'hover:bg-slate-50'}"
+                class="card p-3 text-center transition-shadow {itemCategoryId === cat.id ? 'ring-2 ring-brand-600 bg-brand-50' : 'hover:ring-brand-400'}"
                 on:click={() => (itemCategoryId = itemCategoryId === cat.id ? null : cat.id)}
               >
-                <span class="flex w-10 h-10 mx-auto rounded-xl text-white items-center justify-center" style="background-color: {cat.colour}">
-                  <Icon icon={categoryIcon(cat.icon)} width="20" height="20" />
+                <span class="icon-chip" style="background-color: {cat.colour}">
+                  <Icon icon={categoryIcon(cat.icon, cat.name)} width="24" height="24" />
                 </span>
                 <span class="block mt-1.5 font-medium text-sm">{cat.name}</span>
               </button>
@@ -202,8 +202,8 @@
         <p class="text-sm text-slate-500 mb-2">A photo helps repairers see what they'll be working on.</p>
         {#if photoPreview}
           <div class="flex items-start gap-3">
-            <img src={photoPreview} alt="Item" class="w-32 h-32 rounded-lg object-cover ring-1 ring-slate-200" />
-            <button type="button" class="btn-ghost text-sm" on:click={removePhoto}><X size={16} /> Remove</button>
+            <img src={photoPreview} alt="Item" class="w-32 h-32 rounded-xl object-cover ring-1 ring-slate-200" />
+            <button type="button" class="btn-ghost btn-sm" on:click={removePhoto}><X size={16} /> Remove</button>
           </div>
         {:else}
           <CameraCapture on:capture={onPhoto} maxLongestEdge={1200} quality={0.8} />

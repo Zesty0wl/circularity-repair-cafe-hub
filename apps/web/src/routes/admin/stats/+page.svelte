@@ -207,7 +207,7 @@
 <!-- ── Activity heatmap (last 12 months) ───────────────────────────── -->
 <div class="card p-4 mt-4 overflow-x-auto">
   <div class="flex items-baseline justify-between mb-3">
-    <h2 class="font-semibold">Activity in the last 12 months</h2>
+    <h2 class="text-lg font-semibold">Activity in the last 12 months</h2>
     <p class="text-xs text-slate-500">{heatmap.length} days with events</p>
   </div>
   <div class="inline-block min-w-full">
@@ -256,40 +256,40 @@
 </div>
 
 <!-- ── Events table ──────────────────────────────────────────────── -->
-<div class="card p-4 mt-4">
-  <div class="flex items-baseline justify-between mb-3">
-    <h2 class="font-semibold">Events ({RANGE_LABELS[range].toLowerCase()})</h2>
+<section class="mt-6">
+  <div class="flex items-baseline justify-between mb-2">
+    <h2 class="text-lg font-semibold">Events ({RANGE_LABELS[range].toLowerCase()})</h2>
     <p class="text-xs text-slate-500">{events.length} event{events.length === 1 ? '' : 's'}</p>
   </div>
   {#if events.length === 0}
-    <p class="text-sm text-slate-500 py-6 text-center">No events in this period.</p>
+    <div class="card p-6 text-center text-sm text-slate-500">No events in this period.</div>
   {:else}
-    <div class="overflow-x-auto">
+    <div class="card overflow-x-auto">
       <table class="w-full text-sm">
-        <thead class="text-slate-500 text-left text-xs uppercase tracking-wide">
-          <tr class="border-b border-slate-200">
-            <th class="py-2 pr-3">Date</th>
-            <th class="py-2 pr-3">Event</th>
-            <th class="py-2 pr-3">Venue</th>
-            <th class="py-2 pr-3 text-right">Items</th>
-            <th class="py-2 pr-3 text-right">Fixed</th>
-            <th class="py-2 pr-3 text-right">Volunteers</th>
-            <th class="py-2 pr-3 text-right">Avg time</th>
-            <th class="py-2"></th>
+        <thead class="bg-slate-50 text-left text-slate-600">
+          <tr>
+            <th class="px-3 py-2">Date</th>
+            <th class="px-3 py-2">Event</th>
+            <th class="px-3 py-2">Venue</th>
+            <th class="px-3 py-2 text-right">Items</th>
+            <th class="px-3 py-2 text-right">Fixed</th>
+            <th class="px-3 py-2 text-right">Volunteers</th>
+            <th class="px-3 py-2 text-right">Avg time</th>
+            <th class="px-3 py-2"></th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100">
           {#each events as e}
-            <tr class="hover:bg-slate-50">
-              <td class="py-2 pr-3 text-slate-600 whitespace-nowrap">{e.date}</td>
-              <td class="py-2 pr-3 font-medium text-slate-900">{e.name}</td>
-              <td class="py-2 pr-3 text-slate-600">{e.venueName}</td>
-              <td class="py-2 pr-3 text-right">{e.repairCount}</td>
-              <td class="py-2 pr-3 text-right text-emerald-700 font-medium">{e.completedCount}</td>
-              <td class="py-2 pr-3 text-right">{e.repairerCount}</td>
-              <td class="py-2 pr-3 text-right text-slate-600">{fmtDuration(e.avgDurationMin)}</td>
-              <td class="py-2 text-right">
-                <a class="btn-ghost text-xs" href={`/admin/stats/events/${e.id}`}>Details →</a>
+            <tr>
+              <td class="px-3 py-2 text-slate-600 whitespace-nowrap">{e.date}</td>
+              <td class="px-3 py-2 font-medium text-slate-900">{e.name}</td>
+              <td class="px-3 py-2 text-slate-600">{e.venueName}</td>
+              <td class="px-3 py-2 text-right">{e.repairCount}</td>
+              <td class="px-3 py-2 text-right text-emerald-700 font-medium">{e.completedCount}</td>
+              <td class="px-3 py-2 text-right">{e.repairerCount}</td>
+              <td class="px-3 py-2 text-right text-slate-600">{fmtDuration(e.avgDurationMin)}</td>
+              <td class="px-3 py-2 text-right">
+                <a class="btn-ghost btn-sm whitespace-nowrap" href={`/admin/stats/events/${e.id}`}>Details</a>
               </td>
             </tr>
           {/each}
@@ -297,5 +297,5 @@
       </table>
     </div>
   {/if}
-</div>
+</section>
 

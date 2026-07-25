@@ -46,7 +46,7 @@
           <td class="px-3 py-2 text-xs text-slate-600">{(u.skills || []).length} skill{(u.skills || []).length === 1 ? '' : 's'}</td>
           <td class="px-3 py-2">{u.repairCountCache}</td>
           <td class="px-3 py-2"><button class="badge {u.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'}" on:click={() => toggleActive(u)}>{u.isActive ? 'Yes' : 'No'}</button></td>
-          <td class="px-3 py-2 text-right"><button class="text-xs btn-ghost" on:click={() => resetLink(u.id)}>Reset link</button></td>
+          <td class="px-3 py-2 text-right"><button class="btn-ghost btn-sm" on:click={() => resetLink(u.id)}>Reset link</button></td>
         </tr>
       {/each}
     </tbody>

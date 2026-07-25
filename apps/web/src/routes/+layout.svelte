@@ -7,12 +7,13 @@
   import '@fontsource-variable/mulish/index.css';
   import '@fontsource-variable/hanken-grotesk/index.css';
   import { onMount } from 'svelte';
-  import { browser } from '$app/environment';
+  import { browser, dev } from '$app/environment';
   import { page } from '$app/stores';
   import { cafe, setupCompleted } from '$lib/stores/cafe';
   import { applyBranding, brandingCss } from '$lib/brand';
   import { restoreSession } from '$lib/api';
-  import { serializeJsonLd, type PageSeo } from '@circularity/shared';
+  import InstallPrompt from '$lib/components/InstallPrompt.svelte';
+  import { serializeJsonLd, shortAppName, type PageSeo } from '@circularity/shared';
   import type { LayoutData } from './$types';
 
   export let data: LayoutData;
@@ -38,6 +39,15 @@
     // Protected layouts await the same promise before they redirect to
     // /login, so a page refresh no longer bounces signed-in users there.
     restoreSession();
+
+    // Register the service worker that makes the app installable. Production
+    // only: in development it would serve cached files back and hide the
+    // changes you just made.
+    if (!dev && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js').catch(() => {
+        /* an install offer is optional; never break the page over it */
+      });
+    }
   });
 
   // ── SEO/meta — centralised here so every route emits exactly one of each ──
@@ -65,6 +75,16 @@
   // site name registered in Plausible; src is the script URL (e.g.
   // https://plausible.io/js/script.js or a self-hosted instance).
   $: plausibleEnabled = Boolean(c?.plausibleDomain && c?.plausibleSrc);
+
+  // ── Progressive web app ───────────────────────────────────────────────────
+  // The manifest and the icons are built per cafe by the server. The icon
+  // filename carries a hash of the branding, so it changes whenever the logo
+  // or the colour does.
+  $: themeColor = c?.primaryColor?.trim() || '#1B6B5A';
+  $: appleTouchIcon = c?.pwaIconVersion ? `/icons/any-${c.pwaIconVersion}-192.png` : null;
+  // Same helper the server uses to build the manifest, so iOS and Android
+  // never end up labelling the same install differently.
+  $: appShortName = shortAppName(cafeName);
 </script>
 
 <svelte:head>
@@ -77,6 +97,15 @@
   {#if metaDesc}<meta name="description" content={metaDesc} />{/if}
   {#if noindex}<meta name="robots" content="noindex, nofollow" />{/if}
   <link rel="icon" href={faviconHref} />
+  <!-- Progressive web app: installable, themed with the cafe's own colour. -->
+  <meta name="theme-color" content={themeColor} />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <!-- iOS reads its own tags rather than the manifest. -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content={appShortName} />
+  {#if appleTouchIcon}<link rel="apple-touch-icon" href={appleTouchIcon} />{/if}
   <!-- Open Graph / Twitter -->
   <meta property="og:title" content={pageTitle} />
   {#if metaDesc}<meta property="og:description" content={metaDesc} />{/if}
@@ -94,3 +123,5 @@
 </svelte:head>
 
 <slot />
+
+<InstallPrompt />

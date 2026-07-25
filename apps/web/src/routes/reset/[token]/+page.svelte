@@ -28,13 +28,15 @@
   }
 </script>
 
-<div class="max-w-sm mx-auto mt-12 card p-6">
-  <h1 class="text-xl font-bold">Set your password</h1>
-  <p class="text-sm text-slate-600 mt-1">Choose a strong password (10+ chars, mixed case &amp; number).</p>
-  <div class="mt-4 space-y-3">
-    <div><label class="label" for="p1">New password</label><input id="p1" class="input" type="password" bind:value={password} /></div>
-    <div><label class="label" for="p2">Confirm</label><input id="p2" class="input" type="password" bind:value={confirm} /></div>
-    {#if error}<p class="text-rose-600 text-sm">{error}</p>{/if}
-    <button class="btn-primary w-full" on:click={submit} disabled={busy}>Set password &amp; sign in</button>
+<main class="min-h-screen grid place-items-center bg-slate-100 px-4 py-12">
+  <div class="card p-8 w-full max-w-sm">
+    <h1 class="text-2xl font-semibold">Set your password</h1>
+    <p class="mt-1 text-sm text-slate-600">Use at least 10 characters, with upper and lower case letters and a number.</p>
+    <div class="mt-6 space-y-4">
+      <div><label class="label" for="p1">New password</label><input id="p1" class="input" type="password" bind:value={password} /></div>
+      <div><label class="label" for="p2">Confirm password</label><input id="p2" class="input" type="password" bind:value={confirm} /></div>
+      {#if error}<p class="text-sm text-rose-600">{error}</p>{/if}
+      <button class="btn-primary w-full" on:click={submit} disabled={busy}>Set password and sign in</button>
+    </div>
   </div>
-</div>
+</main>

@@ -263,7 +263,7 @@
   }
 </script>
 
-<main class="min-h-screen bg-slate-50 customer-ui">
+<main class="min-h-screen bg-slate-100 customer-ui">
   <div class="max-w-md mx-auto px-4 py-8">
     {#if loadError}
       <div class="card p-6 text-center">
@@ -287,9 +287,9 @@
       {#if step === 1}
         <div class="card p-8 text-center">
           {#if info.cafe.logoUrl}
-            <img src={info.cafe.logoUrl} alt={`${info.cafe.name} logo`} class="h-20 w-20 mx-auto rounded-2xl bg-white object-contain p-2 ring-1 ring-slate-200" />
+            <img src={info.cafe.logoUrl} alt={`${info.cafe.name} logo`} class="h-16 w-16 mx-auto rounded-2xl bg-white object-contain p-2 ring-1 ring-slate-200" />
           {:else}
-            <span class="h-16 w-16 mx-auto rounded-2xl bg-brand-600 text-white flex items-center justify-center"><Wrench size={28} /></span>
+            <span class="h-14 w-14 mx-auto rounded-2xl bg-brand-600 text-white flex items-center justify-center"><Wrench size={24} /></span>
           {/if}
           {#if returning && savedCustomer}
             <h1 class="text-3xl font-bold mt-5">Welcome back, {savedCustomer.customerName}!</h1>
@@ -357,11 +357,11 @@
                 {#each info.categories as cat}
                   <button
                     type="button"
-                    class="card p-4 text-center transition-colors {itemCategoryId === cat.id ? 'ring-2 ring-brand-600 bg-brand-50' : 'hover:bg-slate-50'}"
+                    class="card p-4 text-center transition-shadow {itemCategoryId === cat.id ? 'ring-2 ring-brand-600 bg-brand-50' : 'hover:ring-brand-400'}"
                     on:click={() => (itemCategoryId = cat.id)}
                   >
-                    <span class="flex w-12 h-12 mx-auto rounded-xl text-white items-center justify-center" style="background-color: {cat.colour}">
-                      <Icon icon={categoryIcon(cat.icon)} width="24" height="24" />
+                    <span class="icon-chip" style="background-color: {cat.colour}">
+                      <Icon icon={categoryIcon(cat.icon, cat.name)} width="24" height="24" />
                     </span>
                     <span class="block mt-2 font-medium text-base">{cat.name}</span>
                   </button>
@@ -403,7 +403,7 @@
             <p class="mt-1 text-slate-700">Please have a seat and hold on to your item.</p>
 
             {#if trackingUrl}
-              <div class="mt-8 rounded-xl border border-brand-200 bg-brand-50 p-5 text-left">
+              <div class="mt-8 rounded-2xl bg-brand-50 ring-1 ring-brand-200 p-5 text-left">
                 <h2 class="text-base font-semibold text-brand-900 flex items-center gap-2">
                   <Sparkles size={18} /> Track your repair, live
                 </h2>
@@ -435,7 +435,7 @@
             {/if}
 
             {#if info.cafe.donateUrl}
-              <div class="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-5 text-left">
+              <div class="mt-4 rounded-2xl bg-rose-50 ring-1 ring-rose-200 p-5 text-left">
                 <h2 class="text-base font-semibold text-rose-900 flex items-center gap-2">
                   <Heart size={18} class="fill-rose-500 text-rose-500" /> Love what we do?
                 </h2>
@@ -458,7 +458,7 @@
               <p class="mt-1 text-sm text-slate-600">A photo helps our repairers see what they'll be working on while you wait.</p>
               {#if uploadedThumb}
                 <div class="mt-3 text-sm text-emerald-700 flex items-center gap-1"><CheckCircle2 size={16} /> Photo uploaded, thanks!</div>
-                <img src={uploadedThumb} alt="Uploaded" class="mt-2 w-32 h-32 rounded-lg object-cover" />
+                <img src={uploadedThumb} alt="Uploaded" class="mt-2 w-32 h-32 rounded-xl object-cover ring-1 ring-slate-200" />
               {:else}
                 <div class="mt-3"><CameraCapture on:capture={onCapture} maxLongestEdge={1200} quality={0.8} /></div>
               {/if}

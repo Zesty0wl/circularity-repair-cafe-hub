@@ -2,10 +2,13 @@
   import { cafe } from '$lib/stores/cafe';
   import SiteHeader from '$lib/components/SiteHeader.svelte';
   import SiteFooter from '$lib/components/SiteFooter.svelte';
+  import SectionHeading from '$lib/components/SectionHeading.svelte';
+  import VolunteerCard from '$lib/components/VolunteerCard.svelte';
+  import NextSessionCta from '$lib/components/NextSessionCta.svelte';
   import AddToCalendar from '$lib/components/AddToCalendar.svelte';
-  import { Calendar, Clock, MapPin, Mail, Phone, ChevronDown, ChevronLeft, ChevronRight, X, Heart, Package, CheckCircle2, HelpCircle } from 'lucide-svelte';
+  import { Calendar, Clock, MapPin, ChevronDown, ChevronLeft, ChevronRight, X, CheckCircle2 } from 'lucide-svelte';
   import Icon from '@iconify/svelte';
-  import { categoryIcon } from '$lib/categoryIcon';
+  import { categoryIcon, categoryTint, categoryInk } from '$lib/categoryIcon';
   import type { PageData } from './$types';
 
   interface PublicEvent {
@@ -18,6 +21,14 @@
     venue: { name: string; address: string | null; postcode: string | null };
   }
   interface SkillCategory { id: string; name: string; icon: string; colour: string; repairerCount: number }
+  interface PublicStats {
+    eventCount: number;
+    repairCount: number;
+    completedCount: number;
+    successRate: number;
+    co2SavedKg: number;
+    volunteerCount: number;
+  }
   interface Repairer { id: string; displayName: string; avatarUrl: string | null; bio: string | null; skills: string[]; joinDate: string | null; showOnHomePage?: boolean }
 
   let upcomingEvents: PublicEvent[] = [];
@@ -29,9 +40,18 @@
   $: upcomingEvents = (data.upcomingEvents ?? []) as PublicEvent[];
   $: categories = (data.categories ?? []) as SkillCategory[];
   $: repairers = (data.repairers ?? []) as Repairer[];
+  $: stats = (data.stats ?? null) as PublicStats | null;
 
-  function formatDate(d: string): string {
-    return new Date(d + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+  // How much of each long list the home page shows before it hands off to the
+  // full page. Each number fills its grid exactly, so no row is left ragged.
+  const DATE_PREVIEW = 4;   // 4 across on desktop, 2 across on mobile
+  const PHOTO_PREVIEW = 8;  // 2 rows of 4, or 4 rows of 2
+  const TEAM_PREVIEW = 6;   // 2 rows of 3
+  const BADGE_PREVIEW = 4;  // skills shown on a team card before "+n more"
+
+  // A short form for the hero, where the full date is too long on a phone.
+  function formatDateShort(d: string): string {
+    return new Date(d + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
   }
   // Split a date into the pieces a calendar tile needs (day number, short
   // month, weekday name). Anchored at UTC noon + a fixed locale so the server
@@ -43,6 +63,12 @@
       monthShort: dt.toLocaleDateString('en-GB', { month: 'short', timeZone: 'UTC' }),
       weekdayLong: dt.toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'UTC' }),
     };
+  }
+
+  // Keep a value on one line by swapping its spaces for non-breaking ones.
+  // Used for postcodes, which look wrong when a line break splits them.
+  function noWrap(s: string): string {
+    return s.replace(/\s+/g, ' ');
   }
 
   // The same homeVenue is shown for most "When & where" sections.
@@ -60,6 +86,28 @@
   // (or self-edit) has opted in. The field defaults to true server-side, so
   // existing volunteers keep showing until someone explicitly opts them out.
   $: homeRepairers = repairers.filter((r) => r.showOnHomePage !== false);
+
+  // ── "Our numbers" ─────────────────────────────────────────────────────────
+  // Off unless the cafe turns it on in Settings. Each figure is dropped when
+  // it is still zero, so a cafe that has just started never shows a row of
+  // noughts, and the band itself disappears if nothing is worth showing yet.
+  $: showStats = hp.showStats === true && stats !== null;
+  $: statTiles = !stats
+    ? []
+    : [
+        { value: stats.completedCount.toLocaleString('en-GB'), label: 'Repairs done', show: stats.completedCount > 0 },
+        // Same figure the admin stats page reports as "CO₂ saved" (the
+        // environmental_saving_kg a repairer records on a finished job), so
+        // the public number and the internal one always agree.
+        { value: `${stats.co2SavedKg.toLocaleString('en-GB')} kg`, label: 'CO₂ saved', show: stats.co2SavedKg > 0 },
+        { value: stats.volunteerCount.toLocaleString('en-GB'), label: 'Volunteers', show: stats.volunteerCount > 0 },
+        { value: stats.eventCount.toLocaleString('en-GB'), label: 'Sessions held', show: stats.eventCount > 0 },
+      ].filter((t) => t.show);
+
+  // The closing band sits on a real photo of a session. Nothing else does:
+  // an image behind a heavy wash adds noise rather than atmosphere, so the
+  // hero is a flat block of the cafe's own colour instead.
+  $: closingImage = gallery.length > 0 ? gallery[gallery.length - 1]!.url : null;
 
   // "What to bring" can be free prose or a bullet list. We split on lines
   // starting with -, *, • or a number (e.g. "1."). If most non-empty lines
@@ -86,6 +134,10 @@
     .split(/\n\s*\n/)
     .map((p: string) => p.trim())
     .filter(Boolean);
+
+  // ── Progressive reveal ────────────────────────────────────────────────────
+  let showAllPhotos = false;
+  $: visiblePhotos = showAllPhotos ? gallery : gallery.slice(0, PHOTO_PREVIEW);
 
   // ── Lightbox state ────────────────────────────────────────────────────────
   let lightboxIndex: number | null = null;
@@ -119,107 +171,82 @@
 
 <svelte:window on:keydown={handleKey} />
 
-<svelte:head>
-  <!-- Preload the hero banner (the LCP image) so it paints sooner. -->
-  {#if $cafe?.bannerUrl}<link rel="preload" as="image" href={$cafe.bannerUrl} fetchpriority="high" />{/if}
-</svelte:head>
-
 <SiteHeader variant="public" />
 
 <main>
-  <!-- ───────────────────────── Hero ───────────────────────── -->
-  <section
-    class="relative bg-gradient-to-br from-brand-700 to-brand-500 text-white"
-    style={$cafe?.bannerUrl ? `background-image: linear-gradient(to bottom right, rgb(var(--brand-800) / .88), rgb(var(--brand-600) / .82)), url('${$cafe.bannerUrl}'); background-size: cover; background-position: center;` : ''}
-  >
-    <div class="max-w-6xl mx-auto px-4 py-20 md:py-28 flex flex-col md:flex-row items-start md:items-center gap-8">
-      {#if $cafe?.logoUrl}
-        <img src={$cafe.logoUrl} alt={`${$cafe.name} logo`} class="h-24 w-24 md:h-32 md:w-32 rounded-2xl bg-white/95 p-3 object-contain shadow-lg flex-shrink-0" />
+  <!-- ───────────────────────── Hero ─────────────────────────
+       A flat block of the cafe's own colour. One centred column: name,
+       tagline, one line of description, the next session, then the two
+       actions. The next session sits here because it is the thing most
+       visitors came to find. -->
+  <section class="bg-brand-600 text-white">
+    <div class="max-w-3xl mx-auto px-4 py-20 md:py-28 text-center">
+      <h1 class="text-4xl md:text-6xl font-bold tracking-tight">{$cafe?.name ?? 'Welcome'}</h1>
+      {#if $cafe?.tagline}
+        <p class="mt-4 text-xl md:text-2xl text-white/90">{$cafe.tagline}</p>
       {/if}
-      <div>
-        <h1 class="text-4xl md:text-6xl font-bold tracking-tight">{$cafe?.name ?? 'Welcome'}</h1>
-        {#if $cafe?.tagline}<p class="mt-4 text-xl md:text-2xl text-white/90 max-w-2xl">{$cafe.tagline}</p>{/if}
-        <div class="mt-8 flex flex-wrap gap-3">
-          {#if upcomingEvents.length > 0}
-            <a href="#when" class="btn-primary !bg-white !text-brand-700 hover:!bg-slate-100"><Calendar size={18} /> See upcoming events</a>
-          {:else}
-            <a href="/events" class="btn-primary !bg-white !text-brand-700 hover:!bg-slate-100"><Calendar size={18} /> See upcoming events</a>
+      {#if $cafe?.description}
+        <p class="mt-3 text-base md:text-lg text-white/70 max-w-xl mx-auto">{$cafe.description}</p>
+      {/if}
+
+      {#if nextEvent}
+        <div class="mt-10 inline-flex flex-col items-center gap-1 rounded-2xl bg-white/10 ring-1 ring-white/20 px-6 py-4">
+          <span class="eyebrow text-white/70">Next session</span>
+          <span class="text-lg font-semibold">
+            {formatDateShort(nextEvent.date)}, {nextEvent.startTime.slice(0,5)}–{nextEvent.endTime.slice(0,5)}
+          </span>
+          {#if homeVenue}
+            <span class="flex items-start justify-center gap-1.5 text-sm text-white/75">
+              <MapPin size={15} class="shrink-0 mt-0.5" />
+              <span>{homeVenue.name}</span>
+            </span>
           {/if}
-          <a href="/skills" class="btn-secondary !bg-white/10 !text-white !ring-white/30 hover:!bg-white/20">What we repair</a>
         </div>
+      {/if}
+
+      <div class="mt-8 flex flex-col sm:flex-row flex-wrap gap-3 sm:justify-center">
+        {#if upcomingEvents.length > 0}
+          <a href="#when" class="btn-primary !bg-white !text-brand-800 hover:!bg-slate-100"><Calendar size={18} /> See upcoming events</a>
+        {:else}
+          <a href="/events" class="btn-primary !bg-white !text-brand-800 hover:!bg-slate-100"><Calendar size={18} /> See upcoming events</a>
+        {/if}
+        <a href="/skills" class="btn-secondary !bg-white/10 !text-white !ring-white/40 hover:!bg-white/20">What we repair</a>
       </div>
     </div>
   </section>
 
-  <!-- ───────────────── Tagline (cafe.description) ────────────────────── -->
-  {#if $cafe?.description}
-    <section class="max-w-3xl mx-auto px-4 pt-12 pb-2 text-center">
-      <p class="inline-flex items-center gap-3 text-brand-700 font-medium uppercase tracking-wide text-sm">
-        <span aria-hidden="true" class="h-px w-8 bg-brand-300"></span>
-        {$cafe.description}
-        <span aria-hidden="true" class="h-px w-8 bg-brand-300"></span>
-      </p>
-    </section>
-  {/if}
-
-  <!-- ──────────────── Intro / "What & Who" body ───────────────── -->
+  <!-- ──────────────── Intro / "What & Who" ───────────────── -->
   {#if hp.intro?.body || hp.intro?.heading}
-    <section class="max-w-4xl mx-auto px-4 pt-6 pb-12">
-      <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-50 via-white to-brand-50 ring-1 ring-brand-100 shadow-sm px-6 py-10 sm:px-12 sm:py-14">
-        <!-- decorative blobs -->
-        <div aria-hidden="true" class="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-brand-200/40 blur-3xl"></div>
-        <div aria-hidden="true" class="pointer-events-none absolute -bottom-20 -left-20 h-56 w-56 rounded-full bg-brand-200/30 blur-3xl"></div>
-
-        <div class="relative text-center">
-          <span class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-brand-600 text-white shadow-md">
-            <Heart size={26} />
-          </span>
-          {#if hp.intro?.heading}
-            <h2 class="mt-5 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">{hp.intro.heading}</h2>
-            <span class="mt-3 inline-block h-1 w-16 rounded-full bg-brand-500"></span>
-          {/if}
-          {#if introParagraphs.length > 0}
-            <p class="mt-6 text-xl sm:text-2xl leading-relaxed font-medium text-slate-800 whitespace-pre-line max-w-2xl mx-auto">
-              {introParagraphs[0]}
-            </p>
-            {#each introParagraphs.slice(1) as p}
-              <p class="mt-4 text-lg leading-relaxed text-slate-600 whitespace-pre-line max-w-2xl mx-auto">{p}</p>
-            {/each}
-          {/if}
-        </div>
+    <section class="section">
+      <div class="max-w-2xl mx-auto text-center">
+        {#if hp.intro?.heading}
+          <h2 class="section-title">{hp.intro.heading}</h2>
+        {/if}
+        {#if introParagraphs.length > 0}
+          <p class="mt-6 text-xl sm:text-2xl leading-relaxed font-medium text-slate-800 whitespace-pre-line">
+            {introParagraphs[0]}
+          </p>
+          {#each introParagraphs.slice(1) as p}
+            <p class="mt-4 text-lg leading-relaxed text-slate-600 whitespace-pre-line">{p}</p>
+          {/each}
+        {/if}
       </div>
     </section>
   {/if}
 
-  <!-- ───────────────── Next event spotlight ────────────────── -->
-  {#if nextEvent}
-    <section class="max-w-3xl mx-auto px-4 pb-12">
-      <div class="card p-6 flex flex-col sm:flex-row gap-6 items-start sm:items-center justify-between border-t-4 border-brand-600">
-        <div>
-          <p class="text-sm font-medium text-brand-700 uppercase tracking-wide">Next event</p>
-          <h2 class="mt-2 text-2xl font-semibold">{nextEvent.name}</h2>
-          <p class="mt-1 text-slate-600 flex items-center gap-2"><Calendar size={16} /> {formatDate(nextEvent.date)} · {nextEvent.startTime.slice(0,5)}–{nextEvent.endTime.slice(0,5)}</p>
-          <p class="mt-1 text-slate-600 flex items-center gap-2"><MapPin size={16} /> {nextEvent.venue.name}</p>
-        </div>
-        <div class="flex flex-col gap-2 w-full sm:w-auto">
-          <a href="/events" class="btn-primary">Find out more</a>
-          <AddToCalendar event={nextEvent} variant="button" />
-        </div>
-      </div>
-    </section>
-  {/if}
-
-
-  <!-- ──────────────── How it works steps ─────────────────────── -->
+  <!-- ──────────────── How it works ─────────────────────── -->
   {#if Array.isArray(hp.howItWorks) && hp.howItWorks.length > 0}
-    <section class="bg-slate-50 py-14">
-      <div class="max-w-6xl mx-auto px-4">
-        <h2 class="text-3xl font-bold tracking-tight text-center text-slate-900">How it works</h2>
-        <div class="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <section class="band">
+      <div class="section">
+        <SectionHeading eyebrow="Your visit" title="How it works" />
+        <div class="relative mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10">
+          <!-- Hairline joining the numbered steps, so they read as one
+               sequence rather than four separate boxes. -->
+          <div aria-hidden="true" class="hidden lg:block absolute top-6 left-[12.5%] right-[12.5%] h-px bg-brand-200"></div>
           {#each hp.howItWorks as step, i}
-            <div class="card p-6 text-center">
-              <div class="w-12 h-12 mx-auto rounded-full bg-brand-600 text-white flex items-center justify-center text-xl font-bold">{i + 1}</div>
-              <h3 class="mt-4 text-lg font-semibold">{step.title}</h3>
+            <div class="relative text-center">
+              <div class="w-12 h-12 mx-auto rounded-full bg-brand-600 text-white ring-8 ring-brand-50 flex items-center justify-center text-xl font-bold font-display">{i + 1}</div>
+              <h3 class="mt-4 text-lg font-semibold text-pine">{step.title}</h3>
               <p class="mt-2 text-slate-600 text-sm leading-relaxed whitespace-pre-line">{step.body}</p>
             </div>
           {/each}
@@ -228,35 +255,97 @@
     </section>
   {/if}
 
+  <!-- ──────────────────── Our numbers ─────────────────────────
+       A dark block on purpose. The rest of the page alternates cream and a
+       tint, and this section is optional, so making it a third surface keeps
+       that alternation correct whether it is switched on or off. -->
+  {#if showStats && statTiles.length > 0}
+    <section class="bg-brand-800 text-white">
+      <div class="section">
+        <SectionHeading
+          tone="inverse"
+          eyebrow="What we have done together"
+          title="Our numbers"
+          lede="Every repair keeps something working, and keeps it out of the bin."
+        />
+        <dl class="mt-12 grid grid-cols-2 gap-8 {statTiles.length >= 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}">
+          {#each statTiles as tile}
+            <div class="text-center">
+              <dt class="sr-only">{tile.label}</dt>
+              <dd>
+                <span class="block font-display text-4xl md:text-5xl font-bold leading-none">{tile.value}</span>
+                <span class="mt-3 block text-sm text-white/75">{tile.label}</span>
+              </dd>
+            </div>
+          {/each}
+        </dl>
+      </div>
+    </section>
+  {/if}
+
+  <!-- ──────────────────── Photo gallery ─────────────────────── -->
+  {#if gallery.length > 0}
+    <section class="section">
+      <SectionHeading
+        eyebrow="From our sessions"
+        title="In the workshop"
+        lede="A few photos from recent repair sessions."
+      />
+      <div class="mt-10 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+        {#each visiblePhotos as img, i}
+          <button
+            type="button"
+            on:click={() => openLightbox(i)}
+            class="relative aspect-[4/3] overflow-hidden rounded-xl bg-slate-200 group focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+            aria-label={img.caption ? `View larger: ${img.caption}` : `View image ${i + 1} of ${gallery.length}`}
+          >
+            <img src={img.url} alt={img.caption || `${cafeName} repair café`} loading="lazy" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+          </button>
+        {/each}
+      </div>
+      {#if gallery.length > PHOTO_PREVIEW}
+        <div class="text-center mt-8">
+          <button type="button" class="btn-secondary" on:click={() => (showAllPhotos = !showAllPhotos)}>
+            {showAllPhotos ? 'Show fewer photos' : `Show all ${gallery.length} photos`}
+          </button>
+        </div>
+      {/if}
+    </section>
+  {/if}
+
   <!-- ──────────────────── When & where ──────────────────────── -->
   {#if upcomingEvents.length > 0}
-    <section id="when" class="bg-sage/30 py-16">
-      <div class="max-w-5xl mx-auto px-4">
-        <div class="text-center">
-          <p class="text-xs font-bold uppercase tracking-[0.18em] text-clay">Mark your calendar</p>
-          <h2 class="mt-2 text-3xl md:text-4xl font-bold tracking-tight text-pine">When &amp; where</h2>
+    <section id="when" class="band">
+      <div class="section">
+        <SectionHeading eyebrow="Mark your calendar" title="When &amp; where">
           {#if homeVenue}
-            <p class="mt-3 text-slate-600 flex items-center justify-center gap-2">
-              <MapPin size={16} /> {homeVenue.name}{#if homeVenue.address}, {homeVenue.address}{/if}{#if homeVenue.postcode} · {homeVenue.postcode}{/if}
+            <!-- The pin is inline, not a flex sibling, so it stays next to the
+                 first word instead of being stranded when the address wraps. -->
+            <p class="section-lede">
+              <MapPin size={18} class="inline-block align-text-bottom mr-1.5" />{homeVenue.name}{#if homeVenue.address}, {homeVenue.address}{/if}{#if homeVenue.postcode}{' · '}{noWrap(homeVenue.postcode)}{/if}
             </p>
           {/if}
-        </div>
+        </SectionHeading>
 
-        <div class="mt-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
-          {#each upcomingEvents.slice(0, 8) as e, i}
+        <div class="mt-10 grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {#each upcomingEvents.slice(0, DATE_PREVIEW) as e, i}
             {@const p = dateParts(e.date)}
-            <div
-              class="group relative rounded-2xl bg-white ring-1 ring-slate-200 overflow-hidden text-center shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 hover:ring-brand-300"
-            >
+            <div class="group relative card overflow-hidden text-center transition-shadow hover:ring-brand-400">
               {#if i === 0}
-                <span class="absolute top-2 right-2 z-10 rounded-full bg-sun text-ink text-[10px] font-bold uppercase tracking-wide px-2 py-0.5">Next</span>
+                <span class="absolute top-2 right-2 z-10 rounded-full bg-accent-600 text-white text-[10px] font-bold uppercase tracking-wide px-2 py-0.5">Next</span>
               {/if}
               <div class="absolute top-2 left-2 z-10">
-                <AddToCalendar event={e} variant="compact" />
+                <!-- Dark, so it reads on the lead tile's solid strip and on
+                     the tinted strips of the tiles that follow it. -->
+                <AddToCalendar event={e} variant="compact" class="!bg-brand-800/90 !text-white !ring-white/20 hover:!bg-brand-800" />
               </div>
               <a href="/events" class="block">
-                <div class="bg-brand-600 text-white text-xs font-bold uppercase tracking-wider py-1.5">{p.monthShort}</div>
-                <div class="px-3 py-4">
+                <!-- The next date keeps the solid brand strip; later dates use
+                     a tint, so one tile leads and the rest support it. -->
+                <div
+                  class="text-xs font-bold uppercase tracking-wider py-1.5 {i === 0 ? 'bg-brand-600 text-white' : 'bg-brand-100 text-brand-800'}"
+                >{p.monthShort}</div>
+                <div class="px-3 py-5">
                   <div class="text-4xl font-bold font-display text-pine leading-none">{p.day}</div>
                   <div class="mt-1 text-sm text-slate-500">{p.weekdayLong}</div>
                   <div class="mt-3 inline-flex items-center gap-1 text-xs font-medium text-slate-600">
@@ -271,35 +360,13 @@
           {/each}
         </div>
 
-        {#if upcomingEvents.length > 8}
-          <p class="mt-6 text-center text-sm text-slate-500">+ {upcomingEvents.length - 8} more {upcomingEvents.length - 8 === 1 ? 'date' : 'dates'} on the schedule</p>
-        {/if}
-
-        <div class="text-center mt-8">
+        <div class="text-center mt-10">
+          {#if upcomingEvents.length > DATE_PREVIEW}
+            <p class="mb-4 text-sm text-slate-500">
+              We have {upcomingEvents.length - DATE_PREVIEW} more {upcomingEvents.length - DATE_PREVIEW === 1 ? 'date' : 'dates'} booked after these.
+            </p>
+          {/if}
           <a href="/events" class="btn-secondary">See full schedule</a>
-        </div>
-      </div>
-    </section>
-  {/if}
-
-  <!-- ──────────────────── Photo gallery ─────────────────────── -->
-  {#if gallery.length > 0}
-    <section class="bg-slate-50 py-14">
-      <div class="max-w-6xl mx-auto px-4">
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-          {#each gallery as img, i}
-            <button
-              type="button"
-              on:click={() => openLightbox(i)}
-              class="relative aspect-[4/3] overflow-hidden rounded-lg bg-slate-200 group focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
-              aria-label={img.caption ? `View larger: ${img.caption}` : `View image ${i + 1} of ${gallery.length}`}
-            >
-              <img src={img.url} alt={img.caption || `${cafeName} repair café`} loading="lazy" class="w-full h-full object-cover transition-transform group-hover:scale-105" />
-              {#if img.caption}
-                <span class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent text-white text-xs p-2 text-left line-clamp-2">{img.caption}</span>
-              {/if}
-            </button>
-          {/each}
         </div>
       </div>
     </section>
@@ -307,123 +374,94 @@
 
   <!-- ────────────────── What to bring ───────────────────────── -->
   {#if hp.whatToBring?.body}
-    <section class="max-w-4xl mx-auto px-4 py-14">
-      <div class="relative overflow-hidden rounded-3xl bg-white ring-1 ring-slate-200 shadow-sm px-6 py-10 sm:px-12 sm:py-12">
-        <div aria-hidden="true" class="pointer-events-none absolute -top-12 -right-12 h-44 w-44 rounded-full bg-brand-100/60 blur-3xl"></div>
-
-        <div class="relative">
-          <div class="flex items-center gap-4">
-            <span class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-brand-600 text-white shadow-md shrink-0">
-              <Package size={22} />
-            </span>
-            <div>
-              <p class="text-xs font-semibold uppercase tracking-wider text-brand-700">Before you come</p>
-              {#if hp.whatToBring.heading}
-                <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">{hp.whatToBring.heading}</h2>
-              {/if}
-            </div>
+    <section class="section">
+      <SectionHeading eyebrow="Before you come" title={hp.whatToBring.heading || 'What to bring'} />
+      <div class="mt-10 max-w-3xl mx-auto card p-6 sm:p-10">
+        {#if bring.isList}
+          <ul class="space-y-4">
+            {#each bring.items as item}
+              <li class="flex items-start gap-3 text-slate-700">
+                <CheckCircle2 size={20} class="text-brand-600 shrink-0 mt-0.5" />
+                <span class="leading-relaxed">{item}</span>
+              </li>
+            {/each}
+          </ul>
+        {:else}
+          <div class="space-y-4">
+            {#each bring.paragraphs as p}
+              <p class="text-lg leading-relaxed text-slate-700 whitespace-pre-line">{p}</p>
+            {/each}
           </div>
-
-          {#if bring.isList}
-            <ul class="mt-8 grid sm:grid-cols-2 gap-x-8 gap-y-3">
-              {#each bring.items as item}
-                <li class="flex items-start gap-3 text-slate-700">
-                  <CheckCircle2 size={20} class="text-emerald-600 shrink-0 mt-0.5" />
-                  <span class="leading-snug">{item}</span>
-                </li>
-              {/each}
-            </ul>
-          {:else}
-            <div class="mt-6 space-y-4">
-              {#each bring.paragraphs as p}
-                <p class="text-lg leading-relaxed text-slate-700 whitespace-pre-line">{p}</p>
-              {/each}
-            </div>
-          {/if}
-        </div>
+        {/if}
       </div>
     </section>
   {/if}
 
   <!-- ──────────────── What we repair (categories) ───────────── -->
   {#if categories.length > 0}
-    <section class="max-w-6xl mx-auto px-4 pb-12">
-      <h2 class="text-3xl font-bold tracking-tight text-center text-slate-900 uppercase">What we repair</h2>
-      <div class="mt-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-        {#each categories as cat}
-          <div class="card p-4 text-center">
-            <div class="w-14 h-14 mx-auto rounded-2xl flex items-center justify-center text-white shadow-sm" style="background-color: {cat.colour}">
-              <Icon icon={categoryIcon(cat.icon)} width="28" height="28" />
+    <section class="band">
+      <div class="section">
+        <SectionHeading
+          eyebrow="What we can look at"
+          title="What we repair"
+          lede="Bring one of these along, or just ask. We will always take a look."
+        />
+        <div class="mt-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          {#each categories as cat}
+            <div class="card p-5 text-center">
+              <!-- One lightness for every tile: the category colour as a soft
+                   wash, with a darkened version of the same colour as the
+                   glyph so it stays readable. -->
+              <span
+                class="icon-tile mx-auto"
+                style={`background-color: ${categoryTint(cat.colour)}; color: ${categoryInk(cat.colour)}`}
+              >
+                <Icon icon={categoryIcon(cat.icon, cat.name)} width="24" height="24" />
+              </span>
+              <p class="mt-3 font-medium text-pine">{cat.name}</p>
+              <p class="text-xs text-slate-500">{cat.repairerCount} volunteer{cat.repairerCount === 1 ? '' : 's'}</p>
             </div>
-            <p class="mt-3 font-medium">{cat.name}</p>
-            <p class="text-xs text-slate-500">{cat.repairerCount} volunteer{cat.repairerCount === 1 ? '' : 's'}</p>
-          </div>
-        {/each}
+          {/each}
+        </div>
       </div>
     </section>
   {/if}
 
   <!-- ──────────────────── Team ──────────────────────────────── -->
   {#if homeRepairers.length > 0}
-    <section class="max-w-6xl mx-auto px-4 pb-16">
-      <div class="flex items-end justify-between mb-6">
-        <h2 class="text-2xl font-semibold">Meet our team</h2>
-        <a href="/skills" class="text-brand-700 hover:underline text-sm">See everyone →</a>
-      </div>
-      <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {#each homeRepairers.slice(0, 12) as r}
-          <a
-            href="/team/{r.id}"
-            aria-label={`View profile: ${r.displayName}`}
-            class="card p-5 block hover:shadow-md transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-          >
-            <div class="flex items-center gap-3">
-              {#if r.avatarUrl}
-                <img src={r.avatarUrl} alt="" class="h-14 w-14 rounded-full object-cover" />
-              {:else}
-                <div class="h-14 w-14 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-semibold">{r.displayName.slice(0, 2).toUpperCase()}</div>
-              {/if}
-              <div>
-                <p class="font-semibold text-brand-700">{r.displayName}</p>
-                {#if r.joinDate}<p class="text-xs text-slate-500">Joined {new Date(r.joinDate).getFullYear()}</p>{/if}
-              </div>
-            </div>
-            {#if r.bio}<p class="mt-3 text-sm text-slate-700 line-clamp-3">{r.bio}</p>{/if}
-            {#if r.skills.length > 0}
-              <div class="mt-3 flex flex-wrap gap-1">
-                {#each r.skills as s}
-                  <span class="badge bg-slate-100 text-slate-700">{s}</span>
-                {/each}
-              </div>
-            {/if}
-          </a>
+    <section class="section">
+      <SectionHeading
+        eyebrow="The people who fix things"
+        title="Meet our team"
+        lede="Our repairers are volunteers. They give their time, their tools and their know-how."
+      />
+      <div class="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {#each homeRepairers.slice(0, TEAM_PREVIEW) as r}
+          <VolunteerCard volunteer={r} badgeLimit={BADGE_PREVIEW} />
         {/each}
+      </div>
+      <div class="text-center mt-10">
+        <a href="/skills" class="btn-secondary">See everyone</a>
       </div>
     </section>
   {/if}
 
   <!-- ──────────────────── FAQ ──────────────────────────────── -->
   {#if Array.isArray(hp.faqs) && hp.faqs.length > 0}
-    <section class="bg-sage/30 py-16">
-      <div class="max-w-3xl mx-auto px-4">
-        <div class="text-center">
-          <span class="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-brand-600 text-white shadow-md">
-            <HelpCircle size={26} />
-          </span>
-          <p class="mt-4 text-xs font-bold uppercase tracking-[0.18em] text-clay">Good to know</p>
-          <h2 class="mt-2 text-3xl md:text-4xl font-bold tracking-tight text-pine">Questions</h2>
-        </div>
-        <div class="mt-10 space-y-3">
+    <section class="band">
+      <div class="section">
+        <SectionHeading eyebrow="Good to know" title="Common questions" />
+        <div class="mt-10 max-w-3xl mx-auto space-y-3">
           {#each hp.faqs as faq, i}
             <details
-              class="group rounded-2xl bg-white ring-1 ring-slate-200 shadow-sm transition-all hover:ring-brand-300 open:ring-2 open:ring-brand-400 open:shadow-md"
+              class="group card transition-shadow hover:ring-brand-400 open:ring-brand-400"
               open={openFaq === i}
               on:toggle={(e) => { if ((e.target as HTMLDetailsElement).open) openFaq = i; }}
             >
               <summary class="cursor-pointer flex items-center gap-4 px-5 py-4 list-none">
-                <span class="shrink-0 grid place-items-center h-9 w-9 rounded-full bg-sage text-pine font-bold font-display transition-colors group-open:bg-brand-600 group-open:text-white">{i + 1}</span>
+                <span class="shrink-0 grid place-items-center h-9 w-9 rounded-full bg-brand-100 text-pine font-bold font-display transition-colors group-open:bg-brand-600 group-open:text-white">{i + 1}</span>
                 <span class="flex-1 font-semibold text-pine">{faq.q}</span>
-                <span class="shrink-0 grid place-items-center h-8 w-8 rounded-full bg-slate-100 text-slate-500 transition-all group-open:bg-clay group-open:text-white group-open:rotate-180">
+                <span class="shrink-0 grid place-items-center h-8 w-8 rounded-full bg-slate-100 text-slate-500 transition-transform group-open:rotate-180">
                   <ChevronDown size={18} />
                 </span>
               </summary>
@@ -435,20 +473,9 @@
     </section>
   {/if}
 
-  <!-- ──────────────────── Contact / address ─────────────────── -->
-  {#if $cafe?.contactEmail || $cafe?.address}
-    <section class="max-w-3xl mx-auto px-4 py-14 text-center">
-      <h2 class="text-2xl font-semibold text-slate-900">Get in touch</h2>
-      <div class="mt-4 flex flex-col sm:flex-row gap-6 justify-center text-slate-700">
-        {#if $cafe?.contactEmail}
-          <a href={`mailto:${$cafe.contactEmail}`} class="flex items-center gap-2 hover:text-brand-700"><Mail size={18} /> {$cafe.contactEmail}</a>
-        {/if}
-        {#if $cafe?.address}
-          <span class="flex items-center gap-2"><MapPin size={18} /> {$cafe.address}</span>
-        {/if}
-      </div>
-    </section>
-  {/if}
+  <!-- ──────────────── Closing call to action ────────────────
+       The page ends on an invitation, not on a list. -->
+  <NextSessionCta event={nextEvent} venue={homeVenue} image={closingImage} />
 </main>
 
 <!-- ────────────────────── Gallery lightbox ────────────────────── -->

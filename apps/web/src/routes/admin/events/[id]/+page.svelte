@@ -91,14 +91,14 @@
 
   <div class="grid md:grid-cols-2 gap-4 mt-6">
     <div class="card p-5">
-      <h2 class="font-semibold">QR code</h2>
+      <h2 class="text-lg font-semibold">QR code</h2>
       {#if detail.event.qrCodeUrl}
         <img src={detail.event.qrCodeUrl} alt="QR Code" class="mt-3 w-48 h-48" />
         <p class="mt-2 text-xs text-slate-500 break-all">{checkInUrl()}</p>
         <div class="mt-3 flex flex-wrap gap-2">
-          <a href={detail.event.qrCodeUrl} download class="btn-secondary text-sm"><Download size={14} /> Download PNG</a>
-          <a href={`/admin/events/${id}/print`} target="_blank" class="btn-secondary text-sm"><Printer size={14} /> Print view</a>
-          <button class="btn-ghost text-sm" on:click={regenerate}><RotateCw size={14} /> Regenerate</button>
+          <a href={detail.event.qrCodeUrl} download class="btn-secondary btn-sm"><Download size={14} /> Download PNG</a>
+          <a href={`/admin/events/${id}/print`} target="_blank" class="btn-secondary btn-sm"><Printer size={14} /> Print view</a>
+          <button class="btn-ghost btn-sm" on:click={regenerate}><RotateCw size={14} /> Regenerate</button>
         </div>
       {:else}
         <p class="mt-3 text-sm text-slate-500">QR not yet generated</p>
@@ -107,7 +107,7 @@
     </div>
 
     <div class="card p-5">
-      <h2 class="font-semibold">Settings</h2>
+      <h2 class="text-lg font-semibold">Settings</h2>
       <label class="mt-3 flex items-center gap-2"><input type="checkbox" checked={detail.event.isPublished} on:change={(e) => update({ isPublished: e.currentTarget.checked })} /> Published on public calendar</label>
       <div class="mt-3">
         <label class="label" for="vid">Venue</label>
@@ -123,7 +123,7 @@
   </div>
 
   <section class="mt-6">
-    <h2 class="font-semibold mb-2">Attending repairers</h2>
+    <h2 class="text-lg font-semibold mb-2">Attending repairers</h2>
     <div class="card p-4 grid sm:grid-cols-2 md:grid-cols-3 gap-2">
       {#each users.filter((u: any) => u.isActive) as u}
         {@const attending = detail.attending.find((a: any) => a.userId === u.id)}
@@ -136,7 +136,7 @@
   </section>
 
   <section class="mt-6">
-    <h2 class="font-semibold mb-2">Repair jobs ({detail.jobs.length})</h2>
+    <h2 class="text-lg font-semibold mb-2">Repair jobs ({detail.jobs.length})</h2>
     <div class="card overflow-x-auto">
       <table class="w-full text-sm">
         <thead class="bg-slate-50 text-left text-slate-600">

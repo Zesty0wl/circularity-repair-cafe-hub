@@ -71,7 +71,7 @@
             <td class="px-3 py-2">{e.jobCount}</td>
             <td class="px-3 py-2 text-right">
               {#if e.status === 'scheduled'}
-                <button class="btn-secondary text-xs" on:click={() => activate(e.id)}>Activate</button>
+                <button class="btn-secondary btn-sm" on:click={() => activate(e.id)}>Activate</button>
               {/if}
             </td>
           </tr>

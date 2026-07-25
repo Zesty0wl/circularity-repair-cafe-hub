@@ -112,8 +112,8 @@
         </p>
       </div>
       <div class="flex gap-2 shrink-0">
-        <button class="btn-ghost text-sm" on:click={() => startEdit(v)}>Edit</button>
-        <button class="btn-ghost text-sm text-rose-600" on:click={() => del(v)}>Delete</button>
+        <button class="btn-ghost btn-sm" on:click={() => startEdit(v)}>Edit</button>
+        <button class="btn-ghost btn-sm text-rose-600" on:click={() => del(v)}>Delete</button>
       </div>
     </li>
   {/each}
@@ -125,7 +125,7 @@
 {#if editing}
   <div class="fixed inset-0 bg-slate-900/50 z-50 overflow-y-auto">
     <div class="min-h-full flex items-start sm:items-center justify-center p-4">
-      <div class="bg-white rounded-2xl max-w-2xl w-full p-6 my-8 space-y-4 shadow-xl">
+      <div class="modal-panel max-w-2xl my-8 space-y-4">
         <h2 class="text-lg font-semibold">{editing.id ? 'Edit venue' : 'New venue'}</h2>
 
       <div>

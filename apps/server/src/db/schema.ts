@@ -21,6 +21,7 @@ export const repairStatusEnum = pgEnum('repair_status', [
   'in_progress',
   'completed',
   'cannot_repair',
+  'awaiting_return',
   'returned',
 ]);
 export const eventStatusEnum = pgEnum('event_status', [

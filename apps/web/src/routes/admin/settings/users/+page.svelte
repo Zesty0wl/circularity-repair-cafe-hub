@@ -1,13 +1,14 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { api } from '$lib/api';
+  import { ArrowLeft } from 'lucide-svelte';
 
   let users: any[] = [];
   async function load() { users = await api('/api/admin/users'); }
   onMount(load);
 </script>
 
-<a href="/admin/settings" class="text-sm text-slate-600 hover:underline">← Settings</a>
+<a href="/admin/settings" class="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-brand-700"><ArrowLeft size={14} /> Back to settings</a>
 <div class="flex justify-between items-center mt-1">
   <h1 class="text-2xl font-bold">Users</h1>
   <a href="/admin/repairers/new" class="btn-primary">Add user</a>

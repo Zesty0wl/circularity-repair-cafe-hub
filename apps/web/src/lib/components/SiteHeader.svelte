@@ -26,23 +26,17 @@
 <header class="bg-white shadow-sm border-b border-slate-200 no-print sticky top-0 z-30">
   <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
     <div class="flex items-center gap-3 min-w-0">
+      <!-- Only the cafe's own name and logo here. The Circularity credit
+           lives in the footer. Most cafe logos are wide wordmarks, so we give
+           the image its own width and cap it, rather than squashing it into a
+           square. -->
       <a href="/" class="flex items-center gap-3 text-slate-900 font-semibold text-lg min-w-0">
         {#if $cafe?.logoUrl}
-          <img src={$cafe.logoUrl} alt="" class="h-9 w-9 rounded-lg object-contain shrink-0" />
+          <img src={$cafe.logoUrl} alt="" class="h-10 w-auto max-w-[9rem] rounded-lg object-contain shrink-0" />
         {:else}
-          <span class="h-9 w-9 rounded-lg bg-brand-600 text-white inline-flex items-center justify-center shrink-0"><Wrench size={18} /></span>
+          <span class="h-10 w-10 rounded-lg bg-brand-600 text-white inline-flex items-center justify-center shrink-0"><Wrench size={18} /></span>
         {/if}
         <span class="truncate">{$cafe?.name || 'Repair Cafe'}</span>
-      </a>
-      <span class="hidden lg:block h-8 w-px bg-slate-200 shrink-0" aria-hidden="true"></span>
-      <a
-        href="https://circularity.org"
-        target="_blank"
-        rel="noopener"
-        class="hidden lg:inline-flex items-center gap-1.5 text-xs font-normal text-slate-500 hover:text-slate-700 shrink-0"
-      >
-        <span>Powered by</span>
-        <img src="/brand/logo-wordmark.svg" alt="Circularity.org" class="h-7 w-auto" />
       </a>
     </div>
 
@@ -55,12 +49,12 @@
         <a href="/contact" class="px-3 py-2 rounded-lg hover:bg-slate-100">Contact</a>
         {#if $auth}
           {#if $auth.user.role === 'admin' || $auth.user.role === 'super_admin'}
-            <a href="/admin/dashboard" class="btn-primary !px-4 !py-2 text-sm">Admin</a>
+            <a href="/admin/dashboard" class="btn-primary btn-sm">Admin</a>
           {:else}
-            <a href="/repairer" class="btn-primary !px-4 !py-2 text-sm">Repairer</a>
+            <a href="/repairer" class="btn-primary btn-sm">Repairer</a>
           {/if}
         {:else}
-          <a href="/login" class="btn-secondary !px-4 !py-2 text-sm">Sign in</a>
+          <a href="/login" class="btn-secondary btn-sm">Sign in</a>
         {/if}
       {:else if user}
         {#if variant === 'repairer'}
@@ -69,7 +63,7 @@
           <a href="/repairer/profile" class="px-3 py-2 rounded-lg hover:bg-slate-100">My profile</a>
         {/if}
         <span class="text-slate-600">{user.displayName}</span>
-        <button class="btn-ghost !px-3 !py-2 text-sm" on:click={logout}>
+        <button class="btn-ghost btn-sm" on:click={logout}>
           <LogOut size={16} /> <span>Sign out</span>
         </button>
       {/if}

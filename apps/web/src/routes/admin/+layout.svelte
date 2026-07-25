@@ -78,12 +78,13 @@
     {/if}
 
     <div class="flex-1 min-w-0">
-      <div class="md:hidden bg-white border-b border-slate-200 px-3 py-2 flex items-center justify-between">
-        <button class="btn-ghost" on:click={() => (sidebarOpen = true)}><Menu size={20} /></button>
+      <div class="md:hidden bg-white border-b border-slate-200 px-4 py-2 flex items-center justify-between">
+        <button class="btn-ghost !px-2" on:click={() => (sidebarOpen = true)} aria-label="Open menu"><Menu size={20} /></button>
         <span class="font-semibold">Admin</span>
         <a href="/" class="text-sm text-brand-700">Site</a>
       </div>
-      <main class="p-4 md:p-8 max-w-6xl">
+      <!-- Centred in the space next to the sidebar so wide screens stay balanced. -->
+      <main class="p-4 md:p-8 max-w-6xl mx-auto">
         <slot />
       </main>
     </div>

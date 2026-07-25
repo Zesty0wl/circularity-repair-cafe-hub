@@ -119,7 +119,7 @@
     <p class="text-slate-600 text-sm">This is what visitors see on the public team page.</p>
   </div>
   {#if me}
-    <a href="/team/{me.id}" target="_blank" rel="noopener" class="btn-secondary text-sm">
+    <a href="/team/{me.id}" target="_blank" rel="noopener" class="btn-secondary btn-sm">
       <ExternalLink size={14} /> View my public page
     </a>
   {/if}
@@ -131,12 +131,12 @@
   <div class="grid md:grid-cols-3 gap-4 mt-4">
     <!-- Avatar -->
     <div class="card p-6 text-center md:col-span-1">
-      <p class="text-sm text-slate-500 uppercase tracking-wide">Photo</p>
+      <p class="kicker">Photo</p>
       <div class="mt-4 flex justify-center">
         {#if me.avatarUrl}
-          <img src={me.avatarUrl} alt="" class="h-32 w-32 rounded-2xl object-cover ring-4 ring-white shadow-md" />
+          <img src={me.avatarUrl} alt="" class="h-32 w-32 rounded-2xl object-cover ring-1 ring-slate-200" />
         {:else}
-          <div class="h-32 w-32 rounded-2xl bg-brand-100 text-brand-700 flex items-center justify-center text-3xl font-bold ring-4 ring-white shadow-md">
+          <div class="h-32 w-32 rounded-2xl bg-brand-100 text-brand-700 flex items-center justify-center text-3xl font-bold">
             {initials(displayName || me.displayName)}
           </div>
         {/if}
@@ -146,7 +146,7 @@
         <input type="file" accept="image/jpeg,image/png,image/webp" class="hidden" on:change={uploadAvatar} disabled={uploading} />
       </label>
       {#if me.avatarUrl}
-        <button class="btn-ghost text-sm mt-2 text-rose-600 inline-flex items-center gap-1" on:click={removeAvatar}>
+        <button class="btn-ghost btn-sm mt-2 text-rose-600" on:click={removeAvatar}>
           <Trash2 size={14} /> Remove photo
         </button>
       {/if}

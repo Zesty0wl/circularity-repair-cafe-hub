@@ -38,6 +38,9 @@ export interface CafeInfo {
   ogImageUrl: string | null;
   plausibleDomain: string | null;
   plausibleSrc: string | null;
+  // Hash of the branding the home screen icons are built from. Used to point
+  // the apple-touch-icon at the current, immutable icon file.
+  pwaIconVersion?: string | null;
 }
 
 export const cafe = writable<CafeInfo | null>(null);

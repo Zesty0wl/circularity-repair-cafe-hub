@@ -39,7 +39,7 @@
 
 <SiteHeader variant="public" />
 
-<main class="max-w-3xl mx-auto px-4 py-10 space-y-6">
+<main class="max-w-3xl mx-auto px-4 py-8 md:py-12 space-y-6">
   <a href="/skills" class="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-brand-700">
     <ArrowLeft size={16} /> Back to the team
   </a>
@@ -59,17 +59,17 @@
         <img
           src={repairer.avatarUrl}
           alt={repairer.displayName}
-          class="h-32 w-32 sm:h-36 sm:w-36 rounded-2xl object-cover ring-4 ring-white shadow-md shrink-0"
+          class="h-32 w-32 sm:h-36 sm:w-36 rounded-2xl object-cover ring-1 ring-slate-200 shrink-0"
         />
       {:else}
         <div
-          class="h-32 w-32 sm:h-36 sm:w-36 rounded-2xl bg-brand-100 text-brand-700 flex items-center justify-center text-4xl font-bold ring-4 ring-white shadow-md shrink-0"
+          class="h-32 w-32 sm:h-36 sm:w-36 rounded-2xl bg-brand-100 text-brand-700 flex items-center justify-center text-4xl font-bold shrink-0"
         >
           {initials(repairer.displayName)}
         </div>
       {/if}
       <div class="min-w-0 flex-1">
-        <p class="text-sm text-brand-700 font-medium uppercase tracking-wide">Volunteer repairer</p>
+        <p class="eyebrow">Volunteer repairer</p>
         <h1 class="mt-1 text-3xl sm:text-4xl font-bold tracking-tight">{repairer.displayName}</h1>
         <div class="mt-3 flex flex-wrap justify-center sm:justify-start gap-x-5 gap-y-2 text-sm text-slate-600">
           {#if repairer.joinDate}
@@ -87,7 +87,7 @@
     <!-- Bio -->
     {#if repairer.bio}
       <section class="card p-6 sm:p-8">
-        <h2 class="text-sm text-slate-500 uppercase tracking-wide">About</h2>
+        <h2 class="kicker">About</h2>
         <p class="mt-3 text-lg leading-relaxed text-slate-700 whitespace-pre-line">{repairer.bio}</p>
       </section>
     {/if}
@@ -95,14 +95,14 @@
     <!-- Skills -->
     {#if repairer.skills.length > 0}
       <section class="card p-6 sm:p-8">
-        <h2 class="text-sm text-slate-500 uppercase tracking-wide">Specialises in</h2>
+        <h2 class="kicker">Specialises in</h2>
         <div class="mt-4 flex flex-wrap gap-3">
           {#each repairer.skills as s}
             <span
-              class="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium text-white shadow-sm"
+              class="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium text-white"
               style="background-color: {s.colour}"
             >
-              <Icon icon={categoryIcon(s.icon)} width="16" height="16" />
+              <Icon icon={categoryIcon(s.icon, s.name)} width="16" height="16" />
               {s.name}
             </span>
           {/each}

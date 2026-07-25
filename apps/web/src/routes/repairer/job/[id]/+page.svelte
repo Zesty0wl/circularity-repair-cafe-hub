@@ -15,7 +15,7 @@
   }
 
   let detail: JobDetail | null = null;
-  let outcome: 'completed' | 'cannot_repair' = 'completed';
+  let outcome: 'completed' | 'cannot_repair' | 'awaiting_return' = 'completed';
   let outcomeNotes = '';
   let partsUsed = '';
   let savings: number | string = '';
@@ -27,6 +27,8 @@
   $: myId = $auth?.user.id ?? null;
   $: status = detail?.job.status as string | undefined;
   $: isMine = !!detail && detail.job.repairerId === myId && status === 'in_progress';
+  // 'awaiting_return' is deliberately not here: the repair is paused, not
+  // finished, so it can still be picked up again at the next session.
   $: isFinished = status === 'completed' || status === 'cannot_repair';
 
   async function load() {
@@ -122,12 +124,12 @@
   {#if status === 'waiting'}
     <div class="card p-4 mt-4 flex items-center justify-between gap-3 bg-amber-50">
       <p class="text-sm text-amber-900">This repair is waiting for a repairer.</p>
-      <button class="btn-primary text-sm" disabled={busy} on:click={claim}>Claim this repair</button>
+      <button class="btn-primary btn-sm" disabled={busy} on:click={claim}>Claim this repair</button>
     </div>
   {:else if status === 'in_progress' && !isMine}
     <div class="card p-4 mt-4 flex items-center justify-between gap-3 bg-blue-50">
       <p class="text-sm text-blue-900">Another repairer is working on this. You can take over if needed.</p>
-      <button class="btn-primary text-sm" disabled={busy} on:click={takeOver}>Take over this job</button>
+      <button class="btn-primary btn-sm" disabled={busy} on:click={takeOver}>Take over this job</button>
     </div>
   {/if}
 
@@ -140,7 +142,7 @@
     <div class="flex justify-between items-center">
       <h2 class="text-lg font-semibold">Photos</h2>
       {#if isMine}
-        <button class="btn-secondary text-sm" on:click={() => { cameraStage = 'during_repair'; showCamera = true; }}><CameraIcon size={16} /> Add photo</button>
+        <button class="btn-secondary btn-sm" on:click={() => { cameraStage = 'during_repair'; showCamera = true; }}><CameraIcon size={16} /> Add photo</button>
       {/if}
     </div>
     {#if detail.images.length === 0}
@@ -149,7 +151,7 @@
       <div class="mt-3 grid grid-cols-3 gap-2">
         {#each detail.images as img}
           <a href={`/uploads/${img.filePath}`} target="_blank" rel="noopener">
-            <img src={`/uploads/${img.filePath}`} alt={img.stage} class="w-full aspect-square object-cover rounded-lg" />
+            <img src={`/uploads/${img.filePath}`} alt={img.stage} class="w-full aspect-square object-cover rounded-xl ring-1 ring-slate-200" />
           </a>
         {/each}
       </div>
@@ -161,7 +163,7 @@
           <option value="during_repair">During repair</option>
           <option value="completed">Completed</option>
         </select>
-        <button class="btn-ghost text-sm ml-auto" on:click={() => (showCamera = false)}>Cancel</button>
+        <button class="btn-ghost btn-sm ml-auto" on:click={() => (showCamera = false)}>Cancel</button>
       </div>
       <div class="mt-3"><CameraCapture on:capture={onCapture} maxLongestEdge={2000} quality={0.82} /></div>
     {/if}
@@ -187,11 +189,20 @@
       <select id="oc" class="input" bind:value={outcome}>
         <option value="completed">Repaired successfully</option>
         <option value="cannot_repair">Could not repair (see notes)</option>
+        <option value="awaiting_return">Awaiting return (visitor is bringing a part back)</option>
       </select>
+      {#if outcome === 'awaiting_return'}
+        <p class="text-xs text-slate-500 mt-1">
+          Use the notes above to say which part they need to bring. The repair stays open,
+          and anyone can pick it up when they come back.
+        </p>
+      {/if}
     </div>
     <div class="flex justify-between gap-2">
       <button class="btn-ghost" disabled={busy} on:click={release}>Return to queue</button>
-      <button class="btn-primary" disabled={busy} on:click={() => (confirming = true)}>Mark as complete</button>
+      <button class="btn-primary" disabled={busy} on:click={() => (confirming = true)}>
+        {outcome === 'awaiting_return' ? 'Save and pause' : 'Mark as complete'}
+      </button>
     </div>
   </section>
   {:else if isFinished && (detail.job.outcomeNotes || detail.job.partsUsed || detail.job.environmentalSavingKg)}
@@ -211,9 +222,14 @@
 
   {#if confirming}
     <div class="fixed inset-0 bg-slate-900/50 flex items-end sm:items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-2xl max-w-sm w-full p-6">
+      <div class="modal-panel max-w-sm">
         <h3 class="text-lg font-semibold">Confirm</h3>
-        <p class="mt-2 text-slate-700">Mark this job as <strong>{outcome === 'completed' ? 'repaired' : 'unable to repair'}</strong>?</p>
+        <p class="mt-2 text-slate-700">
+          Mark this job as
+          <strong>
+            {#if outcome === 'completed'}repaired{:else if outcome === 'cannot_repair'}unable to repair{:else}awaiting return{/if}
+          </strong>?
+        </p>
         <div class="mt-5 flex justify-end gap-2">
           <button class="btn-ghost" on:click={() => (confirming = false)}>Cancel</button>
           <button class="btn-primary" on:click={complete} disabled={busy}>Confirm</button>

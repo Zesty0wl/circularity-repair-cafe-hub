@@ -36,6 +36,8 @@
   let howItWorks: Step[] = [];
   let whatToBring = { heading: '', body: '' };
   let faqs: Faq[] = [];
+  // Show the headline numbers (repairs, CO2 saved, volunteers) on the home page.
+  let showStats = false;
 
   // Gallery
   type GalleryRow = { id: string; url: string; caption: string | null; sortOrder: number };
@@ -72,6 +74,7 @@
     howItWorks = Array.isArray(hp.howItWorks) ? hp.howItWorks.map((s: any) => ({ title: s.title ?? '', body: s.body ?? '' })) : [];
     whatToBring = { heading: hp.whatToBring?.heading ?? '', body: hp.whatToBring?.body ?? '' };
     faqs = Array.isArray(hp.faqs) ? hp.faqs.map((f: any) => ({ q: f.q ?? '', a: f.a ?? '' })) : [];
+    showStats = hp.showStats === true;
   }
   async function loadGallery() {
     gallery = await api<GalleryRow[]>('/api/admin/gallery');
@@ -126,6 +129,7 @@
         howItWorks: howItWorks.filter((s) => s.title || s.body),
         whatToBring: { heading: whatToBring.heading || '', body: whatToBring.body || '' },
         faqs: faqs.filter((f) => f.q || f.a),
+        showStats,
       };
       await api('/api/admin/settings/home-page', { method: 'PATCH', json: { homePage } });
       await loadCafe();
@@ -294,11 +298,11 @@
 
 <h1 class="text-2xl font-bold">Settings</h1>
 
-<div class="mt-3 flex gap-2 flex-wrap text-sm">
+<div class="mt-3 flex gap-2 flex-wrap">
   {#each [['profile','Cafe profile'],['home','Home page'],['gallery','Gallery'],['preferences','Check-in & preferences'],['seo','SEO & analytics'],['gdpr','GDPR'], ...(isSuperAdmin ? [['backup','Backup & restore']] : []),['about','About']] as [key, label]}
-    <button class="btn-{tab === key ? 'primary' : 'secondary'}" on:click={() => (tab = key as Tab)}>{label}</button>
+    <button class="btn-{tab === key ? 'primary' : 'secondary'} btn-sm" on:click={() => (tab = key as Tab)}>{label}</button>
   {/each}
-  <a href="/admin/settings/users" class="btn-secondary">Users…</a>
+  <a href="/admin/settings/users" class="btn-secondary btn-sm">Users…</a>
 </div>
 
 {#if cafe}
@@ -335,7 +339,7 @@
             value={primaryColorInput}
             on:change={(e) => (primaryColorInput = normaliseHex((e.currentTarget as HTMLInputElement).value))}
           />
-          <button type="button" class="btn-ghost text-sm" on:click={() => (primaryColorInput = DEFAULT_PRIMARY)}>Reset</button>
+          <button type="button" class="btn-ghost btn-sm" on:click={() => (primaryColorInput = DEFAULT_PRIMARY)}>Reset</button>
         </div>
         <p class="text-xs text-slate-500 mt-1">Used for links, headings, focus states and text accents across your site. Leave at the Circularity default teal, or set your cafe's own colour. Stored as #rrggbb hex.</p>
       </div>
@@ -391,13 +395,13 @@
       <div class="grid sm:grid-cols-2 gap-3 pt-2">
         <div>
           <span class="label">Logo</span>
-          {#if cafe.logoUrl}<img src={cafe.logoUrl} alt="logo" class="h-16 mb-2 bg-slate-100 rounded p-1" />{/if}
+          {#if cafe.logoUrl}<img src={cafe.logoUrl} alt="logo" class="h-16 mb-2 bg-slate-100 rounded-lg p-1" />{/if}
           <input type="file" accept="image/png,image/jpeg,image/webp" bind:files={logoFile} on:change={() => uploadAsset('logo', logoFile)} />
           <p class="text-xs text-slate-500 mt-1">Square works best. Shown in the header and on the home page hero.</p>
         </div>
         <div>
           <span class="label">Banner</span>
-          {#if cafe.bannerUrl}<img src={cafe.bannerUrl} alt="banner" class="h-16 mb-2 rounded object-cover" />{/if}
+          {#if cafe.bannerUrl}<img src={cafe.bannerUrl} alt="banner" class="h-16 mb-2 rounded-lg object-cover" />{/if}
           <input type="file" accept="image/png,image/jpeg,image/webp" bind:files={bannerFile} on:change={() => uploadAsset('banner', bannerFile)} />
           <p class="text-xs text-slate-500 mt-1">Wide image (~1600×600). Used as the home-page hero background.</p>
         </div>
@@ -408,11 +412,28 @@
   {/if}
 
   {#if tab === 'home'}
-    <div class="card p-6 mt-4 max-w-3xl space-y-6">
+    <div class="card p-6 mt-4 max-w-2xl space-y-6">
       <p class="text-sm text-slate-600">All sections are optional. Leave anything blank to hide it from the home page.</p>
 
       <section>
-        <h2 class="font-semibold">Intro / About section</h2>
+        <h2 class="text-lg font-semibold">Our numbers</h2>
+        <p class="text-xs text-slate-500 mt-0.5">
+          Show what your cafe has achieved: repairs done, waste kept out of landfill, and how many volunteers help.
+        </p>
+        <label class="mt-3 flex items-start gap-3 cursor-pointer">
+          <input type="checkbox" class="mt-1 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" bind:checked={showStats} />
+          <span class="text-sm text-slate-700">
+            Show our numbers on the home page
+            <span class="block text-xs text-slate-500">
+              Figures come from your own records and update on their own. Numbers that are still zero stay hidden,
+              so a new cafe never shows an empty row.
+            </span>
+          </span>
+        </label>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-semibold">Intro / About section</h2>
         <p class="text-xs text-slate-500 mt-0.5">Like the “What &amp; Who” paragraph at the top of your page.</p>
         <div class="mt-2 space-y-2">
           <input class="input" placeholder="Heading (e.g. What & Who)" bind:value={intro.heading} />
@@ -421,7 +442,7 @@
       </section>
 
       <section>
-        <h2 class="font-semibold">How it works</h2>
+        <h2 class="text-lg font-semibold">How it works</h2>
         <p class="text-xs text-slate-500 mt-0.5">Numbered steps that show customers what to expect.</p>
         <div class="mt-2 space-y-3">
           {#each howItWorks as step, i}
@@ -429,17 +450,17 @@
               <div class="flex items-center gap-2">
                 <span class="text-xs font-mono text-slate-400 w-6">{i + 1}</span>
                 <input class="input flex-1" placeholder="Step title" bind:value={step.title} />
-                <button class="btn-ghost" type="button" on:click={() => howItWorks = howItWorks.filter((_, k) => k !== i)} title="Remove"><Trash2 size={16} /></button>
+                <button class="p-2 rounded-lg text-rose-600 hover:bg-rose-50" type="button" on:click={() => howItWorks = howItWorks.filter((_, k) => k !== i)} title="Remove" aria-label="Remove step"><Trash2 size={16} /></button>
               </div>
               <textarea class="input" rows="2" placeholder="Short description" bind:value={step.body}></textarea>
             </div>
           {/each}
-          <button class="btn-secondary text-sm" type="button" on:click={() => howItWorks = [...howItWorks, { title: '', body: '' }]}><Plus size={14} /> Add step</button>
+          <button class="btn-secondary btn-sm" type="button" on:click={() => howItWorks = [...howItWorks, { title: '', body: '' }]}><Plus size={14} /> Add step</button>
         </div>
       </section>
 
       <section>
-        <h2 class="font-semibold">What to bring</h2>
+        <h2 class="text-lg font-semibold">What to bring</h2>
         <p class="text-xs text-slate-500 mt-0.5">Customer guidance. Bullet points work well (start each line with “• ”).</p>
         <div class="mt-2 space-y-2">
           <input class="input" placeholder="Heading (e.g. What to bring)" bind:value={whatToBring.heading} />
@@ -448,18 +469,18 @@
       </section>
 
       <section>
-        <h2 class="font-semibold">FAQs</h2>
+        <h2 class="text-lg font-semibold">FAQs</h2>
         <div class="mt-2 space-y-3">
           {#each faqs as faq, i}
             <div class="border border-slate-200 rounded-lg p-3 space-y-2">
               <div class="flex items-center gap-2">
                 <input class="input flex-1" placeholder="Question" bind:value={faq.q} />
-                <button class="btn-ghost" type="button" on:click={() => faqs = faqs.filter((_, k) => k !== i)} title="Remove"><Trash2 size={16} /></button>
+                <button class="p-2 rounded-lg text-rose-600 hover:bg-rose-50" type="button" on:click={() => faqs = faqs.filter((_, k) => k !== i)} title="Remove" aria-label="Remove FAQ"><Trash2 size={16} /></button>
               </div>
               <textarea class="input" rows="2" placeholder="Answer" bind:value={faq.a}></textarea>
             </div>
           {/each}
-          <button class="btn-secondary text-sm" type="button" on:click={() => faqs = [...faqs, { q: '', a: '' }]}><Plus size={14} /> Add FAQ</button>
+          <button class="btn-secondary btn-sm" type="button" on:click={() => faqs = [...faqs, { q: '', a: '' }]}><Plus size={14} /> Add FAQ</button>
         </div>
       </section>
 
@@ -470,7 +491,7 @@
   {/if}
 
   {#if tab === 'gallery'}
-    <div class="card p-6 mt-4 max-w-3xl space-y-4">
+    <div class="card p-6 mt-4 max-w-2xl space-y-4">
       <div>
         <span class="label">Add photos</span>
         <input type="file" accept="image/png,image/jpeg,image/webp" multiple bind:files={galleryFile} on:change={() => uploadGallery(galleryFile)} />
@@ -483,15 +504,15 @@
         <ul class="space-y-3 mt-2">
           {#each gallery as g, i (g.id)}
             <li class="flex gap-3 items-start border border-slate-200 rounded-lg p-3">
-              <img src={g.url} alt="" class="h-24 w-32 object-cover rounded" />
+              <img src={g.url} alt="" class="h-24 w-32 object-cover rounded-lg ring-1 ring-slate-200" />
               <div class="flex-1">
                 <input class="input text-sm" placeholder="Caption (optional)" bind:value={g.caption} on:blur={() => updateCaption(g)} />
                 <p class="text-xs text-slate-400 mt-1 truncate">{g.url}</p>
               </div>
               <div class="flex flex-col gap-1">
-                <button class="btn-ghost p-1" type="button" disabled={i === 0} on:click={() => move(i, -1)} title="Move up"><ArrowUp size={14} /></button>
-                <button class="btn-ghost p-1" type="button" disabled={i === gallery.length - 1} on:click={() => move(i, 1)} title="Move down"><ArrowDown size={14} /></button>
-                <button class="btn-ghost p-1 text-rose-600" type="button" on:click={() => deleteImage(g)} title="Remove"><Trash2 size={14} /></button>
+                <button class="p-2 rounded-lg text-slate-600 hover:bg-slate-100 disabled:opacity-40" type="button" disabled={i === 0} on:click={() => move(i, -1)} title="Move up" aria-label="Move up"><ArrowUp size={14} /></button>
+                <button class="p-2 rounded-lg text-slate-600 hover:bg-slate-100 disabled:opacity-40" type="button" disabled={i === gallery.length - 1} on:click={() => move(i, 1)} title="Move down" aria-label="Move down"><ArrowDown size={14} /></button>
+                <button class="p-2 rounded-lg text-rose-600 hover:bg-rose-50" type="button" on:click={() => deleteImage(g)} title="Remove" aria-label="Remove image"><Trash2 size={14} /></button>
               </div>
             </li>
           {/each}
@@ -516,7 +537,7 @@
   {#if tab === 'seo'}
     <div class="card p-6 mt-4 max-w-2xl space-y-6">
       <section class="space-y-3">
-        <h2 class="font-semibold">Search engine listing</h2>
+        <h2 class="text-lg font-semibold">Search engine listing</h2>
         <p class="text-xs text-slate-500 -mt-1">How your home page appears in Google results and on social shares.</p>
         <div>
           <label class="label" for="st">Page title</label>
@@ -531,17 +552,17 @@
       </section>
 
       <section class="space-y-3 pt-2 border-t">
-        <h2 class="font-semibold">Icons &amp; share image</h2>
+        <h2 class="text-lg font-semibold">Icons &amp; share image</h2>
         <div class="grid sm:grid-cols-2 gap-4">
           <div>
             <span class="label">Favicon</span>
-            {#if cafe.faviconUrl}<img src={cafe.faviconUrl} alt="favicon" class="h-12 w-12 mb-2 bg-slate-100 rounded p-1 object-contain" />{/if}
+            {#if cafe.faviconUrl}<img src={cafe.faviconUrl} alt="favicon" class="h-12 w-12 mb-2 bg-slate-100 rounded-lg p-1 object-contain" />{/if}
             <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" bind:files={faviconFile} on:change={() => uploadAsset('favicon', faviconFile)} />
             <p class="text-xs text-slate-500 mt-1">Square, 32–256px. Shown in browser tabs.</p>
           </div>
           <div>
             <span class="label">Social share image (Open Graph)</span>
-            {#if cafe.ogImageUrl}<img src={cafe.ogImageUrl} alt="og image" class="h-16 mb-2 rounded object-cover" />{/if}
+            {#if cafe.ogImageUrl}<img src={cafe.ogImageUrl} alt="og image" class="h-16 mb-2 rounded-lg object-cover" />{/if}
             <input type="file" accept="image/png,image/jpeg,image/webp" bind:files={ogFile} on:change={() => uploadAsset('og', ogFile)} />
             <p class="text-xs text-slate-500 mt-1">~1200×630 works best. Falls back to your banner if blank.</p>
           </div>
@@ -549,7 +570,7 @@
       </section>
 
       <section class="space-y-3 pt-2 border-t">
-        <h2 class="font-semibold">Plausible analytics <span class="text-xs text-slate-400 font-normal">(optional)</span></h2>
+        <h2 class="text-lg font-semibold">Plausible analytics <span class="text-xs text-slate-400 font-normal">(optional)</span></h2>
         <p class="text-xs text-slate-500 -mt-1">Privacy-friendly, cookie-free. Leave blank to disable.</p>
         <div>
           <label class="label" for="pd">Site domain</label>
@@ -571,7 +592,7 @@
 
   {#if tab === 'gdpr'}
     <div class="card p-6 mt-4 max-w-2xl space-y-3">
-      <h2 class="font-semibold">Data retention</h2>
+      <h2 class="text-lg font-semibold">Data retention</h2>
       <p class="text-sm text-slate-600">Customer-personal data is automatically purged after the configured retention period. You can also trigger an immediate purge of expired data.</p>
       <button class="btn-danger" on:click={purgePii}>Purge expired PII now</button>
     </div>
@@ -580,7 +601,7 @@
   {#if tab === 'backup' && isSuperAdmin}
     <div class="mt-4 max-w-2xl space-y-4">
       <div class="card p-6 space-y-3">
-        <h2 class="font-semibold flex items-center gap-2"><Download class="w-4 h-4" /> Download a backup</h2>
+        <h2 class="text-lg font-semibold flex items-center gap-2"><Download class="w-4 h-4" /> Download a backup</h2>
         <p class="text-sm text-slate-600">Creates a zip containing the entire database (all tables including audit log) plus every uploaded photo and branding asset. Keep this somewhere safe. Anyone with the file can restore your cafe's data.</p>
         {#if backupInfo}
           <p class="text-xs text-slate-500">App version <span class="font-mono">{backupInfo.appVersion}</span> · backup format v{backupInfo.backupFormatVersion}</p>
@@ -595,9 +616,9 @@
         <p class="text-xs text-slate-500">The download starts as soon as the database dump is ready. Big cafes with lots of photos may take a minute.</p>
       </div>
 
-      <div class="card p-6 space-y-3 border-rose-200">
-        <h2 class="font-semibold text-rose-800 flex items-center gap-2"><AlertTriangle class="w-4 h-4" /> Restore from a backup</h2>
-        <div class="rounded-lg bg-rose-50 border border-rose-200 p-3 text-sm text-rose-900">
+      <div class="card p-6 space-y-3 ring-rose-200">
+        <h2 class="text-lg font-semibold text-rose-800 flex items-center gap-2"><AlertTriangle class="w-4 h-4" /> Restore from a backup</h2>
+        <div class="rounded-lg bg-rose-50 ring-1 ring-rose-200 p-3 text-sm text-rose-900">
           <p class="font-semibold">This wipes every record currently in this install.</p>
           <ul class="list-disc ml-5 mt-1 space-y-0.5">
             <li>All users, events, repair jobs, photos and settings are replaced with the backup's contents.</li>

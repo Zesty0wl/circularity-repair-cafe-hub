@@ -249,6 +249,12 @@ const STATEMENTS: string[] = [
 
   // ── Optional donate link shown on guest receipt + tracker pages ──
   `ALTER TABLE cafes ADD COLUMN IF NOT EXISTS donate_url TEXT`,
+
+  // ── "Awaiting return": the repair is paused because the visitor is coming
+  //    back with a part at a later session. Not finished, so it stays open.
+  //    ADD VALUE is safe here because runMigrations applies each statement on
+  //    its own (no surrounding transaction).
+  `ALTER TYPE repair_status ADD VALUE IF NOT EXISTS 'awaiting_return'`,
 ];
 
 const DEFAULT_CATEGORIES: Array<{ name: string; icon: string; colour: string }> = [

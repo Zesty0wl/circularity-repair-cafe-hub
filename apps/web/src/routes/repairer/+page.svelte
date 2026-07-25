@@ -14,13 +14,13 @@
   interface ActiveData {
     event: any | null;
     jobs: Job[];
-    counts: { waiting: number; in_progress: number; completed: number; cannot_repair: number } | null;
+    counts: { waiting: number; in_progress: number; completed: number; cannot_repair: number; awaiting_return: number } | null;
     myJobs: Job[];
   }
 
   let data: ActiveData | null = null;
   let stats: { total: number; successRate: number; busiestCategory: string | null } | null = null;
-  let filter: 'all' | 'waiting' | 'in_progress' | 'completed' | 'cannot_repair' = 'waiting';
+  let filter: 'all' | 'waiting' | 'in_progress' | 'completed' | 'cannot_repair' | 'awaiting_return' = 'waiting';
   let timer: ReturnType<typeof setInterval> | null = null;
   let busyId: string | null = null;
 
@@ -67,17 +67,24 @@
   }
 </script>
 
-<div class="grid sm:grid-cols-2 gap-4">
+<h1 class="text-2xl font-bold">Dashboard</h1>
+
+<div class="mt-4 grid sm:grid-cols-2 gap-4">
   {#if data?.event}
     <div class="card p-5">
       <h2 class="text-lg font-semibold">{data.event.name}</h2>
       <p class="text-slate-600 text-sm">{data.event.venueName} · {data.event.startTime.slice(0,5)}–{data.event.endTime.slice(0,5)}</p>
       {#if data.counts}
-        <div class="mt-4 grid grid-cols-2 gap-2 text-center">
+        <!-- The paused tile only appears when there is something in it, so a
+             normal session still shows a tidy block of four. -->
+        <div class="mt-4 grid gap-2 text-center {data.counts.awaiting_return > 0 ? 'grid-cols-2 sm:grid-cols-5' : 'grid-cols-2'}">
           <div class="rounded-xl bg-slate-50 p-3 flex flex-col"><p class="text-xs text-slate-600 flex items-center justify-center gap-1.5"><span class="status-dot status-dot-waiting"></span>Waiting</p><p class="mt-auto text-2xl font-bold text-slate-900">{data.counts.waiting}</p></div>
           <div class="rounded-xl bg-slate-50 p-3 flex flex-col"><p class="text-xs text-slate-600 flex items-center justify-center gap-1.5"><span class="status-dot status-dot-in_progress"></span>In progress</p><p class="mt-auto text-2xl font-bold text-slate-900">{data.counts.in_progress}</p></div>
           <div class="rounded-xl bg-slate-50 p-3 flex flex-col"><p class="text-xs text-slate-600 flex items-center justify-center gap-1.5"><span class="status-dot status-dot-completed"></span>Done</p><p class="mt-auto text-2xl font-bold text-slate-900">{data.counts.completed}</p></div>
           <div class="rounded-xl bg-slate-50 p-3 flex flex-col"><p class="text-xs text-slate-600 flex items-center justify-center gap-1.5"><span class="status-dot status-dot-cannot_repair"></span>Cannot repair</p><p class="mt-auto text-2xl font-bold text-slate-900">{data.counts.cannot_repair}</p></div>
+          {#if data.counts.awaiting_return > 0}
+            <div class="rounded-xl bg-slate-50 p-3 flex flex-col"><p class="text-xs text-slate-600 flex items-center justify-center gap-1.5"><span class="status-dot status-dot-awaiting_return"></span>Awaiting return</p><p class="mt-auto text-2xl font-bold text-slate-900">{data.counts.awaiting_return}</p></div>
+          {/if}
         </div>
       {/if}
       <a href="/repairer/checkin" class="mt-4 btn-primary w-full"><UserPlus size={16} /> Register a repair for a visitor</a>
@@ -106,7 +113,7 @@
     <h2 class="text-lg font-semibold mb-3">My active repairs</h2>
     <div class="grid sm:grid-cols-2 gap-3">
       {#each data.myJobs as j}
-        <a href={`/repairer/job/${j.id}`} class="card p-4 hover:bg-slate-50">
+        <a href={`/repairer/job/${j.id}`} class="card-link p-4">
           <p class="text-xs text-slate-500">{j.jobNumber}</p>
           <p class="font-semibold">{j.itemDescription}</p>
           <p class="text-sm text-slate-600">{j.customerName ?? '-'}</p>
@@ -120,7 +127,7 @@
   <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
     <h2 class="text-lg font-semibold">Job queue</h2>
     <div class="flex flex-wrap gap-1 text-sm">
-      {#each ['waiting', 'in_progress', 'completed', 'cannot_repair', 'all'] as f}
+      {#each ['waiting', 'in_progress', 'awaiting_return', 'completed', 'cannot_repair', 'all'] as f}
         <button class="px-3 py-1 rounded-full whitespace-nowrap {filter === f ? 'bg-brand-600 text-white' : 'bg-white ring-1 ring-slate-200 text-slate-700'}" on:click={() => (filter = f)}>{f.replace('_', ' ')}</button>
       {/each}
     </div>
@@ -148,14 +155,14 @@
           </div>
           <div class="mt-3 flex justify-end gap-2">
             {#if j.status === 'waiting'}
-              <button class="btn-primary text-sm" disabled={busyId === j.id} on:click={() => accept(j.id)}>Claim this repair</button>
+              <button class="btn-primary btn-sm" disabled={busyId === j.id} on:click={() => accept(j.id)}>Claim this repair</button>
             {:else if j.status === 'in_progress' && j.repairerId === myId}
-              <a href={`/repairer/job/${j.id}`} class="btn-primary text-sm">Continue</a>
+              <a href={`/repairer/job/${j.id}`} class="btn-primary btn-sm">Continue</a>
             {:else if j.status === 'in_progress'}
-              <a href={`/repairer/job/${j.id}`} class="btn-secondary text-sm">View</a>
-              <button class="btn-primary text-sm" disabled={busyId === j.id} on:click={() => takeOver(j)}>Take over</button>
+              <a href={`/repairer/job/${j.id}`} class="btn-secondary btn-sm">View</a>
+              <button class="btn-primary btn-sm" disabled={busyId === j.id} on:click={() => takeOver(j)}>Take over</button>
             {:else}
-              <a href={`/repairer/job/${j.id}`} class="btn-secondary text-sm">View</a>
+              <a href={`/repairer/job/${j.id}`} class="btn-secondary btn-sm">View</a>
             {/if}
           </div>
         </article>

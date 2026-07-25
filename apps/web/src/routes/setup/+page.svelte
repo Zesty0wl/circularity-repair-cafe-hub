@@ -150,11 +150,11 @@
 
     <div class="mt-6 card p-8">
       {#if step === 1}
-        <h1 class="text-3xl font-bold">Welcome</h1>
+        <h1 class="text-2xl font-semibold">Welcome</h1>
         <p class="mt-3 text-slate-700">This wizard will set up your repair cafe hub. We'll create your admin account, configure your cafe details and home venue, and have you ready in just a few minutes.</p>
         <button class="btn-primary mt-8 w-full" on:click={next}>Let's get started</button>
       {:else if step === 2}
-        <h1 class="text-3xl font-bold">Create your admin account</h1>
+        <h1 class="text-2xl font-semibold">Create your admin account</h1>
         <p class="mt-2 text-slate-600">This account will be the system administrator. You can add more team members later.</p>
         <div class="mt-6 space-y-4">
           <div>
@@ -168,7 +168,7 @@
           <div>
             <label class="label" for="pw">Password</label>
             <input id="pw" type="password" class="input" bind:value={admin.password} autocomplete="new-password" />
-            <p class="mt-1 text-xs text-slate-500">Min 10 chars, with upper/lower case and a number.</p>
+            <p class="mt-1 text-xs text-slate-500">Use at least 10 characters, with upper and lower case letters and a number.</p>
           </div>
           <div>
             <label class="label" for="cf">Confirm password</label>
@@ -176,7 +176,7 @@
           </div>
         </div>
       {:else if step === 3}
-        <h1 class="text-3xl font-bold">Your repair cafe</h1>
+        <h1 class="text-2xl font-semibold">Your repair cafe</h1>
         <div class="mt-6 space-y-4">
           <div>
             <label class="label" for="cn">Repair cafe name</label>
@@ -200,7 +200,7 @@
           </div>
         </div>
       {:else if step === 4}
-        <h1 class="text-3xl font-bold">Your home venue</h1>
+        <h1 class="text-2xl font-semibold">Your home venue</h1>
         <p class="mt-2 text-slate-600">Where do you usually hold events?</p>
         <div class="mt-6 space-y-4">
           <div>
@@ -231,7 +231,7 @@
           </div>
         </div>
       {:else if step === 5}
-        <h1 class="text-3xl font-bold">Your public URL</h1>
+        <h1 class="text-2xl font-semibold">Your public URL</h1>
         <p class="mt-2 text-slate-600">This is the web address where your hub is hosted. We need this to generate QR codes for your customers.</p>
         <div class="mt-6 space-y-3">
           <div>
@@ -245,7 +245,7 @@
           </div>
         </div>
       {:else if step === 6}
-        <h1 class="text-3xl font-bold">Your branding</h1>
+        <h1 class="text-2xl font-semibold">Your branding</h1>
         <p class="mt-2 text-slate-600">Make the hub yours. You can change any of this later under Admin → Settings, and upload your logo there too.</p>
         <div class="mt-6 space-y-5">
           <div>
@@ -288,7 +288,7 @@
           </div>
         </div>
       {:else if step === 7}
-        <h1 class="text-3xl font-bold">Ready</h1>
+        <h1 class="text-2xl font-semibold">Ready</h1>
         <p class="mt-2 text-slate-600">Review your setup:</p>
         <dl class="mt-6 space-y-2 text-sm">
           <div class="flex justify-between border-b border-slate-100 pb-2"><dt class="text-slate-500">Cafe name</dt><dd class="font-medium">{cafe.name}</dd></div>

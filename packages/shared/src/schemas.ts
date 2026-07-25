@@ -208,7 +208,7 @@ export const userUpdateSchema = userCreateSchema.partial().extend({
 });
 
 export const repairUpdateSchema = z.object({
-  status: z.enum(['waiting', 'in_progress', 'completed', 'cannot_repair', 'returned']).optional(),
+  status: z.enum(['waiting', 'in_progress', 'completed', 'cannot_repair', 'awaiting_return', 'returned']).optional(),
   repairerId: z.string().uuid().nullable().optional(),
   outcomeNotes: z.string().max(2000).optional().nullable(),
   partsUsed: z.string().max(500).optional().nullable(),

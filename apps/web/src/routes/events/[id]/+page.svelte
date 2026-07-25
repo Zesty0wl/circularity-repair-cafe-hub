@@ -55,17 +55,17 @@
 
 <SiteHeader variant="public" />
 
-<main class="max-w-3xl mx-auto px-4 py-10 space-y-6">
+<main class="max-w-3xl mx-auto px-4 py-8 md:py-12 space-y-6">
   <a href="/events" class="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-brand-700">
     <ArrowLeft size={16} /> Back to all events
   </a>
 
   {#if notFound || !event}
     <div class="card p-8 text-center">
-      <span class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-sage/50 text-pine">
-        <CalendarX2 size={26} />
+      <span class="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-brand-100 text-pine">
+        <CalendarX2 size={22} />
       </span>
-      <h1 class="mt-4 !text-pine">Event not found</h1>
+      <h1 class="mt-4 text-pine">Event not found</h1>
       <p class="mt-2 text-slate-600">This event may have been removed or is no longer published.</p>
       <a href="/events" class="btn-primary mt-4 inline-flex">See upcoming events</a>
     </div>
@@ -73,7 +73,7 @@
     {@const p = dateParts(event.date)}
     <article class="card overflow-hidden">
       <!-- Header band -->
-      <div class="relative bg-gradient-to-br from-brand-700 to-brand-600 text-white p-6 sm:p-8">
+      <div class="relative bg-gradient-to-br from-brand-700 to-brand-500 text-white p-6 sm:p-8">
         {#if isPast}
           <span class="inline-block mb-2 rounded-full bg-white/15 ring-1 ring-white/20 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5">Past event</span>
         {/if}
@@ -83,7 +83,7 @@
             <div class="text-3xl font-bold font-display leading-none">{p.day}</div>
           </div>
           <div class="min-w-0">
-            <h1 class="!text-white text-2xl sm:text-3xl font-bold font-display leading-tight">{event.name}</h1>
+            <h1 class="text-white text-2xl sm:text-3xl font-bold font-display leading-tight">{event.name}</h1>
             <p class="mt-1 text-sm text-brand-100">{fullDate(event.date)}</p>
           </div>
         </div>

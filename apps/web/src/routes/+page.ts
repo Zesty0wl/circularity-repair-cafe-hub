@@ -15,9 +15,14 @@ export const load: PageLoad = async ({ fetch, url, parent }) => {
   const venueP = fetch('/api/public/venue')
     .then((r) => (r.ok ? r.json() : null))
     .catch(() => null);
+  // Headline numbers for the "Our numbers" band. Always fetched; the page
+  // only renders them if the cafe has switched the band on.
+  const statsP = fetch('/api/public/stats')
+    .then((r) => (r.ok ? r.json() : null))
+    .catch(() => null);
 
   const { cafe } = await parent();
-  const [upcomingEvents, skills, venue] = await Promise.all([eventsP, skillsP, venueP]);
+  const [upcomingEvents, skills, venue, stats] = await Promise.all([eventsP, skillsP, venueP, statsP]);
 
   const seo = buildSeo({
     route: 'home',
@@ -30,6 +35,7 @@ export const load: PageLoad = async ({ fetch, url, parent }) => {
 
   return {
     upcomingEvents,
+    stats,
     categories: skills?.categories ?? [],
     repairers: skills?.repairers ?? [],
     seo,

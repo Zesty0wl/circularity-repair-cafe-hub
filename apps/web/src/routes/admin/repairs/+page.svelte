@@ -105,6 +105,7 @@
     <option value="in_progress">In progress</option>
     <option value="completed">Completed</option>
     <option value="cannot_repair">Cannot repair</option>
+    <option value="awaiting_return">Awaiting return</option>
   </select>
   <input class="input" type="date" bind:value={filters.from} />
   <input class="input" type="date" bind:value={filters.to} />
@@ -136,7 +137,7 @@
             <td class="px-3 py-2">{r.customerName ?? '-'}</td>
             <td class="px-3 py-2 min-w-[180px]">
               <select
-                class="input input-sm py-1 text-sm w-full"
+                class="input py-1 text-sm w-full"
                 disabled={savingRowId === r.id}
                 value={r.repairerId ?? ''}
                 on:change={(e) => assignRow(r, (e.currentTarget as HTMLSelectElement).value)}

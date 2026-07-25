@@ -39,6 +39,9 @@
   html {
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
+    /* Stop the grey flash mobile browsers paint on tapped links and cards.
+       Buttons and links show their own hover and focus styles instead. */
+    -webkit-tap-highlight-color: transparent;
   }
   body {
     @apply bg-paper text-ink antialiased font-sans;
@@ -88,6 +91,10 @@
   .btn-lg {
     @apply px-7 py-4 text-lg;
   }
+  /* Compact button for toolbars, card actions and dense rows. */
+  .btn-sm {
+    @apply px-4 py-2 text-sm;
+  }
   .input {
     @apply block w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-base shadow-sm focus:border-brand-500 focus:ring-brand-500 focus:outline-none focus:ring-1;
   }
@@ -97,6 +104,53 @@
   .card {
     @apply bg-white rounded-2xl shadow-sm ring-1 ring-slate-200;
   }
+  /* A card that is a link or a button. Only the border tint changes on
+     hover; the shadow and position never change, so nothing jumps or
+     flashes. */
+  .card-link {
+    @apply card block transition-shadow hover:ring-brand-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500;
+  }
+  /* A dialog panel that floats above the page. Dialogs are the only
+     surface that uses a large shadow. */
+  .modal-panel {
+    @apply w-full rounded-2xl bg-white p-6 shadow-xl ring-1 ring-slate-200;
+  }
+  /* Small uppercase line above a page or section title. */
+  .eyebrow {
+    @apply text-xs font-bold uppercase tracking-[0.18em] text-clay;
+  }
+  /* Small uppercase label at the top of a card. */
+  .kicker {
+    @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
+  }
+  /* Public site section title. Sits centred above a section or band. */
+  .section-title {
+    @apply font-display text-3xl md:text-4xl font-semibold tracking-tight text-pine;
+  }
+  /* One line of supporting text under a section title. */
+  .section-lede {
+    @apply mt-4 text-lg leading-relaxed text-slate-600;
+  }
+  /* Public page rhythm. Every section on the public site uses `.section` so
+     the gaps down the page are always the same size, and every section lines
+     up on the same left and right edges. A `.band` is a section on a tinted
+     background; it holds a `.section` inside it. */
+  .section {
+    @apply max-w-6xl mx-auto px-4 py-16 md:py-24;
+  }
+  .band {
+    @apply bg-brand-50 border-y border-brand-100;
+  }
+  /* Square brand tile that holds one icon (render the icon at size 22). */
+  .icon-chip {
+    @apply inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-600 text-white;
+  }
+  /* Tile for a skill-category icon. The category's own colour is applied
+     inline as a soft wash behind a full-strength glyph, so a row of tiles
+     shares one lightness and reads as a set instead of a box of sweets. */
+  .icon-tile {
+    @apply inline-flex h-12 w-12 items-center justify-center rounded-2xl;
+  }
   .badge {
     @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
   }
@@ -104,6 +158,8 @@
   .badge-in_progress { @apply bg-blue-100 text-blue-800; }
   .badge-completed { @apply bg-emerald-100 text-emerald-800; }
   .badge-cannot_repair { @apply bg-rose-100 text-rose-800; }
+  /* Paused: the visitor is coming back with a part at a later session. */
+  .badge-awaiting_return { @apply bg-violet-100 text-violet-800; }
   .badge-returned { @apply bg-slate-100 text-slate-800; }
   .badge-scheduled { @apply bg-slate-100 text-slate-800; }
   .badge-active { @apply bg-brand-100 text-brand-800; }
@@ -115,6 +171,7 @@
   .status-dot-in_progress { @apply bg-blue-500; }
   .status-dot-completed { @apply bg-emerald-500; }
   .status-dot-cannot_repair { @apply bg-rose-500; }
+  .status-dot-awaiting_return { @apply bg-violet-500; }
 }
 
 @media print {

@@ -4,7 +4,7 @@
   import { api } from '$lib/api';
   import { goto } from '$app/navigation';
   import { auth } from '$lib/stores/auth';
-  import { ExternalLink, Upload, Trash2, Eye, EyeOff } from 'lucide-svelte';
+  import { ArrowLeft, ExternalLink, Upload, Trash2, Eye, EyeOff } from 'lucide-svelte';
 
   $: id = $page.params.id;
   let user: any = null;
@@ -104,11 +104,11 @@
 </script>
 
 {#if user}
-  <a href="/admin/repairers" class="text-sm text-slate-600 hover:underline">← Back to list</a>
+  <a href="/admin/repairers" class="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-brand-700"><ArrowLeft size={14} /> Back to list</a>
   <div class="mt-1 flex items-start justify-between gap-3 flex-wrap">
     <h1 class="text-2xl font-bold">{user.displayName}</h1>
     {#if publicVisible}
-      <a href="/team/{user.id}" target="_blank" rel="noopener" class="btn-secondary text-sm">
+      <a href="/team/{user.id}" target="_blank" rel="noopener" class="btn-secondary btn-sm">
         <ExternalLink size={14} /> View public profile
       </a>
     {:else}
@@ -119,23 +119,23 @@
   </div>
 
   <!-- Profile photo -->
-  <div class="card p-6 mt-4 max-w-xl">
-    <p class="text-sm text-slate-500 uppercase tracking-wide">Profile photo</p>
+  <div class="card p-6 mt-4 max-w-2xl">
+    <p class="kicker">Profile photo</p>
     <div class="mt-3 flex items-center gap-4">
       {#if user.avatarUrl}
-        <img src={user.avatarUrl} alt="" class="h-20 w-20 rounded-2xl object-cover ring-2 ring-white shadow" />
+        <img src={user.avatarUrl} alt="" class="h-20 w-20 rounded-2xl object-cover ring-1 ring-slate-200" />
       {:else}
-        <div class="h-20 w-20 rounded-2xl bg-brand-100 text-brand-700 flex items-center justify-center text-2xl font-bold ring-2 ring-white shadow">
+        <div class="h-20 w-20 rounded-2xl bg-brand-100 text-brand-700 flex items-center justify-center text-2xl font-bold">
           {initials(displayName || user.displayName)}
         </div>
       {/if}
       <div class="flex flex-col gap-2">
-        <label class="btn-secondary text-sm cursor-pointer">
+        <label class="btn-secondary btn-sm cursor-pointer">
           <Upload size={14} /> {user.avatarUrl ? 'Change photo' : 'Upload photo'}
           <input type="file" accept="image/jpeg,image/png,image/webp" class="hidden" on:change={uploadAvatar} disabled={uploading} />
         </label>
         {#if user.avatarUrl}
-          <button class="btn-ghost text-sm text-rose-600 inline-flex items-center gap-1" on:click={removeAvatar}>
+          <button class="btn-ghost btn-sm text-rose-600" on:click={removeAvatar}>
             <Trash2 size={14} /> Remove
           </button>
         {/if}
@@ -146,7 +146,7 @@
     <p class="text-xs text-slate-400 mt-3">JPEG, PNG or WebP. Square photos look best.</p>
   </div>
 
-  <div class="card p-6 mt-4 max-w-xl space-y-4">
+  <div class="card p-6 mt-4 max-w-2xl space-y-4">
     <div><label class="label" for="dn">Display name</label><input id="dn" class="input" bind:value={displayName} /></div>
     <div><label class="label" for="em">Email</label><input id="em" type="email" class="input" bind:value={email} /></div>
     <div><label class="label" for="ro">Role</label>
@@ -202,9 +202,14 @@
   </div>
 
   {#if $auth?.user.role === 'super_admin' && user.id !== $auth.user.id}
-    <div class="card p-4 mt-4 max-w-xl border-rose-200">
-      <button class="btn-danger" on:click={del}>Delete user</button>
-      <p class="text-xs text-slate-500 mt-2">Cannot delete users who have repaired items.</p>
-    </div>
+    <section class="mt-8 max-w-2xl">
+      <div class="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-rose-50 ring-1 ring-rose-200 p-4">
+        <div class="min-w-0">
+          <p class="font-semibold text-rose-900">Delete this user</p>
+          <p class="text-sm text-rose-700">This cannot be undone. Users who have repaired items cannot be deleted.</p>
+        </div>
+        <button class="btn-danger shrink-0" on:click={del}>Delete user</button>
+      </div>
+    </section>
   {/if}
 {/if}

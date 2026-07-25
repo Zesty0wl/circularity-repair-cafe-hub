@@ -7,7 +7,7 @@
   import Icon from '@iconify/svelte';
   import { categoryIcon } from '$lib/categoryIcon';
 
-  type Status = 'waiting' | 'in_progress' | 'completed' | 'cannot_repair' | 'returned';
+  type Status = 'waiting' | 'in_progress' | 'completed' | 'cannot_repair' | 'awaiting_return' | 'returned';
 
   interface TrackJob {
     id: string;
@@ -93,6 +93,7 @@
       case 'in_progress': return 'Being repaired now';
       case 'completed': return 'Fixed!';
       case 'cannot_repair': return "Couldn't be fixed";
+      case 'awaiting_return': return 'Waiting for your next visit';
       case 'returned': return 'Returned to you';
     }
   }
@@ -121,8 +122,8 @@
   <meta name="robots" content="noindex" />
 </svelte:head>
 
-<main class="min-h-screen bg-slate-50 customer-ui">
-  <div class="max-w-md mx-auto px-4 py-6">
+<main class="min-h-screen bg-slate-100 customer-ui">
+  <div class="max-w-md mx-auto px-4 py-8">
     {#if loadError && !data}
       <div class="card p-6 text-center">
         <h1 class="text-2xl font-semibold">Sorry</h1>
@@ -140,7 +141,7 @@
         {:else}
           <span class="h-14 w-14 mx-auto rounded-2xl bg-brand-600 text-white flex items-center justify-center"><Wrench size={24} /></span>
         {/if}
-        <h1 class="text-2xl font-bold mt-4">
+        <h1 class="text-2xl font-semibold mt-4">
           {#if data.customerName}{data.customerName}'s repairs{:else}Your repairs{/if}
         </h1>
         <p class="mt-1 text-sm text-slate-600">{data.event.name} · {data.venue.name}</p>
@@ -162,7 +163,7 @@
           href={data.cafe.donateUrl}
           target="_blank"
           rel="noopener"
-          class="mt-3 flex items-center gap-3 rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-900 hover:bg-rose-100 transition-colors"
+          class="mt-3 flex items-center gap-3 rounded-2xl bg-rose-50 ring-1 ring-rose-200 p-4 text-rose-900 hover:bg-rose-100 transition-colors"
         >
           <Heart size={20} class="fill-rose-500 text-rose-500 shrink-0" />
           <span class="text-sm leading-tight flex-1">
@@ -191,7 +192,7 @@
                 </a>
               {:else if job.category}
                 <span class="flex w-10 h-10 shrink-0 rounded-xl text-white items-center justify-center" style="background-color: {job.category.colour}">
-                  <Icon icon={categoryIcon(job.category.icon)} width="20" height="20" />
+                  <Icon icon={categoryIcon(job.category.icon, job.category.name)} width="20" height="20" />
                 </span>
               {:else}
                 <span class="flex w-10 h-10 shrink-0 rounded-xl bg-slate-200 text-slate-600 items-center justify-center"><Wrench size={18} /></span>

@@ -33,12 +33,18 @@ export default {
           800: 'rgb(var(--accent-800) / <alpha-value>)',
           900: 'rgb(var(--accent-900) / <alpha-value>)',
         },
-        // Fixed Circularity brand colours (not per-cafe themeable), except
-        // `pine` which follows the brand colour so headings re-theme with it.
+        // Supporting colours. `pine`, `clay`, `sun` and `sage` all follow the
+        // cafe's own two colours, so a page never mixes a cafe's palette with
+        // Circularity's. `paper` (page background) and `ink` (body text) stay
+        // fixed: they are near-neutral and work under any brand colour.
+        //   pine  → headings and strong text
+        //   clay  → small warm accents (eyebrows, meta icons)
+        //   sun   → highlight badges
+        //   sage  → soft tinted surfaces and section bands
         pine: 'rgb(var(--brand-700) / <alpha-value>)',
-        clay: '#D2683F',
-        sun: '#F3B43E',
-        sage: '#BFD6C4',
+        clay: 'rgb(var(--accent-600) / <alpha-value>)',
+        sun: 'rgb(var(--accent-500) / <alpha-value>)',
+        sage: 'rgb(var(--brand-100) / <alpha-value>)',
         paper: '#FBF7EF',
         ink: '#1C2622',
       },

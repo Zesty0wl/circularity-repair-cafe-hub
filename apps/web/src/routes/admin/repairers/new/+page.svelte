@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { api } from '$lib/api';
+  import { ArrowLeft } from 'lucide-svelte';
 
   let categories: any[] = [];
   let displayName = '';
@@ -32,18 +33,18 @@
   }
 </script>
 
-<a href="/admin/repairers" class="text-sm text-slate-600 hover:underline">← Back to list</a>
+<a href="/admin/repairers" class="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-brand-700"><ArrowLeft size={14} /> Back to list</a>
 <h1 class="text-2xl font-bold mt-1">Add repairer</h1>
 
 {#if result}
-  <div class="card p-6 mt-4 max-w-xl">
+  <div class="card p-6 mt-4 max-w-2xl">
     <p class="font-semibold text-emerald-700">User created</p>
     <p class="mt-2 text-sm">Send them this single-use reset link (expires in 14 days):</p>
-    <code class="mt-3 block break-all bg-slate-100 p-3 rounded">{`${window.location.origin}/reset/${result.token}`}</code>
+    <code class="mt-3 block break-all bg-slate-100 p-3 rounded-lg">{`${window.location.origin}/reset/${result.token}`}</code>
     <a href="/admin/repairers" class="btn-primary mt-4">Back to list</a>
   </div>
 {:else}
-  <div class="card p-6 mt-4 max-w-xl space-y-4">
+  <div class="card p-6 mt-4 max-w-2xl space-y-4">
     <div>
       <label class="label" for="dn">Display name</label>
       <input id="dn" class="input" bind:value={displayName} />

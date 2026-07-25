@@ -174,6 +174,7 @@ export async function repairerRoutes(app: FastifyInstance): Promise<void> {
       in_progress: jobs.filter((j) => j.status === 'in_progress').length,
       completed: jobs.filter((j) => j.status === 'completed').length,
       cannot_repair: jobs.filter((j) => j.status === 'cannot_repair').length,
+      awaiting_return: jobs.filter((j) => j.status === 'awaiting_return').length,
     };
 
     return {
@@ -353,16 +354,20 @@ export async function repairerRoutes(app: FastifyInstance): Promise<void> {
   app.patch('/api/repairer/jobs/:id/complete', async (request, reply) => {
     const { id } = request.params as { id: string };
     const body = request.body as {
-      outcome: 'completed' | 'cannot_repair';
+      outcome: 'completed' | 'cannot_repair' | 'awaiting_return';
       outcomeNotes?: string;
       partsUsed?: string;
       environmentalSavingKg?: number | null;
     };
     const me = request.auth!;
-    if (!['completed', 'cannot_repair'].includes(body?.outcome)) {
+    if (!['completed', 'cannot_repair', 'awaiting_return'].includes(body?.outcome)) {
       reply.code(400).send({ error: 'Outcome required', code: 'validation/failed' });
       return;
     }
+    // "Awaiting return" pauses a repair rather than finishing it: the visitor
+    // is coming back with a part at a later session. So it does not count
+    // towards a repairer's total and it does not set completedAt.
+    const isPaused = body.outcome === 'awaiting_return';
     const [existing] = await db.select().from(repairJobs).where(eq(repairJobs.id, id)).limit(1);
     if (!existing) {
       reply.code(404).send({ error: 'Job not found', code: 'job/not_found' });
@@ -382,13 +387,13 @@ export async function repairerRoutes(app: FastifyInstance): Promise<void> {
           body.environmentalSavingKg !== undefined && body.environmentalSavingKg !== null
             ? String(body.environmentalSavingKg)
             : existing.environmentalSavingKg,
-        completedAt: new Date(),
+        completedAt: isPaused ? null : new Date(),
         updatedAt: new Date(),
       })
       .where(eq(repairJobs.id, id))
       .returning();
 
-    if (existing.repairerId) {
+    if (existing.repairerId && !isPaused) {
       await db.execute(
         sql`UPDATE users SET repair_count_cache = repair_count_cache + 1 WHERE id = ${existing.repairerId}`
       );

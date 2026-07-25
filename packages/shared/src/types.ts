@@ -1,6 +1,14 @@
 export type UserRole = 'super_admin' | 'admin' | 'repairer';
 
-export type RepairStatus = 'waiting' | 'in_progress' | 'completed' | 'cannot_repair' | 'returned';
+// `awaiting_return` means the repair is paused: the visitor is coming back
+// with a part at a later session. It is an open state, not a finished one.
+export type RepairStatus =
+  | 'waiting'
+  | 'in_progress'
+  | 'completed'
+  | 'cannot_repair'
+  | 'awaiting_return'
+  | 'returned';
 
 export type EventStatus = 'scheduled' | 'active' | 'completed' | 'cancelled';
 

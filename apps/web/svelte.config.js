@@ -18,11 +18,11 @@ const config = {
     alias: {
       $lib: 'src/lib',
     },
-    // CSP is emitted by SvelteKit as a <meta http-equiv="content-security-policy">
-    // tag in index.html. Hash mode auto-includes the SHA-256 of the inline
-    // bootstrap script (which changes each build), so we don't need 'unsafe-inline'.
-    // The Fastify server disables helmet's CSP header so this meta tag is the
-    // single source of truth.
+    // With adapter-node, SvelteKit sends the policy as a Content-Security-Policy
+    // response header on every rendered page. Hash mode auto-includes the
+    // SHA-256 of the inline bootstrap script (which changes each build), so we
+    // don't need 'unsafe-inline'. The Fastify server disables helmet's CSP so
+    // this is the single source of truth.
     csp: {
       mode: 'hash',
       directives: {
@@ -38,6 +38,11 @@ const config = {
         // api.iconify.design for icon JSON; https: for plausible's POSTs.
         'connect-src': ['self', 'https://api.iconify.design', 'https:'],
         'font-src': ['self', 'data:'],
+        // The progressive web app: its own service worker, and its own
+        // manifest. Both are same-origin only. Without these they would fall
+        // back to script-src, which allows https: for analytics.
+        'worker-src': ['self'],
+        'manifest-src': ['self'],
         'frame-ancestors': ['none'],
         // Allow embedded maps from common providers. We deliberately allowlist
         // hosts rather than `https:` so a venue mapUrl can only iframe a map,

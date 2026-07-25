@@ -343,9 +343,13 @@ export async function checkInRoutes(app: FastifyInstance): Promise<void> {
           itemDescription: r.job.itemDescription,
           itemBrand: r.job.itemBrand,
           faultDescription: r.job.faultDescription,
+          // Notes are shown once there is something to say. That includes a
+          // paused repair, where the note tells the visitor which part to
+          // bring back next time.
           outcomeNotes:
             r.job.status === 'completed' ||
             r.job.status === 'cannot_repair' ||
+            r.job.status === 'awaiting_return' ||
             r.job.status === 'returned'
               ? r.job.outcomeNotes
               : null,

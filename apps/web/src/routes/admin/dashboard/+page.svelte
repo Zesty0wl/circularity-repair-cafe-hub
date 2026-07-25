@@ -96,18 +96,23 @@
     <div class="card p-6">
       <div class="flex justify-between items-start gap-3">
         <div class="min-w-0">
-          <p class="text-xs uppercase tracking-wide text-brand-700 font-semibold">Active event</p>
+          <p class="kicker text-brand-700">Active event</p>
           <h2 class="text-xl font-semibold mt-1 break-words">{data.activeEvent.name}</h2>
           <p class="text-slate-600 text-sm">{data.activeEvent.venueName} · {data.activeEvent.startTime.slice(0,5)}–{data.activeEvent.endTime.slice(0,5)}</p>
         </div>
         <span class="badge badge-active shrink-0">Active</span>
       </div>
       {#if data.activeCounts}
-        <div class="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+        <!-- The paused tile only appears when there is something in it, so a
+             normal session still shows a tidy block of four. -->
+        <div class="mt-5 grid gap-3 text-center {data.activeCounts.awaiting_return > 0 ? 'grid-cols-2 sm:grid-cols-5' : 'grid-cols-2 sm:grid-cols-4'}">
           <div class="rounded-xl bg-slate-50 p-3 flex flex-col"><p class="text-xs text-slate-600 flex items-center justify-center gap-1.5"><span class="status-dot status-dot-waiting"></span>Waiting</p><p class="mt-auto text-2xl sm:text-3xl font-bold text-slate-900">{data.activeCounts.waiting}</p></div>
           <div class="rounded-xl bg-slate-50 p-3 flex flex-col"><p class="text-xs text-slate-600 flex items-center justify-center gap-1.5"><span class="status-dot status-dot-in_progress"></span>In progress</p><p class="mt-auto text-2xl sm:text-3xl font-bold text-slate-900">{data.activeCounts.in_progress}</p></div>
           <div class="rounded-xl bg-slate-50 p-3 flex flex-col"><p class="text-xs text-slate-600 flex items-center justify-center gap-1.5"><span class="status-dot status-dot-completed"></span>Done</p><p class="mt-auto text-2xl sm:text-3xl font-bold text-slate-900">{data.activeCounts.completed}</p></div>
           <div class="rounded-xl bg-slate-50 p-3 flex flex-col"><p class="text-xs text-slate-600 flex items-center justify-center gap-1.5"><span class="status-dot status-dot-cannot_repair"></span>Cannot repair</p><p class="mt-auto text-2xl sm:text-3xl font-bold text-slate-900">{data.activeCounts.cannot_repair}</p></div>
+          {#if data.activeCounts.awaiting_return > 0}
+            <div class="rounded-xl bg-slate-50 p-3 flex flex-col"><p class="text-xs text-slate-600 flex items-center justify-center gap-1.5"><span class="status-dot status-dot-awaiting_return"></span>Awaiting return</p><p class="mt-auto text-2xl sm:text-3xl font-bold text-slate-900">{data.activeCounts.awaiting_return}</p></div>
+          {/if}
         </div>
       {/if}
       <div class="mt-5 flex flex-col sm:flex-row sm:flex-wrap gap-2">
@@ -118,7 +123,7 @@
     </div>
   {:else if data.nextEvent}
     <div class="card p-6">
-      <p class="text-xs uppercase tracking-wide text-slate-500 font-semibold">Next event</p>
+      <p class="kicker">Next event</p>
       <h2 class="text-xl font-semibold mt-1">{data.nextEvent.name}</h2>
       <p class="text-slate-600 text-sm">{data.nextEvent.venueName} · {data.nextEvent.date}</p>
       <div class="mt-4 flex flex-col sm:flex-row gap-2">

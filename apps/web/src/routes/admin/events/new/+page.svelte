@@ -83,7 +83,7 @@
   <button class="btn-{mode === 'recurring' ? 'primary' : 'secondary'}" on:click={() => (mode = 'recurring')}>Recurring (template)</button>
 </div>
 
-<div class="card p-6 mt-4 max-w-xl space-y-4">
+<div class="card p-6 mt-4 max-w-2xl space-y-4">
   {#if mode === 'oneoff'}
     <div>
       <label class="label" for="n">Name</label>

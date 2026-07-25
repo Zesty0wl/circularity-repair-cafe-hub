@@ -1,7 +1,11 @@
 <script lang="ts">
   import { api } from '$lib/api';
+  import { cafe } from '$lib/stores/cafe';
   import SiteHeader from '$lib/components/SiteHeader.svelte';
   import SiteFooter from '$lib/components/SiteFooter.svelte';
+  import PageHeader from '$lib/components/PageHeader.svelte';
+  import NextSessionCta from '$lib/components/NextSessionCta.svelte';
+  import AddToCalendar from '$lib/components/AddToCalendar.svelte';
   import { Clock, MapPin, CalendarDays, CalendarX2, History, ChevronRight } from 'lucide-svelte';
   import type { PageData } from './$types';
 
@@ -20,7 +24,6 @@
   let upcoming: PublicEvent[] = [];
   let past: PublicEvent[] = [];
   let showPast = false;
-  let loading = false;
 
   export let data: PageData;
   $: upcoming = (data.upcoming ?? []) as PublicEvent[];
@@ -40,10 +43,12 @@
       day: dt.toLocaleDateString('en-GB', { day: 'numeric', timeZone: 'UTC' }),
       monthShort: dt.toLocaleDateString('en-GB', { month: 'short', timeZone: 'UTC' }),
       weekdayLong: dt.toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'UTC' }),
+      monthLong: dt.toLocaleDateString('en-GB', { month: 'long', timeZone: 'UTC' }),
+      year: dt.toLocaleDateString('en-GB', { year: 'numeric', timeZone: 'UTC' }),
     };
   }
 
-  // Full, human-friendly date for the expanded modal.
+  // Full, human-friendly date for screen readers and labels.
   function fullDate(d: string): string {
     return new Date(d + 'T12:00:00Z').toLocaleDateString('en-GB', {
       weekday: 'long',
@@ -54,49 +59,51 @@
     });
   }
 
+  // Keep a postcode on one line: a break in the middle of it looks wrong.
+  function noWrap(s: string): string {
+    return s.replace(/\s+/g, ' ');
+  }
+
   // When every upcoming event shares one venue (the common case for a regular
   // monthly cafe) we surface it once in the header.
   $: uniformVenue = upcoming.length > 0 && upcoming.every((e) => e.venue.name === upcoming[0]!.venue.name)
     ? upcoming[0]!.venue
     : null;
+  // Same idea for the name. A regular cafe calls every session the same thing,
+  // so repeating it down the list tells the reader nothing. When the names all
+  // match we lead each row with the date instead, which is the useful part.
+  $: uniformName = upcoming.length > 0 && upcoming.every((e) => e.name === upcoming[0]!.name);
+
+  $: nextEvent = upcoming[0] ?? null;
+  $: gallery = $cafe?.gallery ?? [];
+  $: ctaImage = gallery.length > 0 ? gallery[gallery.length - 1]!.url : null;
 </script>
 
 <SiteHeader variant="public" />
 
 <main>
-  <!-- ───────────────────────── Header band ───────────────────────── -->
-  <section class="bg-sage/30 border-b border-sage/50">
-    <div class="max-w-4xl mx-auto px-4 py-14 text-center">
-      <span class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-brand-600 text-white shadow-md">
-        <CalendarDays size={26} />
-      </span>
-      <p class="mt-5 text-xs font-bold uppercase tracking-[0.18em] text-clay">What's on</p>
-      <h1 class="mt-2 !text-pine">Upcoming events</h1>
-      <span class="mt-3 inline-block h-1 w-16 rounded-full bg-brand-500"></span>
-      <p class="mt-4 text-lg text-slate-600 max-w-xl mx-auto">Bring an item to repair. We'll do our best to fix it together.</p>
-      {#if uniformVenue}
-        <p class="mt-4 inline-flex items-center gap-2 rounded-full bg-white/70 ring-1 ring-sage/60 px-4 py-1.5 text-sm text-slate-700">
-          <MapPin size={15} class="text-clay shrink-0" />
-          <span>{uniformVenue.name}{#if uniformVenue.postcode} · {uniformVenue.postcode}{/if}</span>
-        </p>
-      {/if}
-    </div>
-  </section>
+  <PageHeader
+    eyebrow="What's on"
+    title="Upcoming events"
+    lede="Bring an item to repair. We'll do our best to fix it together."
+  >
+    <CalendarDays size={22} slot="icon" />
+    {#if uniformVenue}
+      <p class="mt-6 inline-flex items-center gap-2 rounded-full bg-white ring-1 ring-brand-200 px-4 py-1.5 text-sm text-slate-700">
+        <MapPin size={15} class="text-clay shrink-0" />
+        <span>{uniformVenue.name}{#if uniformVenue.postcode}{' · '}{noWrap(uniformVenue.postcode)}{/if}</span>
+      </p>
+    {/if}
+  </PageHeader>
 
   <!-- ───────────────────────── Event list ───────────────────────── -->
-  <section class="max-w-4xl mx-auto px-4 py-12">
-    {#if loading}
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-hidden="true">
-        {#each Array(3) as _}
-          <div class="h-24 rounded-2xl bg-slate-100 animate-pulse"></div>
-        {/each}
-      </div>
-    {:else if upcoming.length === 0}
-      <div class="card p-10 text-center">
-        <span class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-sage/50 text-pine">
-          <CalendarX2 size={26} />
+  <section class="section">
+    {#if upcoming.length === 0}
+      <div class="card p-10 text-center max-w-xl mx-auto">
+        <span class="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-brand-100 text-pine">
+          <CalendarX2 size={22} />
         </span>
-        <h3 class="mt-4 !text-pine">No events scheduled just yet</h3>
+        <h3 class="mt-4 text-pine">No events scheduled just yet</h3>
         <p class="mt-2 text-slate-600">We're planning the next session. Check back soon, or get in touch to be the first to know.</p>
         <a href="/contact" class="btn-secondary mt-6">Contact us</a>
       </div>
@@ -104,22 +111,28 @@
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {#each upcoming as evt, i}
           {@const p = dateParts(evt.date)}
-          <a
-            href={`/events/${evt.id}`}
-            aria-label={`${evt.name}, ${fullDate(evt.date)}, view details`}
-            class="group relative flex items-center gap-3 rounded-2xl bg-white ring-1 ring-slate-200 p-3 pr-2 text-left shadow-sm transition-all hover:shadow-md hover:ring-brand-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-          >
+          <!-- The card is the container; the title link stretches over the
+               whole card, so the row is one tap target and the calendar
+               button beside it stays a separate control. -->
+          <div class="card group relative flex h-full items-center gap-4 overflow-hidden p-4 transition-shadow hover:ring-brand-400">
             {#if i === 0}
-              <span class="absolute -top-2 right-3 rounded-full bg-sun text-ink text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 shadow-sm">Next</span>
+              <span class="absolute top-0 right-0 rounded-tr-2xl rounded-bl-xl bg-accent-600 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">Next</span>
             {/if}
-            <!-- Date tile -->
-            <div class="shrink-0 w-16 rounded-xl bg-gradient-to-br from-brand-700 to-brand-600 text-white text-center py-2">
-              <div class="text-[11px] font-bold uppercase tracking-wider text-brand-100">{p.monthShort}</div>
-              <div class="text-2xl font-bold font-display leading-none">{p.day}</div>
+            <!-- Date tile, flat and in one colour so a column of them reads
+                 as a set (the home page tiles use the same treatment). -->
+            <div class="shrink-0 w-16 overflow-hidden rounded-xl bg-brand-600 text-white text-center">
+              <div class="bg-black/15 text-[11px] font-bold uppercase tracking-wider py-1">{p.monthShort}</div>
+              <div class="text-2xl font-bold font-display leading-none py-2">{p.day}</div>
             </div>
-            <!-- Critical detail -->
             <div class="min-w-0 flex-1">
-              <p class="font-semibold text-pine truncate">{evt.name}</p>
+              <!-- Lead with whatever actually differs between rows. -->
+              <a
+                href={`/events/${evt.id}`}
+                aria-label={`${evt.name}, ${fullDate(evt.date)}, view details`}
+                class="font-semibold text-pine block truncate after:absolute after:inset-0 focus:outline-none focus-visible:underline"
+              >
+                {#if uniformName}{p.weekdayLong} {p.day} {p.monthLong}{:else}{evt.name}{/if}
+              </a>
               <p class="mt-1 flex items-center gap-1.5 text-sm text-slate-600">
                 <Clock size={14} class="text-clay shrink-0" /> {evt.startTime.slice(0,5)}–{evt.endTime.slice(0,5)}
               </p>
@@ -129,14 +142,19 @@
                 </p>
               {/if}
             </div>
-            <ChevronRight size={18} class="shrink-0 text-slate-300 transition-colors group-hover:text-brand-500" />
-          </a>
+            <AddToCalendar
+              event={evt}
+              variant="compact"
+              class="relative z-10 shrink-0 !bg-brand-50 !text-brand-700 !ring-brand-200 hover:!bg-brand-100"
+            />
+            <ChevronRight size={18} class="shrink-0 text-slate-400 transition-colors group-hover:text-brand-600" />
+          </div>
         {/each}
       </div>
     {/if}
 
     <!-- ───────────────────────── Past events ───────────────────────── -->
-    <div class="mt-14 pt-8 border-t border-slate-200">
+    <div class="mt-16 pt-10 border-t border-slate-200">
       {#if !showPast}
         <div class="text-center">
           <button class="btn-secondary" type="button" on:click={loadPast}>
@@ -144,7 +162,7 @@
           </button>
         </div>
       {:else}
-        <h2 class="!text-pine flex items-center gap-2"><History size={20} class="text-clay" /> Past events</h2>
+        <h2 class="text-pine flex items-center gap-2"><History size={20} class="text-clay" /> Past events</h2>
         {#if past.length === 0}
           <p class="mt-3 text-slate-500">No past events to show.</p>
         {:else}
@@ -169,6 +187,16 @@
       {/if}
     </div>
   </section>
+
+  <NextSessionCta
+    event={nextEvent}
+    venue={uniformVenue ?? nextEvent?.venue ?? null}
+    image={ctaImage}
+    heading="Not sure if we can fix it?"
+    body="Bring it anyway. We will always take a look, and we will be honest about what we can and cannot do."
+    ctaHref="/contact"
+    ctaLabel="Find us"
+  />
 </main>
 
 <SiteFooter />

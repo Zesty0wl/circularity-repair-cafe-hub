@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { db } from '../db/index.js';
 import { cafeGallery, cafes, events, skillCategories, users, venues } from '../db/schema.js';
 import { and, asc, eq, gte, ne, sql } from 'drizzle-orm';
+import { iconVersion } from '../services/pwaIcons.js';
 
 export async function publicRoutes(app: FastifyInstance): Promise<void> {
   app.get('/api/public/cafe', async () => {
@@ -35,6 +36,50 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
       ogImageUrl: cafe.ogImageUrl,
       plausibleDomain: cafe.plausibleDomain,
       plausibleSrc: cafe.plausibleSrc,
+      // Hash of the branding the home screen icons are built from. The web
+      // <head> uses it to point at the right (immutable) icon file.
+      pwaIconVersion: iconVersion({
+        logoUrl: cafe.logoUrl,
+        faviconUrl: cafe.faviconUrl,
+        primaryColor: cafe.primaryColor,
+      }),
+    };
+  });
+
+  // ── Headline numbers for the home page ──────────────────────────────────
+  // Counted over sessions that actually happened ('completed' or 'active'),
+  // the same rule the admin stats use, so the public figures and the internal
+  // ones can never disagree. Only shown if the cafe turns it on.
+  app.get('/api/public/stats', async () => {
+    const rows = await db.execute(sql`
+      SELECT
+        COUNT(DISTINCT e.id)::int AS event_count,
+        COUNT(rj.id)::int AS repair_count,
+        COUNT(rj.id) FILTER (WHERE rj.status = 'completed')::int AS completed,
+        COUNT(rj.id) FILTER (WHERE rj.status = 'cannot_repair')::int AS cannot_repair,
+        COALESCE(SUM(rj.environmental_saving_kg) FILTER (WHERE rj.status = 'completed'), 0)::float AS savings_kg
+      FROM events e
+      LEFT JOIN repair_jobs rj ON rj.event_id = e.id
+      WHERE e.status IN ('completed','active')
+    `);
+    const r = (rows.rows[0] ?? {}) as Record<string, unknown>;
+    const completed = Number(r.completed ?? 0);
+    // Success rate is out of the repairs we finished either way. Repairs still
+    // open, or paused waiting for a part, would drag it down unfairly.
+    const closed = completed + Number(r.cannot_repair ?? 0);
+
+    const [volunteerRow] = await db
+      .select({ count: sql<number>`COUNT(*)::int` })
+      .from(users)
+      .where(and(eq(users.isActive, true), ne(users.role, 'super_admin')));
+
+    return {
+      eventCount: Number(r.event_count ?? 0),
+      repairCount: Number(r.repair_count ?? 0),
+      completedCount: completed,
+      successRate: closed > 0 ? Math.round((completed / closed) * 100) : 0,
+      co2SavedKg: Math.round(Number(r.savings_kg ?? 0) * 10) / 10,
+      volunteerCount: Number(volunteerRow?.count ?? 0),
     };
   });
 

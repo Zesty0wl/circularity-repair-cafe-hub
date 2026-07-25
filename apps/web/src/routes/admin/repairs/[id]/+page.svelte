@@ -4,6 +4,7 @@
   import { onMount } from 'svelte';
   import { api } from '$lib/api';
   import { auth } from '$lib/stores/auth';
+  import { ArrowLeft } from 'lucide-svelte';
 
   $: id = $page.params.id;
   let detail: any = null;
@@ -132,7 +133,7 @@
 </script>
 
 {#if detail}
-  <a href="/admin/repairs" class="text-sm text-slate-600 hover:underline">← Back to repairs</a>
+  <a href="/admin/repairs" class="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-brand-700"><ArrowLeft size={14} /> Back to repairs</a>
   <h1 class="text-2xl font-bold mt-1">{detail.job.jobNumber}</h1>
   <p class="text-slate-600">{detail.event?.name} · {detail.event?.date}</p>
 
@@ -205,6 +206,7 @@
         <option value="in_progress">In progress</option>
         <option value="completed">Completed</option>
         <option value="cannot_repair">Cannot repair</option>
+        <option value="awaiting_return">Awaiting return</option>
       </select>
     </div>
     <div class="flex justify-end"><button class="btn-primary" on:click={save} disabled={busy}>Save</button></div>
@@ -212,11 +214,11 @@
 
   {#if detail.images?.length}
     <section class="mt-6">
-      <h2 class="font-semibold mb-2">Photos</h2>
+      <h2 class="text-lg font-semibold mb-2">Photos</h2>
       <div class="grid grid-cols-3 sm:grid-cols-4 gap-2">
         {#each detail.images as img}
           <a href={`/uploads/${img.filePath}`} target="_blank" rel="noopener">
-            <img src={`/uploads/${img.filePath}`} alt={img.stage} class="w-full aspect-square object-cover rounded-lg" />
+            <img src={`/uploads/${img.filePath}`} alt={img.stage} class="w-full aspect-square object-cover rounded-xl ring-1 ring-slate-200" />
           </a>
         {/each}
       </div>
@@ -224,7 +226,7 @@
   {/if}
 
   <section class="mt-8 max-w-2xl">
-    <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 p-4">
+    <div class="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-rose-50 ring-1 ring-rose-200 p-4">
       <div class="min-w-0">
         <p class="font-semibold text-rose-900">Delete this repair</p>
         <p class="text-sm text-rose-700">Permanently removes this repair record and any photos. This cannot be undone.</p>

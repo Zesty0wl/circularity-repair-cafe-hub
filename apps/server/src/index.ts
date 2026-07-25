@@ -14,6 +14,7 @@ import { healthRoutes } from './routes/health.js';
 import { setupRoutes } from './routes/setup.js';
 import { authRoutes } from './routes/auth.js';
 import { publicRoutes } from './routes/public.js';
+import { pwaRoutes } from './routes/pwa.js';
 import { checkInRoutes } from './routes/checkin.js';
 import { repairerRoutes } from './routes/repairer.js';
 import { adminRoutes } from './routes/admin/index.js';
@@ -72,6 +73,9 @@ async function start(): Promise<void> {
   await app.register(setupRoutes);
   await app.register(authRoutes);
   await app.register(publicRoutes);
+  // Progressive web app manifest + icons. Registered as real routes so they
+  // take precedence over the SvelteKit fallback below.
+  await app.register(pwaRoutes);
   await app.register(checkInRoutes);
   await app.register(repairerRoutes);
   await app.register(adminRoutes);

@@ -57,6 +57,12 @@ export const cafes = pgTable('cafes', {
   plausibleDomain: text('plausible_domain'),
   plausibleSrc: text('plausible_src'),
   repaircafeSlug: text('repaircafe_slug'),
+  /**
+   * Nearby Repair Cafes this cafe knows and wants to point people at, held as
+   * repaircafe.org slugs. The names, addresses and pins come from the directory
+   * at render time, so a cafe that moves or renames is right on our page too.
+   */
+  localCafeSlugs: text('local_cafe_slugs').array().default([]).notNull(),
   // How much of a new purchase a repair is taken to prevent, and whether the
   // CO2 figure is worked out and shown at all.
   co2DisplacementRate: numeric('co2_displacement_rate', { precision: 4, scale: 3 }).notNull().default('0.5'),

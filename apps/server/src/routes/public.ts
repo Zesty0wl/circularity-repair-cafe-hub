@@ -14,7 +14,7 @@ import {
 import { and, asc, desc, eq, gte, ne, sql } from 'drizzle-orm';
 import { iconVersion } from '../services/pwaIcons.js';
 import { uploadUrl } from '../services/imageUpload.js';
-import { findOurs, getNetwork } from '../services/repairCafeNetwork.js';
+import { findOurs, getNetwork, resolveSlugs } from '../services/repairCafeNetwork.js';
 import { getGuide, searchGuides } from '../services/ifixit.js';
 import { co2Settings, listFactors } from '../services/co2.js';
 
@@ -103,6 +103,34 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
         url: 'https://zenodo.org/records/5900046',
         licence: 'CC BY-SA 4.0',
       },
+    };
+  });
+
+  // ── Neighbouring cafes we know and support ──────────────────────────────
+  // Backs the "local repair cafe community" card on the home page. Returns an
+  // empty list, never an error, when nothing has been chosen or the directory
+  // is briefly unreachable, so the card simply does not appear.
+  app.get('/api/public/local-cafes', async (_request, reply) => {
+    const [cafe] = await db
+      .select({ slug: cafes.repaircafeSlug, selected: cafes.localCafeSlugs, name: cafes.name })
+      .from(cafes)
+      .limit(1);
+    const selected = cafe?.selected ?? [];
+    if (selected.length === 0) return { ours: null, cafes: [] };
+
+    const snapshot = await getNetwork();
+    if (!snapshot) return { ours: null, cafes: [] };
+
+    const ours = findOurs(snapshot, cafe?.slug ?? null);
+    // The directory only changes daily, so let browsers hold on to this for an
+    // hour, the same as the world map.
+    void reply.header('Cache-Control', 'public, max-age=3600');
+    return {
+      // Our own pin, so the map can show where the group is centred. We use
+      // the cafe's own name rather than the directory's, because that is the
+      // name the rest of the site uses.
+      ours: ours ? { ...ours, name: cafe?.name || ours.name } : null,
+      cafes: resolveSlugs(snapshot, selected, ours),
     };
   });
 

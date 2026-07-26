@@ -7,6 +7,8 @@
   import NextSessionCta from '$lib/components/NextSessionCta.svelte';
   import AddToCalendar from '$lib/components/AddToCalendar.svelte';
   import PhotoGrid from '$lib/components/PhotoGrid.svelte';
+  import LocalCafeMap from '$lib/components/LocalCafeMap.svelte';
+  import { formatDistance, repairCafeOrgUrl, type LocalCafe } from '$lib/localCafes';
   import { Calendar, Clock, MapPin, ChevronDown, CheckCircle2 } from 'lucide-svelte';
   import Icon from '@iconify/svelte';
   import { categoryIcon, categoryTint, categoryInk } from '$lib/categoryIcon';
@@ -139,6 +141,19 @@
   // Photos from a session say where and when they were taken, so the gallery
   // lede can promise something the strip actually delivers.
   $: galleryHasSessions = gallery.some((g) => g.eventId);
+
+  // ── Repair Cafes near us ──────────────────────────────────────────────────
+  // Only appears when an admin has picked some under Settings, Local cafes.
+  $: localCafes = ((data.localCafes?.cafes ?? []) as LocalCafe[]);
+  $: localOurs = (data.localCafes?.ours ?? null) as LocalCafe | null;
+  let selectedLocalSlug: string | null = null;
+
+  /** Clicking a pin picks that cafe out in the list, and brings it into view. */
+  function pickLocalCafe(slug: string | null) {
+    selectedLocalSlug = slug;
+    if (!slug || typeof document === 'undefined') return;
+    document.getElementById(`local-cafe-${slug}`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
 </script>
 
 <SiteHeader variant="public" />
@@ -429,6 +444,78 @@
             </details>
           {/each}
         </div>
+      </div>
+    </section>
+  {/if}
+
+  <!-- ─────────────── Repair Cafes near us ───────────────────── -->
+  {#if localCafes.length > 0}
+    <section class="section">
+      <SectionHeading
+        eyebrow="Not just us"
+        title="Repair Cafes near us"
+        lede="We are part of a wider community of repairers. If we cannot help, one of these might."
+      />
+      <div class="mt-10 grid gap-6 lg:grid-cols-5 items-start">
+        <div class="lg:col-span-3">
+          <LocalCafeMap
+            cafes={localCafes}
+            ours={localOurs}
+            selectedSlug={selectedLocalSlug}
+            height="24rem"
+            on:select={(e) => pickLocalCafe(e.detail.slug)}
+          />
+          <p class="mt-2 text-xs text-slate-500">
+            Tap a pin to find that cafe in the list. Details come from
+            <a href="https://www.repaircafe.org" target="_blank" rel="noopener" class="underline underline-offset-2">repaircafe.org</a>.
+          </p>
+        </div>
+
+        <ul class="lg:col-span-2 space-y-2 lg:max-h-[24rem] lg:overflow-y-auto lg:pr-1">
+          {#each localCafes as cafe, i (cafe.slug ?? cafe.name)}
+            <li
+              id={`local-cafe-${cafe.slug}`}
+              class="rounded-xl p-3 ring-1 transition-colors {selectedLocalSlug === cafe.slug
+                ? 'bg-brand-50 ring-brand-300'
+                : 'bg-white ring-slate-200'}"
+            >
+              <div class="flex items-start gap-3">
+                <!-- The number matches the pin on the map. -->
+                <button
+                  type="button"
+                  class="mt-0.5 shrink-0 h-6 w-6 rounded-full text-xs font-bold ring-2 transition-colors {selectedLocalSlug === cafe.slug
+                    ? 'bg-brand-700 text-white ring-brand-700'
+                    : 'bg-white text-brand-800 ring-brand-600 hover:bg-brand-50'}"
+                  aria-label={`Show ${cafe.name} on the map`}
+                  on:click={() => (selectedLocalSlug = selectedLocalSlug === cafe.slug ? null : cafe.slug)}
+                >
+                  {i + 1}
+                </button>
+                <div class="min-w-0 flex-1">
+                  <p class="font-semibold text-pine">{cafe.name}</p>
+                  {#if cafe.address}
+                    <p class="text-sm text-slate-600">{cafe.address}</p>
+                  {/if}
+                  <p class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                    {#if formatDistance(cafe.distanceKm)}
+                      <span class="text-slate-500">{formatDistance(cafe.distanceKm)}</span>
+                    {/if}
+                    {#if cafe.website}
+                      <a href={cafe.website} target="_blank" rel="noopener" class="text-brand-700 underline underline-offset-2 hover:text-brand-800">
+                        Their website
+                      </a>
+                    {/if}
+                    {#if repairCafeOrgUrl(cafe.slug)}
+                      <a href={repairCafeOrgUrl(cafe.slug)} target="_blank" rel="noopener" class="text-brand-700 underline underline-offset-2 hover:text-brand-800">
+                        On repaircafe.org
+                      </a>
+                    {/if}
+                  </p>
+                </div>
+              </div>
+            </li>
+          {/each}
+        </ul>
       </div>
     </section>
   {/if}

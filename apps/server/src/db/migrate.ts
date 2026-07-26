@@ -259,6 +259,11 @@ const STATEMENTS: string[] = [
   // uses it to pick our own pin out of the worldwide directory.
   `ALTER TABLE cafes ADD COLUMN IF NOT EXISTS repaircafe_slug TEXT`,
 
+  // ── Neighbouring cafes we know and support (additive, idempotent) ──
+  // Just the repaircafe.org slugs. Everything shown about them is read from
+  // the directory when a page is drawn, so nothing here can go stale.
+  `ALTER TABLE cafes ADD COLUMN IF NOT EXISTS local_cafe_slugs TEXT[] NOT NULL DEFAULT '{}'`,
+
   // ── "Awaiting return": the repair is paused because the visitor is coming
   //    back with a part at a later session. Not finished, so it stays open.
   //    ADD VALUE is safe here because runMigrations applies each statement on

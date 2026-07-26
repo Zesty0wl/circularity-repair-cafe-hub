@@ -2,9 +2,31 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
-## Unreleased
+## 2026-07-26 (later the same day)
+
+A big release in three parts: photos of your sessions, a carbon figure that is
+looked up rather than guessed, and a map of the Repair Cafes near you.
 
 ### Added
+
+**Photos**
+
+- Every session now has its own photo gallery. Repairers and admins can add
+  photos from a phone or a laptop, and they appear on that session's page on the
+  public site. Volunteers get a new "Photos" page in their own area: pick the
+  session, add the photos, done.
+- Photos taken during a repair can now be shown too. They stay private until an
+  admin picks them out, one at a time or all at once, because they are pictures
+  of someone else's belongings.
+- Any photo from a session can be starred to bring it into the main gallery on
+  the home page, so the site fills up on its own as volunteers add photos.
+- Past events now show what happened at the session: how many items came in, how
+  many went home working, what kinds of thing they were, how many volunteers
+  helped, and the waste kept out of landfill. No visitor names or item details
+  are shown. You can turn this off under Settings, Home page.
+- The list of past events now shows a photo and a count for each session.
+
+**Carbon savings**
 
 - The CO2 figure is now worked out rather than guessed. When someone checks an
   item in they say what kind of thing it is, and we look up what it costs the
@@ -22,20 +44,16 @@ Notable changes to the Repair Café Hub. Newest first.
   that is not clear enough to be sure, the repair is left exactly as it was with
   the figure someone typed at the time. Nobody has to label old records by hand.
 
-- Every session now has its own photo gallery. Repairers and admins can add
-  photos from a phone or a laptop, and they appear on that session's page on the
-  public site. Volunteers get a new "Photos" page in their own area: pick the
-  session, add the photos, done.
-- Photos taken during a repair can now be shown too. They stay private until an
-  admin picks them out, one at a time or all at once, because they are pictures
-  of someone else's belongings.
-- Any photo from a session can be starred to bring it into the main gallery on
-  the home page, so the site fills up on its own as volunteers add photos.
-- Past events now show what happened at the session: how many items came in, how
-  many went home working, what kinds of thing they were, how many volunteers
-  helped, and the waste kept out of landfill. No visitor names or item details
-  are shown. You can turn this off under Settings, Home page.
-- The list of past events now shows a photo and a count for each session.
+**Local cafe community**
+
+- New "Local cafes" tab under Settings. Search the repaircafe.org directory and
+  tick up to ten nearby Repair Cafes you know and want to support. With your own
+  repaircafe.org page set, the list opens on your closest neighbours and shows
+  how far away each one is.
+- Those cafes then appear on your home page as a flat map with a numbered list
+  beside it. Tap a pin to find that cafe in the list, or tap a number to move
+  the map to it. Each one links to its own website and its page on
+  repaircafe.org. The card only appears once you have chosen some.
 
 ### Changed
 
@@ -67,6 +85,13 @@ Notable changes to the Repair Café Hub. Newest first.
 - The carbon figures come from The Restart Project's Fixometer reference data,
   shared under CC BY-SA 4.0. See `docs/proposal-co2-savings.md` and
   `apps/server/src/db/co2Factors.ts`.
+- The local cafes card stores only the repaircafe.org slug of each cafe you
+  pick, in a new `cafes.local_cafe_slugs` column. Names, addresses and pins are
+  read from the mirrored directory every time a page is drawn, so nothing here
+  can go stale, and a cafe that leaves the directory simply stops appearing.
+- The map uses Leaflet over CARTO's light tiles, the same tile source as the
+  world globe. It is loaded in the browser only, after the page has rendered, so
+  a visitor who never scrolls that far never downloads it.
 - Two additive database changes are applied on start-up: a new `event_images`
   table, and two flags on `repair_images` that say who may see each photo. Both
   are idempotent, so restarting an existing install is safe.

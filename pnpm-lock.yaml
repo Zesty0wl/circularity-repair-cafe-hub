@@ -119,6 +119,9 @@ importers:
       date-fns:
         specifier: ^4.1.0
         version: 4.3.0
+      leaflet:
+        specifier: ^1.9.4
+        version: 1.9.4
       lucide-svelte:
         specifier: ^0.460.0
         version: 0.460.1(svelte@5.55.9)
@@ -135,6 +138,9 @@ importers:
       '@sveltejs/vite-plugin-svelte':
         specifier: ^4.0.0
         version: 4.0.4(svelte@5.55.9)(vite@5.4.21(@types/node@22.19.19))
+      '@types/leaflet':
+        specifier: ^1.9.21
+        version: 1.9.21
       '@types/node':
         specifier: ^22.7.5
         version: 22.19.19
@@ -1250,6 +1256,9 @@ packages:
   '@types/geojson@7946.0.16':
     resolution: {integrity: sha512-6C8nqWur3j98U6+lXDfTUWIfgvZU+EumvpHKcYjujKH7woYyLj2sUmff0tRhrqM7BohUw7Pz3ZB1jj2gW9Fvmg==}
 
+  '@types/leaflet@1.9.21':
+    resolution: {integrity: sha512-TbAd9DaPGSnzp6QvtYngntMZgcRk+igFELwR2N99XZn7RXUdKgsXMR+28bUO0rPsWp8MIu/f47luLIQuSLYv/w==}
+
   '@types/node@22.19.19':
     resolution: {integrity: sha512-dyh/xO2Fh5bYrfWaaqGrRQQGkNdmYw6AmaAUvYeUMNTWQtvb796ikLdmTchRmOlOiIJ1TDXfWgVx1QkUlQ6Hew==}
 
@@ -2085,6 +2094,9 @@ packages:
   lazystream@1.0.1:
     resolution: {integrity: sha512-b94GiNHQNy6JNTrt5w6zNyffMrNkXZb3KTkCZJb2V1xaEGCk093vkZ2jk3tpaeP33/OiXC+WvK9AxUebnf5nbw==}
     engines: {node: '>= 0.6.3'}
+
+  leaflet@1.9.4:
+    resolution: {integrity: sha512-nxS1ynzJOmOlHp+iL3FyWqK89GtNL8U8rvlMOsQdTTssxZwCXh8N2NB3GDQOL+YR3XnWyZAxwQixURb+FA74PA==}
 
   lerc@2.0.0:
     resolution: {integrity: sha512-7qo1Mq8ZNmaR4USHHm615nEW2lPeeWJ3bTyoqFbd35DLx0LUH7C6ptt5FDCTAlbIzs3+WKrk5SkJvw8AFDE2hg==}
@@ -3632,6 +3644,10 @@ snapshots:
 
   '@types/geojson@7946.0.16': {}
 
+  '@types/leaflet@1.9.21':
+    dependencies:
+      '@types/geojson': 7946.0.16
+
   '@types/node@22.19.19':
     dependencies:
       undici-types: 6.21.0
@@ -4444,6 +4460,8 @@ snapshots:
   lazystream@1.0.1:
     dependencies:
       readable-stream: 2.3.8
+
+  leaflet@1.9.4: {}
 
   lerc@2.0.0: {}
 

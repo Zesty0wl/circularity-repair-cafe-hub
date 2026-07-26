@@ -61,6 +61,13 @@ hundreds of repairs, and yours to host on a £5/month VPS or a Pi in the corner.
   repaircafe.org page under Settings and your cafe is marked on the globe.
   Cesium needs a looser content security policy than the rest of the site; that
   is applied to the `/world` page alone (see `apps/web/src/hooks.server.ts`).
+- **Local cafe community** — pick up to ten nearby Repair Cafes out of the
+  repaircafe.org directory under Settings, searching by name or town with your
+  closest neighbours listed first. They show on the home page as a flat map
+  (Leaflet over CARTO tiles) beside a numbered list, where a pin and a list row
+  point at each other, and each cafe links to its own site. Only the
+  repaircafe.org slug is stored, so names, addresses and pins are always read
+  fresh from the directory rather than going stale in your database.
 - **SEO + analytics** — every public page is server-rendered with Open Graph /
   Twitter tags and schema.org structured data, plus an auto-generated sitemap.
   Previews work in Facebook / LinkedIn / Slack and events can surface as rich

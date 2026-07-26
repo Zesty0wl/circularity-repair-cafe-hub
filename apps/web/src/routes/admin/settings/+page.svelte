@@ -9,10 +9,11 @@
   import ImageDropzone from '$lib/components/ImageDropzone.svelte';
   import GalleryManager from '$lib/components/GalleryManager.svelte';
   import type { ManagedPhoto } from '$lib/gallery';
+  import { MAX_LOCAL_CAFES, formatDistance, repairCafeOrgUrl, type LocalCafe } from '$lib/localCafes';
 
   let cafe: any = null;
   let busy = false;
-  type Tab = 'profile' | 'home' | 'gallery' | 'preferences' | 'seo' | 'gdpr' | 'backup' | 'about';
+  type Tab = 'profile' | 'home' | 'gallery' | 'local' | 'preferences' | 'seo' | 'gdpr' | 'backup' | 'about';
   let tab: Tab = 'profile';
 
   $: isSuperAdmin = $auth?.user.role === 'super_admin';
@@ -45,6 +46,82 @@
 
   // Gallery
   let gallery: ManagedPhoto[] = [];
+
+  // ── Neighbouring cafes we know and support ────────────────────────
+  let localQuery = '';
+  let localResults: LocalCafe[] = [];
+  let localChosen: LocalCafe[] = [];
+  let localSelected: string[] = [];
+  let localAnchor: { name: string; lat: number; lng: number } | null = null;
+  let localMax = MAX_LOCAL_CAFES;
+  let localLoading = false;
+  let localError = '';
+  let localSaved = false;
+  let localSearchTimer: ReturnType<typeof setTimeout> | null = null;
+  let localLoadedOnce = false;
+
+  async function loadLocalCafes() {
+    localLoading = true;
+    try {
+      const res = await api<{
+        anchor: { name: string; lat: number; lng: number } | null;
+        max: number;
+        selected: string[];
+        chosen: LocalCafe[];
+        results: LocalCafe[];
+      }>(`/api/admin/local-cafes?q=${encodeURIComponent(localQuery)}`);
+      localAnchor = res.anchor;
+      localMax = res.max ?? MAX_LOCAL_CAFES;
+      localSelected = res.selected ?? [];
+      localChosen = res.chosen ?? [];
+      localResults = res.results ?? [];
+      localError = '';
+      localLoadedOnce = true;
+    } catch (err: any) {
+      localError = err?.message ?? 'Could not reach the Repair Café directory';
+    } finally {
+      localLoading = false;
+    }
+  }
+
+  /** Wait for a pause in typing before searching, so each key is not a call. */
+  function onLocalSearch() {
+    if (localSearchTimer) clearTimeout(localSearchTimer);
+    localSearchTimer = setTimeout(() => void loadLocalCafes(), 300);
+  }
+
+  function toggleLocalCafe(cafe: LocalCafe, checked: boolean) {
+    if (!cafe.slug) return;
+    localSaved = false;
+    if (checked) {
+      if (localSelected.includes(cafe.slug) || localSelected.length >= localMax) return;
+      localSelected = [...localSelected, cafe.slug];
+      localChosen = [...localChosen, cafe];
+    } else {
+      localSelected = localSelected.filter((s) => s !== cafe.slug);
+      localChosen = localChosen.filter((c) => c.slug !== cafe.slug);
+    }
+  }
+
+  async function saveLocalCafes() {
+    busy = true;
+    localError = '';
+    try {
+      await api('/api/admin/settings/local-cafes', { method: 'PATCH', json: { slugs: localSelected } });
+      localSaved = true;
+      await loadCafe();
+    } catch (err: any) {
+      localError = err?.message ?? 'Could not save your choices';
+    } finally {
+      busy = false;
+    }
+  }
+
+  // Load the directory the first time the tab is opened, not on every page
+  // load: it is the only part of Settings that talks to another service.
+  $: if (tab === 'local' && !localLoadedOnce && !localLoading) {
+    void loadLocalCafes();
+  }
 
   // Brand colour — <input type="color"> requires #rrggbb. We normalise on load
   // and via the change handler so an empty/legacy value never reaches the
@@ -291,7 +368,7 @@
 <h1 class="text-2xl font-bold">Settings</h1>
 
 <div class="mt-3 flex gap-2 flex-wrap">
-  {#each [['profile','Cafe profile'],['home','Home page'],['gallery','Gallery'],['preferences','Check-in & preferences'],['seo','SEO & analytics'],['gdpr','GDPR'], ...(isSuperAdmin ? [['backup','Backup & restore']] : []),['about','About']] as [key, label]}
+  {#each [['profile','Cafe profile'],['home','Home page'],['gallery','Gallery'],['local','Local cafes'],['preferences','Check-in & preferences'],['seo','SEO & analytics'],['gdpr','GDPR'], ...(isSuperAdmin ? [['backup','Backup & restore']] : []),['about','About']] as [key, label]}
     <button class="btn-{tab === key ? 'primary' : 'secondary'} btn-sm" on:click={() => (tab = key as Tab)}>{label}</button>
   {/each}
   <a href="/admin/settings/users" class="btn-secondary btn-sm">Users…</a>
@@ -531,6 +608,136 @@
           onReorder={reorderGallery}
           emptyMessage="No photos yet. Add a few to fill the gallery on your home page."
         />
+      </div>
+    </div>
+  {/if}
+
+  {#if tab === 'local'}
+    <div class="card p-6 mt-4 max-w-3xl space-y-5">
+      <div>
+        <h2 class="text-lg font-semibold">Repair Cafes near us</h2>
+        <p class="text-sm text-slate-600 mt-1">
+          Pick up to {localMax} nearby Repair Cafes you know and want to support. They show as a small
+          map and list on your home page, so a visitor you cannot help can find someone who can.
+          Names, addresses and pins come from repaircafe.org, so they stay right on their own.
+        </p>
+      </div>
+
+      {#if !localAnchor && localLoadedOnce}
+        <div class="rounded-xl bg-amber-50 ring-1 ring-amber-200 p-3 text-sm text-amber-900">
+          <p class="font-semibold">We do not know where you are yet.</p>
+          <p class="mt-1">
+            Add your own page on repaircafe.org under
+            <button class="underline underline-offset-2 font-medium" type="button" on:click={() => (tab = 'profile')}>Cafe profile</button>,
+            and this list will start with your closest neighbours. Until then you can still search by
+            name or town.
+          </p>
+        </div>
+      {/if}
+
+      <div>
+        <label class="label" for="local-search">Search by name or town</label>
+        <input
+          id="local-search"
+          class="input"
+          type="search"
+          placeholder={localAnchor ? 'Leave blank to see your closest cafes' : 'For example: Sheffield'}
+          bind:value={localQuery}
+          on:input={onLocalSearch}
+        />
+        {#if localAnchor}
+          <p class="text-xs text-slate-500 mt-1">Distances are measured from {localAnchor.name}, in a straight line.</p>
+        {/if}
+      </div>
+
+      {#if localError}
+        <p class="text-sm text-rose-700">{localError}</p>
+      {/if}
+
+      <!-- What is ticked, kept in view even when a search hides it. -->
+      <div>
+        <h3 class="text-base font-semibold">
+          Chosen <span class="font-normal text-slate-500">({localSelected.length} of {localMax})</span>
+        </h3>
+        {#if localChosen.length === 0}
+          <p class="text-sm text-slate-500 mt-1">None yet. Tick a cafe below to add it.</p>
+        {:else}
+          <ul class="mt-2 flex flex-wrap gap-2">
+            {#each localChosen as cafe (cafe.slug)}
+              <li class="inline-flex items-center gap-2 rounded-full bg-brand-50 ring-1 ring-brand-200 pl-3 pr-1.5 py-1 text-sm">
+                <span class="text-brand-900">{cafe.name}</span>
+                {#if formatDistance(cafe.distanceKm)}
+                  <span class="text-xs text-slate-500">{formatDistance(cafe.distanceKm)}</span>
+                {/if}
+                <button
+                  class="p-1 rounded-full text-slate-500 hover:bg-white hover:text-rose-700"
+                  type="button"
+                  aria-label={`Remove ${cafe.name}`}
+                  on:click={() => toggleLocalCafe(cafe, false)}
+                >
+                  <Trash2 size={13} />
+                </button>
+              </li>
+            {/each}
+          </ul>
+        {/if}
+      </div>
+
+      <div>
+        <h3 class="text-base font-semibold">
+          {localQuery.trim() ? 'Search results' : 'Closest to you'}
+        </h3>
+        {#if localLoading}
+          <p class="text-sm text-slate-500 mt-2">Looking…</p>
+        {:else if localResults.length === 0}
+          <p class="text-sm text-slate-500 mt-2">
+            {localQuery.trim() ? 'No cafes match that. Try a town name.' : 'No cafes to show.'}
+          </p>
+        {:else}
+          <ul class="mt-2 divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden">
+            {#each localResults as cafe (cafe.slug)}
+              {@const isOn = !!cafe.slug && localSelected.includes(cafe.slug)}
+              {@const isFull = localSelected.length >= localMax && !isOn}
+              <li class="flex items-start gap-3 p-3 {isOn ? 'bg-brand-50' : 'bg-white'}">
+                <input
+                  type="checkbox"
+                  class="mt-1 h-4 w-4 rounded border-slate-300 text-brand-600 disabled:opacity-40"
+                  checked={isOn}
+                  disabled={isFull}
+                  aria-label={`Show ${cafe.name} on our home page`}
+                  on:change={(e) => toggleLocalCafe(cafe, e.currentTarget.checked)}
+                />
+                <div class="min-w-0 flex-1">
+                  <p class="font-medium text-slate-800">{cafe.name}</p>
+                  {#if cafe.address}
+                    <p class="text-sm text-slate-500">{cafe.address}</p>
+                  {/if}
+                  <p class="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                    {#if formatDistance(cafe.distanceKm)}
+                      <span class="text-slate-500">{formatDistance(cafe.distanceKm)}</span>
+                    {/if}
+                    {#if repairCafeOrgUrl(cafe.slug)}
+                      <a href={repairCafeOrgUrl(cafe.slug)} target="_blank" rel="noopener" class="text-brand-700 underline underline-offset-2">Their page on repaircafe.org</a>
+                    {/if}
+                    {#if cafe.website}
+                      <a href={cafe.website} target="_blank" rel="noopener" class="text-brand-700 underline underline-offset-2">Their own website</a>
+                    {/if}
+                  </p>
+                </div>
+              </li>
+            {/each}
+          </ul>
+          {#if localSelected.length >= localMax}
+            <p class="text-xs text-amber-800 mt-2">
+              That is {localMax}, the most we show. Remove one to add another.
+            </p>
+          {/if}
+        {/if}
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-2 border-t">
+        {#if localSaved}<span class="text-sm text-emerald-700">Saved</span>{/if}
+        <button class="btn-primary" on:click={saveLocalCafes} disabled={busy}>Save local cafes</button>
       </div>
     </div>
   {/if}

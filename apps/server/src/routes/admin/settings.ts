@@ -5,7 +5,10 @@ import { cafeSettingsSchema } from '@circularity/shared';
 import { asc, eq } from 'drizzle-orm';
 import { audit } from '../../utils/audit.js';
 import { saveValidatedImage, deleteImage } from '../../services/imageUpload.js';
-import { slugFromLink } from '../../services/repairCafeNetwork.js';
+import { findOurs, getNetwork, resolveSlugs, searchNetwork, slugFromLink } from '../../services/repairCafeNetwork.js';
+
+/** The most neighbouring cafes a cafe may put on its home page. */
+const MAX_LOCAL_CAFES = 10;
 
 /**
  * Reduce whatever an admin pasted to a bare repaircafe.org slug.
@@ -128,6 +131,92 @@ export async function adminSettingsRoutes(app: FastifyInstance): Promise<void> {
     const [updated] = await db.update(cafes).set(update).where(eq(cafes.id, cafe.id)).returning();
     await audit({ request, actorId: me.sub, actorType: me.role, action: 'cafe.seo_updated', entityType: 'cafe', entityId: cafe.id });
     return updated;
+  });
+
+  // ─────────────── Neighbouring cafes we know and support ───────────
+  // Search the mirrored repaircafe.org directory. With no search term you get
+  // the closest cafes, which is what the page wants the moment it opens.
+  // "Closest" is measured from this cafe's own pin in the directory, so it
+  // needs the repaircafe.org page to be set under Settings, Cafe profile.
+  app.get('/api/admin/local-cafes', async (request, reply) => {
+    const query = request.query as { q?: string; limit?: string };
+    const [cafe] = await db
+      .select({ slug: cafes.repaircafeSlug, selected: cafes.localCafeSlugs })
+      .from(cafes)
+      .limit(1);
+    const snapshot = await getNetwork();
+    if (!snapshot) {
+      reply.code(503).send({
+        error: 'The Repair Café directory is not available right now',
+        code: 'network/unavailable',
+      });
+      return;
+    }
+    const ours = findOurs(snapshot, cafe?.slug ?? null);
+    const selected = cafe?.selected ?? [];
+    return {
+      // Where "near" is measured from, and whether we have one at all. The
+      // page explains what to do when we do not.
+      anchor: ours ? { name: ours.name, lat: ours.lat, lng: ours.lng } : null,
+      max: MAX_LOCAL_CAFES,
+      selected,
+      // The chosen cafes always come back in full, even when a search term
+      // hides them, so the page can show what is ticked without a second call.
+      chosen: resolveSlugs(snapshot, selected, ours),
+      results: searchNetwork(snapshot, {
+        query: query.q,
+        near: ours,
+        excludeSlug: cafe?.slug ?? null,
+        limit: Number(query.limit) || 25,
+      }),
+      directoryUpdatedAt: snapshot.fetchedAt,
+    };
+  });
+
+  app.patch('/api/admin/settings/local-cafes', async (request, reply) => {
+    const me = request.auth!;
+    const body = (request.body ?? {}) as { slugs?: unknown };
+    if (!Array.isArray(body.slugs)) {
+      reply.code(400).send({ error: 'slugs must be an array', code: 'validation/failed' });
+      return;
+    }
+    // Trim, drop blanks and duplicates, then cap. Saving more than the cap
+    // would quietly produce a home page nobody designed.
+    const slugs = Array.from(
+      new Set(
+        body.slugs
+          .filter((s): s is string => typeof s === 'string')
+          .map((s) => s.trim())
+          .filter(Boolean),
+      ),
+    );
+    if (slugs.length > MAX_LOCAL_CAFES) {
+      reply.code(400).send({
+        error: `Choose up to ${MAX_LOCAL_CAFES} cafes`,
+        code: 'local_cafes/too_many',
+      });
+      return;
+    }
+    const [cafe] = await db.select({ id: cafes.id }).from(cafes).limit(1);
+    if (!cafe) {
+      reply.code(404).send({ error: 'Cafe not initialized', code: 'cafe/missing' });
+      return;
+    }
+    const [updated] = await db
+      .update(cafes)
+      .set({ localCafeSlugs: slugs, updatedAt: new Date() })
+      .where(eq(cafes.id, cafe.id))
+      .returning({ localCafeSlugs: cafes.localCafeSlugs });
+    await audit({
+      request,
+      actorId: me.sub,
+      actorType: me.role,
+      action: 'cafe.local_cafes_updated',
+      entityType: 'cafe',
+      entityId: cafe.id,
+      metadata: { count: slugs.length },
+    });
+    return { slugs: updated?.localCafeSlugs ?? slugs };
   });
 
   // ───────────────────────── Photo gallery ──────────────────────────

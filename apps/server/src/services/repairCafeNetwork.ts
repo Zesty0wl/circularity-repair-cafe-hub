@@ -302,3 +302,107 @@ export function findOurs(snapshot: NetworkSnapshot, slug: string | null | undefi
   if (!wanted) return null;
   return snapshot.cafes.find((c) => c.slug?.toLowerCase() === wanted) ?? null;
 }
+
+/** A cafe with how far away it is, when we know where "here" is. */
+export interface NearbyCafe extends NetworkCafe {
+  /** Straight-line distance in kilometres, or null when we have no anchor. */
+  distanceKm: number | null;
+}
+
+/** Mean radius of the Earth in kilometres. */
+const EARTH_RADIUS_KM = 6371;
+
+/**
+ * Straight line distance between two points, in kilometres.
+ *
+ * As the crow flies, not as the car drives, which is all a "cafes near you"
+ * list needs. Roads would take a routing service and a lot more care.
+ */
+export function distanceKm(
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number },
+): number {
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h =
+    Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
+  return 2 * EARTH_RADIUS_KM * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+/** Fold accents and case away, so "Café" and "cafe" match each other. */
+function foldForSearch(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
+export interface SearchOptions {
+  /** Words to look for in the name or address. Empty returns the nearest.  */
+  query?: string;
+  /** Where "near" is measured from. Without it, results are alphabetical. */
+  near?: { lat: number; lng: number } | null;
+  /** Our own slug, so we never offer a cafe itself as its own neighbour. */
+  excludeSlug?: string | null;
+  limit?: number;
+}
+
+/**
+ * Look through the directory for cafes to point people at.
+ *
+ * With a search term, matches on the name or the address. Without one, gives
+ * the closest cafes, which is what an admin wants the moment the page opens.
+ * Either way the answer is sorted by distance when we know where the cafe is,
+ * because "how far is it?" is the question being asked.
+ *
+ * Only cafes with a repaircafe.org page are offered. The slug is what we save,
+ * and a cafe with no page has nothing stable to save.
+ */
+export function searchNetwork(snapshot: NetworkSnapshot, options: SearchOptions = {}): NearbyCafe[] {
+  const limit = Math.max(1, Math.min(100, options.limit ?? 25));
+  const near = options.near ?? null;
+  const exclude = (options.excludeSlug ?? '').trim().toLowerCase();
+  const terms = foldForSearch((options.query ?? '').trim())
+    .split(/\s+/)
+    .filter(Boolean);
+
+  const matches: NearbyCafe[] = [];
+  for (const cafe of snapshot.cafes) {
+    if (!cafe.slug) continue;
+    if (exclude && cafe.slug.toLowerCase() === exclude) continue;
+    if (terms.length > 0) {
+      const haystack = foldForSearch(`${cafe.name} ${cafe.address ?? ''}`);
+      if (!terms.every((t) => haystack.includes(t))) continue;
+    }
+    matches.push({ ...cafe, distanceKm: near ? Math.round(distanceKm(near, cafe) * 10) / 10 : null });
+  }
+
+  matches.sort((a, b) => {
+    if (a.distanceKm !== null && b.distanceKm !== null) return a.distanceKm - b.distanceKm;
+    return a.name.localeCompare(b.name);
+  });
+  return matches.slice(0, limit);
+}
+
+/**
+ * The cafes behind a saved list of slugs, in the order they were saved.
+ * Anything that has since left the directory is quietly dropped, so a stale
+ * slug shows nothing rather than an empty pin.
+ */
+export function resolveSlugs(
+  snapshot: NetworkSnapshot,
+  slugs: readonly string[],
+  near?: { lat: number; lng: number } | null,
+): NearbyCafe[] {
+  const bySlug = new Map(snapshot.cafes.filter((c) => c.slug).map((c) => [c.slug!.toLowerCase(), c]));
+  const out: NearbyCafe[] = [];
+  for (const slug of slugs) {
+    const cafe = bySlug.get(slug.trim().toLowerCase());
+    if (!cafe) continue;
+    out.push({ ...cafe, distanceKm: near ? Math.round(distanceKm(near, cafe) * 10) / 10 : null });
+  }
+  return out;
+}

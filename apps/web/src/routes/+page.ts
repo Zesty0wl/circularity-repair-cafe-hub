@@ -20,9 +20,20 @@ export const load: PageLoad = async ({ fetch, url, parent }) => {
   const statsP = fetch('/api/public/stats')
     .then((r) => (r.ok ? r.json() : null))
     .catch(() => null);
+  // Neighbouring cafes, when the cafe has chosen some. Comes back empty
+  // otherwise, and the card is left out.
+  const localCafesP = fetch('/api/public/local-cafes')
+    .then((r) => (r.ok ? r.json() : { ours: null, cafes: [] }))
+    .catch(() => ({ ours: null, cafes: [] }));
 
   const { cafe } = await parent();
-  const [upcomingEvents, skills, venue, stats] = await Promise.all([eventsP, skillsP, venueP, statsP]);
+  const [upcomingEvents, skills, venue, stats, localCafes] = await Promise.all([
+    eventsP,
+    skillsP,
+    venueP,
+    statsP,
+    localCafesP,
+  ]);
 
   const seo = buildSeo({
     route: 'home',
@@ -38,6 +49,7 @@ export const load: PageLoad = async ({ fetch, url, parent }) => {
     stats,
     categories: skills?.categories ?? [],
     repairers: skills?.repairers ?? [],
+    localCafes,
     seo,
   };
 };

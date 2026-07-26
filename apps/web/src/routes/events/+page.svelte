@@ -6,7 +6,7 @@
   import PageHeader from '$lib/components/PageHeader.svelte';
   import NextSessionCta from '$lib/components/NextSessionCta.svelte';
   import AddToCalendar from '$lib/components/AddToCalendar.svelte';
-  import { Clock, MapPin, CalendarDays, CalendarX2, History, ChevronRight } from 'lucide-svelte';
+  import { Clock, MapPin, CalendarDays, CalendarX2, History, ChevronRight, Camera } from 'lucide-svelte';
   import type { PageData } from './$types';
 
   interface Venue { name: string; address: string | null; postcode: string | null }
@@ -19,6 +19,9 @@
     endTime: string;
     status: string;
     venue: Venue;
+    /** Photos a visitor can see for this session, and the first of them. */
+    photoCount?: number;
+    coverUrl?: string | null;
   }
 
   let upcoming: PublicEvent[] = [];
@@ -163,6 +166,7 @@
         </div>
       {:else}
         <h2 class="text-pine flex items-center gap-2"><History size={20} class="text-clay" /> Past events</h2>
+        <p class="mt-2 text-slate-600">See how each session went, and the photos our volunteers took.</p>
         {#if past.length === 0}
           <p class="mt-3 text-slate-500">No past events to show.</p>
         {:else}
@@ -175,10 +179,25 @@
                     <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500">{p.monthShort}</div>
                     <div class="text-lg font-bold font-display text-slate-700 leading-none">{p.day}</div>
                   </div>
-                  <div class="min-w-0">
+                  <div class="min-w-0 flex-1">
                     <p class="font-medium text-slate-800 truncate group-hover:text-brand-700">{evt.name}</p>
                     <p class="text-sm text-slate-500 truncate">{evt.venue.name}</p>
+                    {#if evt.photoCount}
+                      <p class="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
+                        <Camera size={13} class="text-clay shrink-0" />
+                        {evt.photoCount} photo{evt.photoCount === 1 ? '' : 's'}
+                      </p>
+                    {/if}
                   </div>
+                  {#if evt.coverUrl}
+                    <img
+                      src={evt.coverUrl}
+                      alt=""
+                      loading="lazy"
+                      class="shrink-0 h-14 w-20 rounded-lg object-cover ring-1 ring-slate-200"
+                    />
+                  {/if}
+                  <ChevronRight size={16} class="shrink-0 text-slate-400 transition-colors group-hover:text-brand-600" />
                 </a>
               </li>
             {/each}

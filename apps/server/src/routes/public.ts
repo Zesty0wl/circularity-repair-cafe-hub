@@ -1,19 +1,31 @@
 import type { FastifyInstance } from 'fastify';
 import { db } from '../db/index.js';
-import { cafeGallery, cafes, events, skillCategories, users, venues } from '../db/schema.js';
-import { and, asc, eq, gte, ne, sql } from 'drizzle-orm';
+import {
+  cafeGallery,
+  cafes,
+  eventImages,
+  events,
+  repairImages,
+  repairJobs,
+  skillCategories,
+  users,
+  venues,
+} from '../db/schema.js';
+import { and, asc, desc, eq, gte, ne, sql } from 'drizzle-orm';
 import { iconVersion } from '../services/pwaIcons.js';
+import { uploadUrl } from '../services/imageUpload.js';
 import { findOurs, getNetwork } from '../services/repairCafeNetwork.js';
 import { getGuide, searchGuides } from '../services/ifixit.js';
+import { co2Settings, listFactors } from '../services/co2.js';
+
+/** How many photos the site's main gallery will ever return. */
+const MAIN_GALLERY_LIMIT = 60;
 
 export async function publicRoutes(app: FastifyInstance): Promise<void> {
   app.get('/api/public/cafe', async () => {
     const [cafe] = await db.select().from(cafes).limit(1);
     if (!cafe) return null;
-    const gallery = await db
-      .select({ id: cafeGallery.id, url: cafeGallery.filePath, caption: cafeGallery.caption })
-      .from(cafeGallery)
-      .orderBy(asc(cafeGallery.sortOrder), asc(cafeGallery.createdAt));
+    const gallery = await mainGallery();
     return {
       name: cafe.name,
       tagline: cafe.tagline,
@@ -75,6 +87,25 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
     };
   });
 
+  // ── The kinds of thing people bring in, and what each one saves ─────────
+  // Used by the check-in item picker, and by the About page to show its
+  // workings. Public because check-in is done by visitors who are not signed
+  // in. It is reference data with nothing personal in it.
+  app.get('/api/public/co2-factors', async (_request, reply) => {
+    const [settings, factors] = await Promise.all([co2Settings(), listFactors()]);
+    void reply.header('Cache-Control', 'public, max-age=3600');
+    return {
+      enabled: settings.enabled,
+      displacementRate: settings.displacementRate,
+      factors,
+      source: {
+        name: 'Fixometer reference data (2021), The Restart Project',
+        url: 'https://zenodo.org/records/5900046',
+        licence: 'CC BY-SA 4.0',
+      },
+    };
+  });
+
   // ── Repair guides from iFixit ───────────────────────────────────────────
   // Proxied and cached, so visitors' searches stay between them and us. See
   // services/ifixit.ts.
@@ -126,7 +157,10 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
         COUNT(rj.id)::int AS repair_count,
         COUNT(rj.id) FILTER (WHERE rj.status = 'completed')::int AS completed,
         COUNT(rj.id) FILTER (WHERE rj.status = 'cannot_repair')::int AS cannot_repair,
-        COALESCE(SUM(rj.environmental_saving_kg) FILTER (WHERE rj.status = 'completed'), 0)::float AS savings_kg
+        COALESCE(SUM(rj.co2_saving_kg) FILTER (WHERE rj.status = 'completed'), 0)::float AS savings_kg,
+        -- How many finished repairs actually carry a figure. The total is a sum
+        -- over these, not over every repair, and the page says so.
+        COUNT(rj.id) FILTER (WHERE rj.status = 'completed' AND rj.co2_saving_kg IS NOT NULL)::int AS savings_counted
       FROM events e
       LEFT JOIN repair_jobs rj ON rj.event_id = e.id
       WHERE e.status IN ('completed','active')
@@ -148,6 +182,9 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
       completedCount: completed,
       successRate: closed > 0 ? Math.round((completed / closed) * 100) : 0,
       co2SavedKg: Math.round(Number(r.savings_kg ?? 0) * 10) / 10,
+      // What the CO2 total is actually based on, so the page can say
+      // "from 78% of repairs" rather than implying it covers all of them.
+      co2CountedRepairs: Number(r.savings_counted ?? 0),
       volunteerCount: Number(volunteerRow?.count ?? 0),
     };
   });
@@ -170,6 +207,25 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
         venueName: venues.name,
         venueAddress: venues.address,
         venuePostcode: venues.postcode,
+        // Enough for a past-events list to show a thumbnail and a count
+        // without a second round trip per event.
+        photoCount: sql<number>`(
+          SELECT COUNT(*)::int FROM event_images ei
+          WHERE ei.event_id = ${events.id} AND ei.is_published
+        ) + (
+          SELECT COUNT(*)::int FROM repair_images ri
+          JOIN repair_jobs rj ON rj.id = ri.repair_job_id
+          WHERE rj.event_id = ${events.id} AND ri.is_published
+        )`,
+        coverUrl: sql<string | null>`COALESCE(
+          (SELECT ei.file_path FROM event_images ei
+             WHERE ei.event_id = ${events.id} AND ei.is_published
+             ORDER BY ei.sort_order, ei.created_at LIMIT 1),
+          (SELECT ri.file_path FROM repair_images ri
+             JOIN repair_jobs rj ON rj.id = ri.repair_job_id
+             WHERE rj.event_id = ${events.id} AND ri.is_published
+             ORDER BY ri.created_at LIMIT 1)
+        )`,
       })
       .from(events)
       .innerJoin(venues, eq(venues.id, events.venueId))
@@ -184,6 +240,8 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
       endTime: r.endTime,
       status: r.status,
       venue: { name: r.venueName, address: r.venueAddress, postcode: r.venuePostcode },
+      photoCount: Number(r.photoCount ?? 0),
+      coverUrl: r.coverUrl ? uploadUrl(r.coverUrl) : null,
     }));
   });
 
@@ -217,6 +275,23 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
       reply.code(404).send({ error: 'Not found', code: 'event/not_found' });
       return;
     }
+
+    // Photos and figures only make sense once a session has run. We go by the
+    // date as well as the status, because plenty of cafes never get round to
+    // marking a session "completed" and their photos should still show.
+    const hasHappened =
+      row.status === 'active' ||
+      row.status === 'completed' ||
+      row.date < new Date().toISOString().slice(0, 10);
+    const [gallery, stats, cafeRow] = await Promise.all([
+      hasHappened ? eventGallery(row.id) : Promise.resolve([]),
+      hasHappened ? eventStats(row.id) : Promise.resolve(null),
+      db.select({ homePage: cafes.homePage }).from(cafes).limit(1),
+    ]);
+    // Admins can turn the per-session figures off under Settings. Anything
+    // saved before that switch existed keeps showing them.
+    const showEventStats = (cafeRow[0]?.homePage as { showEventStats?: boolean } | undefined)?.showEventStats !== false;
+
     return {
       id: row.id,
       name: row.name,
@@ -226,6 +301,8 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
       endTime: row.endTime,
       status: row.status,
       venue: { name: row.venueName, address: row.venueAddress, postcode: row.venuePostcode },
+      gallery,
+      stats: showEventStats ? stats : null,
     };
   });
 
@@ -328,4 +405,201 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
 
   // Allow checking if URL is reachable for setup wizard
   app.get('/api/public/ping', async () => ({ ok: true, ts: Date.now() }));
+}
+
+/**
+ * The site's main photo gallery.
+ *
+ * Curated photos an admin uploaded under Settings come first and keep their
+ * order. Anything an admin has starred from an event gallery follows, newest
+ * session first, so the gallery grows on its own as volunteers add photos.
+ */
+async function mainGallery(): Promise<
+  Array<{
+    id: string;
+    url: string;
+    caption: string | null;
+    eventId: string | null;
+    eventName: string | null;
+    eventDate: string | null;
+  }>
+> {
+  const curated = await db
+    .select({ id: cafeGallery.id, url: cafeGallery.filePath, caption: cafeGallery.caption })
+    .from(cafeGallery)
+    .orderBy(asc(cafeGallery.sortOrder), asc(cafeGallery.createdAt));
+
+  const sessionShots = await db
+    .select({
+      id: eventImages.id,
+      url: eventImages.filePath,
+      caption: eventImages.caption,
+      eventId: events.id,
+      eventName: events.name,
+      eventDate: events.date,
+      sortOrder: eventImages.sortOrder,
+    })
+    .from(eventImages)
+    .innerJoin(events, eq(events.id, eventImages.eventId))
+    .where(and(eq(eventImages.showOnHome, true), eq(eventImages.isPublished, true)))
+    .orderBy(desc(events.date), asc(eventImages.sortOrder), asc(eventImages.createdAt))
+    .limit(MAIN_GALLERY_LIMIT);
+
+  const repairShots = await db
+    .select({
+      id: repairImages.id,
+      url: repairImages.filePath,
+      caption: repairImages.caption,
+      categoryName: skillCategories.name,
+      eventId: events.id,
+      eventName: events.name,
+      eventDate: events.date,
+    })
+    .from(repairImages)
+    .innerJoin(repairJobs, eq(repairJobs.id, repairImages.repairJobId))
+    .innerJoin(events, eq(events.id, repairJobs.eventId))
+    .leftJoin(skillCategories, eq(skillCategories.id, repairJobs.itemCategoryId))
+    .where(and(eq(repairImages.showOnHome, true), eq(repairImages.isPublished, true)))
+    .orderBy(desc(events.date), asc(repairImages.createdAt))
+    .limit(MAIN_GALLERY_LIMIT);
+
+  return [
+    ...curated.map((r) => ({
+      id: r.id,
+      url: uploadUrl(r.url),
+      caption: r.caption,
+      eventId: null,
+      eventName: null,
+      eventDate: null,
+    })),
+    ...sessionShots.map((r) => ({
+      id: r.id,
+      url: uploadUrl(r.url),
+      caption: r.caption,
+      eventId: r.eventId,
+      eventName: r.eventName,
+      eventDate: r.eventDate,
+    })),
+    ...repairShots.map((r) => ({
+      id: r.id,
+      url: uploadUrl(r.url),
+      caption: r.caption ?? r.categoryName ?? null,
+      eventId: r.eventId,
+      eventName: r.eventName,
+      eventDate: r.eventDate,
+    })),
+  ].slice(0, MAIN_GALLERY_LIMIT);
+}
+
+/**
+ * Every photo a visitor may see for one event: the session photos volunteers
+ * added, then the repair photos an admin chose to show.
+ */
+async function eventGallery(eventId: string): Promise<
+  Array<{ id: string; url: string; caption: string | null; kind: 'session' | 'repair' }>
+> {
+  const sessionShots = await db
+    .select({ id: eventImages.id, url: eventImages.filePath, caption: eventImages.caption })
+    .from(eventImages)
+    .where(and(eq(eventImages.eventId, eventId), eq(eventImages.isPublished, true)))
+    .orderBy(asc(eventImages.sortOrder), asc(eventImages.createdAt));
+
+  const repairShots = await db
+    .select({
+      id: repairImages.id,
+      url: repairImages.filePath,
+      caption: repairImages.caption,
+      categoryName: skillCategories.name,
+    })
+    .from(repairImages)
+    .innerJoin(repairJobs, eq(repairJobs.id, repairImages.repairJobId))
+    .leftJoin(skillCategories, eq(skillCategories.id, repairJobs.itemCategoryId))
+    .where(and(eq(repairJobs.eventId, eventId), eq(repairImages.isPublished, true)))
+    .orderBy(asc(repairImages.createdAt));
+
+  return [
+    ...sessionShots.map((r) => ({
+      id: r.id,
+      url: uploadUrl(r.url),
+      caption: r.caption,
+      kind: 'session' as const,
+    })),
+    ...repairShots.map((r) => ({
+      id: r.id,
+      url: uploadUrl(r.url),
+      // Fall back to the item's category, never to the free-text description
+      // a volunteer typed at check-in.
+      caption: r.caption ?? r.categoryName ?? null,
+      kind: 'repair' as const,
+    })),
+  ];
+}
+
+/**
+ * What happened at one session: how many items came in, how many went home
+ * working, which kinds of thing they were, and how many volunteers helped.
+ * Returns null for a session that has no repairs recorded, so the page can
+ * leave the whole block out.
+ */
+async function eventStats(eventId: string): Promise<{
+  repairCount: number;
+  completedCount: number;
+  cannotRepairCount: number;
+  awaitingReturnCount: number;
+  successRate: number;
+  co2SavedKg: number;
+  volunteerCount: number;
+  categories: Array<{ name: string; colour: string | null; icon: string | null; count: number; completedCount: number }>;
+} | null> {
+  const totals = await db.execute(sql`
+    SELECT
+      COUNT(*)::int AS repair_count,
+      COUNT(*) FILTER (WHERE status = 'completed')::int AS completed,
+      COUNT(*) FILTER (WHERE status = 'cannot_repair')::int AS cannot_repair,
+      COUNT(*) FILTER (WHERE status = 'awaiting_return')::int AS awaiting_return,
+      COUNT(DISTINCT repairer_id) FILTER (WHERE repairer_id IS NOT NULL)::int AS volunteer_count,
+      COALESCE(SUM(co2_saving_kg) FILTER (WHERE status = 'completed'), 0)::float AS savings_kg
+    FROM repair_jobs
+    WHERE event_id = ${eventId}
+  `);
+  const t = (totals.rows[0] ?? {}) as Record<string, unknown>;
+  const repairCount = Number(t.repair_count ?? 0);
+  if (repairCount === 0) return null;
+
+  const completed = Number(t.completed ?? 0);
+  const cannotRepair = Number(t.cannot_repair ?? 0);
+  // Out of the items we finished either way. Items still open, or paused
+  // waiting for a part, would drag the figure down unfairly.
+  const closed = completed + cannotRepair;
+
+  const categoryRows = await db
+    .select({
+      name: skillCategories.name,
+      colour: skillCategories.colour,
+      icon: skillCategories.icon,
+      count: sql<number>`COUNT(${repairJobs.id})::int`,
+      completedCount: sql<number>`COUNT(${repairJobs.id}) FILTER (WHERE ${repairJobs.status} = 'completed')::int`,
+    })
+    .from(repairJobs)
+    .innerJoin(skillCategories, eq(skillCategories.id, repairJobs.itemCategoryId))
+    .where(eq(repairJobs.eventId, eventId))
+    .groupBy(skillCategories.id, skillCategories.name, skillCategories.colour, skillCategories.icon)
+    .orderBy(desc(sql`COUNT(${repairJobs.id})`), asc(skillCategories.name));
+
+  return {
+    repairCount,
+    completedCount: completed,
+    cannotRepairCount: cannotRepair,
+    awaitingReturnCount: Number(t.awaiting_return ?? 0),
+    successRate: closed > 0 ? Math.round((completed / closed) * 100) : 0,
+    co2SavedKg: Math.round(Number(t.savings_kg ?? 0) * 10) / 10,
+    volunteerCount: Number(t.volunteer_count ?? 0),
+    categories: categoryRows.map((r) => ({
+      name: r.name,
+      colour: r.colour,
+      icon: r.icon,
+      count: Number(r.count ?? 0),
+      completedCount: Number(r.completedCount ?? 0),
+    })),
+  };
 }

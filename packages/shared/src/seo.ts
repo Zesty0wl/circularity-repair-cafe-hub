@@ -76,7 +76,8 @@ export type SeoRoute =
   | 'contact'
   | 'team'
   | 'world'
-  | 'guides';
+  | 'guides'
+  | 'about';
 
 export interface BuildSeoOptions {
   route: SeoRoute;
@@ -525,6 +526,20 @@ export function buildSeo(opts: BuildSeoOptions): PageSeo {
         breadcrumbNode(origin, [
           { name: 'Home', path: '/' },
           { name: 'Worldwide', path: '/world' },
+        ]),
+      );
+      break;
+    }
+    case 'about': {
+      title = `About & how we measure | ${name}`;
+      description = clamp(
+        `How ${name} works, and how we work out the figures we publish, including the carbon saved by each repair.`,
+        300,
+      );
+      graph.push(
+        breadcrumbNode(origin, [
+          { name: 'Home', path: '/' },
+          { name: 'About', path: '/about' },
         ]),
       );
       break;

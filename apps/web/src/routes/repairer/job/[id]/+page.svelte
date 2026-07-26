@@ -19,6 +19,10 @@
   let outcomeNotes = '';
   let partsUsed = '';
   let savings: number | string = '';
+  /** What kind of thing it is, which is what the carbon figure comes from. */
+  let co2FactorId: string | null = null;
+  let factors: Array<{ id: string; label: string; category: string; co2eKg: number | null }> = [];
+  let displacementRate = 0.5;
   let busy = false;
   let showCamera = false;
   let cameraStage: 'during_repair' | 'completed' = 'during_repair';
@@ -36,9 +40,43 @@
     if (detail.job.outcomeNotes) outcomeNotes = detail.job.outcomeNotes;
     if (detail.job.partsUsed) partsUsed = detail.job.partsUsed;
     if (detail.job.environmentalSavingKg) savings = detail.job.environmentalSavingKg;
+    co2FactorId = detail.job.co2FactorId ?? null;
   }
 
-  onMount(load);
+  /** Grouped for the dropdown, so a long list is still navigable. */
+  $: factorGroups = Array.from(
+    factors.reduce((map, f) => {
+      const list = map.get(f.category) ?? [];
+      list.push(f);
+      map.set(f.category, list);
+      return map;
+    }, new Map<string, typeof factors>()),
+  ).map(([name, types]) => ({ name, types }));
+
+  /** What the chosen type works out to, shown before the job is saved. */
+  $: estimate = (() => {
+    const factor = factors.find((f) => f.id === co2FactorId);
+    if (!factor?.co2eKg) return null;
+    return Math.round(factor.co2eKg * displacementRate * 10) / 10;
+  })();
+
+  onMount(async () => {
+    await load();
+    try {
+      const res = await fetch('/api/public/co2-factors');
+      if (!res.ok) return;
+      const body = (await res.json()) as {
+        enabled: boolean;
+        displacementRate: number;
+        factors: typeof factors;
+      };
+      if (!body.enabled) return;
+      factors = body.factors;
+      displacementRate = body.displacementRate;
+    } catch {
+      /* the picker just stays empty */
+    }
+  });
 
   async function claim() {
     busy = true;
@@ -66,6 +104,7 @@
           outcomeNotes: outcomeNotes.trim() || null,
           partsUsed: partsUsed.trim() || null,
           environmentalSavingKg: savings === '' ? null : Number(savings),
+          co2FactorId,
         },
       });
       goto('/repairer');
@@ -180,9 +219,36 @@
       <label class="label" for="parts">Parts used</label>
       <input id="parts" class="input" bind:value={partsUsed} />
     </div>
+    <!-- The carbon saving is worked out from what kind of thing this is, so
+         nobody has to estimate it. The repairer can correct the type if the
+         visitor picked the wrong one, or type a number over the top. -->
     <div>
-      <label class="label" for="esv">Environmental saving (kg, optional)</label>
+      <label class="label" for="ctype">What kind of thing is it?</label>
+      <select id="ctype" class="input" bind:value={co2FactorId}>
+        <option value={null}>Not recorded</option>
+        {#each factorGroups as group}
+          <optgroup label={group.name}>
+            {#each group.types as type (type.id)}
+              <option value={type.id}>{type.label}</option>
+            {/each}
+          </optgroup>
+        {/each}
+      </select>
+      {#if estimate !== null}
+        <p class="text-sm text-slate-600 mt-2">
+          Fixing this saves about <strong>{estimate} kg of CO₂e</strong>.
+          <a class="underline underline-offset-2" href="/about#carbon" target="_blank">How this is worked out</a>
+        </p>
+      {:else if co2FactorId}
+        <p class="text-sm text-slate-500 mt-2">We have no carbon figure for this kind of thing.</p>
+      {/if}
+    </div>
+    <div>
+      <label class="label" for="esv">Override the saving (kg, optional)</label>
       <input id="esv" class="input" type="number" step="0.001" min="0" bind:value={savings} />
+      <p class="text-xs text-slate-500 mt-1">
+        Leave this blank to use the figure above. Only fill it in if you know better.
+      </p>
     </div>
     <div>
       <label class="label" for="oc">Outcome</label>

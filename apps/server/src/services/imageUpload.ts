@@ -53,6 +53,19 @@ export async function saveValidatedImage(
   };
 }
 
+/**
+ * Turn a stored image path into a browser URL.
+ *
+ * Older tables store the path under uploads/ ("repairs/<id>/x.jpg") while
+ * newer ones store the full URL ("/uploads/repairs/<id>/x.jpg"). Both reach
+ * the same file, so read paths through here and stop caring which is which.
+ */
+export function uploadUrl(storedPath: string): string {
+  if (!storedPath) return '';
+  if (storedPath.startsWith('/uploads/') || /^https?:\/\//.test(storedPath)) return storedPath;
+  return `/uploads/${storedPath.replace(/^\/+/, '')}`;
+}
+
 export async function deleteImage(relativePath: string): Promise<void> {
   if (!relativePath) return;
   const safe = relativePath.replace(/^\/+/, '').replace(/\.\./g, '');

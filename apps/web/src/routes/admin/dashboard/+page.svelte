@@ -52,7 +52,15 @@
       case 'backup.downloaded': return { who, rest: 'downloaded a backup' };
       case 'backup.restored': return { who, rest: 'restored a backup' };
       case 'setup.completed': return { who: null, rest: 'Setup was completed' };
+      case 'co2.backfilled': return { who: null, rest: 'Older repairs were given their item type, so they count towards the CO₂ total' };
+      case 'event.photo_added': return { who, rest: 'added a photo of a session' };
+      case 'event.photo_deleted': return { who, rest: 'removed a session photo' };
+      case 'event.repair_photos_published': return { who, rest: 'showed repair photos on the public site' };
+      case 'event.repair_photos_hidden': return { who, rest: 'hid repair photos from the public site' };
       default: {
+        if (a.action?.startsWith('event.photo') || a.action?.startsWith('event.repair_photo')) {
+          return { who, rest: 'updated the photos for a session' };
+        }
         if (a.action?.startsWith('cafe.gallery')) return { who, rest: 'updated the photo gallery' };
         if (a.action?.startsWith('cafe.')) return { who, rest: 'updated the cafe settings' };
         return { who, rest: `updated ${String(a.entityType).replace(/_/g, ' ')}` };

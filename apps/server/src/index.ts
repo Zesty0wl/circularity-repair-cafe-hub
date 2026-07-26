@@ -18,6 +18,7 @@ import { pwaRoutes } from './routes/pwa.js';
 import { ogRoutes } from './routes/og.js';
 import { checkInRoutes } from './routes/checkin.js';
 import { repairerRoutes } from './routes/repairer.js';
+import { eventGalleryRoutes } from './routes/eventGallery.js';
 import { adminRoutes } from './routes/admin/index.js';
 
 // Shape of the SvelteKit (adapter-node) request handler: a connect-style
@@ -42,7 +43,7 @@ const app = Fastify({
 
 async function start(): Promise<void> {
   // Ensure data dirs exist
-  for (const dir of [env.UPLOADS_DIR, env.CONFIG_DIR, path.join(env.UPLOADS_DIR, 'repairs'), path.join(env.UPLOADS_DIR, 'profiles'), path.join(env.UPLOADS_DIR, 'branding'), path.join(env.UPLOADS_DIR, 'qr')]) {
+  for (const dir of [env.UPLOADS_DIR, env.CONFIG_DIR, path.join(env.UPLOADS_DIR, 'repairs'), path.join(env.UPLOADS_DIR, 'events'), path.join(env.UPLOADS_DIR, 'profiles'), path.join(env.UPLOADS_DIR, 'branding'), path.join(env.UPLOADS_DIR, 'qr')]) {
     fs.mkdirSync(dir, { recursive: true });
   }
 
@@ -82,6 +83,9 @@ async function start(): Promise<void> {
   await app.register(ogRoutes);
   await app.register(checkInRoutes);
   await app.register(repairerRoutes);
+  // Event photo galleries. Repairers and admins share these routes; the
+  // handlers check the role for anything only an admin may do.
+  await app.register(eventGalleryRoutes);
   await app.register(adminRoutes);
 
   // Setup-required gate. If setup not completed, JSON API responses redirect through 409 on most endpoints,

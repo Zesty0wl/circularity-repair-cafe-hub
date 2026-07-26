@@ -6,12 +6,18 @@ export interface HomePageContent {
   howItWorks?: Array<{ title: string; body: string }>;
   whatToBring?: { heading?: string; body?: string };
   faqs?: Array<{ q: string; a: string }>;
+  showStats?: boolean;
+  showEventStats?: boolean;
 }
 
 export interface GalleryImage {
   id: string;
   url: string;
   caption: string | null;
+  /** Set when the photo came from a session, so we can link back to it. */
+  eventId?: string | null;
+  eventName?: string | null;
+  eventDate?: string | null;
 }
 
 export interface CafeInfo {

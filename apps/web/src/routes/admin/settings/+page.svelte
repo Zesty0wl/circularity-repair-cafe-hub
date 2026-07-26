@@ -5,7 +5,10 @@
   import { auth } from '$lib/stores/auth';
   import { loadCafe } from '$lib/stores/cafe';
   import { FONT_OPTIONS } from '@circularity/shared';
-  import { Trash2, Plus, ArrowUp, ArrowDown, Download, Upload, AlertTriangle } from 'lucide-svelte';
+  import { Trash2, Plus, Download, Upload, AlertTriangle } from 'lucide-svelte';
+  import ImageDropzone from '$lib/components/ImageDropzone.svelte';
+  import GalleryManager from '$lib/components/GalleryManager.svelte';
+  import type { ManagedPhoto } from '$lib/gallery';
 
   let cafe: any = null;
   let busy = false;
@@ -25,7 +28,6 @@
   let restoreInfo = '';
   let logoFile: FileList | null = null;
   let bannerFile: FileList | null = null;
-  let galleryFile: FileList | null = null;
   let faviconFile: FileList | null = null;
   let ogFile: FileList | null = null;
 
@@ -38,10 +40,11 @@
   let faqs: Faq[] = [];
   // Show the headline numbers (repairs, CO2 saved, volunteers) on the home page.
   let showStats = false;
+  // Show what happened at each session on its own page in Past events.
+  let showEventStats = true;
 
   // Gallery
-  type GalleryRow = { id: string; url: string; caption: string | null; sortOrder: number };
-  let gallery: GalleryRow[] = [];
+  let gallery: ManagedPhoto[] = [];
 
   // Brand colour — <input type="color"> requires #rrggbb. We normalise on load
   // and via the change handler so an empty/legacy value never reaches the
@@ -75,9 +78,12 @@
     whatToBring = { heading: hp.whatToBring?.heading ?? '', body: hp.whatToBring?.body ?? '' };
     faqs = Array.isArray(hp.faqs) ? hp.faqs.map((f: any) => ({ q: f.q ?? '', a: f.a ?? '' })) : [];
     showStats = hp.showStats === true;
+    // On unless it has been turned off, so cafes that saved their home page
+    // before this setting existed still get the session summaries.
+    showEventStats = hp.showEventStats !== false;
   }
   async function loadGallery() {
-    gallery = await api<GalleryRow[]>('/api/admin/gallery');
+    gallery = await api<ManagedPhoto[]>('/api/admin/gallery');
   }
   onMount(async () => {
     await load();
@@ -131,6 +137,7 @@
         whatToBring: { heading: whatToBring.heading || '', body: whatToBring.body || '' },
         faqs: faqs.filter((f) => f.q || f.a),
         showStats,
+        showEventStats,
       };
       await api('/api/admin/settings/home-page', { method: 'PATCH', json: { homePage } });
       await loadCafe();
@@ -164,37 +171,21 @@
     } finally { busy = false; }
   }
 
-  async function uploadGallery(files: FileList | null) {
-    if (!files || files.length === 0) return;
-    busy = true;
-    try {
-      // Upload one at a time; keeps UX responsive and ordering predictable
-      for (const file of Array.from(files)) {
-        const fd = new FormData();
-        fd.append('image', file);
-        await api('/api/admin/gallery', { method: 'POST', formData: fd });
-      }
-      await loadGallery();
-      await loadCafe();
-      galleryFile = null;
-    } finally { busy = false; }
-  }
-
-  async function updateCaption(g: GalleryRow) {
-    await api(`/api/admin/gallery/${g.id}`, { method: 'PATCH', json: { caption: g.caption } });
-  }
-  async function deleteImage(g: GalleryRow) {
-    if (!confirm('Remove this image from the gallery?')) return;
-    await api(`/api/admin/gallery/${g.id}`, { method: 'DELETE' });
-    await loadGallery();
+  // ── Gallery actions, handed to <GalleryManager> ──────────────────
+  async function saveGalleryCaption(photo: ManagedPhoto, caption: string) {
+    await api(`/api/admin/gallery/${photo.id}`, { method: 'PATCH', json: { caption } });
     await loadCafe();
   }
-  async function move(idx: number, delta: number) {
-    const j = idx + delta;
-    if (j < 0 || j >= gallery.length) return;
-    [gallery[idx], gallery[j]] = [gallery[j], gallery[idx]];
-    gallery = gallery; // tell svelte
-    await api('/api/admin/gallery/reorder', { method: 'POST', json: { ids: gallery.map((g) => g.id) } });
+  async function deleteGalleryPhoto(photo: ManagedPhoto) {
+    await api(`/api/admin/gallery/${photo.id}`, { method: 'DELETE' });
+    await loadCafe();
+  }
+  async function reorderGallery(ids: string[]) {
+    await api('/api/admin/gallery/reorder', { method: 'POST', json: { ids } });
+    await loadCafe();
+  }
+  async function onGalleryUploaded() {
+    await loadGallery();
     await loadCafe();
   }
 
@@ -440,6 +431,16 @@
             </span>
           </span>
         </label>
+        <label class="mt-3 flex items-start gap-3 cursor-pointer">
+          <input type="checkbox" class="mt-1 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" bind:checked={showEventStats} />
+          <span class="text-sm text-slate-700">
+            Show what happened at each past session
+            <span class="block text-xs text-slate-500">
+              Adds a short summary to every past event's page: how many items came in, how many went home
+              working, and what kinds of thing they were. No visitor names or item details are shown.
+            </span>
+          </span>
+        </label>
       </section>
 
       <section>
@@ -501,33 +502,36 @@
   {/if}
 
   {#if tab === 'gallery'}
-    <div class="card p-6 mt-4 max-w-2xl space-y-4">
+    <div class="card p-6 mt-4 max-w-4xl space-y-6">
       <div>
-        <span class="label">Add photos</span>
-        <input type="file" accept="image/png,image/jpeg,image/webp" multiple bind:files={galleryFile} on:change={() => uploadGallery(galleryFile)} />
-        <p class="text-xs text-slate-500 mt-1">JPEG/PNG/WebP up to 1800px on the longest edge. Multiple at a time supported.</p>
+        <h2 class="text-lg font-semibold">Photo gallery</h2>
+        <p class="text-sm text-slate-600 mt-1">
+          These photos fill the gallery on your home page. Volunteers can also add photos to each
+          session under <a href="/admin/events" class="text-brand-700 underline underline-offset-2">Events</a>,
+          and you can star any of those to bring them in here too.
+        </p>
       </div>
 
-      {#if gallery.length === 0}
-        <p class="text-sm text-slate-500 mt-2">No photos yet. Upload a few to fill the gallery on the home page.</p>
-      {:else}
-        <ul class="space-y-3 mt-2">
-          {#each gallery as g, i (g.id)}
-            <li class="flex gap-3 items-start border border-slate-200 rounded-lg p-3">
-              <img src={g.url} alt="" class="h-24 w-32 object-cover rounded-lg ring-1 ring-slate-200" />
-              <div class="flex-1">
-                <input class="input text-sm" placeholder="Caption (optional)" bind:value={g.caption} on:blur={() => updateCaption(g)} />
-                <p class="text-xs text-slate-400 mt-1 truncate">{g.url}</p>
-              </div>
-              <div class="flex flex-col gap-1">
-                <button class="p-2 rounded-lg text-slate-600 hover:bg-slate-100 disabled:opacity-40" type="button" disabled={i === 0} on:click={() => move(i, -1)} title="Move up" aria-label="Move up"><ArrowUp size={14} /></button>
-                <button class="p-2 rounded-lg text-slate-600 hover:bg-slate-100 disabled:opacity-40" type="button" disabled={i === gallery.length - 1} on:click={() => move(i, 1)} title="Move down" aria-label="Move down"><ArrowDown size={14} /></button>
-                <button class="p-2 rounded-lg text-rose-600 hover:bg-rose-50" type="button" on:click={() => deleteImage(g)} title="Remove" aria-label="Remove image"><Trash2 size={14} /></button>
-              </div>
-            </li>
-          {/each}
-        </ul>
-      {/if}
+      <ImageDropzone
+        endpoint="/api/admin/gallery"
+        title="Add photos to the gallery"
+        hint="Drag photos here, paste one from your clipboard, or browse your device. JPEG, PNG or WebP."
+        on:done={onGalleryUploaded}
+      />
+
+      <div>
+        <h3 class="text-base font-semibold mb-2">
+          Photos in the gallery
+          {#if gallery.length > 0}<span class="font-normal text-slate-500">({gallery.length})</span>{/if}
+        </h3>
+        <GalleryManager
+          bind:photos={gallery}
+          onSaveCaption={saveGalleryCaption}
+          onDelete={deleteGalleryPhoto}
+          onReorder={reorderGallery}
+          emptyMessage="No photos yet. Add a few to fill the gallery on your home page."
+        />
+      </div>
     </div>
   {/if}
 
@@ -572,7 +576,7 @@
           </div>
           <div>
             <span class="label">Social share image (Open Graph)</span>
-            {#if cafe.ogImageUrl}<img src={cafe.ogImageUrl} alt="og image" class="h-16 mb-2 rounded-lg object-cover" />{/if}
+            {#if cafe.ogImageUrl}<img src={cafe.ogImageUrl} alt="How your site looks when someone shares it" class="h-16 mb-2 rounded-lg object-cover" />{/if}
             <input type="file" accept="image/png,image/jpeg,image/webp" bind:files={ogFile} on:change={() => uploadAsset('og', ogFile)} />
             <p class="text-xs text-slate-500 mt-1">~1200×630 works best. Falls back to your banner if blank.</p>
           </div>

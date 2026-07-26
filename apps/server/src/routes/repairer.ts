@@ -8,6 +8,7 @@ import { nextJobNumber } from '../services/jobNumber.js';
 import { randomToken } from '../utils/tokens.js';
 import { audit } from '../utils/audit.js';
 import { env } from '../env.js';
+import { resolveSaving } from '../services/co2.js';
 
 export async function repairerRoutes(app: FastifyInstance): Promise<void> {
   app.addHook('preHandler', app.requireRole('super_admin', 'admin', 'repairer'));
@@ -234,6 +235,9 @@ export async function repairerRoutes(app: FastifyInstance): Promise<void> {
         customerToken,
         itemDescription: data.itemDescription,
         itemCategoryId: data.itemCategoryId ?? null,
+        // Recorded now so the CO2 saving can be worked out at the end. The
+        // repairer can correct it if the visitor picked the wrong thing.
+        co2FactorId: data.co2FactorId ?? null,
         itemBrand: data.itemBrand ?? null,
         faultDescription: data.faultDescription,
         gdprConsent,
@@ -358,6 +362,8 @@ export async function repairerRoutes(app: FastifyInstance): Promise<void> {
       outcomeNotes?: string;
       partsUsed?: string;
       environmentalSavingKg?: number | null;
+      /** Lets a repairer correct what the visitor picked. */
+      co2FactorId?: string | null;
     };
     const me = request.auth!;
     if (!['completed', 'cannot_repair', 'awaiting_return'].includes(body?.outcome)) {
@@ -377,12 +383,25 @@ export async function repairerRoutes(app: FastifyInstance): Promise<void> {
       reply.code(403).send({ error: 'Not your job', code: 'job/not_owner' });
       return;
     }
+    // Work the saving out from the kind of thing it is. A number typed in by
+    // hand always wins: whoever did that has looked at the actual item.
+    const factorId =
+      body.co2FactorId !== undefined ? body.co2FactorId : existing.co2FactorId ?? null;
+    const manualKg =
+      body.environmentalSavingKg !== undefined && body.environmentalSavingKg !== null
+        ? body.environmentalSavingKg
+        : null;
+    const saving = await resolveSaving({ factorId, manualKg });
+
     const [updated] = await db
       .update(repairJobs)
       .set({
         status: body.outcome,
         outcomeNotes: body.outcomeNotes ?? existing.outcomeNotes ?? null,
         partsUsed: body.partsUsed ?? existing.partsUsed ?? null,
+        co2FactorId: factorId,
+        co2SavingKg: saving.savingKg === null ? null : String(saving.savingKg),
+        co2SavingSource: saving.source,
         environmentalSavingKg:
           body.environmentalSavingKg !== undefined && body.environmentalSavingKg !== null
             ? String(body.environmentalSavingKg)

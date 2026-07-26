@@ -1,4 +1,7 @@
+import type { PoolClient } from 'pg';
 import { pool } from './index.js';
+import { CO2_FACTORS } from './co2Factors.js';
+import { matchCo2FactorKey } from './co2Match.js';
 
 /**
  * Idempotent migration runner. We avoid drizzle-kit at runtime and just
@@ -261,6 +264,70 @@ const STATEMENTS: string[] = [
   //    ADD VALUE is safe here because runMigrations applies each statement on
   //    its own (no surrounding transaction).
   `ALTER TYPE repair_status ADD VALUE IF NOT EXISTS 'awaiting_return'`,
+
+  // ── Event galleries (additive, idempotent) ───────────────────────
+  // Photos of a session itself, uploaded by repairers and admins from a phone
+  // or a laptop. Published by default, because someone chose to add them.
+  `CREATE TABLE IF NOT EXISTS event_images (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    file_path TEXT NOT NULL,
+    file_size_bytes INT,
+    mime_type TEXT,
+    caption TEXT,
+    uploaded_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    is_published BOOLEAN NOT NULL DEFAULT TRUE,
+    show_on_home BOOLEAN NOT NULL DEFAULT FALSE,
+    sort_order INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`,
+  'CREATE INDEX IF NOT EXISTS idx_event_images_event_id ON event_images(event_id)',
+  'CREATE INDEX IF NOT EXISTS idx_event_images_sort_order ON event_images(sort_order)',
+
+  // Repair photos are of a visitor's belongings, so they stay private until an
+  // admin picks them out for the event gallery. Both flags default to false.
+  `ALTER TABLE repair_images ADD COLUMN IF NOT EXISTS is_published BOOLEAN NOT NULL DEFAULT FALSE`,
+  `ALTER TABLE repair_images ADD COLUMN IF NOT EXISTS show_on_home BOOLEAN NOT NULL DEFAULT FALSE`,
+  'CREATE INDEX IF NOT EXISTS idx_repair_images_repair_job_id ON repair_images(repair_job_id)',
+
+  // ── Working out the CO2 figure (additive, idempotent) ─────────────
+  // Reference data for what it costs the planet to make the things people
+  // bring in, so the saving is looked up rather than guessed. See
+  // db/co2Factors.ts for where the numbers come from.
+  `CREATE TABLE IF NOT EXISTS co2_factors (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    key TEXT NOT NULL UNIQUE,
+    label TEXT NOT NULL,
+    group_label TEXT NOT NULL,
+    category TEXT NOT NULL,
+    weight_kg NUMERIC(8,3),
+    co2e_kg NUMERIC(8,2),
+    sample INT NOT NULL DEFAULT 0,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    sort_order INT NOT NULL DEFAULT 0
+  )`,
+  'CREATE INDEX IF NOT EXISTS idx_co2_factors_category ON co2_factors(category)',
+
+  // What kind of thing this was, and what that works out to. The figure is
+  // stored rather than worked out on the way past: if the reference data is
+  // updated later, totals a cafe has already published must not move.
+  `ALTER TABLE repair_jobs ADD COLUMN IF NOT EXISTS co2_factor_id UUID REFERENCES co2_factors(id) ON DELETE SET NULL`,
+  `ALTER TABLE repair_jobs ADD COLUMN IF NOT EXISTS co2_saving_kg NUMERIC(8,3)`,
+  // 'calculated' from the reference data, 'manual' where somebody typed a
+  // number in, 'none' where there is no figure. Older repairs carry whatever a
+  // repairer typed, so they start as 'manual' and are not relabelled.
+  `ALTER TABLE repair_jobs ADD COLUMN IF NOT EXISTS co2_saving_source TEXT`,
+  `UPDATE repair_jobs SET co2_saving_source = 'manual', co2_saving_kg = environmental_saving_kg
+     WHERE co2_saving_source IS NULL AND environmental_saving_kg IS NOT NULL`,
+  `UPDATE repair_jobs SET co2_saving_source = 'none'
+     WHERE co2_saving_source IS NULL`,
+
+  // How much of a new purchase a repair is taken to prevent. The Restart
+  // Project's figure is 0.5: a repaired thing lives about half as long again,
+  // so it displaces half a new one. Kept as a setting so it is visible, and so
+  // a cafe can be more cautious.
+  `ALTER TABLE cafes ADD COLUMN IF NOT EXISTS co2_displacement_rate NUMERIC(4,3) NOT NULL DEFAULT 0.5`,
+  `ALTER TABLE cafes ADD COLUMN IF NOT EXISTS co2_enabled BOOLEAN NOT NULL DEFAULT TRUE`,
 ];
 
 const DEFAULT_CATEGORIES: Array<{ name: string; icon: string; colour: string }> = [
@@ -350,7 +417,151 @@ export async function runMigrations(): Promise<void> {
         );
       }
     }
+
+    // Reference data for the CO2 figure. Written on every start rather than
+    // only when empty, so a corrected number reaches existing installs. `key`
+    // is what an entry is matched on, and `is_active` is left alone because a
+    // cafe may have hidden the kinds of thing it never sees.
+    let factorOrder = 0;
+    for (const factor of CO2_FACTORS) {
+      await client.query(
+        `INSERT INTO co2_factors (key, label, group_label, category, weight_kg, co2e_kg, sample, sort_order)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         ON CONFLICT (key) DO UPDATE SET
+           label = EXCLUDED.label,
+           group_label = EXCLUDED.group_label,
+           category = EXCLUDED.category,
+           weight_kg = EXCLUDED.weight_kg,
+           co2e_kg = EXCLUDED.co2e_kg,
+           sample = EXCLUDED.sample,
+           sort_order = EXCLUDED.sort_order`,
+        [
+          factor.key,
+          factor.label,
+          factor.groupLabel,
+          factor.category,
+          factor.weightKg,
+          factor.co2eKg,
+          factor.sample,
+          factorOrder++,
+        ],
+      );
+    }
+
+    await backfillCo2Types(client);
   } finally {
     client.release();
+  }
+}
+
+/** The audit entry that records the one-off pass, so it cannot run twice. */
+const CO2_BACKFILL_ACTION = 'co2.backfilled';
+
+/**
+ * Give old repairs the kind of thing they were.
+ *
+ * Repairs recorded before we asked "what kind of thing is it?" carry a number
+ * a volunteer typed from memory at a busy table. This reads what was written
+ * down (the description, the brand, the skill category) and, where that is
+ * clear enough, records the type and replaces the guess with the looked-up
+ * figure. See db/co2Match.ts for how a type is worked out.
+ *
+ * Three things keep it safe:
+ *
+ *  - It runs once. After the first pass an audit entry says so, and later
+ *    starts skip it, so a number a repairer types in from now on is never
+ *    quietly overwritten.
+ *  - It only touches repairs with no type at all.
+ *  - It never invents a figure. Where the type cannot be worked out, or that
+ *    type has no CO2e data behind it, the repair keeps exactly what it had.
+ *
+ * Nothing is lost either way: the original typed-in number stays in
+ * `environmental_saving_kg`, which this never writes to.
+ */
+async function backfillCo2Types(client: PoolClient): Promise<void> {
+  const done = await client.query(
+    `SELECT 1 FROM audit_log WHERE action = $1 LIMIT 1`,
+    [CO2_BACKFILL_ACTION],
+  );
+  if ((done.rowCount ?? 0) > 0) return;
+
+  const untyped = await client.query<{
+    id: string;
+    item_description: string | null;
+    item_brand: string | null;
+    category: string | null;
+  }>(`
+    SELECT rj.id, rj.item_description, rj.item_brand, sc.name AS category
+    FROM repair_jobs rj
+    LEFT JOIN skill_categories sc ON sc.id = rj.item_category_id
+    WHERE rj.co2_factor_id IS NULL
+  `);
+
+  const factors = await client.query<{ id: string; key: string; co2e_kg: string | null }>(
+    `SELECT id, key, co2e_kg FROM co2_factors`,
+  );
+  const byKey = new Map(factors.rows.map((f) => [f.key, f]));
+
+  const cafe = await client.query<{ co2_enabled: boolean; co2_displacement_rate: string }>(
+    `SELECT co2_enabled, co2_displacement_rate FROM cafes LIMIT 1`,
+  );
+  const enabled = cafe.rows[0]?.co2_enabled ?? true;
+  const rawRate = Number(cafe.rows[0]?.co2_displacement_rate ?? 0.5);
+  const rate = Number.isFinite(rawRate) && rawRate >= 0 && rawRate <= 1 ? rawRate : 0.5;
+
+  let typed = 0;
+  let recalculated = 0;
+  for (const job of untyped.rows) {
+    const key = matchCo2FactorKey({
+      itemDescription: job.item_description,
+      itemBrand: job.item_brand,
+      categoryName: job.category,
+    });
+    if (!key) continue;
+    const factor = byKey.get(key);
+    if (!factor) continue;
+
+    const preUse = factor.co2e_kg === null ? null : Number(factor.co2e_kg);
+    const canCalculate = enabled && preUse !== null && Number.isFinite(preUse) && preUse > 0;
+    if (canCalculate) {
+      // Same sum as services/co2.ts, to three decimal places, which is what
+      // the column holds and as much precision as an average deserves.
+      const saving = Math.round(preUse * rate * 1000) / 1000;
+      await client.query(
+        `UPDATE repair_jobs
+           SET co2_factor_id = $1, co2_saving_kg = $2, co2_saving_source = 'calculated'
+         WHERE id = $3`,
+        [factor.id, saving, job.id],
+      );
+      recalculated++;
+    } else {
+      // The type is worth recording even with no CO2e figure behind it, so
+      // the history is complete if the reference data grows later.
+      await client.query(`UPDATE repair_jobs SET co2_factor_id = $1 WHERE id = $2`, [factor.id, job.id]);
+    }
+    typed++;
+  }
+
+  // Written even when there was nothing to do. On a new install this closes
+  // the door straight away, so the pass can never wake up months later and
+  // rewrite a figure a repairer typed in by hand.
+  await client.query(
+    `INSERT INTO audit_log (actor_id, actor_type, action, entity_type, metadata)
+     VALUES (NULL, 'system', $1, 'repair_job', $2::jsonb)`,
+    [
+      CO2_BACKFILL_ACTION,
+      JSON.stringify({
+        considered: untyped.rowCount ?? 0,
+        typed,
+        recalculated,
+        skipped: (untyped.rowCount ?? 0) - typed,
+      }),
+    ],
+  );
+  if ((untyped.rowCount ?? 0) > 0) {
+    console.log(
+      `[migrate] CO2 backfill: looked at ${untyped.rowCount} untyped repairs, ` +
+        `named ${typed}, recalculated ${recalculated}. The rest keep the figure they had.`,
+    );
   }
 }

@@ -2,6 +2,77 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
+## Unreleased
+
+### Added
+
+- The CO2 figure is now worked out rather than guessed. When someone checks an
+  item in they say what kind of thing it is, and we look up what it costs the
+  planet to make one. Before this, we asked repairers to estimate the carbon
+  themselves, which nobody can do at a busy table, so the totals were guesses.
+  Repairers can correct the item type, or type a figure over the top if they
+  know better.
+- New "About" page explaining how the carbon figure is worked out, with the sum
+  written out, worked examples, and a plain list of what the number is and is
+  not. It also says what share of repairs the total actually covers. More
+  sections can be added to this page over time.
+- Repairs recorded before any of this get their item type worked out for you, so
+  your whole history counts towards the total. It reads what was already written
+  down: the description, the brand, and the category the volunteer picked. Where
+  that is not clear enough to be sure, the repair is left exactly as it was with
+  the figure someone typed at the time. Nobody has to label old records by hand.
+
+- Every session now has its own photo gallery. Repairers and admins can add
+  photos from a phone or a laptop, and they appear on that session's page on the
+  public site. Volunteers get a new "Photos" page in their own area: pick the
+  session, add the photos, done.
+- Photos taken during a repair can now be shown too. They stay private until an
+  admin picks them out, one at a time or all at once, because they are pictures
+  of someone else's belongings.
+- Any photo from a session can be starred to bring it into the main gallery on
+  the home page, so the site fills up on its own as volunteers add photos.
+- Past events now show what happened at the session: how many items came in, how
+  many went home working, what kinds of thing they were, how many volunteers
+  helped, and the waste kept out of landfill. No visitor names or item details
+  are shown. You can turn this off under Settings, Home page.
+- The list of past events now shows a photo and a count for each session.
+
+### Changed
+
+- Adding photos is now drag and drop, everywhere. Drop photos onto the page,
+  paste one from your clipboard, or browse your device. Each photo has its own
+  progress bar, and big photos from a phone are shrunk in your browser first, so
+  they upload quickly on a hall's wifi.
+- Describing a photo is now a proper job rather than a cramped text box. Click a
+  photo to see it large, write the description, then step through the rest with
+  Previous and Next. It saves as you go.
+- Photos in the gallery can be dragged into the order you want. Keyboard users
+  can Tab to a photo's grip and use the arrow keys.
+
+### Notes for people running this
+
+- The carbon reference data is seeded on every start, so a corrected figure
+  reaches existing installs. Item types you have hidden stay hidden.
+- On the first start after this upgrade, older repairs are matched to an item
+  type from their description, brand and category, and their figure is worked
+  out from the reference data. **Your published total will move**, usually up,
+  because the figures it replaces were estimates. Repairs that cannot be matched
+  with confidence are left alone. The pass runs once and never again: it writes
+  a `co2.backfilled` entry to the audit log and checks for that entry first, so
+  a figure a repairer types in from now on is never overwritten.
+- Nothing is lost in that pass. The original typed-in number stays in
+  `repair_jobs.environmental_saving_kg`, which is never written to, so it can be
+  put back with a single UPDATE. See `apps/server/src/db/co2Match.ts` for how a
+  type is worked out, and add words to it if your cafe sees things it misses.
+- The carbon figures come from The Restart Project's Fixometer reference data,
+  shared under CC BY-SA 4.0. See `docs/proposal-co2-savings.md` and
+  `apps/server/src/db/co2Factors.ts`.
+- Two additive database changes are applied on start-up: a new `event_images`
+  table, and two flags on `repair_images` that say who may see each photo. Both
+  are idempotent, so restarting an existing install is safe.
+- Session photos are written to `uploads/events/<event id>/`. Include it in your
+  backups (the built-in backup already covers the whole uploads folder).
+
 ## 2026-07-26
 
 ### Added

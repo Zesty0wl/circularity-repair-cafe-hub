@@ -6,7 +6,8 @@
   import VolunteerCard from '$lib/components/VolunteerCard.svelte';
   import NextSessionCta from '$lib/components/NextSessionCta.svelte';
   import AddToCalendar from '$lib/components/AddToCalendar.svelte';
-  import { Calendar, Clock, MapPin, ChevronDown, ChevronLeft, ChevronRight, X, CheckCircle2 } from 'lucide-svelte';
+  import PhotoGrid from '$lib/components/PhotoGrid.svelte';
+  import { Calendar, Clock, MapPin, ChevronDown, CheckCircle2 } from 'lucide-svelte';
   import Icon from '@iconify/svelte';
   import { categoryIcon, categoryTint, categoryInk } from '$lib/categoryIcon';
   import type { PageData } from './$types';
@@ -135,41 +136,10 @@
     .map((p: string) => p.trim())
     .filter(Boolean);
 
-  // ── Progressive reveal ────────────────────────────────────────────────────
-  let showAllPhotos = false;
-  $: visiblePhotos = showAllPhotos ? gallery : gallery.slice(0, PHOTO_PREVIEW);
-
-  // ── Lightbox state ────────────────────────────────────────────────────────
-  let lightboxIndex: number | null = null;
-
-  function openLightbox(i: number) {
-    lightboxIndex = i;
-  }
-  function closeLightbox() {
-    lightboxIndex = null;
-  }
-  function nextImage() {
-    if (lightboxIndex === null || gallery.length === 0) return;
-    lightboxIndex = (lightboxIndex + 1) % gallery.length;
-  }
-  function prevImage() {
-    if (lightboxIndex === null || gallery.length === 0) return;
-    lightboxIndex = (lightboxIndex - 1 + gallery.length) % gallery.length;
-  }
-  function handleKey(e: KeyboardEvent) {
-    if (lightboxIndex === null) return;
-    if (e.key === 'Escape') { closeLightbox(); }
-    else if (e.key === 'ArrowRight') { nextImage(); }
-    else if (e.key === 'ArrowLeft') { prevImage(); }
-  }
-
-  // Lock body scroll while the lightbox is open.
-  $: if (typeof document !== 'undefined') {
-    document.body.style.overflow = lightboxIndex === null ? '' : 'hidden';
-  }
+  // Photos from a session say where and when they were taken, so the gallery
+  // lede can promise something the strip actually delivers.
+  $: galleryHasSessions = gallery.some((g) => g.eventId);
 </script>
-
-<svelte:window on:keydown={handleKey} />
 
 <SiteHeader variant="public" />
 
@@ -289,27 +259,17 @@
       <SectionHeading
         eyebrow="From our sessions"
         title="In the workshop"
-        lede="A few photos from recent repair sessions."
+        lede={galleryHasSessions
+          ? 'Photos from recent repair sessions. Open one to see which session it came from.'
+          : 'A few photos from recent repair sessions.'}
       />
-      <div class="mt-10 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-        {#each visiblePhotos as img, i}
-          <button
-            type="button"
-            on:click={() => openLightbox(i)}
-            class="relative aspect-[4/3] overflow-hidden rounded-xl bg-slate-200 group focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
-            aria-label={img.caption ? `View larger: ${img.caption}` : `View image ${i + 1} of ${gallery.length}`}
-          >
-            <img src={img.url} alt={img.caption || `${cafeName} repair café`} loading="lazy" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
-          </button>
-        {/each}
+      <div class="mt-10">
+        <PhotoGrid
+          photos={gallery}
+          previewCount={PHOTO_PREVIEW}
+          fallbackAlt={`${cafeName} repair café`}
+        />
       </div>
-      {#if gallery.length > PHOTO_PREVIEW}
-        <div class="text-center mt-8">
-          <button type="button" class="btn-secondary" on:click={() => (showAllPhotos = !showAllPhotos)}>
-            {showAllPhotos ? 'Show fewer photos' : `Show all ${gallery.length} photos`}
-          </button>
-        </div>
-      {/if}
     </section>
   {/if}
 
@@ -477,66 +437,5 @@
        The page ends on an invitation, not on a list. -->
   <NextSessionCta event={nextEvent} venue={homeVenue} image={closingImage} />
 </main>
-
-<!-- ────────────────────── Gallery lightbox ────────────────────── -->
-{#if lightboxIndex !== null && gallery[lightboxIndex]}
-  <div
-    class="fixed inset-0 z-50 bg-black/90 flex flex-col"
-    role="dialog"
-    aria-modal="true"
-    aria-label="Photo viewer"
-    on:click|self={closeLightbox}
-  >
-    <!-- Top bar: counter + close -->
-    <div class="flex items-center justify-between px-4 py-3 text-white/90 text-sm">
-      <span class="font-mono tabular-nums">{lightboxIndex + 1} / {gallery.length}</span>
-      <button
-        type="button"
-        on:click={closeLightbox}
-        class="p-2 rounded-full hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/50"
-        aria-label="Close (Esc)"
-      >
-        <X size={24} />
-      </button>
-    </div>
-
-    <!-- Image + nav -->
-    <div class="relative flex-1 flex items-center justify-center min-h-0" on:click|self={closeLightbox}>
-      <img
-        src={gallery[lightboxIndex].url}
-        alt={gallery[lightboxIndex].caption ?? ''}
-        class="max-h-full max-w-full object-contain rounded"
-        on:click|stopPropagation
-      />
-      {#if gallery.length > 1}
-        <button
-          type="button"
-          on:click|stopPropagation={prevImage}
-          class="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-white/50"
-          aria-label="Previous image (←)"
-        >
-          <ChevronLeft size={28} />
-        </button>
-        <button
-          type="button"
-          on:click|stopPropagation={nextImage}
-          class="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-white/50"
-          aria-label="Next image (→)"
-        >
-          <ChevronRight size={28} />
-        </button>
-      {/if}
-    </div>
-
-    <!-- Caption -->
-    {#if gallery[lightboxIndex].caption}
-      <div class="px-6 py-4 text-center text-white text-sm sm:text-base max-w-3xl mx-auto">
-        {gallery[lightboxIndex].caption}
-      </div>
-    {:else}
-      <div class="py-4"></div>
-    {/if}
-  </div>
-{/if}
 
 <SiteFooter />

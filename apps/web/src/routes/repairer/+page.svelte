@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { api } from '$lib/api';
   import { auth } from '$lib/stores/auth';
-  import { Clock, CheckCircle2, XCircle, Hourglass, History, UserCircle2, UserPlus } from 'lucide-svelte';
+  import { Clock, CheckCircle2, XCircle, Hourglass, History, UserCircle2, UserPlus, Camera } from 'lucide-svelte';
   import { goto } from '$app/navigation';
 
   interface Job {
@@ -88,11 +88,13 @@
         </div>
       {/if}
       <a href="/repairer/checkin" class="mt-4 btn-primary w-full"><UserPlus size={16} /> Register a repair for a visitor</a>
+      <a href="/repairer/photos" class="mt-2 btn-secondary w-full"><Camera size={16} /> Add photos of this session</a>
     </div>
   {:else}
     <div class="card p-5">
       <h2 class="text-lg font-semibold">No active event</h2>
       <p class="text-slate-600 text-sm mt-2">An admin will activate an event when it starts.</p>
+      <a href="/repairer/photos" class="mt-4 btn-secondary w-full"><Camera size={16} /> Add photos of a past session</a>
     </div>
   {/if}
 

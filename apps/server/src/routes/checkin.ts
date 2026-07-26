@@ -137,6 +137,9 @@ export async function checkInRoutes(app: FastifyInstance): Promise<void> {
         customerToken,
         itemDescription: data.itemDescription,
         itemCategoryId: data.itemCategoryId ?? null,
+        // Recorded now so the CO2 saving can be worked out at the end. The
+        // repairer can correct it if the visitor picked the wrong thing.
+        co2FactorId: data.co2FactorId ?? null,
         itemBrand: data.itemBrand ?? null,
         faultDescription: data.faultDescription,
         gdprConsent,

@@ -33,6 +33,18 @@ hundreds of repairs, and yours to host on a £5/month VPS or a Pi in the corner.
   and after photos.
 - **Admin** — events (one-off and recurring), venues, skill categories, repairers,
   full repair history, CSV export, statistics dashboard.
+- **Session photo galleries** — every event has its own gallery. Repairers and
+  admins add photos from a phone or a laptop by drag and drop, paste or browse;
+  big photos are shrunk in the browser first. Photos of the session go public
+  straight away, while photos taken during a repair stay private until an admin
+  chooses to show them. Star any photo to bring it into the main gallery on the
+  home page. Past events also show what happened at the session (items in, items
+  fixed, categories, volunteers, waste saved) with no visitor details.
+- **Carbon savings that add up** — visitors say what kind of thing they have brought,
+  and the CO2 saved is looked up from
+  [The Restart Project's reference data](https://zenodo.org/records/5900046) rather
+  than estimated by a volunteer. A public About page shows the sum, worked examples,
+  and what share of repairs the total covers.
 - **Repair guides** — search thousands of step-by-step guides from the
   [iFixit API](https://www.ifixit.com/api-docs), with photographs, tools, parts and
   numbered steps rendered in your own site's style. The server proxies and caches

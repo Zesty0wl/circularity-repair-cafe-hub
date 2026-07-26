@@ -42,6 +42,9 @@
   let faultDescription = '';
   let itemBrand = '';
   let itemCategoryId: string | null = null;
+  /** Which kind of thing it is, so the CO2 saving can be looked up. */
+  let co2FactorId: string | null = null;
+  let allTypes: Array<{ id: string; label: string; category: string }> = [];
   let busy = false;
   let error = '';
   let createdJob: { id: string; jobNumber: string } | null = null;
@@ -114,7 +117,33 @@
     } catch (err: any) {
       loadError = err?.message || 'Could not load this event';
     }
+    // The kinds of thing we can work out a carbon saving for. If this fails the
+    // picker simply does not appear, and check-in carries on as before.
+    try {
+      const res = await fetch('/api/public/co2-factors');
+      if (res.ok) {
+        const body = (await res.json()) as {
+          enabled: boolean;
+          factors: Array<{ id: string; label: string; category: string; co2eKg: number | null }>;
+        };
+        // Types with no carbon figure would give a visitor a choice that does
+        // nothing, so they are left out here.
+        if (body.enabled) allTypes = body.factors.filter((f) => f.co2eKg !== null);
+      }
+    } catch {
+      /* leave the picker out */
+    }
   });
+
+  /** The item types under whichever category the visitor tapped. */
+  $: selectedCategoryName = info?.categories.find((c) => c.id === itemCategoryId)?.name ?? null;
+  $: itemTypes = selectedCategoryName
+    ? allTypes.filter((t) => t.category === selectedCategoryName)
+    : [];
+  // Changing the category makes the old choice meaningless.
+  $: if (itemCategoryId && co2FactorId && !itemTypes.some((t) => t.id === co2FactorId)) {
+    co2FactorId = null;
+  }
 
   function next() {
     error = '';
@@ -157,6 +186,7 @@
         faultDescription: faultDescription.trim(),
         itemBrand: itemBrand.trim() || null,
         itemCategoryId,
+        co2FactorId,
       };
       if (customerToken) {
         payload.customerToken = customerToken;
@@ -219,6 +249,7 @@
     faultDescription = '';
     itemBrand = '';
     itemCategoryId = null;
+    co2FactorId = null;
     createdJob = null;
     uploadedThumb = null;
     error = '';
@@ -234,6 +265,7 @@
     faultDescription = '';
     itemBrand = '';
     itemCategoryId = null;
+    co2FactorId = null;
     createdJob = null;
     uploadedThumb = null;
     error = '';
@@ -368,6 +400,31 @@
                 {/each}
               </div>
             </div>
+
+            <!-- What kind of thing it is. This is what lets us work out the
+                 CO2 saving instead of guessing it. Only shown once a category
+                 is chosen, so the list stays short, and always skippable
+                 because somebody may not find their item. -->
+            {#if itemCategoryId && itemTypes.length > 0}
+              <div>
+                <p class="label text-base">Which of these is closest?</p>
+                <p class="text-sm text-slate-500 -mt-1 mb-2">
+                  This helps us work out the carbon it saves. Skip it if none fit.
+                </p>
+                <div class="flex flex-wrap gap-2">
+                  {#each itemTypes as type (type.id)}
+                    <button
+                      type="button"
+                      class="type-chip {co2FactorId === type.id ? 'is-picked' : ''}"
+                      on:click={() => (co2FactorId = co2FactorId === type.id ? null : type.id)}
+                    >
+                      {type.label}
+                    </button>
+                  {/each}
+                </div>
+              </div>
+            {/if}
+
             <div>
               <label class="label text-base" for="id">Item description</label>
               <input id="id" class="input text-lg py-4" maxlength="200" placeholder="e.g. Bosch cordless drill, blue" bind:value={itemDescription} />
@@ -476,3 +533,30 @@
     {/if}
   </div>
 </main>
+
+<style>
+  /* Item types. Big enough to tap on a phone, and quiet enough that they do
+     not compete with the category tiles above them. */
+  .type-chip {
+    padding: 0.55rem 0.9rem;
+    border-radius: 9999px;
+    background: #fff;
+    border: 1px solid rgb(203 213 225);
+    font-size: 0.95rem;
+    color: rgb(51 65 85);
+    transition:
+      border-color 0.12s ease,
+      background-color 0.12s ease;
+  }
+  .type-chip:hover,
+  .type-chip:focus-visible {
+    border-color: rgb(var(--brand-400));
+    outline: none;
+  }
+  .type-chip.is-picked {
+    background: rgb(var(--brand-50));
+    border-color: rgb(var(--brand-600));
+    color: rgb(var(--brand-900));
+    font-weight: 600;
+  }
+</style>

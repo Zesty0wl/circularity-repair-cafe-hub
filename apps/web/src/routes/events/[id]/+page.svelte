@@ -2,13 +2,27 @@
   import SiteHeader from '$lib/components/SiteHeader.svelte';
   import SiteFooter from '$lib/components/SiteFooter.svelte';
   import AddToCalendar from '$lib/components/AddToCalendar.svelte';
-  import { ArrowLeft, Clock, MapPin, ArrowUpRight, CalendarX2 } from 'lucide-svelte';
+  import PhotoGrid from '$lib/components/PhotoGrid.svelte';
+  import Icon from '@iconify/svelte';
+  import { categoryIcon, categoryTint, categoryInk } from '$lib/categoryIcon';
+  import type { GalleryPhoto } from '$lib/gallery';
+  import { ArrowLeft, Clock, MapPin, ArrowUpRight, CalendarX2, Camera, BarChart3 } from 'lucide-svelte';
   import type { PageData } from './$types';
 
   interface Venue {
     name: string;
     address: string | null;
     postcode: string | null;
+  }
+  interface EventStats {
+    repairCount: number;
+    completedCount: number;
+    cannotRepairCount: number;
+    awaitingReturnCount: number;
+    successRate: number;
+    co2SavedKg: number;
+    volunteerCount: number;
+    categories: Array<{ name: string; colour: string | null; icon: string | null; count: number; completedCount: number }>;
   }
   interface PublicEvent {
     id: string;
@@ -19,11 +33,27 @@
     endTime: string;
     status: string;
     venue: Venue;
+    gallery?: GalleryPhoto[];
+    stats?: EventStats | null;
   }
 
   export let data: PageData;
   $: event = (data.event ?? null) as PublicEvent | null;
   $: notFound = data.notFound;
+  $: gallery = event?.gallery ?? [];
+  $: stats = event?.stats ?? null;
+
+  // Only the figures worth reading. A tile that would say "0" is dropped, so a
+  // quiet session shows a short honest row rather than a wall of noughts.
+  $: statTiles = !stats
+    ? []
+    : [
+        { value: String(stats.repairCount), label: stats.repairCount === 1 ? 'Item brought in' : 'Items brought in', show: stats.repairCount > 0 },
+        { value: String(stats.completedCount), label: 'Went home working', show: stats.completedCount > 0 },
+        { value: `${stats.successRate}%`, label: 'Fixed on the day', show: stats.successRate > 0 },
+        { value: String(stats.volunteerCount), label: stats.volunteerCount === 1 ? 'Volunteer repairer' : 'Volunteer repairers', show: stats.volunteerCount > 0 },
+        { value: `${stats.co2SavedKg} kg`, label: 'CO₂ saved', show: stats.co2SavedKg > 0 },
+      ].filter((t) => t.show);
 
   // Anchored at UTC noon + a fixed locale so SSR and the browser render
   // identical text (no hydration mismatch).
@@ -122,6 +152,65 @@
         {/if}
       </div>
     </article>
+
+    <!-- ─────────────── What happened at this session ─────────────── -->
+    {#if statTiles.length > 0 && stats}
+      <section class="card p-6 sm:p-8">
+        <h2 class="text-xl font-semibold font-display text-pine flex items-center gap-2">
+          <BarChart3 size={20} class="text-clay shrink-0" /> What happened at this session
+        </h2>
+        <dl class="mt-5 flex flex-wrap gap-3">
+          {#each statTiles as tile}
+            <div class="flex-1 min-w-[7.5rem] rounded-xl bg-brand-50 ring-1 ring-brand-100 px-4 py-3 text-center">
+              <dt class="sr-only">{tile.label}</dt>
+              <dd>
+                <span class="block text-2xl font-bold font-display text-pine leading-none">{tile.value}</span>
+                <span class="mt-1 block text-xs text-slate-600">{tile.label}</span>
+              </dd>
+            </div>
+          {/each}
+        </dl>
+
+        {#if stats.categories.length > 0}
+          <h3 class="mt-6 text-base font-semibold text-slate-800">What we worked on</h3>
+          <ul class="mt-3 flex flex-wrap gap-2">
+            {#each stats.categories as cat}
+              <li
+                class="inline-flex items-center gap-2 rounded-full bg-white ring-1 ring-slate-200 pl-2 pr-3 py-1.5 text-sm text-slate-700"
+              >
+                <span class="inline-flex h-6 w-6 items-center justify-center rounded-lg" style={`background:${categoryTint(cat.colour)}`}>
+                  <Icon icon={categoryIcon(cat.icon, cat.name)} width="14" height="14" style={`color:${categoryInk(cat.colour)}`} />
+                </span>
+                <span>{cat.name}</span>
+                <span class="font-semibold tabular-nums text-pine">{cat.count}</span>
+              </li>
+            {/each}
+          </ul>
+        {/if}
+
+        {#if stats.awaitingReturnCount > 0}
+          <p class="mt-4 text-sm text-slate-600">
+            {stats.awaitingReturnCount}
+            {stats.awaitingReturnCount === 1 ? 'item is' : 'items are'} waiting for a part and will be finished at a later session.
+          </p>
+        {/if}
+        <p class="mt-4 text-xs text-slate-500">
+          Figures come from our own records. We never show visitor names or contact details.
+        </p>
+      </section>
+    {/if}
+
+    <!-- ───────────────────── Photos from the day ───────────────────── -->
+    {#if gallery.length > 0}
+      <section>
+        <h2 class="text-xl font-semibold font-display text-pine flex items-center gap-2">
+          <Camera size={20} class="text-clay shrink-0" /> Photos from the day
+        </h2>
+        <div class="mt-4">
+          <PhotoGrid photos={gallery} fallbackAlt={`Photo from ${event.name}`} />
+        </div>
+      </section>
+    {/if}
   {/if}
 </main>
 

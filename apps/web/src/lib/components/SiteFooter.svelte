@@ -37,6 +37,7 @@
           <li><a class="hover:text-white" href="/skills">Skills &amp; team</a></li>
           <li><a class="hover:text-white" href="/guides">Repair guides</a></li>
           <li><a class="hover:text-white" href="/world">Repair Cafés worldwide</a></li>
+          <li><a class="hover:text-white" href="/about">About &amp; how we measure</a></li>
           <li><a class="hover:text-white" href="/contact">Contact</a></li>
         </ul>
       </div>

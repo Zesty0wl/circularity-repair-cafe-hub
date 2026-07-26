@@ -97,6 +97,9 @@ export const checkInSubmitSchema = z
     itemDescription: z.string().min(1).max(200),
     faultDescription: z.string().min(1).max(500),
     itemCategoryId: z.string().uuid().optional().nullable(),
+    // What kind of thing it is, used to look up the CO2 saving. Optional,
+    // because a visitor may not find their item in the list.
+    co2FactorId: z.string().uuid().optional().nullable(),
     itemBrand: z.string().max(100).optional().nullable(),
   })
   .refine(
@@ -120,6 +123,9 @@ export const assistedCheckInSchema = z
     itemDescription: z.string().min(1).max(200),
     faultDescription: z.string().min(1).max(500),
     itemCategoryId: z.string().uuid().optional().nullable(),
+    // What kind of thing it is, used to look up the CO2 saving. Optional,
+    // because a visitor may not find their item in the list.
+    co2FactorId: z.string().uuid().optional().nullable(),
     itemBrand: z.string().max(100).optional().nullable(),
   })
   .refine(

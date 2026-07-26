@@ -57,6 +57,10 @@ export const cafes = pgTable('cafes', {
   plausibleDomain: text('plausible_domain'),
   plausibleSrc: text('plausible_src'),
   repaircafeSlug: text('repaircafe_slug'),
+  // How much of a new purchase a repair is taken to prevent, and whether the
+  // CO2 figure is worked out and shown at all.
+  co2DisplacementRate: numeric('co2_displacement_rate', { precision: 4, scale: 3 }).notNull().default('0.5'),
+  co2Enabled: boolean('co2_enabled').notNull().default(true),
   setupCompleted: boolean('setup_completed').notNull().default(false),
   allowSkipPhoto: boolean('allow_skip_photo').notNull().default(true),
   enableContactField: boolean('enable_contact_field').notNull().default(true),
@@ -121,6 +125,26 @@ export const skillCategories = pgTable('skill_categories', {
   colour: text('colour').notNull().default('#1B6B5A'),
   sortOrder: integer('sort_order').notNull().default(0),
   isActive: boolean('is_active').notNull().default(true),
+});
+
+/**
+ * What it costs the planet to make the things people bring in, so the CO2
+ * saving is looked up rather than guessed. Seeded from db/co2Factors.ts.
+ */
+export const co2Factors = pgTable('co2_factors', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  key: text('key').notNull().unique(),
+  label: text('label').notNull(),
+  groupLabel: text('group_label').notNull(),
+  /** Which of our skill categories offers this type first. */
+  category: text('category').notNull(),
+  weightKg: numeric('weight_kg', { precision: 8, scale: 3 }),
+  /** Carbon emitted making and shipping one, before anybody uses it. */
+  co2eKg: numeric('co2e_kg', { precision: 8, scale: 2 }),
+  /** How many real products the average came from. Some are just one. */
+  sample: integer('sample').notNull().default(0),
+  isActive: boolean('is_active').notNull().default(true),
+  sortOrder: integer('sort_order').notNull().default(0),
 });
 
 export const venues = pgTable('venues', {
@@ -229,6 +253,12 @@ export const repairJobs = pgTable(
     outcomeNotes: text('outcome_notes'),
     partsUsed: text('parts_used'),
     environmentalSavingKg: numeric('environmental_saving_kg', { precision: 8, scale: 3 }),
+    // What kind of thing this was, and what that works out to in CO2e. See
+    // services/co2.ts. The older environmentalSavingKg above is kept as the
+    // manual override, so existing records still read.
+    co2FactorId: uuid('co2_factor_id'),
+    co2SavingKg: numeric('co2_saving_kg', { precision: 8, scale: 3 }),
+    co2SavingSource: text('co2_saving_source'),
     gdprConsent: boolean('gdpr_consent').notNull().default(false),
     dataRetentionDate: date('data_retention_date'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -254,8 +284,45 @@ export const repairImages = pgTable('repair_images', {
   stage: imageStageEnum('stage').notNull().default('check_in'),
   takenBy: uuid('taken_by').references(() => users.id),
   caption: text('caption'),
+  // A repair photo is of someone else's belongings, so it stays private until
+  // an admin chooses to show it. `isPublished` puts it in the event gallery on
+  // the public site; `showOnHome` also adds it to the main photo gallery.
+  isPublished: boolean('is_published').notNull().default(false),
+  showOnHome: boolean('show_on_home').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
+
+/**
+ * Photos of a session itself: the room, the team at work, the queue, the
+ * cake. Repairers and admins upload these from a phone or a laptop. They are
+ * separate from `repair_images`, which are photos of a visitor's item taken
+ * as part of a repair job.
+ */
+export const eventImages = pgTable(
+  'event_images',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    eventId: uuid('event_id')
+      .notNull()
+      .references(() => events.id, { onDelete: 'cascade' }),
+    filePath: text('file_path').notNull(),
+    fileSizeBytes: integer('file_size_bytes'),
+    mimeType: text('mime_type'),
+    caption: text('caption'),
+    uploadedBy: uuid('uploaded_by').references(() => users.id, { onDelete: 'set null' }),
+    // Shown on the public page for this event. On by default: a volunteer who
+    // adds a photo of the session means it to be seen.
+    isPublished: boolean('is_published').notNull().default(true),
+    // Also shown in the main photo gallery on the site. Admins only.
+    showOnHome: boolean('show_on_home').notNull().default(false),
+    sortOrder: integer('sort_order').notNull().default(0),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    eventIdx: index('idx_event_images_event_id').on(t.eventId),
+    sortIdx: index('idx_event_images_sort_order').on(t.sortOrder),
+  })
+);
 
 export const auditLog = pgTable(
   'audit_log',
@@ -283,4 +350,5 @@ export type Event = typeof events.$inferSelect;
 export type EventTemplate = typeof eventTemplates.$inferSelect;
 export type RepairJob = typeof repairJobs.$inferSelect;
 export type RepairImage = typeof repairImages.$inferSelect;
+export type EventImage = typeof eventImages.$inferSelect;
 export type SkillCategory = typeof skillCategories.$inferSelect;

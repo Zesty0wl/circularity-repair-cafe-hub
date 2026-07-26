@@ -48,6 +48,7 @@
         <a href="/skills" class="px-3 py-2 rounded-lg hover:bg-slate-100 whitespace-nowrap">Skills &amp; Team</a>
         <a href="/guides" class="px-3 py-2 rounded-lg hover:bg-slate-100 whitespace-nowrap">Repair guides</a>
         <a href="/world" class="px-3 py-2 rounded-lg hover:bg-slate-100">Worldwide</a>
+        <a href="/about" class="px-3 py-2 rounded-lg hover:bg-slate-100">About</a>
         <a href="/contact" class="px-3 py-2 rounded-lg hover:bg-slate-100">Contact</a>
         {#if $auth}
           {#if $auth.user.role === 'admin' || $auth.user.role === 'super_admin'}
@@ -62,6 +63,7 @@
         {#if variant === 'repairer'}
           <a href="/repairer" class="px-3 py-2 rounded-lg hover:bg-slate-100">Dashboard</a>
           <a href="/repairer/checkin" class="px-3 py-2 rounded-lg hover:bg-slate-100 whitespace-nowrap">Register a repair</a>
+          <a href="/repairer/photos" class="px-3 py-2 rounded-lg hover:bg-slate-100">Photos</a>
           <a href="/repairer/profile" class="px-3 py-2 rounded-lg hover:bg-slate-100">My profile</a>
         {/if}
         <span class="text-slate-600">{user.displayName}</span>
@@ -101,6 +103,7 @@
           <a href="/skills" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">Skills &amp; Team</a>
           <a href="/guides" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">Repair guides</a>
           <a href="/world" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">Worldwide</a>
+          <a href="/about" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">About</a>
           <a href="/contact" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">Contact</a>
           <div class="h-px bg-slate-200 my-2"></div>
           {#if $auth}
@@ -116,6 +119,7 @@
           {#if variant === 'repairer'}
             <a href="/repairer" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">Dashboard</a>
             <a href="/repairer/checkin" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">Register a repair</a>
+            <a href="/repairer/photos" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">Photos</a>
             <a href="/repairer/profile" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">My profile</a>
             <div class="h-px bg-slate-200 my-2"></div>
           {/if}

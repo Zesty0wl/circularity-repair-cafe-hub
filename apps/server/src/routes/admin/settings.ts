@@ -146,7 +146,19 @@ export async function adminSettingsRoutes(app: FastifyInstance): Promise<void> {
       return;
     }
     const buf = await file.toBuffer();
-    const saved = await saveValidatedImage(buf, file.mimetype, 'gallery', { maxLongestEdge: 1800, quality: 0.85 });
+    let saved;
+    try {
+      saved = await saveValidatedImage(buf, file.mimetype, 'gallery', { maxLongestEdge: 1800, quality: 0.85 });
+    } catch (err) {
+      // Anything sharp cannot read (a PDF, an iPhone HEIC that was not
+      // converted) lands here. Say so plainly rather than failing with a 500.
+      request.log.warn({ err }, 'gallery upload failed');
+      reply.code(400).send({
+        error: 'That file is not a photo we can use. Try a JPEG, PNG or WebP.',
+        code: 'upload/invalid',
+      });
+      return;
+    }
     // New uploads sort to the end (highest sortOrder + 1)
     const existing = await db.select({ s: cafeGallery.sortOrder }).from(cafeGallery).orderBy(asc(cafeGallery.sortOrder));
     const nextOrder = existing.length > 0 ? Math.max(...existing.map((r) => r.s)) + 1 : 0;

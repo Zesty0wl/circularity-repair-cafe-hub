@@ -3,13 +3,16 @@
   import { onMount } from 'svelte';
   import { api } from '$lib/api';
   import { goto } from '$app/navigation';
-  import { Printer, Download, RotateCw, Copy } from 'lucide-svelte';
+  import { Printer, Download, RotateCw, Copy, Images } from 'lucide-svelte';
 
   $: id = $page.params.id;
   let detail: any = null;
   let venues: any[] = [];
   let users: any[] = [];
   let cafe: any = null;
+  // How many photos this session has, and how many a visitor can see. Shown
+  // so the "Photos" button says whether there is anything to look at.
+  let photoCounts: { total: number; published: number } | null = null;
 
   async function load() {
     [detail, venues, users, cafe] = await Promise.all([
@@ -18,6 +21,20 @@
       api('/api/admin/users'),
       api('/api/admin/settings'),
     ]);
+    await loadPhotoCounts();
+  }
+
+  async function loadPhotoCounts() {
+    try {
+      const res = await api<{ photos: any[]; repairPhotos: any[] }>(`/api/event-gallery/${id}`);
+      const all = [...(res.photos ?? []), ...(res.repairPhotos ?? [])];
+      photoCounts = {
+        total: all.length,
+        published: all.filter((p) => p.isPublished).length,
+      };
+    } catch {
+      photoCounts = null;
+    }
   }
 
   onMount(load);
@@ -85,9 +102,18 @@
       {#if detail.event.status !== 'cancelled' && detail.event.status !== 'completed'}
         <button class="btn-ghost" on:click={cancel}>Cancel</button>
       {/if}
+      <a class="btn-secondary" href={`/admin/events/${id}/gallery`}>
+        <Images size={16} /> Photos{#if photoCounts && photoCounts.total > 0}<span class="font-normal text-slate-500"> ({photoCounts.total})</span>{/if}
+      </a>
       <button class="btn-secondary" on:click={clone}><Copy size={16} /> Clone</button>
     </div>
   </div>
+
+  {#if photoCounts && photoCounts.total === 0}
+    <p class="mt-3 text-sm text-slate-500">
+      No photos yet. Adding a few makes this session's page on the public site far more interesting.
+    </p>
+  {/if}
 
   <div class="grid md:grid-cols-2 gap-4 mt-6">
     <div class="card p-5">

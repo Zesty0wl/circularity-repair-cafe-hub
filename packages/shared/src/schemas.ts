@@ -235,4 +235,7 @@ export const cafeSettingsSchema = z.object({
   contactEmail: z.string().email().optional().nullable(),
   address: z.string().max(500).optional().nullable(),
   socialLinks: z.record(z.string(), z.string()).optional(),
+  // The cafe's own listing on repaircafe.org. Admins may paste the full page
+  // URL or just the slug; the server reduces it to a slug before saving.
+  repaircafeSlug: z.string().max(300).optional().nullable().or(z.literal('')),
 });

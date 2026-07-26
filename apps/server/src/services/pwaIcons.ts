@@ -60,7 +60,7 @@ export function iconFilename(version: string, purpose: IconPurpose, size: number
  * Resolve an uploaded file URL (`/uploads/branding/x.jpg`) to a path on disk,
  * refusing anything that escapes the uploads directory.
  */
-function resolveUploadPath(url: string | null): string | null {
+export function resolveUploadPath(url: string | null): string | null {
   if (!url || !url.startsWith('/uploads/')) return null;
   const relative = url.slice('/uploads/'.length);
   const full = path.resolve(env.UPLOADS_DIR, relative);

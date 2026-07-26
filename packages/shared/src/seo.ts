@@ -68,7 +68,15 @@ export interface SeoRepairer {
   skills?: Array<{ name?: string | null } | string>;
 }
 
-export type SeoRoute = 'home' | 'events' | 'event' | 'skills' | 'contact' | 'team';
+export type SeoRoute =
+  | 'home'
+  | 'events'
+  | 'event'
+  | 'skills'
+  | 'contact'
+  | 'team'
+  | 'world'
+  | 'guides';
 
 export interface BuildSeoOptions {
   route: SeoRoute;
@@ -415,8 +423,28 @@ export function buildSeo(opts: BuildSeoOptions): PageSeo {
   let title = defaultTitle(cafe, venue);
   let description = defaultDescription(cafe);
   let ogType = 'website';
-  let ogImage = defaultImage;
   let noindex = false;
+
+  // ── The picture shown when a link is shared ─────────────────────────────
+  // Each section gets its own card, drawn by the server in the cafe's colours
+  // (see apps/server/src/services/ogImage.ts). Otherwise every link pasted into
+  // a chat looks identical, whether it is an event, a repair guide or the
+  // contact page. Pages with a real photograph of their own, such as a
+  // volunteer's portrait or a repair guide's opening shot, override this below.
+  const sectionCard = (key: string): string => `${origin}/og/section/${key}.png`;
+  const CARD_FOR: Partial<Record<SeoRoute, string>> = {
+    home: 'home',
+    events: 'events',
+    skills: 'skills',
+    contact: 'contact',
+    world: 'world',
+    guides: 'guides',
+  };
+  const card = CARD_FOR[route];
+  // The home page is the one place a cafe's own banner photograph beats a
+  // drawn card: it is the picture they chose to represent themselves.
+  let ogImage =
+    route === 'home' ? (defaultImage ?? sectionCard('home')) : card ? sectionCard(card) : defaultImage;
 
   switch (route) {
     case 'home': {
@@ -451,6 +479,8 @@ export function buildSeo(opts: BuildSeoOptions): PageSeo {
         noindex = true;
         break;
       }
+      // A shared session shows its own date and venue on the card.
+      ogImage = `${origin}/og/event/${event.id}.png`;
       title = `${event.name} · ${humanDate(event.date)} | ${name}`;
       description = clamp(
         event.description ||
@@ -481,6 +511,34 @@ export function buildSeo(opts: BuildSeoOptions): PageSeo {
         breadcrumbNode(origin, [
           { name: 'Home', path: '/' },
           { name: 'What We Repair', path: '/skills' },
+        ]),
+      );
+      break;
+    }
+    case 'world': {
+      title = `The Worldwide Repair Café Movement | ${name}`;
+      description = clamp(
+        `${name} is one of thousands of Repair Cafés around the world. Explore the global map, see where the movement started, and find a Repair Café near you.`,
+        300,
+      );
+      graph.push(
+        breadcrumbNode(origin, [
+          { name: 'Home', path: '/' },
+          { name: 'Worldwide', path: '/world' },
+        ]),
+      );
+      break;
+    }
+    case 'guides': {
+      title = `Repair Guides | ${name}`;
+      description = clamp(
+        `Free step-by-step repair guides for phones, laptops, appliances and more, from iFixit. Search thousands of guides and fix it yourself, or bring it to ${name}.`,
+        300,
+      );
+      graph.push(
+        breadcrumbNode(origin, [
+          { name: 'Home', path: '/' },
+          { name: 'Repair Guides', path: '/guides' },
         ]),
       );
       break;

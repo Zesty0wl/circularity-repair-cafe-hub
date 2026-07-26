@@ -181,6 +181,8 @@ export function renderSitemap(data: SeoData, origin: string): string {
     { loc: `${origin}/`, lastmod: now, changefreq: 'weekly', priority: '1.0' },
     { loc: `${origin}/events`, lastmod: lastEvent ?? now, changefreq: 'daily', priority: '0.9' },
     { loc: `${origin}/skills`, changefreq: 'monthly', priority: '0.7' },
+    { loc: `${origin}/guides`, changefreq: 'weekly', priority: '0.6' },
+    { loc: `${origin}/world`, changefreq: 'monthly', priority: '0.5' },
     { loc: `${origin}/contact`, changefreq: 'yearly', priority: '0.4' },
   ];
 

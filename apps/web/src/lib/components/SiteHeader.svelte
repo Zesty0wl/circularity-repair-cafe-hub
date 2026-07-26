@@ -46,6 +46,8 @@
         <a href="/" class="px-3 py-2 rounded-lg hover:bg-slate-100">Home</a>
         <a href="/events" class="px-3 py-2 rounded-lg hover:bg-slate-100">Events</a>
         <a href="/skills" class="px-3 py-2 rounded-lg hover:bg-slate-100 whitespace-nowrap">Skills &amp; Team</a>
+        <a href="/guides" class="px-3 py-2 rounded-lg hover:bg-slate-100 whitespace-nowrap">Repair guides</a>
+        <a href="/world" class="px-3 py-2 rounded-lg hover:bg-slate-100">Worldwide</a>
         <a href="/contact" class="px-3 py-2 rounded-lg hover:bg-slate-100">Contact</a>
         {#if $auth}
           {#if $auth.user.role === 'admin' || $auth.user.role === 'super_admin'}
@@ -97,6 +99,8 @@
           <a href="/" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">Home</a>
           <a href="/events" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">Events</a>
           <a href="/skills" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">Skills &amp; Team</a>
+          <a href="/guides" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">Repair guides</a>
+          <a href="/world" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">Worldwide</a>
           <a href="/contact" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">Contact</a>
           <div class="h-px bg-slate-200 my-2"></div>
           {#if $auth}

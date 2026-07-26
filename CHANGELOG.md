@@ -2,6 +2,50 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
+## 2026-07-26
+
+### Added
+
+- New "Repair guides" page with thousands of step-by-step guides from iFixit.
+  Search by make and model, or start from one of the common things people bring
+  in, like a vacuum cleaner or a laptop. A guide opens with its photographs,
+  tools, parts and numbered steps, so you can follow it at the table, and links
+  back to iFixit. The guides are written by the iFixit community and shared
+  under a Creative Commons licence.
+- New "Worldwide" page that connects your cafe to repaircafe.org. It shows a 3D
+  globe with every Repair Café in the world on it, explains what the Repair Café
+  International Foundation is, and links out to their site. You can search by
+  name or town, or let the page find the cafes closest to you. Cafes that sit
+  close together are grouped into one circle with a count, and clicking it zooms
+  in and splits the group up, down to single cafes. Cafe names appear once you
+  are close enough to read them.
+- New setting under Settings, Profile: your page on repaircafe.org. Paste the
+  address of your cafe's page there and your own pin is marked on the globe with
+  a white marker and a ring, so visitors can see where you fit in.
+- Each part of the site now has its own picture when you share a link. Paste an
+  event into a group chat and you see its name, date and venue. Other sections
+  get a card in your own colours, and repair guides and volunteer pages show
+  their own photograph. Before this, every link looked the same.
+
+### Fixed
+
+- The "Their website" links on the world map went nowhere for many cafes. A lot
+  of addresses in the repaircafe.org directory are written without "https://" in
+  front, which a browser reads as a page on your own site.
+- You could see cafes on the far side of the planet through the globe.
+
+### Notes for people running this
+
+- The globe is drawn with CesiumJS, which needs a looser content security policy
+  than the rest of the site: it builds code from text and runs its map workers
+  from memory. That looser policy is applied to the /world page only. Every other
+  page, including sign-in and the admin area, keeps the strict one. See
+  `apps/web/src/hooks.server.ts`.
+- The container now installs a font (`fonts-dejavu-core`). Without one, the text
+  in the sharing pictures cannot be drawn at all.
+- CesiumJS is copied out of `node_modules` during the build rather than kept in
+  the repository, so a fresh checkout needs `pnpm install` before `pnpm build`.
+
 ## 2026-07-25
 
 ### Added

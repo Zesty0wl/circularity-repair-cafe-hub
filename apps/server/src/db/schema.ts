@@ -56,6 +56,7 @@ export const cafes = pgTable('cafes', {
   ogImageUrl: text('og_image_url'),
   plausibleDomain: text('plausible_domain'),
   plausibleSrc: text('plausible_src'),
+  repaircafeSlug: text('repaircafe_slug'),
   setupCompleted: boolean('setup_completed').notNull().default(false),
   allowSkipPhoto: boolean('allow_skip_photo').notNull().default(true),
   enableContactField: boolean('enable_contact_field').notNull().default(true),

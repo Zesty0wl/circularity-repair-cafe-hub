@@ -5,6 +5,23 @@ import { cafeSettingsSchema } from '@circularity/shared';
 import { asc, eq } from 'drizzle-orm';
 import { audit } from '../../utils/audit.js';
 import { saveValidatedImage, deleteImage } from '../../services/imageUpload.js';
+import { slugFromLink } from '../../services/repairCafeNetwork.js';
+
+/**
+ * Reduce whatever an admin pasted to a bare repaircafe.org slug.
+ * Accepts a full page address or the slug on its own. Returns null when the
+ * field is empty, which clears the setting.
+ */
+function normaliseRepaircafeSlug(value: string | null | undefined): string | null {
+  const raw = (value ?? '').trim();
+  if (!raw) return null;
+  const fromLink = slugFromLink(raw);
+  if (fromLink) return fromLink;
+  // Not a link, so treat it as a slug. Drop anything that is not a plausible
+  // slug character so a stray paste cannot reach the matcher.
+  const slug = raw.replace(/^\/+|\/+$/g, '').toLowerCase();
+  return /^[a-z0-9à-ſ._-]+$/.test(slug) ? slug : null;
+}
 
 export async function adminSettingsRoutes(app: FastifyInstance): Promise<void> {
   app.get('/api/admin/settings', async () => {
@@ -28,6 +45,11 @@ export async function adminSettingsRoutes(app: FastifyInstance): Promise<void> {
     const update: any = { updatedAt: new Date() };
     for (const k of ['name', 'tagline', 'description', 'websiteUrl', 'publicUrl', 'contactEmail', 'address', 'socialLinks', 'primaryColor', 'accentColor', 'headingFont', 'bodyFont', 'donateUrl']) {
       if ((data as any)[k] !== undefined) update[k] = (data as any)[k] === '' ? null : (data as any)[k];
+    }
+    // Admins can paste the whole repaircafe.org page address. Store just the
+    // slug, which is what the directory data matches on.
+    if (data.repaircafeSlug !== undefined) {
+      update.repaircafeSlug = normaliseRepaircafeSlug(data.repaircafeSlug);
     }
     const [updated] = await db.update(cafes).set(update).where(eq(cafes.id, cafe.id)).returning();
     await audit({ request, actorId: me.sub, actorType: me.role, action: 'cafe.updated', entityType: 'cafe', entityId: cafe.id });

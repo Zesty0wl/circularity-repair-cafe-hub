@@ -97,6 +97,7 @@
           headingFont: headingFontInput || null,
           bodyFont: bodyFontInput || null,
           donateUrl: cafe.donateUrl || null,
+          repaircafeSlug: cafe.repaircafeSlug || null,
           socialFacebook: cafe.socialFacebook || null, socialTwitter: cafe.socialTwitter || null,
           socialInstagram: cafe.socialInstagram || null,
         },
@@ -320,6 +321,15 @@
         <label class="label" for="du">Donate link <span class="font-normal text-slate-500">(optional)</span></label>
         <input id="du" class="input" type="url" placeholder="https://www.justgiving.com/…" bind:value={cafe.donateUrl} />
         <p class="text-xs text-slate-500 mt-1">Shown to guests after they check in and on their live tracker. Leave blank to hide.</p>
+      </div>
+      <div>
+        <label class="label" for="rc">Your page on repaircafe.org <span class="font-normal text-slate-500">(optional)</span></label>
+        <input id="rc" class="input" placeholder="https://www.repaircafe.org/cafe/your-cafe" bind:value={cafe.repaircafeSlug} />
+        <p class="text-xs text-slate-500 mt-1">
+          Paste the address of your cafe's page on repaircafe.org. We use it to highlight you on the
+          <a href="/world" class="text-brand-700 underline underline-offset-2" target="_blank" rel="noopener">world map</a>.
+          Leave blank if you are not listed yet.
+        </p>
       </div>
       <div>
         <label class="label" for="pc">Primary colour</label>

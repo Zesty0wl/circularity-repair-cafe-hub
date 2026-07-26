@@ -66,8 +66,12 @@ ENV DEBIAN_FRONTEND=noninteractive \
     S6_VERBOSITY=1
 
 # System deps
+# fonts-dejavu-core is small (about 1 MB) and is what lets the server draw text
+# into the social sharing images. Without a font installed, the text simply does
+# not appear. DejaVu covers the accents in names like "Repair Café".
 RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates curl gnupg locales tini xz-utils tzdata gosu lsb-release \
+        fonts-dejavu-core fontconfig \
     && install -d /usr/share/postgresql-common/pgdg \
     && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
         | gpg --dearmor -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.gpg \

@@ -250,6 +250,12 @@ const STATEMENTS: string[] = [
   // ── Optional donate link shown on guest receipt + tracker pages ──
   `ALTER TABLE cafes ADD COLUMN IF NOT EXISTS donate_url TEXT`,
 
+  // ── This cafe's own listing on repaircafe.org (additive, idempotent) ──
+  // Just the slug from the cafe's page URL, e.g. "repair-cafe-hattem" from
+  // https://www.repaircafe.org/cafe/repair-cafe-hattem. The world map page
+  // uses it to pick our own pin out of the worldwide directory.
+  `ALTER TABLE cafes ADD COLUMN IF NOT EXISTS repaircafe_slug TEXT`,
+
   // ── "Awaiting return": the repair is paused because the visitor is coming
   //    back with a part at a later session. Not finished, so it stays open.
   //    ADD VALUE is safe here because runMigrations applies each statement on

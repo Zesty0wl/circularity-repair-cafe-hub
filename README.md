@@ -33,10 +33,29 @@ hundreds of repairs, and yours to host on a £5/month VPS or a Pi in the corner.
   and after photos.
 - **Admin** — events (one-off and recurring), venues, skill categories, repairers,
   full repair history, CSV export, statistics dashboard.
+- **Repair guides** — search thousands of step-by-step guides from the
+  [iFixit API](https://www.ifixit.com/api-docs), with photographs, tools, parts and
+  numbered steps rendered in your own site's style. The server proxies and caches
+  the API, so visitors' searches stay between them and you. Guide text and photos
+  are iFixit's, shared under CC BY-NC-SA, and every guide links back to the original.
+- **Worldwide map** — a 3D globe of every Repair Café in the world, drawn from the
+  [repaircafe.org location API](https://www.repaircafe.org/en/api/). The server
+  mirrors the directory once a day and drops the contact email addresses before
+  passing it on, so the browser makes one same-origin request for the data. Cafés
+  that sit close together are grouped into one numbered circle; clicking it zooms
+  in and splits it up. The globe is drawn with [CesiumJS](https://cesium.com/platform/cesiumjs/)
+  over a dark OpenStreetMap style served by CARTO, the same map at every zoom, so
+  it holds together from the whole planet down to a single street. Set your own
+  repaircafe.org page under Settings and your cafe is marked on the globe.
+  Cesium needs a looser content security policy than the rest of the site; that
+  is applied to the `/world` page alone (see `apps/web/src/hooks.server.ts`).
 - **SEO + analytics** — every public page is server-rendered with Open Graph /
-  Twitter tags and schema.org structured data, plus an auto-generated sitemap,
-  so previews work in Facebook / LinkedIn / Slack and events can surface as rich
-  results. Optional [Plausible](https://plausible.io) integration; configurable
+  Twitter tags and schema.org structured data, plus an auto-generated sitemap.
+  Previews work in Facebook / LinkedIn / Slack and events can surface as rich
+  results. Sharing pictures are drawn per section in your own brand colours, so
+  every link does not look the same: an event shows its date and venue, while
+  repair guides and volunteer pages use their own photograph.
+  Optional [Plausible](https://plausible.io) integration; configurable
   favicon and meta description — all from the admin UI.
 - **Privacy by design** — bcrypt passwords, JWT + httpOnly refresh cookies,
   rate-limited login, CSP headers, configurable PII retention with one-click purge.

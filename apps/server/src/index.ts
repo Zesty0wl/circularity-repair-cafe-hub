@@ -15,6 +15,7 @@ import { setupRoutes } from './routes/setup.js';
 import { authRoutes } from './routes/auth.js';
 import { publicRoutes } from './routes/public.js';
 import { pwaRoutes } from './routes/pwa.js';
+import { ogRoutes } from './routes/og.js';
 import { checkInRoutes } from './routes/checkin.js';
 import { repairerRoutes } from './routes/repairer.js';
 import { adminRoutes } from './routes/admin/index.js';
@@ -76,6 +77,9 @@ async function start(): Promise<void> {
   // Progressive web app manifest + icons. Registered as real routes so they
   // take precedence over the SvelteKit fallback below.
   await app.register(pwaRoutes);
+  // Social sharing pictures. Registered as real routes so they take precedence
+  // over the SvelteKit fallback below.
+  await app.register(ogRoutes);
   await app.register(checkInRoutes);
   await app.register(repairerRoutes);
   await app.register(adminRoutes);

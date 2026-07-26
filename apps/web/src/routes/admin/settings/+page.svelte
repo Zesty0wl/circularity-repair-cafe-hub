@@ -801,7 +801,11 @@
         <div>
           <label class="label" for="ps">Script URL</label>
           <input id="ps" class="input" bind:value={cafe.plausibleSrc} placeholder="https://plausible.io/js/script.js" />
-          <p class="text-xs text-slate-500 mt-1">Use <code>https://plausible.io/js/script.js</code> for managed Plausible, or your self-hosted equivalent.</p>
+          <p class="text-xs text-slate-500 mt-1">
+            Use <code>https://plausible.io/js/script.js</code> for managed Plausible, or the same path on
+            your own server. Plausible also offers a per-site script whose address looks like
+            <code>/js/pa-XXXX.js</code>. Either works here.
+          </p>
         </div>
       </section>
 

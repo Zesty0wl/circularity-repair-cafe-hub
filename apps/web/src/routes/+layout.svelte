@@ -48,6 +48,9 @@
         /* an install offer is optional; never break the page over it */
       });
     }
+
+    // Some Plausible scripts wait to be told to start. See startPlausible.
+    if (plausibleEnabled) startPlausible();
   });
 
   // ── SEO/meta — centralised here so every route emits exactly one of each ──
@@ -75,6 +78,40 @@
   // site name registered in Plausible; src is the script URL (e.g.
   // https://plausible.io/js/script.js or a self-hosted instance).
   $: plausibleEnabled = Boolean(c?.plausibleDomain && c?.plausibleSrc);
+
+  /**
+   * Start Plausible when it needs starting.
+   *
+   * Plausible ships two kinds of script and they behave differently:
+   *
+   *  - The classic one (`/js/script.js`) reads the site name from the
+   *    `data-domain` attribute and records a page view on its own.
+   *  - The newer per-site one (`/js/pa-<id>.js`) has the site name and the
+   *    endpoint built into it, but it does nothing at all until something
+   *    calls `plausible.init()`. Paste that URL in on its own and no visit is
+   *    ever recorded, with no error to say why.
+   *
+   * So we ask it to start, which is what the second kind needs and what the
+   * first kind has already done for itself. Doing it from here rather than
+   * from a tag in the page keeps it inside our own bundle, so the strict
+   * content security policy needs no exception for inline scripts.
+   */
+  function startPlausible(): void {
+    let attempts = 0;
+    const tick = () => {
+      const p = (window as { plausible?: { l?: boolean; init?: () => void } }).plausible;
+      if (p) {
+        // `l` means it is already running. Only the newer script exposes an
+        // `init` that has not been called yet.
+        if (!p.l && typeof p.init === 'function') p.init();
+        return;
+      }
+      // The tag is deferred, so it may not have run yet. Give it a few
+      // seconds, then let it go: analytics is never worth a busy loop.
+      if (++attempts < 50) setTimeout(tick, 100);
+    };
+    tick();
+  }
 
   // ── Progressive web app ───────────────────────────────────────────────────
   // The manifest and the icons are built per cafe by the server. The icon

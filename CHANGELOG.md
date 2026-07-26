@@ -67,6 +67,14 @@ looked up rather than guessed, and a map of the Repair Cafes near you.
 - Photos in the gallery can be dragged into the order you want. Keyboard users
   can Tab to a photo's grip and use the arrow keys.
 
+### Fixed
+
+- Plausible recorded nothing when you used the per-site script address, the one
+  that looks like `/js/pa-XXXX.js`. That script has your site built into it but
+  waits to be told to start, and nothing was telling it, so no visit was ever
+  counted and no error said why. We now ask it to start. The classic
+  `/js/script.js` starts itself and is unaffected.
+
 ### Notes for people running this
 
 - The carbon reference data is seeded on every start, so a corrected figure

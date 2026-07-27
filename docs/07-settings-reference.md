@@ -118,6 +118,25 @@ count.
 
 See [Reports & GDPR](./06-reports-and-gdpr.md) for the full GDPR story.
 
+## Tab: Sharing our numbers
+
+Whether this cafe sends the project a short daily summary of what it has done.
+Nothing is sent until somebody chooses to, and you can change your mind at any
+time.
+
+| Setting | What it does |
+| --- | --- |
+| **Share our numbers** | Sends counts only: repairs done, sessions held, which version you run. No names, no text anybody typed, nothing about visitors or volunteers. |
+| **Show us on the community map** | Also sends your cafe's name and web address, so you appear on the public map of repair cafes with your figures beside you. |
+| **See exactly what would be sent** | Shows the real message, built from your own data. Not an example. |
+| **Delete everything you hold about us** | Asks the project to delete its copy, and stops sending. |
+
+The summary goes once a day and always carries running totals, so a session
+offline changes nothing: the next message carries the full picture.
+
+Someone running this server can rule it out entirely with `TELEMETRY_DISABLED=true`
+in the environment, in which case this tab says so and the choices do nothing.
+
 ## Tab: About
 
 Just version / source info. No settings.

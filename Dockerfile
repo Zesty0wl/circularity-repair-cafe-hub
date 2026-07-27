@@ -43,6 +43,11 @@ RUN pnpm --filter @circularity/shared build \
 # to be marked as "inject-workspace-packages" (which is the v10+ default).
 RUN pnpm --filter @circularity/server deploy --legacy --prod /app/server-bundle
 
+# The root package.json is the one place the app's version lives, and it does
+# not get copied into the runtime stage. Write it out so the runtime can read
+# it without us having to keep a second copy in step.
+RUN node -p "require('/app/package.json').version" > /app/APP_VERSION
+
 ###############################################################################
 # Stage 2 — runtime: Debian slim with PostgreSQL 16, Node 22, s6-overlay      #
 ###############################################################################
@@ -101,6 +106,7 @@ RUN set -eux; \
 # App
 WORKDIR /app
 COPY --from=builder /app/server-bundle           /app/server
+COPY --from=builder /app/APP_VERSION             /app/APP_VERSION
 # SvelteKit (adapter-node) build output. Self-contained (Rollup-bundled), so it
 # needs no node_modules at runtime. The server imports /app/web/handler.js to
 # serve the SSR pages + client assets in-process.

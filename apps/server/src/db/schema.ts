@@ -63,6 +63,27 @@ export const cafes = pgTable('cafes', {
    * at render time, so a cafe that moves or renames is right on our page too.
    */
   localCafeSlugs: text('local_cafe_slugs').array().default([]).notNull(),
+
+  // ── Telemetry ─────────────────────────────────────────────────────
+  // What this cafe agreed to share with the project, and what we need to keep
+  // in order to do it. Nothing is ever sent while the level is 'none'.
+  //   none      nobody has said yes. Also the state before anyone was asked.
+  //   standard  anonymous counts: repairs, sessions, version. No name.
+  //   community | the above plus the cafe's name and roughly where it is, so
+  //             | it appears on the public map.
+  telemetryLevel: text('telemetry_level').notNull().default('none'),
+  /** Who we are to the collector. Random, generated once, means nothing alone. */
+  telemetryInstallId: uuid('telemetry_install_id'),
+  /** Issued by the collector the first time we say hello. */
+  telemetryToken: text('telemetry_token'),
+  telemetryLastSentAt: timestamp('telemetry_last_sent_at', { withTimezone: true }),
+  /** When somebody last answered the question, either way. */
+  telemetryDecidedAt: timestamp('telemetry_decided_at', { withTimezone: true }),
+  /**
+   * The app version we last asked at. We ask again after an upgrade, and only
+   * once per version, so the offer stays open without becoming nagging.
+   */
+  telemetryPromptedVersion: text('telemetry_prompted_version'),
   // How much of a new purchase a repair is taken to prevent, and whether the
   // CO2 figure is worked out and shown at all.
   co2DisplacementRate: numeric('co2_displacement_rate', { precision: 4, scale: 3 }).notNull().default('0.5'),

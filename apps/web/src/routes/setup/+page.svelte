@@ -5,10 +5,11 @@
   import { loadCafe, loadSetupStatus } from '$lib/stores/cafe';
   import { FONT_OPTIONS } from '@circularity/shared';
   import ProgressBar from '$lib/components/ProgressBar.svelte';
+  import TelemetryChoice from '$lib/components/TelemetryChoice.svelte';
   import { CheckCircle2 } from 'lucide-svelte';
   import { onMount } from 'svelte';
 
-  const TOTAL = 7;
+  const TOTAL = 8;
   let step = 1;
 
   let admin = { displayName: '', email: '', password: '', confirm: '' };
@@ -28,6 +29,11 @@
     headingFont: '',
     bodyFont: '',
   };
+
+  // Sharing our numbers with the project. Ticked to start with, and the step
+  // says plainly what is and is not sent, so it is a choice rather than a
+  // default nobody saw.
+  let telemetryLevel: 'none' | 'standard' | 'community' = 'standard';
 
   let busy = false;
   let error = '';
@@ -122,6 +128,7 @@
           notes: venue.notes.trim() || null,
         },
         publicUrl: publicUrl.trim(),
+        telemetry: { level: telemetryLevel },
       };
       const body = await api<{ accessToken: string; user: any }>('/api/setup/complete', {
         method: 'POST',
@@ -288,6 +295,13 @@
           </div>
         </div>
       {:else if step === 7}
+        <h1 class="text-2xl font-semibold">One last thing</h1>
+        <p class="mt-2 text-slate-600">Entirely up to you, and easy to change later.</p>
+        <div class="mt-6">
+          <TelemetryChoice bind:level={telemetryLevel} cafeName={cafe.name || 'Your Repair Café'} />
+        </div>
+
+      {:else if step === 8}
         <h1 class="text-2xl font-semibold">Ready</h1>
         <p class="mt-2 text-slate-600">Review your setup:</p>
         <dl class="mt-6 space-y-2 text-sm">
@@ -305,12 +319,12 @@
         <p class="mt-4 text-sm text-rose-600">{error}</p>
       {/if}
 
-      {#if step > 1 && step < 7}
+      {#if step > 1 && step < 8}
         <div class="mt-8 flex justify-between">
           <button class="btn-ghost" type="button" on:click={prev}>Back</button>
           <button class="btn-primary" type="button" on:click={next}>Next</button>
         </div>
-      {:else if step === 7}
+      {:else if step === 8}
         <div class="mt-3"><button class="btn-ghost" type="button" on:click={prev}>Back</button></div>
       {/if}
     </div>

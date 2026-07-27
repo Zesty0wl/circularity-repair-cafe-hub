@@ -18,6 +18,16 @@ const envSchema = z.object({
   REFRESH_TOKEN_DAYS: z.coerce.number().int().positive().default(365),
   DATA_RETENTION_DEFAULT_DAYS: z.coerce.number().int().positive().default(365),
   EVENT_GENERATION_MONTHS: z.coerce.number().int().positive().default(12),
+  // ── Telemetry ────────────────────────────────────────────────────────────
+  // Where a cafe that has agreed sends its daily summary of counts.
+  TELEMETRY_ENDPOINT: z.string().default('https://repaircafetelemetry.bzwrd.co.uk'),
+  // Rules it out for the whole install, before anybody is asked. For someone
+  // running this on a client's behalf who wants the question settled in the
+  // compose file rather than the browser.
+  TELEMETRY_DISABLED: z
+    .string()
+    .default('false')
+    .transform((v) => v.toLowerCase() === 'true'),
   TZ: z.string().default('UTC'),
 });
 

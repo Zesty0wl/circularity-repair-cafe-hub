@@ -10,10 +10,11 @@
   import GalleryManager from '$lib/components/GalleryManager.svelte';
   import type { ManagedPhoto } from '$lib/gallery';
   import { MAX_LOCAL_CAFES, formatDistance, repairCafeOrgUrl, type LocalCafe } from '$lib/localCafes';
+  import TelemetryChoice from '$lib/components/TelemetryChoice.svelte';
 
   let cafe: any = null;
   let busy = false;
-  type Tab = 'profile' | 'home' | 'gallery' | 'local' | 'preferences' | 'seo' | 'gdpr' | 'backup' | 'about';
+  type Tab = 'profile' | 'home' | 'gallery' | 'local' | 'preferences' | 'seo' | 'gdpr' | 'telemetry' | 'backup' | 'about';
   let tab: Tab = 'profile';
 
   $: isSuperAdmin = $auth?.user.role === 'super_admin';
@@ -46,6 +47,63 @@
 
   // Gallery
   let gallery: ManagedPhoto[] = [];
+
+  // ── Sharing our numbers with the project ──────────────────────────
+  let telemetry: {
+    level: 'none' | 'standard' | 'community';
+    lastSentAt: string | null;
+    disabledByEnv: boolean;
+  } | null = null;
+  let telemetryLevel: 'none' | 'standard' | 'community' = 'none';
+  let telemetryPayload: unknown = null;
+  let telemetryMsg = '';
+  let telemetryErr = '';
+  let telemetryLoaded = false;
+
+  async function loadTelemetry() {
+    try {
+      telemetry = await api('/api/admin/telemetry');
+      telemetryLevel = telemetry?.level ?? 'none';
+      // The real payload, built from this cafe's own data. The whole point is
+      // that nobody has to take our word for what leaves the building.
+      const preview = await api<{ payload: unknown }>('/api/admin/telemetry/preview');
+      telemetryPayload = preview?.payload ?? null;
+      telemetryErr = '';
+    } catch (err: any) {
+      telemetryErr = err?.message ?? 'Could not read the telemetry settings';
+    } finally {
+      telemetryLoaded = true;
+    }
+  }
+
+  async function saveTelemetry() {
+    busy = true; telemetryMsg = ''; telemetryErr = '';
+    try {
+      const res = await api<{ sent: boolean; error: string | null }>('/api/admin/telemetry', {
+        method: 'PATCH', json: { level: telemetryLevel },
+      });
+      telemetryMsg = telemetryLevel === 'none'
+        ? 'Saved. Nothing more will be sent.'
+        : res.sent ? 'Saved and sent. Thank you.' : 'Saved. We could not reach the collector just now, so it will try again later.';
+      await loadTelemetry();
+    } catch (err: any) {
+      telemetryErr = err?.message ?? 'Could not save';
+    } finally { busy = false; }
+  }
+
+  async function forgetTelemetry() {
+    if (!confirm('Ask the project to delete everything it holds about this cafe, and stop sending?')) return;
+    busy = true; telemetryMsg = ''; telemetryErr = '';
+    try {
+      await api('/api/admin/telemetry/forget', { method: 'POST', json: {} });
+      telemetryMsg = 'Deleted. Nothing more will be sent.';
+      await loadTelemetry();
+    } catch (err: any) {
+      telemetryErr = err?.message ?? 'Could not reach the collector';
+    } finally { busy = false; }
+  }
+
+  $: if (tab === 'telemetry' && !telemetryLoaded) void loadTelemetry();
 
   // ── Neighbouring cafes we know and support ────────────────────────
   let localQuery = '';
@@ -368,7 +426,7 @@
 <h1 class="text-2xl font-bold">Settings</h1>
 
 <div class="mt-3 flex gap-2 flex-wrap">
-  {#each [['profile','Cafe profile'],['home','Home page'],['gallery','Gallery'],['local','Local cafes'],['preferences','Check-in & preferences'],['seo','SEO & analytics'],['gdpr','GDPR'], ...(isSuperAdmin ? [['backup','Backup & restore']] : []),['about','About']] as [key, label]}
+  {#each [['profile','Cafe profile'],['home','Home page'],['gallery','Gallery'],['local','Local cafes'],['preferences','Check-in & preferences'],['seo','SEO & analytics'],['gdpr','GDPR'],['telemetry','Sharing our numbers'], ...(isSuperAdmin ? [['backup','Backup & restore']] : []),['about','About']] as [key, label]}
     <button class="btn-{tab === key ? 'primary' : 'secondary'} btn-sm" on:click={() => (tab = key as Tab)}>{label}</button>
   {/each}
   <a href="/admin/settings/users" class="btn-secondary btn-sm">Users…</a>
@@ -738,6 +796,40 @@
       <div class="flex items-center justify-end gap-3 pt-2 border-t">
         {#if localSaved}<span class="text-sm text-emerald-700">Saved</span>{/if}
         <button class="btn-primary" on:click={saveLocalCafes} disabled={busy}>Save local cafes</button>
+      </div>
+    </div>
+  {/if}
+
+  {#if tab === 'telemetry'}
+    <div class="card p-6 mt-4 max-w-3xl space-y-5">
+      {#if telemetry?.disabledByEnv}
+        <div class="rounded-xl bg-slate-100 ring-1 ring-slate-200 p-3 text-sm text-slate-700">
+          <p class="font-semibold">Switched off for this whole install.</p>
+          <p class="mt-1">
+            <code>TELEMETRY_DISABLED=true</code> is set, so nothing is sent whatever is chosen here.
+            Whoever runs this server decided that.
+          </p>
+        </div>
+      {/if}
+
+      <TelemetryChoice bind:level={telemetryLevel} payload={telemetryPayload} cafeName={cafe?.name ?? ''} />
+
+      {#if telemetry?.lastSentAt}
+        <p class="text-xs text-slate-500">
+          Last sent {new Date(telemetry.lastSentAt).toLocaleString('en-GB')}.
+        </p>
+      {:else}
+        <p class="text-xs text-slate-500">Nothing has been sent yet.</p>
+      {/if}
+
+      {#if telemetryMsg}<p class="text-sm text-emerald-700">{telemetryMsg}</p>{/if}
+      {#if telemetryErr}<p class="text-sm text-rose-700">{telemetryErr}</p>{/if}
+
+      <div class="flex flex-wrap items-center justify-between gap-2 pt-3 border-t">
+        <button class="btn-ghost btn-sm text-rose-700" type="button" disabled={busy} on:click={forgetTelemetry}>
+          Delete everything you hold about us
+        </button>
+        <button class="btn-primary" type="button" disabled={busy} on:click={saveTelemetry}>Save</button>
       </div>
     </div>
   {/if}

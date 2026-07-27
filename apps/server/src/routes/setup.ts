@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { setupCompleteSchema } from '@circularity/shared';
 import { db } from '../db/index.js';
+import { APP_VERSION } from '../version.js';
 import { cafes, users, venues } from '../db/schema.js';
 import { hashPassword } from '../utils/password.js';
 import { audit } from '../utils/audit.js';
@@ -68,6 +69,11 @@ export async function setupRoutes(app: FastifyInstance): Promise<void> {
         headingFont: data.cafe.headingFont || null,
         bodyFont: data.cafe.bodyFont || null,
         publicUrl: data.publicUrl,
+        // The wizard asked, so this is a real answer either way. Recording the
+        // version too means we do not ask again until the next upgrade.
+        telemetryLevel: data.telemetry?.level ?? 'none',
+        telemetryDecidedAt: new Date(),
+        telemetryPromptedVersion: APP_VERSION,
         setupCompleted: true,
         updatedAt: new Date(),
       })

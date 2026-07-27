@@ -76,6 +76,16 @@ hundreds of repairs, and yours to host on a £5/month VPS or a Pi in the corner.
   repair guides and volunteer pages use their own photograph.
   Optional [Plausible](https://plausible.io) integration; configurable
   favicon and meta description — all from the admin UI.
+- **Optional, honest telemetry** — your hub can send the project a daily summary
+  of counts (repairs, sessions, version) so we can show what community repair
+  achieves across every cafe running this. The setup wizard asks, shows you the
+  real message before you agree, and nothing is ever sent until you say yes.
+  There is no free-text field in the message at all, so no item description,
+  note, visitor or volunteer can travel with it. Turn it off in Settings, or
+  rule it out for the whole install with `TELEMETRY_DISABLED=true`. The
+  collector that receives it is a separate, equally open project:
+  [circularity-repair-cafe-collector](https://github.com/Zesty0wl/circularity-repair-cafe-collector).
+  What gets sent and why is set out in [`docs/proposal-telemetry.md`](./docs/proposal-telemetry.md).
 - **Privacy by design** — bcrypt passwords, JWT + httpOnly refresh cookies,
   rate-limited login, CSP headers, configurable PII retention with one-click purge.
 - **Single container** — Node 22 + Fastify + PostgreSQL 16, supervised by

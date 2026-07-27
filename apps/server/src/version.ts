@@ -20,6 +20,25 @@ function readAppVersion(): string {
   // /app/apps/server/src/version.ts. Walk upwards until we find package.json
   // with "circularity-hub" name to be robust to either layout.
   const here = path.dirname(fileURLToPath(import.meta.url));
+
+  // 1. An explicit answer, for anyone building their own image.
+  const fromEnv = (process.env.APP_VERSION ?? '').trim();
+  if (fromEnv) return fromEnv;
+
+  // 2. Written into the image at build time from the root package.json. The
+  //    runtime stage does not contain that file, so without this every
+  //    container reported "0.0.0": no version telemetry, a backup manifest
+  //    that said nothing, and an upgrade prompt that could never notice an
+  //    upgrade. See the Dockerfile.
+  for (const candidate of ['/app/APP_VERSION', path.join(here, '..', 'APP_VERSION')]) {
+    try {
+      const raw = fs.readFileSync(candidate, 'utf8').trim();
+      if (/^\d+\.\d+\.\d+/.test(raw)) return raw;
+    } catch {
+      // try the next one
+    }
+  }
+
   let cursor = here;
   for (let i = 0; i < 8; i++) {
     const candidate = path.join(cursor, 'package.json');

@@ -3,8 +3,45 @@
   import { api } from '$lib/api';
   import { goto } from '$app/navigation';
   import { formatDistanceToNowStrict } from 'date-fns';
+  import { cafe } from '$lib/stores/cafe';
+  import TelemetryChoice from '$lib/components/TelemetryChoice.svelte';
+  import { X } from 'lucide-svelte';
 
   let data: any = null;
+
+  // ── Sharing our numbers with the project ──────────────────────────
+  // Only ever shown when nobody has said yes yet, and only once per version:
+  // the server decides, using the version it last asked at. So the offer comes
+  // back after an upgrade rather than nagging or disappearing forever.
+  let askTelemetry = false;
+  let telemetryLevel: 'none' | 'standard' | 'community' = 'standard';
+  let telemetryBusy = false;
+  let telemetryDone = '';
+
+  async function loadTelemetryPrompt() {
+    try {
+      const t = await api<{ shouldPrompt: boolean }>('/api/admin/telemetry');
+      askTelemetry = t?.shouldPrompt === true;
+    } catch {
+      askTelemetry = false;
+    }
+  }
+
+  async function saveTelemetry() {
+    telemetryBusy = true;
+    try {
+      await api('/api/admin/telemetry', { method: 'PATCH', json: { level: telemetryLevel } });
+      telemetryDone = telemetryLevel === 'none' ? 'Nothing will be sent.' : 'Thank you, that really helps.';
+      setTimeout(() => { askTelemetry = false; }, 2200);
+    } finally {
+      telemetryBusy = false;
+    }
+  }
+
+  async function dismissTelemetry() {
+    askTelemetry = false;
+    await api('/api/admin/telemetry/dismiss', { method: 'POST', json: {} }).catch(() => {});
+  }
   let timer: ReturnType<typeof setInterval> | null = null;
 
   // Turn an audit log row into "who did what" in plain English. The name is
@@ -80,6 +117,7 @@
 
   onMount(() => {
     load();
+    void loadTelemetryPrompt();
     timer = setInterval(load, 30000);
     return () => { if (timer) clearInterval(timer); };
   });
@@ -96,6 +134,32 @@
 </script>
 
 <h1 class="text-2xl font-bold mb-4">Dashboard</h1>
+
+{#if askTelemetry}
+  <!-- Quiet by design: a card in the flow of the page, not a dialog over it.
+       It can be dismissed, and it stays gone until the next upgrade. -->
+  <section class="card p-5 mb-4 ring-brand-200 bg-brand-50/40 relative">
+    <button
+      class="absolute top-3 right-3 p-1.5 rounded-lg text-slate-400 hover:bg-white hover:text-slate-700"
+      type="button"
+      aria-label="Not now"
+      on:click={dismissTelemetry}
+    >
+      <X size={16} />
+    </button>
+    {#if telemetryDone}
+      <p class="text-sm text-emerald-800 font-medium">{telemetryDone}</p>
+    {:else}
+      <TelemetryChoice bind:level={telemetryLevel} cafeName={$cafe?.name ?? 'Your Repair Café'} />
+      <div class="mt-4 flex flex-wrap gap-2">
+        <button class="btn-primary btn-sm" type="button" disabled={telemetryBusy} on:click={saveTelemetry}>
+          {telemetryLevel === 'none' ? 'Save' : 'Yes, share our numbers'}
+        </button>
+        <button class="btn-ghost btn-sm" type="button" on:click={dismissTelemetry}>Not now</button>
+      </div>
+    {/if}
+  </section>
+{/if}
 
 {#if !data}
   <p class="text-slate-500">Loading…</p>

@@ -2,6 +2,56 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
+## 1.1.0 — 27 July 2026
+
+### Added
+
+- Your hub can now send the project a short summary of what you have achieved,
+  once a day, if you choose to. It is how we can finally show what community
+  repair adds up to across every cafe running this. The setup wizard asks, with
+  the offer already ticked, and shows you the exact message it would send,
+  built from your own data rather than an example.
+- Counts only: repairs done, sessions held, which version you run. No names, no
+  text anybody typed, nothing at all about visitors or volunteers. There is no
+  field for free text anywhere in the message, so nothing personal can travel
+  even by accident.
+- You can also choose to appear on a public map of repair cafes with your
+  figures beside you. That one is a separate tick, and starts unticked, because
+  it puts your cafe's name on a page we run.
+- A new "Sharing our numbers" tab in Settings to change your mind, see the exact
+  message, or ask us to delete everything we hold about you.
+
+### Notes for people running this
+
+- **Nothing is sent until somebody says yes.** Upgrading an existing cafe sends
+  nothing: a quiet card appears on the dashboard offering the choice, and it can
+  be dismissed. It comes back once after each upgrade, never more often.
+- `TELEMETRY_DISABLED=true` in the environment rules it out for the whole
+  install before anyone is asked, for anyone running this on someone else's
+  behalf.
+- Summaries go to `repaircafetelemetry.bzwrd.co.uk`, changeable with
+  `TELEMETRY_ENDPOINT`. The collector is MIT-licensed and holds no personal data.
+- Six additive columns on `cafes`, all defaulting to off. The install id is a
+  random UUID that identifies nothing but the install.
+- The collector is a separate open-source project:
+  [circularity-repair-cafe-collector](https://github.com/Zesty0wl/circularity-repair-cafe-collector).
+  Read it before deciding whether to switch this on.
+
+### Fixed
+
+- Every container reported its version as `0.0.0`. The version is read from the
+  root `package.json`, which is not copied into the runtime image, so the
+  lookup always fell through to its fallback. Backups recorded `0.0.0` in their
+  manifest, and the new upgrade prompt could never have noticed an upgrade,
+  because the version it compares against never changed. The build now writes
+  the version into the image, and `APP_VERSION` in the environment overrides it.
+
+### Notes on releasing
+
+- **Bump the version in `package.json` for every release.** The prompt that
+  offers telemetry to an existing cafe fires once per version. A release that
+  does not move the number means no cafe is ever asked again.
+
 ## 2026-07-26 (later the same day)
 
 A big release in three parts: photos of your sessions, a carbon figure that is

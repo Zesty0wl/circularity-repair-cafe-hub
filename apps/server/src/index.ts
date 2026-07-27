@@ -20,6 +20,7 @@ import { checkInRoutes } from './routes/checkin.js';
 import { repairerRoutes } from './routes/repairer.js';
 import { eventGalleryRoutes } from './routes/eventGallery.js';
 import { adminRoutes } from './routes/admin/index.js';
+import { startTelemetrySchedule } from './services/telemetry.js';
 
 // Shape of the SvelteKit (adapter-node) request handler: a connect-style
 // middleware that takes the raw Node req/res plus a `next` callback.
@@ -140,6 +141,11 @@ async function start(): Promise<void> {
       }
     });
   });
+
+  // Once a day, and only if this cafe has agreed to it. Started last so
+  // nothing about it can delay the server coming up, and it does nothing at
+  // all until somebody has answered the question. See services/telemetry.ts.
+  startTelemetrySchedule(app.log);
 
   await app.listen({ host: env.HOST, port: env.PORT });
   app.log.info(`Circularity Hub listening on ${env.HOST}:${env.PORT}`);

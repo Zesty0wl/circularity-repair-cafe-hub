@@ -264,6 +264,19 @@ const STATEMENTS: string[] = [
   // the directory when a page is drawn, so nothing here can go stale.
   `ALTER TABLE cafes ADD COLUMN IF NOT EXISTS local_cafe_slugs TEXT[] NOT NULL DEFAULT '{}'`,
 
+  // ── Telemetry (additive, idempotent) ──────────────────────────────
+  // Starts at 'none' on purpose. An install that upgrades into this sends
+  // nothing until somebody has been asked and has said yes.
+  `ALTER TABLE cafes ADD COLUMN IF NOT EXISTS telemetry_level TEXT NOT NULL DEFAULT 'none'`,
+  `ALTER TABLE cafes ADD COLUMN IF NOT EXISTS telemetry_install_id UUID`,
+  `ALTER TABLE cafes ADD COLUMN IF NOT EXISTS telemetry_token TEXT`,
+  `ALTER TABLE cafes ADD COLUMN IF NOT EXISTS telemetry_last_sent_at TIMESTAMPTZ`,
+  `ALTER TABLE cafes ADD COLUMN IF NOT EXISTS telemetry_decided_at TIMESTAMPTZ`,
+  `ALTER TABLE cafes ADD COLUMN IF NOT EXISTS telemetry_prompted_version TEXT`,
+  // Generated once and then left alone. It identifies this install to the
+  // collector and nothing else: it is not derived from anything about the cafe.
+  `UPDATE cafes SET telemetry_install_id = gen_random_uuid() WHERE telemetry_install_id IS NULL`,
+
   // ── "Awaiting return": the repair is paused because the visitor is coming
   //    back with a part at a later session. Not finished, so it stays open.
   //    ADD VALUE is safe here because runMigrations applies each statement on

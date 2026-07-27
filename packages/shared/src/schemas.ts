@@ -77,6 +77,11 @@ export const setupCompleteSchema = z.object({
     notes: z.string().max(1000).optional().nullable(),
   }),
   publicUrl: z.string().url('Please enter a valid URL'),
+  // What the cafe agreed to share with the project. Optional so an older
+  // client, or a scripted setup, still works: leaving it out shares nothing.
+  telemetry: z
+    .object({ level: z.enum(['none', 'standard', 'community']) })
+    .optional(),
 });
 
 export type SetupCompletePayload = z.infer<typeof setupCompleteSchema>;

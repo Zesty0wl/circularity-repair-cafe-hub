@@ -36,14 +36,25 @@
 
   const dispatch = createEventDispatcher<{ select: NetworkCafe }>();
 
-  // Fixed colours rather than the cafe's brand palette. The map underneath is
-  // dark, and a cafe that picks a dark brand colour would have pins nobody
-  // could see.
-  const PIN = '#f4a91b';
-  const MINE = '#ffffff';
+  // Fixed colours rather than the cafe's brand palette. A cafe that picked a
+  // pale brand colour would have pins nobody could see against the map.
+  //
+  // Deep green for a cafe and amber for us. Neither appears in the map
+  // underneath, which keeps to creams, pale greens and light blues, so a pin is
+  // never mistaken for a road or a park.
+  const PIN = '#0f5c4e';
+  const MINE = '#e07a1f';
 
-  /** The same dark map the globe used, from OpenStreetMap by way of CARTO. */
-  const TILE_URL = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+  /**
+   * The OpenStreetMap look, served by CARTO.
+   *
+   * These are OpenStreetMap's own roads, parks and place names, drawn in
+   * CARTO's Voyager style. We do not use tile.openstreetmap.org itself: that
+   * service is donated, and the people who run it ask that software handed out
+   * to other people does not point at it. This hub is meant to be installed by
+   * any cafe that wants it, so every copy would be doing exactly that.
+   */
+  const TILE_URL = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
   const TILE_ATTRIBUTION =
     '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>';
 
@@ -84,7 +95,7 @@
       className: 'world-pin',
       html:
         `<span style="display:block;width:${size}px;height:${size}px;border-radius:9999px;` +
-        `background:${colour};box-shadow:0 0 0 ${ringWidth}px ${ring},0 1px 5px rgba(0,0,0,.65)"></span>`,
+        `background:${colour};box-shadow:0 0 0 ${ringWidth}px ${ring},0 1px 4px rgba(0,0,0,.35)"></span>`,
       iconSize: [size, size],
       iconAnchor: [size / 2, size / 2],
     });
@@ -98,9 +109,9 @@
       html:
         `<span style="display:flex;align-items:center;justify-content:center;` +
         `width:${size}px;height:${size}px;border-radius:9999px;` +
-        `background:rgba(244,169,27,.94);color:#2b1a02;font-weight:700;` +
+        `background:${PIN};color:#fff;font-weight:700;` +
         `font-size:${size < 30 ? 11 : 12}px;line-height:1;` +
-        `box-shadow:0 0 0 2px rgba(255,255,255,.9),0 2px 7px rgba(0,0,0,.55)">${count}</span>`,
+        `box-shadow:0 0 0 2px rgba(255,255,255,.95),0 2px 7px rgba(0,0,0,.25)">${count}</span>`,
       iconSize: [size, size],
       iconAnchor: [size / 2, size / 2],
     });
@@ -123,8 +134,8 @@
     const chosen = sameCafe(cafe, selected);
     const marker = L.marker([cafe.lat, cafe.lng], {
       icon: chosen
-        ? dotIcon(16, MINE, 'rgba(0,0,0,.55)', 2)
-        : dotIcon(10, PIN, 'rgba(0,0,0,.55)', 1.5),
+        ? dotIcon(16, PIN, '#ffffff', 3)
+        : dotIcon(10, PIN, 'rgba(255,255,255,.95)', 2),
       // Nothing inside the map takes keyboard focus. The map is one image as
       // far as a screen reader is concerned, and the panel beside it is the
       // way to reach every cafe by keyboard.
@@ -169,7 +180,7 @@
     if (!mine) return;
     const chosen = sameCafe(mine, selected);
     const marker = L.marker([mine.lat, mine.lng], {
-      icon: dotIcon(chosen ? 22 : 18, MINE, 'rgba(244,169,27,.95)', 3),
+      icon: dotIcon(chosen ? 22 : 18, MINE, '#ffffff', 3),
       keyboard: false,
       title: `${mine.name} (that is us)`,
       zIndexOffset: 1000,
@@ -308,16 +319,15 @@
   .world-stage {
     width: 100%;
     height: 100%;
-    /* The tiles are almost black, so anything showing through before they load
-       should be too. */
-    background: #05100e;
+    /* What shows through until the tiles arrive. */
+    background: #eef1ec;
   }
 
   .world-fallback {
     position: absolute;
     inset: auto 1rem 1rem;
     text-align: center;
-    color: rgb(226 232 240);
+    color: rgb(71 85 105);
     font-size: 0.875rem;
   }
 
@@ -333,45 +343,39 @@
     z-index: 1;
   }
 
-  /* CARTO's dark map is built to sit under bright overlays, so on its own it is
-     nearly black and the place names are hard to pick out. */
-  .world-stage :global(.leaflet-tile-pane) {
-    filter: brightness(1.45) contrast(1.05);
-  }
-
   /* The pins are our own HTML, so clear Leaflet's default box. */
   .world-stage :global(.world-pin) {
     background: transparent;
     border: 0;
   }
 
-  /* Café names, as a quiet label rather than Leaflet's white speech bubble. */
+  /* Café names, as a quiet label rather than Leaflet's speech bubble. */
   .world-stage :global(.world-label) {
     padding: 2px 7px;
     border: 0;
     border-radius: 0.4rem;
-    background: rgba(4, 16, 14, 0.85);
-    color: #ffd591;
+    background: rgba(255, 255, 255, 0.94);
+    color: rgb(30 41 59);
     font-size: 0.75rem;
     font-weight: 600;
     white-space: nowrap;
-    box-shadow: none;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.22);
   }
   .world-stage :global(.world-label-on) {
+    background: #0f5c4e;
     color: #fff;
   }
   .world-stage :global(.world-label::before) {
     display: none;
   }
 
-  /* OpenStreetMap and CARTO both ask to be credited, so the credit stays. It is
-     toned down to suit the dark map. */
+  /* OpenStreetMap and CARTO both ask to be credited, so the credit stays. */
   .world-stage :global(.leaflet-control-attribution) {
-    background: rgba(4, 16, 14, 0.7);
-    color: rgba(255, 255, 255, 0.55);
+    background: rgba(255, 255, 255, 0.82);
+    color: rgb(100 116 139);
     font-size: 10px;
   }
   .world-stage :global(.leaflet-control-attribution a) {
-    color: rgba(255, 255, 255, 0.75);
+    color: rgb(51 65 85);
   }
 </style>

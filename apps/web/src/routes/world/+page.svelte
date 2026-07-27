@@ -138,7 +138,7 @@
           <div class="map-state">
             <p>We could not load the worldwide map just now.</p>
             <a
-              class="underline underline-offset-4 hover:text-white"
+              class="underline underline-offset-4 hover:text-brand-800"
               href="https://www.repaircafe.org/en/visit/"
               target="_blank"
               rel="noopener"
@@ -233,7 +233,7 @@
             it. Click a circle to zoom in and split it up. Drag the map to move around,
             and click any pin to see that café.
             {#if ours}
-              Ours is the white pin with a ring around it.
+              Ours is the orange pin, and every other café is green.
             {/if}
           </p>
         {/if}
@@ -374,17 +374,15 @@
 <SiteFooter />
 
 <style>
-  /* A deep, softly lit backdrop, so the map reads as one panel rather than a
-     picture dropped on the page. The tint follows the cafe's own brand
-     colour. */
+  /* A softly tinted band, the same one the rest of the site uses, so the map
+     reads as part of the page rather than a picture dropped on it. The tint
+     follows the cafe's own brand colour. */
   .map-band {
-    background:
-      radial-gradient(
-        60rem 40rem at 50% 28%,
-        rgb(var(--brand-700) / 0.5),
-        transparent 70%
-      ),
-      linear-gradient(180deg, #061512 0%, #04100e 100%);
+    background: rgb(var(--brand-50));
+    /* No line along the top: the page heading above uses this same tint, so the
+       two run together as one opening block. The section below is a different
+       colour, which is what the bottom line tidies up. */
+    border-bottom: 1px solid rgb(var(--brand-100));
   }
 
   .map-frame {
@@ -393,6 +391,9 @@
     height: min(70vh, 34rem);
     border-radius: 1.25rem;
     overflow: hidden;
+    /* Its own background, for the moments before the map itself is there. */
+    background: rgb(241 245 249);
+    box-shadow: 0 0 0 1px rgb(226 232 240);
   }
   @media (min-width: 1024px) {
     .map-frame {
@@ -400,12 +401,11 @@
     }
   }
 
-  /* Readouts sit on top of the canvas. */
+  /* Readouts sit on top of the map, so they carry their own background. */
   .map-counts,
   .map-tools {
     position: absolute;
     pointer-events: none;
-    color: #fff;
     /* Above Leaflet's own controls, which sit in the same corners. */
     z-index: 2;
   }
@@ -414,15 +414,19 @@
     /* Clear of Leaflet's credit, which on a narrow screen is a bar across the
        whole width of the map. */
     bottom: 1.6rem;
+    padding: 0.35rem 0.6rem;
+    border-radius: 0.6rem;
+    background: rgba(255, 255, 255, 0.92);
+    color: rgb(30 41 59);
     font-size: 0.85rem;
-    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
+    box-shadow: 0 1px 6px rgba(15, 23, 42, 0.16);
   }
   .map-counts strong {
     font-size: 1.05rem;
     font-weight: 600;
   }
   .map-counts .muted {
-    color: rgba(255, 255, 255, 0.6);
+    color: rgb(100 116 139);
   }
   /* Top right, so the buttons never sit on top of the counts on a narrow
      screen. */
@@ -439,16 +443,17 @@
     gap: 0.35rem;
     padding: 0.4rem 0.75rem;
     border-radius: 0.6rem;
-    background: rgba(255, 255, 255, 0.12);
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    color: #fff;
+    background: rgba(255, 255, 255, 0.94);
+    border: 1px solid rgb(226 232 240);
+    color: rgb(30 41 59);
     font-size: 0.8rem;
     font-weight: 500;
-    backdrop-filter: blur(6px);
+    box-shadow: 0 1px 5px rgba(15, 23, 42, 0.14);
     transition: background-color 0.15s ease;
   }
   .map-btn:hover {
-    background: rgba(255, 255, 255, 0.22);
+    background: #fff;
+    border-color: rgb(var(--brand-300));
   }
 
   .map-state {
@@ -460,14 +465,17 @@
     height: 100%;
     padding: 2rem;
     text-align: center;
-    color: rgba(255, 255, 255, 0.75);
+    color: rgb(71 85 105);
+  }
+  .map-state a {
+    color: rgb(var(--brand-700));
   }
   .spinner {
     width: 1.75rem;
     height: 1.75rem;
     border-radius: 9999px;
-    border: 2px solid rgba(255, 255, 255, 0.25);
-    border-top-color: #fff;
+    border: 2px solid rgb(203 213 225);
+    border-top-color: rgb(var(--brand-600));
     animation: spin 0.9s linear infinite;
   }
   @keyframes spin {
@@ -488,9 +496,9 @@
     gap: 0.75rem;
     padding: 1rem;
     border-radius: 1.25rem;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    color: #fff;
+    background: #fff;
+    border: 1px solid rgb(226 232 240);
+    color: rgb(30 41 59);
     /* Hug the content rather than stretching to the height of the map, so an
        empty panel is not a tall empty box. */
     align-self: start;
@@ -503,32 +511,34 @@
     gap: 0.5rem;
     padding: 0.6rem 0.75rem;
     border-radius: 0.7rem;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgb(248 250 252);
+    border: 1px solid rgb(226 232 240);
+  }
+  .search-row:focus-within {
+    border-color: rgb(var(--brand-400));
   }
   .search-input {
     flex: 1;
     min-width: 0;
     background: transparent;
     border: 0;
-    color: #fff;
+    color: rgb(30 41 59);
     font-size: 0.9rem;
   }
   .search-input::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: rgb(100 116 139);
   }
   .search-input:focus {
     outline: none;
   }
-  /* The browser's own clear button is a dark blue cross, which disappears on
-     this panel. */
+  /* Match the browser's own clear button to the panel's text colour. */
   .search-input::-webkit-search-cancel-button {
     -webkit-appearance: none;
     appearance: none;
     width: 0.85rem;
     height: 0.85rem;
     cursor: pointer;
-    background-color: rgba(255, 255, 255, 0.65);
+    background-color: rgb(100 116 139);
     mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M18 6 6 18M6 6l12 12'/%3E%3C/svg%3E")
       center / contain no-repeat;
   }
@@ -540,15 +550,16 @@
     gap: 0.4rem;
     padding: 0.55rem 0.75rem;
     border-radius: 0.7rem;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    color: #fff;
+    background: rgb(248 250 252);
+    border: 1px solid rgb(226 232 240);
+    color: rgb(30 41 59);
     font-size: 0.85rem;
     font-weight: 500;
     transition: background-color 0.15s ease;
   }
   .near-btn:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgb(var(--brand-50));
+    border-color: rgb(var(--brand-300));
   }
   .near-btn:disabled {
     opacity: 0.55;
@@ -559,12 +570,12 @@
     font-weight: 700;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.55);
+    color: rgb(100 116 139);
   }
   .panel-note {
     font-size: 0.8rem;
     line-height: 1.5;
-    color: rgba(255, 255, 255, 0.65);
+    color: rgb(71 85 105);
   }
 
   .result-list {
@@ -589,7 +600,7 @@
   }
   .result:hover,
   .result:focus-visible {
-    background: rgba(255, 255, 255, 0.12);
+    background: rgb(var(--brand-50));
     outline: none;
   }
   .result-name {
@@ -598,7 +609,7 @@
   }
   .result-meta {
     font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.55);
+    color: rgb(100 116 139);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -608,8 +619,8 @@
     position: relative;
     padding: 0.85rem 0.9rem;
     border-radius: 0.8rem;
-    background: rgba(255, 255, 255, 0.12);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgb(var(--brand-50));
+    border: 1px solid rgb(var(--brand-200));
   }
   .selected-close {
     position: absolute;
@@ -617,11 +628,11 @@
     right: 0.5rem;
     padding: 0.2rem;
     border-radius: 0.4rem;
-    color: rgba(255, 255, 255, 0.6);
+    color: rgb(100 116 139);
   }
   .selected-close:hover {
-    color: #fff;
-    background: rgba(255, 255, 255, 0.15);
+    color: rgb(15 23 42);
+    background: rgb(var(--brand-100));
   }
   .selected-name {
     padding-right: 1.5rem;
@@ -632,12 +643,12 @@
     margin-top: 0.15rem;
     font-size: 0.75rem;
     font-weight: 600;
-    color: #fbbf24;
+    color: rgb(var(--accent-600));
   }
   .selected-address {
     margin-top: 0.3rem;
     font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.7);
+    color: rgb(71 85 105);
   }
   .selected-links {
     margin-top: 0.5rem;
@@ -652,9 +663,9 @@
     font-size: 0.8rem;
     text-decoration: underline;
     text-underline-offset: 2px;
-    color: rgba(255, 255, 255, 0.85);
+    color: rgb(var(--brand-700));
   }
   .selected-links a:hover {
-    color: #fff;
+    color: rgb(var(--brand-800));
   }
 </style>

@@ -2,6 +2,23 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
+## 1.4.1 — 27 July 2026
+
+### Changed
+
+- The Worldwide map now uses the OpenStreetMap look: real roads, parks, rivers
+  and place names in colour, instead of the near-black style it inherited from
+  the globe. It is easier to tell where a café actually is.
+- The map, the panel beside it and the band they sit in are now light, to match
+  the rest of the site. The dark backdrop was there to make the globe look like
+  a planet in space, which no longer means anything.
+- Cafés are green pins and groups are green circles. Our own café is orange, so
+  it stands out from the rest without needing a different shape.
+- The tiles come from CARTO rather than from OpenStreetMap's own servers. Those
+  servers run on donated capacity, and the people who look after them ask that
+  software handed out to other people does not point at them. Any café can
+  install this hub, so every copy would have been doing exactly that.
+
 ## 1.4.0 — 27 July 2026
 
 ### Changed

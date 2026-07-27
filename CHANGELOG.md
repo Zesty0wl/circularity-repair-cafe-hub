@@ -2,6 +2,20 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
+## 1.2.0 — 27 July 2026
+
+### Added
+
+- Your hub can now prove it is real. It serves a small public endpoint,
+  `/api/public/telemetry`, carrying the install id the collector already knows
+  plus the same counts your site publishes anyway. The collector fetches it and
+  checks the id matches, so only a hub genuinely running at your address is
+  counted in the community figures. Nothing new leaves your building: the id
+  identifies an install to us and means nothing to anybody else, and every
+  figure is already on `/api/public/stats`.
+- The endpoint answers `404` when you have not agreed to share, so switching
+  telemetry off also stops it answering.
+
 ## 1.1.0 — 27 July 2026
 
 ### Added

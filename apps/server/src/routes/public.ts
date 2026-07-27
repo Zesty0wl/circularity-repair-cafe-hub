@@ -134,6 +134,69 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
     };
   });
 
+  // ── Proving this hub is real ────────────────────────────────────────────
+  // The telemetry collector cannot tell a real cafe from somebody with curl,
+  // so it does not take our word for it: it fetches this endpoint and checks
+  // that the install id here matches the one that was sent to it. Only a hub
+  // that genuinely runs at this address can answer.
+  //
+  // This is the same idea as an ACME HTTP-01 challenge. The install id is a
+  // random value that identifies this install to the collector and means
+  // nothing to anybody else, and every figure below is already public on
+  // /api/public/stats. See docs/proposal-telemetry.md.
+  //
+  // Answering at all is a form of consent, so a cafe that has not agreed to
+  // share gets a 404 rather than a payload.
+  app.get('/api/public/telemetry', async (_request, reply) => {
+    const [cafe] = await db
+      .select({
+        level: cafes.telemetryLevel,
+        installId: cafes.telemetryInstallId,
+        name: cafes.name,
+      })
+      .from(cafes)
+      .limit(1);
+
+    if (!cafe || cafe.level === 'none' || !cafe.installId) {
+      reply.code(404).send({ error: 'Not shared', code: 'telemetry/not_shared' });
+      return;
+    }
+
+    const totals = await db.execute(sql`
+      SELECT
+        COUNT(*)::int                                                          AS recorded,
+        COUNT(*) FILTER (WHERE status = 'completed')::int                      AS fixed,
+        COUNT(*) FILTER (WHERE status = 'cannot_repair')::int                  AS not_fixed,
+        COALESCE(SUM(co2_saving_kg) FILTER (WHERE status = 'completed'), 0)::float AS co2_kg
+      FROM repair_jobs
+    `);
+    const t = (totals.rows[0] ?? {}) as Record<string, unknown>;
+
+    const others = await db.execute(sql`
+      SELECT
+        (SELECT COUNT(*)::int FROM events WHERE status IN ('completed','active'))          AS sessions,
+        (SELECT COUNT(*)::int FROM users WHERE is_active AND role <> 'super_admin')        AS volunteers
+    `);
+    const o = (others.rows[0] ?? {}) as Record<string, unknown>;
+
+    // Never cached: a stale answer would let a hub look verified after it had
+    // stopped sharing.
+    void reply.header('Cache-Control', 'no-store');
+    return {
+      installId: cafe.installId,
+      level: cafe.level,
+      // Sent only at the Community level, where the cafe already asked to be
+      // named in public.
+      name: cafe.level === 'community' ? cafe.name || null : null,
+      repairsRecorded: Number(t.recorded ?? 0),
+      repairsFixed: Number(t.fixed ?? 0),
+      repairsNotFixed: Number(t.not_fixed ?? 0),
+      sessionsHeld: Number(o.sessions ?? 0),
+      volunteers: Number(o.volunteers ?? 0),
+      co2SavedKg: Math.round(Number(t.co2_kg ?? 0) * 10) / 10,
+    };
+  });
+
   // ── Repair guides from iFixit ───────────────────────────────────────────
   // Proxied and cached, so visitors' searches stay between them and us. See
   // services/ifixit.ts.

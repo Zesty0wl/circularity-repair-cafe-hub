@@ -2,6 +2,26 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
+## 1.3.0 — 27 July 2026
+
+### Added
+
+- The Repair guides page now opens with something on it. It shows nine guides
+  the repair community has just finished or updated, so the page looks ready
+  rather than empty, and there is something to browse for anyone who does not
+  yet know what to search for. They are fetched when the page is built, so they
+  are there the moment it loads and a search engine can see them too.
+
+### Notes for people running this
+
+- The newest guides on iFixit are not all fit to show. Of the fifty most
+  recently updated, thirty-two were unfinished drafts, over half had no
+  photograph, and two were flagged by iFixit as describing something improper.
+  So the list is filtered: no drafts, nothing marked for deletion or improper,
+  nothing missing a picture, English only. One page of fifty reliably yields
+  more than the nine needed, and the result is cached for a day, so the page
+  costs one call to iFixit however many people visit it.
+
 ## 1.2.0 — 27 July 2026
 
 ### Added

@@ -15,7 +15,7 @@ import { and, asc, desc, eq, gte, ne, sql } from 'drizzle-orm';
 import { iconVersion } from '../services/pwaIcons.js';
 import { uploadUrl } from '../services/imageUpload.js';
 import { findOurs, getNetwork, resolveSlugs } from '../services/repairCafeNetwork.js';
-import { getGuide, searchGuides } from '../services/ifixit.js';
+import { getGuide, recentGuides, searchGuides } from '../services/ifixit.js';
 import { co2Settings, listFactors } from '../services/co2.js';
 
 /** How many photos the site's main gallery will ever return. */
@@ -218,6 +218,19 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
         code: 'guides/unavailable',
       });
       return;
+    }
+  });
+
+  // Something to look at before anybody has typed anything. The page used to
+  // open empty, which made it look broken rather than ready.
+  app.get('/api/public/guides/recent', async (_request, reply) => {
+    try {
+      const guides = await recentGuides(9);
+      void reply.header('Cache-Control', 'public, max-age=3600');
+      return { guides };
+    } catch {
+      // A quiet empty list: the page has a search box and works without this.
+      return { guides: [] };
     }
   });
 

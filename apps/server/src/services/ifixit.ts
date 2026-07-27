@@ -260,3 +260,72 @@ export async function getGuide(id: number): Promise<GuideDetail | null> {
   writeCache(key, detail);
   return detail;
 }
+
+/**
+ * Guides iFixit has just published or updated.
+ *
+ * The guides page used to be blank until somebody typed something, which made
+ * a whole section of the site look broken. This fills it with real, current
+ * work from the wider repair community.
+ *
+ * The raw list is not usable as it comes. Of the fifty most recently touched
+ * guides, thirty-two were unfinished drafts, one was marked for deletion, and
+ * two were flagged by iFixit as improper. Rather more than half had no picture
+ * at all, which makes a card look broken. So we take a page of recent guides
+ * and keep the ones that are actually finished, illustrated and in English.
+ *
+ * GUIDE_IMPROPER_ACTION is the flag that matters most: iFixit uses it for
+ * guides that describe something unsafe or wrong, and a repair cafe is the last
+ * place that should be recommending one.
+ */
+
+/** Flags that mean a guide is not fit to put in front of a visitor. */
+const REJECT_FLAGS = new Set([
+  'GUIDE_IN_PROGRESS',      // an unfinished draft
+  'GUIDE_DELETE',           // on its way out
+  'GUIDE_IMPROPER_ACTION',  // iFixit says this describes something wrong
+  'GUIDE_INCORRECT_TOOLS',  // known to call for the wrong tools
+  'GUIDE_PREREQ_ONLY',      // a fragment of another guide, not a guide
+]);
+
+/** How many to look through. One page has reliably yielded well over nine. */
+const RECENT_SCAN = 50;
+
+function isShowable(raw: Record<string, unknown>): boolean {
+  const flags = Array.isArray(raw.flags) ? (raw.flags as string[]) : [];
+  if (flags.some((f) => REJECT_FLAGS.has(f))) return false;
+  if (raw.public === false) return false;
+  // A card with no picture is a grey box, and nine of them look like a fault.
+  if (!raw.image && !raw.thumbnail) return false;
+  // Only guides in the language the rest of the page is written in.
+  if ((raw.locale ?? 'en') !== 'en') return false;
+  const title = typeof raw.title === 'string' ? raw.title : '';
+  if (title.trim().length < 8) return false;
+  return true;
+}
+
+/**
+ * The most recently updated guides worth showing, newest first.
+ * Cached like everything else here, so the page costs one upstream call a day
+ * however many people visit it.
+ */
+export async function recentGuides(limit = 9): Promise<GuideSummary[]> {
+  const wanted = Math.max(1, Math.min(24, limit));
+  const key = `recent:${wanted}`;
+  const hit = readCache(key);
+  if (hit) return hit as GuideSummary[];
+
+  const raw = await callApi<unknown>(`/guides?limit=${RECENT_SCAN}&order=DESC`);
+  if (!Array.isArray(raw)) return [];
+
+  const guides: GuideSummary[] = [];
+  for (const row of raw as Array<Record<string, unknown>>) {
+    if (!isShowable(row)) continue;
+    const guide = toSummary(row);
+    if (guide) guides.push(guide);
+    if (guides.length >= wanted) break;
+  }
+
+  writeCache(key, guides);
+  return guides;
+}

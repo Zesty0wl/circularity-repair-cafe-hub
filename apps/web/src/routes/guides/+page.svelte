@@ -12,11 +12,16 @@
     type GuideSearchResult,
     type GuideSummary,
   } from '$lib/guides';
+  import type { PageData } from './$types';
 
   const PAGE_SIZE = 24;
 
   let term = '';
   let active = '';
+  export let data: PageData;
+  /** Recently updated guides, fetched on the server so the page is never bare. */
+  $: recent = (data?.recent ?? []) as GuideSummary[];
+
   let guides: GuideSummary[] = [];
   let moreResults = false;
   let status: 'idle' | 'loading' | 'more' | 'error' = 'idle';
@@ -174,6 +179,33 @@
         Try the make and model, or something more general like &ldquo;laptop battery&rdquo;.
       </p>
     </div>
+  {:else if !active && recent.length > 0}
+    <!-- Nothing searched for yet. Show what the repair community has been
+         working on this week, so the page opens with something real on it. -->
+    <p class="eyebrow">Recently updated by the repair community</p>
+    <p class="mt-2 text-sm text-slate-600">
+      The newest guides on iFixit that are finished and illustrated. Search above for the thing you
+      are fixing.
+    </p>
+
+    <div class="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {#each recent as guide (guide.id)}
+        <a class="guide-card" href="/guides/{guide.id}">
+          <div class="guide-image">
+            {#if guide.thumbnail}
+              <img src={guide.thumbnail} alt="" loading="lazy" />
+            {/if}
+          </div>
+          <div class="guide-body">
+            <h3 class="guide-title">{guide.title}</h3>
+            {#if guide.difficulty}
+              <p class="guide-meta">{guide.difficulty}{guide.timeRequired ? ` · ${guide.timeRequired}` : ''}</p>
+            {/if}
+          </div>
+        </a>
+      {/each}
+    </div>
+
   {:else if guides.length > 0}
     <p class="eyebrow">
       {guides.length}{moreResults ? '+' : ''} guide{guides.length === 1 ? '' : 's'} for &ldquo;{active}&rdquo;

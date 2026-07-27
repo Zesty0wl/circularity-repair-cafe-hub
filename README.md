@@ -50,17 +50,17 @@ hundreds of repairs, and yours to host on a £5/month VPS or a Pi in the corner.
   numbered steps rendered in your own site's style. The server proxies and caches
   the API, so visitors' searches stay between them and you. Guide text and photos
   are iFixit's, shared under CC BY-NC-SA, and every guide links back to the original.
-- **Worldwide map** — a 3D globe of every Repair Café in the world, drawn from the
+- **Worldwide map** — a flat map of every Repair Café in the world, drawn from the
   [repaircafe.org location API](https://www.repaircafe.org/en/api/). The server
   mirrors the directory once a day and drops the contact email addresses before
   passing it on, so the browser makes one same-origin request for the data. Cafés
   that sit close together are grouped into one numbered circle; clicking it zooms
-  in and splits it up. The globe is drawn with [CesiumJS](https://cesium.com/platform/cesiumjs/)
-  over a dark OpenStreetMap style served by CARTO, the same map at every zoom, so
-  it holds together from the whole planet down to a single street. Set your own
-  repaircafe.org page under Settings and your cafe is marked on the globe.
-  Cesium needs a looser content security policy than the rest of the site; that
-  is applied to the `/world` page alone (see `apps/web/src/hooks.server.ts`).
+  in and splits it up, with the grouping worked out by Supercluster before the map
+  sees anything, so only the markers in view are ever drawn. The map is Leaflet
+  over a dark OpenStreetMap style served by CARTO. Set your own repaircafe.org
+  page under Settings and your cafe is marked on the map. The page also links to
+  the shared figures at the telemetry collector, so visitors can see how many
+  other cafés run this software.
 - **Local cafe community** — pick up to ten nearby Repair Cafes out of the
   repaircafe.org directory under Settings, searching by name or town with your
   closest neighbours listed first. They show on the home page as a flat map

@@ -63,7 +63,7 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
     };
   });
 
-  // ── The worldwide Repair Café directory, for the /world globe ───────────
+  // ── The worldwide Repair Café directory, for the /world map ─────────────
   // A cached mirror of the repaircafe.org location API. See
   // services/repairCafeNetwork.ts for why we proxy it rather than calling it
   // from the browser. `ours` is this cafe's own pin, when an admin has saved

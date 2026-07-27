@@ -35,11 +35,10 @@ export interface NetworkSnapshot {
 // Grouping is done by Supercluster, the library Mapbox and Leaflet maps use. It
 // groups by distance on screen, so bubbles never land on top of each other.
 //
-// It earns its place twice over here. The globe is drawn by Cesium, and asking
-// Cesium to hold all 3,892 cafes at once brings it to about one frame a second,
-// which in turn starves the map of the tiles it needs to sharpen up. Grouping
-// first means the globe is only ever given the hundred or so markers actually
-// in view, and it stays quick.
+// It also keeps the map quick. Handing a map several thousand markers at once
+// makes it crawl, and a map that cannot keep up stops fetching the tiles it
+// needs. Grouping first means the map is only ever given the hundred or so
+// markers actually in view.
 
 /** A group of cafes, drawn as one bubble with a count. */
 export interface CafeGroup {
@@ -55,14 +54,17 @@ interface CafeProps {
 
 export type CafeIndex = Supercluster<CafeProps, Record<string, never>>;
 
-/** How close two cafes must be on screen, in pixels, before they are grouped. */
-const GROUP_RADIUS_PX = 42;
+/**
+ * How close two cafes must be on screen, in pixels, before they are grouped.
+ *
+ * A busy group is drawn as a circle up to 46 pixels across, so anything much
+ * below this leaves the circles overlapping each other where cafes are thick on
+ * the ground, which in practice means most of western Europe.
+ */
+const GROUP_RADIUS_PX = 60;
 
 /** Below this many cafes no group is made, and each one keeps its own pin. */
 const MIN_GROUP_SIZE = 3;
-
-/** Supercluster measures in map tiles of this width. */
-const TILE_SIZE = 256;
 
 export function buildClusterIndex(cafes: NetworkCafe[]): CafeIndex {
   const index: CafeIndex = new Supercluster({
@@ -107,25 +109,6 @@ export function groupsInView(
     }
   }
   return { groups, singles };
-}
-
-/**
- * The map zoom level that matches what the camera can see.
- *
- * Supercluster measures distance on a Mercator map, which stretches east to
- * west by 1 / cos(latitude), so that is taken into account. Without it the same
- * view would group cafes more tightly near the equator than near the poles.
- */
-export function zoomForView(
-  metresPerPixel: number,
-  lat: number,
-): number {
-  const stretch = Math.cos((Math.min(80, Math.abs(lat)) * Math.PI) / 180);
-  // One degree of longitude at the equator is roughly 111,320 metres.
-  const degPerPx = metresPerPixel / 111_320;
-  if (!(degPerPx > 0)) return 0;
-  const zoom = Math.log2((360 * stretch) / (TILE_SIZE * degPerPx));
-  return Math.max(0, Math.min(20, zoom));
 }
 
 /** The public page for a cafe on repaircafe.org. */

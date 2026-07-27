@@ -2,6 +2,39 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
+## 1.4.0 — 27 July 2026
+
+### Changed
+
+- The Worldwide page now shows a flat map instead of a 3D globe. The globe was a
+  nice idea but it did not load reliably. It needed WebGL, a 14 MB runtime, its
+  own background workers, and a looser security policy than the rest of the
+  site. When any one of those was missing, visitors got an empty box. The flat
+  map is drawn with Leaflet, which the home page already uses, and it needs none
+  of those things.
+- Everything the globe could do, the map still does. Cafés that sit close
+  together are grouped into one numbered circle, clicking a circle zooms in and
+  splits it up, search and "Find cafés near me" move the map, and your own café
+  is marked with a white pin.
+- Cafés that sit close together are grouped a little more loosely than before,
+  so the circles no longer overlap each other across western Europe.
+- Only the café you have picked keeps its name on screen. Showing every name at
+  once made a busy town unreadable.
+- The site now runs under one strict security policy, with no exceptions. The
+  Worldwide page used to be allowed to run code built from strings, because the
+  globe could not work without it. Nothing on the site needs that any more.
+
+### Added
+
+- The Worldwide page links to the shared figures for this software, so visitors
+  can see how many other Repair Cafés use it and what they have repaired
+  between them.
+
+### Removed
+
+- CesiumJS, and the 14 MB of runtime files that were copied into the site at
+  build time.
+
 ## 1.3.0 — 27 July 2026
 
 ### Added

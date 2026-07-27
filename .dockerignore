@@ -15,4 +15,3 @@ README.md
 docker-compose.yml
 nginx.conf
 data
-apps/web/static/cesium

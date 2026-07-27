@@ -57,7 +57,7 @@ export interface NetworkCafe {
 }
 
 export interface NetworkSnapshot {
-  /** Cafes that have coordinates, so they can be drawn on the globe. */
+  /** Cafes that have coordinates, so they can be drawn on the map. */
   cafes: NetworkCafe[];
   /** Everything the directory lists, including cafes with no coordinates yet. */
   totalListed: number;
@@ -213,7 +213,7 @@ async function fetchUpstream(): Promise<NetworkSnapshot> {
     const cafe = toNetworkCafe(row);
     if (cafe) cafes.push(cafe);
   }
-  // Alphabetical, so the list beside the globe reads sensibly and the payload
+  // Alphabetical, so the list beside the map reads sensibly and the payload
   // gzips a little better.
   cafes.sort((a, b) => a.name.localeCompare(b.name));
 
@@ -293,7 +293,7 @@ export async function getNetwork(): Promise<NetworkSnapshot | null> {
 }
 
 /**
- * Find this cafe's own entry in the directory, so the globe can mark it.
+ * Find this cafe's own entry in the directory, so the map can mark it.
  * Matches on the repaircafe.org slug the admin saved in Settings.
  */
 export function findOurs(snapshot: NetworkSnapshot, slug: string | null | undefined): NetworkCafe | null {

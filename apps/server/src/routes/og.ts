@@ -20,7 +20,7 @@ const SECTIONS: Record<string, { title: string; subtitle?: string }> = {
   contact: { title: 'Come and find us' },
   world: {
     title: 'Part of a worldwide movement',
-    subtitle: 'Thousands of Repair Cafés, on one globe',
+    subtitle: 'Thousands of Repair Cafés, on one map',
   },
   guides: {
     title: 'Repair guides',

@@ -36,5 +36,3 @@ coverage/
 # Personal scratchpads
 todo.md
 
-# Cesium runtime files, copied out of node_modules at build time
-apps/web/static/cesium/

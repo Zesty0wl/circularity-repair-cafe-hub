@@ -5,7 +5,7 @@
   import SiteFooter from '$lib/components/SiteFooter.svelte';
   import PageHeader from '$lib/components/PageHeader.svelte';
   import SectionHeading from '$lib/components/SectionHeading.svelte';
-  import WorldGlobe from '$lib/components/WorldGlobe.svelte';
+  import WorldMap from '$lib/components/WorldMap.svelte';
   import { Globe2, Search, LocateFixed, ExternalLink, MapPin, X, RotateCcw } from 'lucide-svelte';
   import {
     cafeUrl,
@@ -17,7 +17,7 @@
 
   let snapshot: NetworkSnapshot | null = null;
   let status: 'loading' | 'ready' | 'error' = 'loading';
-  let globe: WorldGlobe;
+  let worldMap: WorldMap;
 
   let term = '';
   let selected: NetworkCafe | null = null;
@@ -44,12 +44,12 @@
 
   function choose(target: NetworkCafe): void {
     selected = target;
-    globe?.flyTo(target);
+    worldMap?.flyTo(target);
   }
 
   function clearSelection(): void {
     selected = null;
-    globe?.resetView();
+    worldMap?.resetView();
   }
 
   function showUs(): void {
@@ -82,6 +82,12 @@
     );
   }
 
+  /**
+   * Where the figures cafes choose to share are published. This is the same
+   * service the software sends to, set on the server as TELEMETRY_ENDPOINT.
+   */
+  const TELEMETRY_SITE = 'https://repaircafetelemetry.bzwrd.co.uk';
+
   function formatKm(km: number): string {
     return km < 10 ? `${km.toFixed(1)} km` : `${Math.round(km).toLocaleString('en-GB')} km`;
   }
@@ -94,42 +100,42 @@
 <PageHeader
   eyebrow="Repair Café International"
   title="Part of a worldwide movement"
-  lede="Every time we fix something together, we join thousands of other Repair Cafés doing the same thing. Here is the whole family, on one globe."
+  lede="Every time we fix something together, we join thousands of other Repair Cafés doing the same thing. Here is the whole family, on one map."
 >
   <span slot="icon"><Globe2 size={22} /></span>
 </PageHeader>
 
-<!-- ── The globe ─────────────────────────────────────────────────────────── -->
-<section class="globe-band">
+<!-- ── The map ───────────────────────────────────────────────────────────── -->
+<section class="map-band">
   <div class="max-w-6xl mx-auto px-4 py-10 md:py-14">
     <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
       <!-- Stage -->
-      <div class="globe-frame">
+      <div class="map-frame">
         {#if status === 'ready'}
-          <WorldGlobe bind:this={globe} {cafes} {ours} {selected} on:select={(e) => choose(e.detail)} />
+          <WorldMap bind:this={worldMap} {cafes} {ours} {selected} on:select={(e) => choose(e.detail)} />
 
-          <div class="globe-counts">
-            <p><strong>{number(cafes.length)}</strong> Repair Cafés on the globe</p>
+          <div class="map-counts">
+            <p><strong>{number(cafes.length)}</strong> Repair Cafés on the map</p>
             <p class="muted">{number(snapshot?.totalListed ?? 0)} listed worldwide</p>
           </div>
 
-          <div class="globe-tools">
+          <div class="map-tools">
             {#if ours}
-              <button type="button" class="globe-btn" on:click={showUs}>
+              <button type="button" class="map-btn" on:click={showUs}>
                 <MapPin size={15} /> Find us
               </button>
             {/if}
-            <button type="button" class="globe-btn" on:click={clearSelection}>
+            <button type="button" class="map-btn" on:click={clearSelection}>
               <RotateCcw size={15} /> Reset
             </button>
           </div>
         {:else if status === 'loading'}
-          <div class="globe-state">
+          <div class="map-state">
             <span class="spinner" aria-hidden="true"></span>
             <p>Loading Repair Cafés from around the world…</p>
           </div>
         {:else}
-          <div class="globe-state">
+          <div class="map-state">
             <p>We could not load the worldwide map just now.</p>
             <a
               class="underline underline-offset-4 hover:text-white"
@@ -144,7 +150,7 @@
       </div>
 
       <!-- Search and results -->
-      <aside class="globe-panel">
+      <aside class="map-panel">
         <label class="sr-only" for="cafe-search">Search Repair Cafés</label>
         <div class="search-row">
           <Search size={16} class="shrink-0 opacity-60" />
@@ -224,8 +230,8 @@
         {:else}
           <p class="panel-note">
             Where cafés sit close together they are grouped into one circle with a number in
-            it. Click a circle to zoom in and split it up. Drag the globe to spin it, and
-            click any pin to see that café.
+            it. Click a circle to zoom in and split it up. Drag the map to move around,
+            and click any pin to see that café.
             {#if ours}
               Ours is the white pin with a ring around it.
             {/if}
@@ -283,11 +289,11 @@
     <SectionHeading eyebrow="Our place in it" title="How {cafeName} fits in" />
     <div class="mt-8 space-y-5 text-lg text-slate-700">
       <p>
-        We are one of the pins on that globe. We run our own sessions, keep our own volunteers and
+        We are one of the pins on that map. We run our own sessions, keep our own volunteers and
         raise our own funds, and we follow the same simple idea as everyone else on the map.
       </p>
       <p>
-        If you are travelling, or you live somewhere else, use the globe above to find a Repair Café
+        If you are travelling, or you live somewhere else, use the map above to find a Repair Café
         near you. If there is not one yet, you can start one. The foundation has a starter kit and
         will help you set it up.
       </p>
@@ -309,6 +315,30 @@
   </div>
 </section>
 
+<!-- ── Cafés running this software ───────────────────────────────────────── -->
+<section class="max-w-4xl mx-auto px-4 py-16 md:py-20">
+  <SectionHeading eyebrow="Open figures" title="Cafés running this software" />
+
+  <div class="mt-8 space-y-5 text-lg text-slate-700">
+    <p>
+      This website runs on Repair Café Hub. It is free software that any Repair Café can use to
+      run its own site, book its sessions and keep track of what it repairs.
+    </p>
+    <p>
+      Cafés using it can choose to share a few counts with us: how many repairs they recorded,
+      how many were fixed, and the kinds of thing they saw. No names, no notes and no
+      photographs are ever sent. We publish every figure we are given on one open page, so
+      anyone can see how much the software is used and what it all adds up to.
+    </p>
+  </div>
+
+  <div class="mt-8">
+    <a class="btn-primary" href={TELEMETRY_SITE} target="_blank" rel="noopener">
+      See the shared figures <ExternalLink size={16} />
+    </a>
+  </div>
+</section>
+
 <!-- ── Where the data comes from ─────────────────────────────────────────── -->
 <section class="max-w-4xl mx-auto px-4 py-10">
   <p class="text-sm text-slate-500">
@@ -319,14 +349,14 @@
       target="_blank"
       rel="noopener"
     >Repair Café location API</a>
-    and are refreshed once a day. Some cafés are listed without a map position, so the globe shows
-    slightly fewer than the total. The globe is drawn with
+    and are refreshed once a day. Some cafés are listed without a map position, so the map shows
+    slightly fewer than the total. The map is drawn with
     <a
       class="underline underline-offset-2 hover:text-slate-700"
-      href="https://cesium.com/platform/cesiumjs/"
+      href="https://leafletjs.com/"
       target="_blank"
       rel="noopener"
-    >CesiumJS</a>, and its map is
+    >Leaflet</a>, and its tiles are
     &copy; <a
       class="underline underline-offset-2 hover:text-slate-700"
       href="https://www.openstreetmap.org/copyright"
@@ -344,9 +374,10 @@
 <SiteFooter />
 
 <style>
-  /* A deep, softly lit backdrop so the planet appears to sit in space. The
-     tint follows the cafe's own brand colour. */
-  .globe-band {
+  /* A deep, softly lit backdrop, so the map reads as one panel rather than a
+     picture dropped on the page. The tint follows the cafe's own brand
+     colour. */
+  .map-band {
     background:
       radial-gradient(
         60rem 40rem at 50% 28%,
@@ -356,7 +387,7 @@
       linear-gradient(180deg, #061512 0%, #04100e 100%);
   }
 
-  .globe-frame {
+  .map-frame {
     position: relative;
     min-height: 26rem;
     height: min(70vh, 34rem);
@@ -364,41 +395,45 @@
     overflow: hidden;
   }
   @media (min-width: 1024px) {
-    .globe-frame {
+    .map-frame {
       height: min(78vh, 40rem);
     }
   }
 
   /* Readouts sit on top of the canvas. */
-  .globe-counts,
-  .globe-tools {
+  .map-counts,
+  .map-tools {
     position: absolute;
     pointer-events: none;
     color: #fff;
+    /* Above Leaflet's own controls, which sit in the same corners. */
+    z-index: 2;
   }
-  .globe-counts {
+  .map-counts {
     left: 1rem;
-    bottom: 1rem;
+    /* Clear of Leaflet's credit, which on a narrow screen is a bar across the
+       whole width of the map. */
+    bottom: 1.6rem;
     font-size: 0.85rem;
     text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
   }
-  .globe-counts strong {
+  .map-counts strong {
     font-size: 1.05rem;
     font-weight: 600;
   }
-  .globe-counts .muted {
+  .map-counts .muted {
     color: rgba(255, 255, 255, 0.6);
   }
   /* Top right, so the buttons never sit on top of the counts on a narrow
      screen. */
-  .globe-tools {
+  .map-tools {
     right: 1rem;
     top: 1rem;
     display: flex;
     gap: 0.5rem;
     pointer-events: auto;
   }
-  .globe-btn {
+  .map-btn {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
@@ -412,11 +447,11 @@
     backdrop-filter: blur(6px);
     transition: background-color 0.15s ease;
   }
-  .globe-btn:hover {
+  .map-btn:hover {
     background: rgba(255, 255, 255, 0.22);
   }
 
-  .globe-state {
+  .map-state {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -447,7 +482,7 @@
   }
 
   /* ── Side panel ──────────────────────────────────────────────────────── */
-  .globe-panel {
+  .map-panel {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
@@ -456,7 +491,7 @@
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.12);
     color: #fff;
-    /* Hug the content rather than stretching to the height of the globe, so an
+    /* Hug the content rather than stretching to the height of the map, so an
        empty panel is not a tall empty box. */
     align-self: start;
     max-height: min(78vh, 40rem);

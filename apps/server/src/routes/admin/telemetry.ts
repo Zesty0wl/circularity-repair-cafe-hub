@@ -25,6 +25,8 @@ export async function adminTelemetryRoutes(app: FastifyInstance): Promise<void> 
       lastSentAt: state.lastSentAt,
       decidedAt: state.decidedAt,
       hasSentAnything: Boolean(state.lastSentAt),
+      verified: state.verified,
+      verifyReason: state.verifyReason,
       disabledByEnv: state.disabledByEnv,
       shouldPrompt: shouldPrompt(state),
       appVersion: APP_VERSION,

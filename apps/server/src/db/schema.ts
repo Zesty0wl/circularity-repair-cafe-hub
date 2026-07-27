@@ -84,6 +84,13 @@ export const cafes = pgTable('cafes', {
    * once per version, so the offer stays open without becoming nagging.
    */
   telemetryPromptedVersion: text('telemetry_prompted_version'),
+  /**
+   * What the collector said last time about whether it could check us. A cafe
+   * whose public address is wrong would otherwise never learn why its numbers
+   * are missing from the community figures.
+   */
+  telemetryVerified: boolean('telemetry_verified'),
+  telemetryVerifyReason: text('telemetry_verify_reason'),
   // How much of a new purchase a repair is taken to prevent, and whether the
   // CO2 figure is worked out and shown at all.
   co2DisplacementRate: numeric('co2_displacement_rate', { precision: 4, scale: 3 }).notNull().default('0.5'),

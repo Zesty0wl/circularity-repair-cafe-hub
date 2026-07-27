@@ -53,6 +53,8 @@
     level: 'none' | 'standard' | 'community';
     lastSentAt: string | null;
     disabledByEnv: boolean;
+    verified: boolean | null;
+    verifyReason: string | null;
   } | null = null;
   let telemetryLevel: 'none' | 'standard' | 'community' = 'none';
   let telemetryPayload: unknown = null;
@@ -820,6 +822,34 @@
         </p>
       {:else}
         <p class="text-xs text-slate-500">Nothing has been sent yet.</p>
+      {/if}
+
+      <!-- Whether the project could check us. Without this, a cafe whose
+           public address is wrong sees nothing at all: it sends happily, and
+           its numbers simply never appear in the community figures. -->
+      {#if telemetry && telemetry.level !== 'none' && telemetry.lastSentAt}
+        {#if telemetry.verified === true}
+          <div class="rounded-xl bg-emerald-50 ring-1 ring-emerald-200 p-3 text-sm text-emerald-900">
+            <p class="font-semibold">Your numbers are counted.</p>
+            <p class="mt-1">
+              The project checked your public site and found this hub, so your figures are included
+              in the community totals.
+            </p>
+          </div>
+        {:else if telemetry.verified === false}
+          <div class="rounded-xl bg-amber-50 ring-1 ring-amber-200 p-3 text-sm text-amber-900">
+            <p class="font-semibold">Your numbers are not being counted yet.</p>
+            <p class="mt-1">{telemetry.verifyReason ?? 'The project could not check your site.'}</p>
+            <p class="mt-1">
+              Your public web address is
+              <code class="bg-white/70 rounded px-1">{cafe?.publicUrl || 'not set'}</code>.
+              It has to be the address visitors use, over https, and reachable from outside your
+              network. Change it under
+              <button class="underline underline-offset-2 font-medium" type="button" on:click={() => (tab = 'profile')}>Cafe profile</button>,
+              then press Save here to try again.
+            </p>
+          </div>
+        {/if}
       {/if}
 
       {#if telemetryMsg}<p class="text-sm text-emerald-700">{telemetryMsg}</p>{/if}

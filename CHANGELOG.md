@@ -6,6 +6,13 @@ Notable changes to the Repair Café Hub. Newest first.
 
 ### Added
 
+- **Settings now tells you whether your numbers are actually being counted.**
+  The project checks each hub by fetching its public address, and a hub whose
+  address is wrong would otherwise send happily for months while its figures
+  never appeared anywhere. Sharing our numbers now shows either "your numbers
+  are counted" or the reason they are not, along with the address it tried.
+  The commonest cause is a public address saved as `http://127.0.0.1:5026`,
+  because setup was done down an SSH tunnel.
 - Your hub can now prove it is real. It serves a small public endpoint,
   `/api/public/telemetry`, carrying the install id the collector already knows
   plus the same counts your site publishes anyway. The collector fetches it and

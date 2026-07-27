@@ -276,6 +276,9 @@ const STATEMENTS: string[] = [
   // Generated once and then left alone. It identifies this install to the
   // collector and nothing else: it is not derived from anything about the cafe.
   `UPDATE cafes SET telemetry_install_id = gen_random_uuid() WHERE telemetry_install_id IS NULL`,
+  // Whether the collector could check us, so a cafe can see and fix it.
+  `ALTER TABLE cafes ADD COLUMN IF NOT EXISTS telemetry_verified BOOLEAN`,
+  `ALTER TABLE cafes ADD COLUMN IF NOT EXISTS telemetry_verify_reason TEXT`,
 
   // ── "Awaiting return": the repair is paused because the visitor is coming
   //    back with a part at a later session. Not finished, so it stays open.

@@ -76,6 +76,8 @@ export async function telemetryState(): Promise<{
   token: string | null;
   lastSentAt: Date | null;
   decidedAt: Date | null;
+  verified: boolean | null;
+  verifyReason: string | null;
   promptedVersion: string | null;
   /** True when an operator has ruled it out for the whole install. */
   disabledByEnv: boolean;
@@ -87,6 +89,8 @@ export async function telemetryState(): Promise<{
       token: cafes.telemetryToken,
       lastSentAt: cafes.telemetryLastSentAt,
       decidedAt: cafes.telemetryDecidedAt,
+      verified: cafes.telemetryVerified,
+      verifyReason: cafes.telemetryVerifyReason,
       promptedVersion: cafes.telemetryPromptedVersion,
     })
     .from(cafes)
@@ -98,6 +102,8 @@ export async function telemetryState(): Promise<{
     token: row.token,
     lastSentAt: row.lastSentAt,
     decidedAt: row.decidedAt,
+    verified: row.verified,
+    verifyReason: row.verifyReason,
     promptedVersion: row.promptedVersion,
     disabledByEnv: env.TELEMETRY_DISABLED,
   };
@@ -280,7 +286,10 @@ export async function sendTelemetry(options: { force?: boolean } = {}): Promise<
 
     if (!res.ok) return { ok: false, status: res.status, error: `collector responded ${res.status}` };
 
-    const body = (await res.json().catch(() => ({}))) as { token?: string };
+    const body = (await res.json().catch(() => ({}))) as {
+      token?: string;
+      verification?: { verified?: boolean; reason?: string | null; help?: string | null };
+    };
     const [cafe] = await db.select({ id: cafes.id }).from(cafes).limit(1);
     if (cafe) {
       await db
@@ -290,6 +299,18 @@ export async function sendTelemetry(options: { force?: boolean } = {}): Promise<
           // The collector hands the token over exactly once, on the call that
           // mints it. Losing it would mean losing the ability to be forgotten.
           ...(body.token ? { telemetryToken: body.token } : {}),
+          // Whether it could check us, and why not. Shown in Settings so a
+          // wrong public address is something a cafe can see and fix rather
+          // than a silence it never accounts for.
+          ...(body.verification
+            ? {
+                telemetryVerified: body.verification.verified === true,
+                telemetryVerifyReason:
+                  body.verification.verified === true
+                    ? null
+                    : (body.verification.help ?? body.verification.reason ?? null),
+              }
+            : {}),
         })
         .where(eq(cafes.id, cafe.id));
     }

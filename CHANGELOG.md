@@ -2,6 +2,22 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
+## 1.5.1 — 28 July 2026
+
+### Fixed
+
+- The very first start of a new hub no longer prints a red `FATAL` about a lock
+  file. Nothing was broken, and the database always came up, but the first
+  thing a new cafe saw in the logs looked like a crash.
+- The cause was a start-up ordering bug. The database service was starting at
+  the same moment as the script that creates the database, rather than waiting
+  for it. The two then fought over the same data folder. The database service
+  now waits for the setup scripts to finish.
+- This also closes a rarer problem the same race could have caused. The app
+  waits for a database to answer before it starts, and during setup the answer
+  could come from the temporary database the setup script runs, which is shut
+  down moments later. The app can no longer see that one.
+
 ## 1.5.0 — 28 July 2026
 
 ### Changed

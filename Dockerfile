@@ -113,6 +113,17 @@ COPY --from=builder /app/APP_VERSION             /app/APP_VERSION
 COPY --from=builder /app/apps/web/build          /app/web
 
 # s6-overlay services + bootstrap scripts (force exec bit so it works regardless of host umask)
+#
+# Note on ordering: s6 does not run cont-init.d before the services on its own.
+# Anything in the "user" bundle with no dependencies starts straight away, in
+# parallel with the setup scripts. So on a brand new /data, the postgres
+# service used to race 01-init-data.sh and try to start a second postmaster
+# while the script's temporary one was still shutting down.
+#
+# docker/s6-rc.d/postgres/dependencies.d/legacy-cont-init is what stops that.
+# It is an empty file on purpose: s6-rc only reads the name. It means "start
+# postgres only once every cont-init.d script has finished". node-app depends
+# on postgres, so it waits too.
 COPY --chmod=755 docker/s6-rc.d        /etc/s6-overlay/s6-rc.d
 COPY --chmod=755 docker/cont-init.d    /etc/cont-init.d
 

@@ -2,6 +2,25 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
+## 1.8.3 — 28 July 2026
+
+### Fixed
+
+- Repeating events are now described in words. The events page used to print
+  the pattern as raw code, so an organiser saw
+  `{"frequency":"monthly","byWeekday":"SA","bySetPos":2}` where it should have
+  said "Second Saturday of the month".
+- You can now edit and delete a repeating event. The buttons were simply never
+  built, although the server has always been able to do both, so a pattern set
+  up once could not be changed or removed from the admin area at all.
+- Deleting one asks first, and says plainly what happens: sessions it has
+  already created stay exactly as they are, repairs and all. They stop being
+  linked to the pattern, and no new ones are added.
+- Rows in the events table are no longer half as tall again wherever an
+  Activate button appears. The button was using a size meant for toolbars, not
+  for sitting inside a line of table text.
+- The repeating events list now shows the venue, which it was never given.
+
 ## 1.8.2 — 28 July 2026
 
 ### Changed

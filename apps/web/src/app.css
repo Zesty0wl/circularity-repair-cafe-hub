@@ -97,6 +97,13 @@
   .btn-sm {
     @apply px-4 py-2 text-sm;
   }
+  /* For actions that sit inside a table row. Even btn-sm is 36px tall, which
+     makes a row of plain text half as tall again wherever one appears. The
+     smaller radius matters too: btn's rounded-xl looks like a lozenge at this
+     size. */
+  .btn-xs {
+    @apply px-2.5 py-1 text-xs gap-1 rounded-lg font-medium;
+  }
   .input {
     @apply block w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-base shadow-sm focus:border-brand-500 focus:ring-brand-500 focus:outline-none focus:ring-1;
   }

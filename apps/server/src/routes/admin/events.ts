@@ -245,7 +245,27 @@ export async function adminEventsRoutes(app: FastifyInstance): Promise<void> {
 
   // Templates
   app.get('/api/admin/event-templates', async () => {
-    return db.select().from(eventTemplates).orderBy(asc(eventTemplates.name));
+    // Joined to venues so the list can say where a repeating event happens,
+    // the same as the events list does. Without it the admin page could only
+    // show a name and a rule.
+    const rows = await db
+      .select({
+        id: eventTemplates.id,
+        name: eventTemplates.name,
+        venueId: eventTemplates.venueId,
+        venueName: venues.name,
+        description: eventTemplates.description,
+        startTime: eventTemplates.startTime,
+        endTime: eventTemplates.endTime,
+        recurrenceRule: eventTemplates.recurrenceRule,
+        recurrenceEndDate: eventTemplates.recurrenceEndDate,
+        maxItemsPerSession: eventTemplates.maxItemsPerSession,
+        isPublished: eventTemplates.isPublished,
+      })
+      .from(eventTemplates)
+      .leftJoin(venues, eq(eventTemplates.venueId, venues.id))
+      .orderBy(asc(eventTemplates.name));
+    return rows;
   });
 
   app.post('/api/admin/event-templates', async (request, reply) => {

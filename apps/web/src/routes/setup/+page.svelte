@@ -149,8 +149,7 @@
 
 <main class="min-h-screen bg-slate-100 py-10 px-4">
   <div class="max-w-xl mx-auto">
-    <div class="flex items-center gap-3 mb-8">
-      <img src="/brand/logo-horizontal.svg" alt="Circularity.org" class="h-9 w-auto" />
+    <div class="mb-8">
       <span class="font-semibold text-lg text-pine">Repair Cafe Hub</span>
     </div>
     <ProgressBar current={step} total={TOTAL} />

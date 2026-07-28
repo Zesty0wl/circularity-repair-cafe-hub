@@ -1,4 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="Circularity icon">
-  <rect width="120" height="120" rx="28" fill="#1B6B5A"/>
-  <g transform="translate(60,60) scale(0.74) translate(-60,-60)"><path d="M 97.59 46.32 A 40.0 40.0 0 1 1 73.68 22.41" fill="none" stroke="#FBF7EF" stroke-width="14.0" stroke-linecap="round"/><circle cx="88.28" cy="31.72" r="8.6" fill="#F3B43E"/></g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="Repair Cafe Hub">
+  <rect width="120" height="120" rx="26" fill="#1C2622"/>
+  <g fill="none" stroke="#FBF7EF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"
+     transform="translate(60,62) scale(0.86) translate(-58,-70)">
+    <path d="M32 44 H72 V64 C72 76 63 85 52 85 C41 85 32 76 32 64 Z"/>
+    <path d="M84 74 L74 68 L74 56 L84 50 L94 56 L94 68 Z" stroke="#E8A33D"/>
+    <path d="M24 97 H88"/>
+  </g>
 </svg>

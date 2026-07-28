@@ -1,6 +1,6 @@
 {
   "name": "circularity-hub",
-  "version": "1.5.1",
+  "version": "1.6.0",
   "private": true,
   "description": "Circularity Repair Cafe Hub - self-hosted repair cafe management",
   "license": "MIT",

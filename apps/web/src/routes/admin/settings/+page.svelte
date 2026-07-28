@@ -993,10 +993,9 @@
 
   {#if tab === 'about'}
     <div class="card p-6 mt-4 max-w-2xl text-sm space-y-2">
-      <img src="/brand/logo-horizontal.svg" alt="Circularity.org" class="h-8 w-auto mb-1" />
       <p><strong>Repair Cafe Hub</strong></p>
       <p>Self-hosted, open-source platform for grass-roots repair cafes.</p>
-      <p>Source: <a class="text-brand-700 hover:underline" href="https://github.com/" target="_blank" rel="noopener">github.com</a></p>
+      <p>Source: <a class="text-brand-700 hover:underline" href="https://github.com/Zesty0wl/circularity-repair-cafe-hub" target="_blank" rel="noopener">github.com/Zesty0wl/circularity-repair-cafe-hub</a></p>
       <p>Released under the MIT licence.</p>
     </div>
   {/if}

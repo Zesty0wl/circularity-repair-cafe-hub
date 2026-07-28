@@ -2,7 +2,50 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
-## 1.5.1 — 28 July 2026
+## 1.6.0 — 28 July 2026
+
+### Changed
+
+- The installer now works on a plain VPS. It used to refuse to run as root,
+  which is exactly how most rented servers hand you your machine, so the
+  one-line install in our own README could not work. It now runs either as
+  root or as a user with sudo.
+- Because of that, the old detour is gone. On a machine where you are root,
+  the installer no longer has to install Docker, stop, ask you to log out and
+  back in, and have you run it a second time. It goes from start to finish in
+  one pass.
+- It checks the machine before it changes anything: enough memory and disk, a
+  free port, that it can reach the places it downloads from, and, most
+  usefully, that your domain really is on Cloudflare. That last check is where
+  most installs used to fail, several minutes in, with a message that meant
+  nothing. It now happens in the first ten seconds and says what to do.
+- `./install.sh --check` runs those checks and stops, so you can find out
+  whether a machine is suitable without committing to anything.
+- Everything it needs to ask you now happens at the start. You answer two
+  questions, approve one thing in your browser, and then it runs on its own.
+  Before, it asked for something, worked for several minutes, then needed you
+  again.
+- The questions look like questions. Each one is set apart, numbered, and has
+  a cursor on its own line, so it is obvious the installer is waiting for you
+  rather than stuck.
+- The link for approving Cloudflare access is shown as a square you can scan
+  with your phone. Copying a very long link out of a terminal, over SSH, is
+  unreliable.
+- The installer asks where your cafe is, and suggests the machine's own
+  setting. Times used to default to London for everybody. A cafe anywhere else
+  had every event time, session date and report an hour or more out, with
+  nothing to explain why.
+- If port 5026 is already taken, it offers a free one instead of giving up.
+  Set `HUB_PORT` in your `.env` to choose your own.
+- Each tunnel is now named after your web address, so two cafes using one
+  Cloudflare account cannot clash over a shared name.
+
+### Added
+
+- `./doctor.sh` checks a running hub and says in plain English what is fine and
+  what is not: the container, the database, the tunnel, your web address, disk
+  space, and whether a newer version is out. If you need help, run it and send
+  us what it prints.
 
 ### Fixed
 
@@ -17,6 +60,18 @@ Notable changes to the Repair Café Hub. Newest first.
   waits for a database to answer before it starts, and during setup the answer
   could come from the temporary database the setup script runs, which is shut
   down moments later. The app can no longer see that one.
+- The setup wizard, the admin About page, the printable event poster and the
+  public site footer no longer carry the Circularity logo. This is software any
+  repair cafe can run, so those places now simply say "Repair Cafe Hub" in
+  words. On your poster and your footer, the only branding that should compete
+  for a visitor's attention is your own. The footer still links back to the
+  project.
+- The logo those pages used was the wrong one anyway. It drew "Circularity.org"
+  in a serif face, while the real wordmark is a bold sans. The footer had the
+  right one, so the same site disagreed with itself.
+- The default icon shown in the browser tab is no longer the Circularity mark.
+  It is a plain cup and nut. This only applies until you upload your own
+  favicon under Settings, which still replaces it.
 
 ## 1.5.0 — 28 July 2026
 

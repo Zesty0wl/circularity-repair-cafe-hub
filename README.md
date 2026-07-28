@@ -243,12 +243,46 @@ From a fresh Raspberry Pi OS Lite 64-bit install:
 curl -fsSL https://raw.githubusercontent.com/Zesty0wl/circularity-repair-cafe-hub/main/install.sh | bash
 ```
 
-The full step-by-step guide — including prerequisites, the Cloudflare login
-flow, verification, updates and troubleshooting — is in
-**[docs/raspberry-pi-setup.md](./docs/raspberry-pi-setup.md)**.
+The same script works on any 64-bit Linux machine, not just a Pi. It runs
+either as root, which is how most rented servers hand you your machine, or as
+a user with `sudo`, which is how a Pi does.
 
-The only thing you need before you start is a Cloudflare account with your
-domain added (the free plan is fine) and proxying turned on for that domain.
+**What you need before you start:**
+
+- A 64-bit Linux machine with 2 GB of memory and 3 GB of free disk
+- Root access, directly or through `sudo`
+- A free Cloudflare account
+- A domain **whose nameservers point at Cloudflare**. Creating a Cloudflare
+  account is not enough. The domain has to be added to it and its nameservers
+  changed at your registrar. This is the step people get wrong most often.
+
+To check a machine is ready without changing anything on it:
+
+```bash
+./install.sh --check
+```
+
+That confirms memory, disk, a free port, internet access and, most usefully,
+that your domain really is on Cloudflare. It takes about ten seconds and
+changes nothing.
+
+The installer asks you two questions at the start, then needs you to approve
+one thing in your browser, which it shows as a QR code you can scan with your
+phone. After that it runs on its own for a few minutes.
+
+If something is not working afterwards, run:
+
+```bash
+./doctor.sh
+```
+
+It checks the container, the database, the tunnel, your web address and disk
+space, and says in plain English what is wrong. If you are asking for help,
+send us everything it prints.
+
+The full step-by-step guide, including the Cloudflare login flow, verification,
+updates and troubleshooting, is in
+**[docs/raspberry-pi-setup.md](./docs/raspberry-pi-setup.md)**.
 
 ## Advanced: nginx + Cloudflare Origin Certificate
 
@@ -312,8 +346,9 @@ docker exec -i circularity-repair-cafe-hub \
 | Variable        | Required | Default                                                           |
 | --------------- | -------- | ----------------------------------------------------------------- |
 | `SECRET_KEY`    | **yes**  | —                                                                 |
-| `TZ`            | no       | `Europe/London`                                                   |
-| `HUB_VERSION`   | no       | `latest`. The published image tag to run, for example `1.5.0`     |
+| `TZ`            | no       | `Europe/London`. Set this to where your cafe is, or every time shown on the site will be out. The installer fills it in from the machine |
+| `HUB_VERSION`   | no       | `latest`. The published image tag to run, for example `1.6.0`     |
+| `HUB_PORT`      | no       | `5026`. The port on the host. Change it if 5026 is already used   |
 | `DATABASE_URL`  | no       | `postgresql://circularity:circularity@127.0.0.1:5432/circularity` |
 | `PORT`          | no       | `3000` (mapped to host `5026` by the included compose file)       |
 | `UPLOADS_DIR`   | no       | `/data/uploads`                                                   |

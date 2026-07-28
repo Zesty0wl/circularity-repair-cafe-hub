@@ -49,11 +49,29 @@ listed in section [3](#3-manual-install) below.
 > ```
 
 The script is **safe to re-run**. If it gets interrupted, or you need to change
-something later, just run it again — it skips steps that are already done.
+something later, just run it again. It skips steps that are already done, and
+it remembers your Cloudflare sign-in.
 
-If Docker wasn't installed before, the script will install it and then ask you
-to log out, log back in, and run the script a second time so the `docker` group
-membership picks up. That's a Linux quirk, not a bug.
+To check the machine is ready before you commit to anything:
+
+```bash
+./install.sh --check
+```
+
+That runs every check and stops. It changes nothing.
+
+**What it asks you.** Two questions at the start: the web address you want, and
+where your cafe is (it suggests the machine's own setting, so usually you just
+press Enter). Then it shows a QR code for approving Cloudflare access. Scan it
+with your phone, sign in, choose your domain and click Authorize. After that it
+runs on its own for a few minutes.
+
+**Running as root or as a normal user.** Both work. On a rented server you are
+usually root already, and the whole thing finishes in one pass. On a Pi you are
+normally a user with `sudo`, and if Docker had to be installed the script will
+ask you to log out, log back in and run it again, so your account picks up
+permission to use Docker. That is a Linux quirk, not a bug, and it only happens
+on the non-root path.
 
 ---
 
@@ -330,6 +348,20 @@ Database migrations run automatically on container start and are idempotent.
 ---
 
 ## 8. Troubleshooting
+
+### Start here
+
+```bash
+cd ~/circularity-repair-cafe-hub && ./doctor.sh
+```
+
+This checks everything in one go: the machine, your settings, the container,
+the database, the tunnel, your web address and whether a newer version is out.
+It only reads things, so it is always safe to run. Each problem it finds comes
+with what to do about it.
+
+If you are asking for help, run it and send us everything it prints. It is the
+quickest way for anyone to see what is wrong.
 
 ### Container won't start
 

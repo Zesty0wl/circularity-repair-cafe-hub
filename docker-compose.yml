@@ -32,10 +32,15 @@ services:
       #   ssh -L 5026:127.0.0.1:5026 you@your-server
       #
       # If you understand the risk and want it open on your network, change
-      # this line to "5026:3000". Never do that on a public IP address without
-      # HTTPS in front.
-      - "127.0.0.1:5026:3000"
+      # this line to "${HUB_PORT:-5026}:3000". Never do that on a public IP
+      # address without HTTPS in front.
+      #
+      # Set HUB_PORT in .env if 5026 is already used by something else.
+      - "127.0.0.1:${HUB_PORT:-5026}:3000"
     environment:
+      # Your local time. Event times, session dates and reports all use this,
+      # so getting it wrong puts every time on the site out by an hour or more.
+      # The installer sets this from the machine's own clock.
       TZ: "${TZ:-Europe/London}"
       # Signs the login tokens. Must be 32 characters or more, and random.
       # Generate one with:  openssl rand -hex 32

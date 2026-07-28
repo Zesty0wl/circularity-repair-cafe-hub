@@ -74,13 +74,12 @@
     <!-- Attribution: equal-sized icons + text, lined up on one baseline -->
     <div class="mt-12 pt-6 border-t border-white/15 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-sm text-white/50">
       <a
-        href="https://circularity.org"
+        href="https://circularity.org/repair-cafe"
         target="_blank"
         rel="noopener"
         class="inline-flex items-center gap-2 hover:text-white/80"
       >
-        <span>Powered by</span>
-        <img src="/brand/logo-wordmark-white.svg" alt="Circularity.org" class="h-5 w-auto opacity-70" />
+        <span>Powered by Repair Cafe Hub</span>
       </a>
       <a
         href="https://github.com/Zesty0wl/circularity-repair-cafe-hub"

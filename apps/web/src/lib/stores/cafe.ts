@@ -49,6 +49,12 @@ export interface CafeInfo {
   // Hash of the branding the home screen icons are built from. Used to point
   // the apple-touch-icon at the current, immutable icon file.
   pwaIconVersion?: string | null;
+  /**
+   * True only on a public try-it-out site, where the login details are
+   * published and everything is wiped and rebuilt regularly. Shows the banner
+   * and keeps the whole site out of search results.
+   */
+  demoMode?: boolean;
 }
 
 export const cafe = writable<CafeInfo | null>(null);

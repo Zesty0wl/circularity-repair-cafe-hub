@@ -257,7 +257,10 @@ export interface SendResult {
  */
 export async function sendTelemetry(options: { force?: boolean } = {}): Promise<SendResult> {
   try {
-    if (env.TELEMETRY_DISABLED) return { ok: false, skipped: 'disabled' };
+    // DEMO_MODE implies telemetry off. A demo cafe with made-up repairs must
+    // never be counted among the real ones in the figures we publish, and this
+    // must not depend on somebody remembering a second setting.
+    if (env.TELEMETRY_DISABLED || env.DEMO_MODE) return { ok: false, skipped: 'disabled' };
     const state = await telemetryState();
     if (!state) return { ok: false, skipped: 'no_cafe' };
     if (state.level === 'none') return { ok: false, skipped: 'not_agreed' };

@@ -10,6 +10,7 @@ import { runMigrations } from './db/migrate.js';
 import { getSeoData, renderRobots, renderSitemap, resolveOrigin } from './services/seo.js';
 import authPlugin from './plugins/auth.js';
 import securityPlugin from './plugins/security.js';
+import demoModePlugin from './plugins/demoMode.js';
 import { healthRoutes } from './routes/health.js';
 import { setupRoutes } from './routes/setup.js';
 import { authRoutes } from './routes/auth.js';
@@ -60,6 +61,10 @@ async function start(): Promise<void> {
       files: 1,
     },
   });
+
+  // Everything that changes on a public demo site. Registers nothing at all
+  // when DEMO_MODE is off, which is the default. See plugins/demoMode.ts.
+  await app.register(demoModePlugin);
 
   // Static: uploads
   await app.register(staticPlugin, {

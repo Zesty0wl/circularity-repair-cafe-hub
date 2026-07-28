@@ -15,6 +15,7 @@
   import InstallPrompt from '$lib/components/InstallPrompt.svelte';
   import { serializeJsonLd, shortAppName, type PageSeo } from '@circularity/shared';
   import type { LayoutData } from './$types';
+  import DemoBanner from '$lib/components/DemoBanner.svelte';
 
   export let data: LayoutData;
 
@@ -72,7 +73,10 @@
   // Operational areas (admin/check-in/etc.) carry no SEO value and are already
   // blocked in robots.txt; emit noindex too as defence in depth.
   $: operational = /^\/(admin|checkin|repairer|login|reset|setup|track)(\/|$)/.test($page.url.pathname);
-  $: noindex = seo?.noindex === true || operational;
+  // A demo site is full of made-up cafes, events and repairs, so none of it
+  // should ever reach a search result. robots.txt already refuses the whole
+  // site; this is the same thing said again on the page itself.
+  $: noindex = seo?.noindex === true || operational || c?.demoMode === true;
   $: jsonLdScript = serializeJsonLd(seo?.jsonLd ?? null);
   // Plausible only loads when both fields are configured. Domain matches the
   // site name registered in Plausible; src is the script URL (e.g.
@@ -158,6 +162,8 @@
     <script defer data-domain={c?.plausibleDomain} src={c?.plausibleSrc}></script>
   {/if}
 </svelte:head>
+
+<DemoBanner show={c?.demoMode === true} />
 
 <slot />
 

@@ -16,6 +16,7 @@ import type { FastifyRequest } from 'fastify';
 import { and, asc, eq, ne } from 'drizzle-orm';
 import { db } from '../db/index.js';
 import { cafes, events, skillCategories, users, venues } from '../db/schema.js';
+import { env } from '../env.js';
 
 type CafeRow = typeof cafes.$inferSelect;
 type VenueRow = typeof venues.$inferSelect;
@@ -156,6 +157,14 @@ export async function getSeoData(): Promise<SeoData> {
 // -----------------------------------------------------------------------------
 
 export function renderRobots(origin: string): string {
+  // A demo site is full of made-up cafes, events and repairs. Letting it into
+  // search results would put a fictional cafe in front of people looking for a
+  // real one, so the whole site is closed off rather than just the
+  // operational pages.
+  if (env.DEMO_MODE) {
+    return ['User-agent: *', 'Disallow: /', ''].join('\n');
+  }
+
   return [
     'User-agent: *',
     'Allow: /',

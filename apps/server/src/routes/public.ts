@@ -1,3 +1,4 @@
+import { env } from '../env.js';
 import type { FastifyInstance } from 'fastify';
 import { db } from '../db/index.js';
 import {
@@ -60,6 +61,10 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
         faviconUrl: cafe.faviconUrl,
         primaryColor: cafe.primaryColor,
       }),
+      // True only on a public try-it-out site. The pages use it to show a
+      // banner saying the data is made up and resets, and to keep the whole
+      // site out of search results.
+      demoMode: env.DEMO_MODE,
     };
   });
 

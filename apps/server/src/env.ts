@@ -28,6 +28,28 @@ const envSchema = z.object({
     .string()
     .default('false')
     .transform((v) => v.toLowerCase() === 'true'),
+  // ── Demo mode ────────────────────────────────────────────────────────────
+  // For a public try-before-you-install site, where the login details are
+  // published and anyone can sign in as an administrator.
+  //
+  // It is deliberately an instance-wide switch rather than a kind of user.
+  // The check-in flow has no login at all, by design, because visitors scan a
+  // QR code. So the riskiest thing on a public demo, somebody uploading a
+  // picture nobody wants hosted on your domain, cannot be stopped by limiting
+  // what a signed-in account may do. It has to be stopped for everyone.
+  //
+  // When on:
+  //   - every upload route refuses, including the anonymous check-in one
+  //   - robots.txt tells search engines to stay out of the whole site
+  //   - nobody can change a password or remove a user, so the demo cannot be
+  //     locked, and the published login keeps working
+  //   - telemetry never sends, so a demo cafe is not counted as a real one
+  //
+  // Off by default. A normal cafe is completely unaffected.
+  DEMO_MODE: z
+    .string()
+    .default('false')
+    .transform((v) => v.toLowerCase() === 'true'),
   TZ: z.string().default('UTC'),
 });
 

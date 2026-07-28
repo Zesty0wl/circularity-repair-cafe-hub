@@ -128,13 +128,14 @@ class Api:
     def patch(self, p, b=None, **k):
         return self.call("PATCH", p, b, **k)
 
-    def upload(self, path: str, filename: str, blob: bytes, field: str = "file"):
+    def upload(self, path: str, filename: str, blob: bytes, field: str = "file",
+               content_type: str = "image/jpeg"):
         """Multipart post, built by hand so nothing outside the stdlib is needed."""
         boundary = "----demoseed" + str(random.randint(10**9, 10**10))
         body = b"".join([
             f"--{boundary}\r\n".encode(),
             f'Content-Disposition: form-data; name="{field}"; filename="{filename}"\r\n'.encode(),
-            b"Content-Type: image/jpeg\r\n\r\n",
+            f"Content-Type: {content_type}\r\n\r\n".encode(),
             blob,
             f"\r\n--{boundary}--\r\n".encode(),
         ])
@@ -154,6 +155,61 @@ class Api:
         except Exception as e:
             print(f"      upload failed: {e}")
             return None
+
+
+# ── drawn avatars ─────────────────────────────────────────────────────────────
+# The volunteers get a drawn pattern rather than a photograph of a face.
+# A Creative Commons licence covers copyright, not somebody's likeness, and
+# nobody should discover their own photograph on a website presenting them as a
+# volunteer at a cafe that does not exist. These are generated from the name, so
+# each person gets their own and it is the same after every reset.
+#
+# Written as a PNG by hand because the server only accepts JPEG, PNG or WebP,
+# and the seed is not allowed any dependency outside the standard library.
+def _png(width: int, height: int, rows: list[bytes]) -> bytes:
+    import struct
+    import zlib
+
+    def chunk(tag: bytes, data: bytes) -> bytes:
+        return (struct.pack(">I", len(data)) + tag + data
+                + struct.pack(">I", zlib.crc32(tag + data) & 0xFFFFFFFF))
+
+    raw = b"".join(b"\x00" + r for r in rows)  # filter byte 0 per scanline
+    return (b"\x89PNG\r\n\x1a\n"
+            + chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0))
+            + chunk(b"IDAT", zlib.compress(raw, 9))
+            + chunk(b"IEND", b""))
+
+
+def avatar_png(name: str, size: int = 420) -> bytes:
+    """A symmetrical block pattern, the colour and shape decided by the name."""
+    import hashlib
+
+    h = hashlib.sha256(name.encode()).digest()
+    # A muted, readable colour: fixed saturation and lightness, hue from the name.
+    import colorsys
+    r, g, b = colorsys.hls_to_rgb(h[0] / 255.0, 0.42, 0.45)
+    fg = (int(r * 255), int(g * 255), int(b * 255))
+    bg = (244, 241, 234)
+
+    grid = 7          # a 1-cell quiet border around a 5x5 pattern
+    cell = size // grid
+    on = set()
+    for col in range(3):                      # left half plus the middle column
+        for row in range(5):
+            if h[4 + col * 5 + row] & 1:
+                on.add((col, row))
+                on.add((4 - col, row))        # mirror, so it reads as a face-like mark
+
+    rows: list[bytes] = []
+    for y in range(size):
+        gy = y // cell - 1
+        line = bytearray()
+        for x in range(size):
+            gx = x // cell - 1
+            line += bytes(fg if (gx, gy) in on else bg)
+        rows.append(bytes(line))
+    return _png(size, size, rows)
 
 
 def step(msg: str) -> None:
@@ -259,13 +315,15 @@ def main() -> int:
     step("Creating events")
     today = date.today()
     events: list[dict] = []
-    # Six months of past sessions, then the next two upcoming.
+    # Six months of finished sessions, one happening right now, and two to come.
+    # The one dated today is what makes the demo worth looking at: the board has
+    # items on it, some waiting and some being worked on, so the shop-floor view
+    # and the check-in flow both have something real to show.
     for months_back in range(6, 0, -1):
-        d = today - timedelta(days=30 * months_back)
-        events.append({"date": d, "past": True})
+        events.append({"date": today - timedelta(days=30 * months_back), "when": "past"})
+    events.append({"date": today, "when": "today"})
     for months_ahead in (1, 2):
-        d = today + timedelta(days=30 * months_ahead)
-        events.append({"date": d, "past": False})
+        events.append({"date": today + timedelta(days=30 * months_ahead), "when": "future"})
 
     created = []
     for e in events:
@@ -280,9 +338,11 @@ def main() -> int:
             "maxItems": 30,
         })
         if row:
-            created.append({**row, "past": e["past"]})
-    ok(f"{len(created)} sessions ({sum(1 for c in created if c['past'])} past, "
-       f"{sum(1 for c in created if not c['past'])} upcoming)")
+            created.append({**row, "when": e["when"]})
+    ok(f"{len(created)} sessions "
+       f"({sum(1 for c in created if c['when'] == 'past')} finished, "
+       f"1 running today, "
+       f"{sum(1 for c in created if c['when'] == 'future')} to come)")
 
     # ── 4. a password for the published repairer login ───────────────────────
     # Accounts are created without one, and normally the person follows a reset
@@ -311,6 +371,14 @@ def main() -> int:
     if not crew:
         raise SystemExit("No repairer could sign in, so no repair could be finished.")
 
+    step("Drawing a profile picture for everybody")
+    faces = 0
+    for u in rows:
+        if api.upload(f"/api/admin/uploads/avatar/{u['id']}", "avatar.png",
+                      avatar_png(u["displayName"]), content_type="image/png"):
+            faces += 1
+    ok(f"{faces} profile pictures")
+
     # ── 5. six months of repairs ─────────────────────────────────────────────
     # Done through the real check-in and repair routes rather than by writing
     # rows, so the seed exercises the same code a cafe uses. That is what makes
@@ -326,7 +394,7 @@ def main() -> int:
 
     total_jobs = fixed = 0
     for ev in created:
-        if not ev["past"]:
+        if ev["when"] != "past":
             continue
         api.post(f"/api/admin/events/{ev['id']}/activate", expect=(200, 201, 400, 409))
 
@@ -365,12 +433,43 @@ def main() -> int:
 
     ok(f"{total_jobs} items brought in, {fixed} fixed")
 
-    # ── 6. the next session, open for check-in ───────────────────────────────
-    upcoming = [c for c in created if not c["past"]]
-    if upcoming:
-        step("Opening the next session so the check-in flow can be tried")
-        api.post(f"/api/admin/events/{upcoming[0]['id']}/activate", expect=(200, 201, 400, 409))
-        ok("The soonest upcoming session is now active")
+    # ── 6. today's session, mid-flow ─────────────────────────────────────────
+    # Left deliberately unfinished. Some items are still waiting to be picked
+    # up, some are being worked on, a couple are already done. That is what a
+    # session actually looks like at two in the afternoon, and it means the
+    # shop-floor board has something on it for anyone who signs in to look.
+    step("Running today's session, and leaving it half way through")
+    live = next((c for c in created if c["when"] == "today"), None)
+    waiting = in_progress = done = 0
+    if live:
+        api.post(f"/api/admin/events/{live['id']}/activate", expect=(200, 201, 400, 409))
+
+        for item, fault, factor_key in random.sample(ITEMS, 9):
+            api.post("/api/repairer/checkin", {
+                "customerName": random.choice(VISITORS),
+                "gdprConsent": True,
+                "itemDescription": item,
+                "faultDescription": fault,
+                "co2FactorId": by_key.get(factor_key),
+            }, expect=(200, 201, 400))
+
+        page = api.get(f"/api/admin/repairs?eventId={live['id']}&perPage=100") or {}
+        jobs = page.get("data", [])
+        for n, job in enumerate(jobs):
+            who = random.choice(crew)
+            if n % 3 == 0:
+                waiting += 1                      # nobody has picked it up yet
+                continue
+            who.call("PATCH", f"/api/repairer/jobs/{job['id']}/accept", expect=(200, 201, 400, 409))
+            if n % 3 == 1:
+                in_progress += 1                  # picked up, still being worked on
+                continue
+            status, note = random.choice(OUTCOMES)
+            who.call("PATCH", f"/api/repairer/jobs/{job['id']}/complete", {
+                "outcome": status, "outcomeNotes": note,
+            }, expect=(200, 201, 400))
+            done += 1
+        ok(f"Today: {waiting} waiting, {in_progress} being worked on, {done} finished")
 
     # ── 7. photographs ───────────────────────────────────────────────────────
     # Downloaded at seeding time rather than committed, so the repository and
@@ -379,7 +478,7 @@ def main() -> int:
     step("Adding photographs")
     manifest = json.loads(Path(args.images).read_text())
     added = 0
-    past_events = [c for c in created if c["past"]]
+    past_events = [c for c in created if c["when"] == "past"]
     for i, img in enumerate(manifest["images"]):
         try:
             req = urllib.request.Request(img["url"], headers=UA)

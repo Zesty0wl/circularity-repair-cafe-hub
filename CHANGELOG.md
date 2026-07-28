@@ -18,6 +18,12 @@ Notable changes to the Repair Café Hub. Newest first.
 - To install, run `docker compose pull` then `docker compose up -d`. To update,
   run `git pull`, then those same two commands. The old
   `docker compose up -d --build` is no longer the normal path.
+- You no longer need the source code at all. `docker-compose.yml` stands on its
+  own, so you can drop it in an empty folder, write a `.env` beside it and
+  start. It is now commented throughout, and it explains the port binding, the
+  folder to back up, and how to pin a version.
+- If `SECRET_KEY` is missing, Compose now stops and tells you how to make one,
+  instead of starting a container that cannot boot.
 - `latest` now means the newest release, not the newest commit. Set
   `HUB_VERSION` in your `.env` to stay on one version, for example
   `HUB_VERSION=1.5.0`.

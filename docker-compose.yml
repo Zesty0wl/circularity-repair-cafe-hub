@@ -1,31 +1,58 @@
+# Circularity Repair Cafe Hub
+#
+# This file is all you need to run the hub. It uses the ready-made image, so
+# nothing is compiled on your machine and you do not have to clone the repo:
+#
+#   mkdir repair-cafe-hub && cd repair-cafe-hub
+#   curl -fsSL -O https://raw.githubusercontent.com/Zesty0wl/circularity-repair-cafe-hub/main/docker-compose.yml
+#   printf 'SECRET_KEY=%s\n' "$(openssl rand -hex 32)" > .env
+#   docker compose up -d
+#
+# To build the image from source instead, see docker-compose.build.yml.
 services:
   hub:
-    # Ready-made image, built for amd64 and arm64 by GitHub Actions.
-    # Nothing is compiled on your server, so a 2 GB machine is plenty.
-    # Set HUB_VERSION in .env to pin a release, for example HUB_VERSION=1.5.0.
-    # To build from source instead, see docker-compose.build.yml.
+    # One image covers 64-bit Intel/AMD and 64-bit Arm (a Raspberry Pi 4 or 5).
+    # Docker picks the right one. A 2 GB machine is plenty to run it.
+    # `latest` is the newest release. To stay on one version, put
+    # HUB_VERSION=1.5.0 in your .env file.
     image: "ghcr.io/zesty0wl/circularity-repair-cafe-hub:${HUB_VERSION:-latest}"
     container_name: circularity-repair-cafe-hub
     restart: unless-stopped
-    # Use the default Docker bridge network — the host has many other networks
-    # already and the predefined address pools are exhausted.  This container
-    # only needs outbound + the published port.
+    # The hub is a single container that talks to nothing else, so the default
+    # Docker bridge is all it needs. This also avoids creating another network
+    # on hosts that already run a lot of containers.
     network_mode: bridge
     ports:
-      # Host 5026 → container 3000 (verified free between podkit-circularity:5025 and rosettacheck:5032)
+      # Host port 5026 goes to port 3000 inside the container.
+      #
+      # It is bound to 127.0.0.1, so it is reachable only from this machine.
+      # That is on purpose: put a reverse proxy or a Cloudflare Tunnel in front
+      # of it for HTTPS. To reach the setup wizard from your laptop before you
+      # have either, open an SSH tunnel:
+      #   ssh -L 5026:127.0.0.1:5026 you@your-server
+      #
+      # If you understand the risk and want it open on your network, change
+      # this line to "5026:3000". Never do that on a public IP address without
+      # HTTPS in front.
       - "127.0.0.1:5026:3000"
     environment:
       TZ: "${TZ:-Europe/London}"
-      # SECRET_KEY MUST be set in .env (32+ chars, randomly generated)
-      SECRET_KEY: "${SECRET_KEY}"
-      # Internal database URL — points at PostgreSQL inside the same container
+      # Signs the login tokens. Must be 32 characters or more, and random.
+      # Generate one with:  openssl rand -hex 32
+      # Compose stops with this message if it is missing.
+      SECRET_KEY: "${SECRET_KEY:?Set SECRET_KEY in a .env file next to this one. Generate one with: openssl rand -hex 32}"
+      # The database runs inside this same container, so this address is local
+      # to it. There is nothing to install or connect up.
       DATABASE_URL: "postgresql://circularity:circularity@127.0.0.1:5432/circularity"
       NODE_ENV: production
       PORT: "3000"
       UPLOADS_DIR: /data/uploads
-      # Trust X-Forwarded-* from the reverse proxy
+      # Read the real visitor address from the X-Forwarded-* headers your proxy
+      # sends. Leave this on when anything sits in front of the container.
       TRUST_PROXY: "true"
     volumes:
+      # Everything worth keeping lives here: the database, uploaded photos,
+      # your branding and the QR codes. Back this up. See the README.
       - hub-data:/data
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3000/api/health"]

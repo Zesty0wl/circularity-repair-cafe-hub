@@ -136,6 +136,35 @@ arm64 by [GitHub Actions](./.github/workflows/docker-publish.yml). Docker picks
 the right one for your machine on its own. This is why 2 GB is enough: building
 the SvelteKit front end needs around 4 GB, and you no longer have to do that.
 
+### Or skip the clone
+
+You do not need the source code to run the hub. The
+[`docker-compose.yml`](./docker-compose.yml) works on its own, so two files in
+an empty folder are enough:
+
+```bash
+mkdir repair-cafe-hub && cd repair-cafe-hub
+
+# 1. Grab the compose file
+curl -fsSL -O https://raw.githubusercontent.com/Zesty0wl/circularity-repair-cafe-hub/main/docker-compose.yml
+
+# 2. Write a .env with a strong SECRET_KEY
+printf 'SECRET_KEY=%s\n' "$(openssl rand -hex 32)" > .env
+
+# 3. Start it
+docker compose up -d
+```
+
+The file is commented throughout, and it explains the port binding, the volume
+you need to back up, and how to pin a version. If you forget the `.env`,
+Compose stops and tells you what to do rather than starting a broken container.
+
+Clone the repo instead if you want the [documentation](./docs/README.md), the
+Raspberry Pi [installer](./install.sh) and the sample
+[`nginx.conf`](./nginx.conf) on the machine too.
+
+### Staying on one version
+
 By default you get `latest`, which is the newest release. To stay on one
 version until you choose to move, set `HUB_VERSION` in your `.env`:
 

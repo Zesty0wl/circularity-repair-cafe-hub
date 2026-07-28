@@ -1,4 +1,5 @@
 import { env } from '../env.js';
+import { APP_VERSION } from '../version.js';
 import type { FastifyInstance } from 'fastify';
 import { db } from '../db/index.js';
 import {
@@ -65,6 +66,10 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
       // banner saying the data is made up and resets, and to keep the whole
       // site out of search results.
       demoMode: env.DEMO_MODE,
+      // Which version this hub is running. Shown in the footer and in the
+      // admin sidebar, so anybody looking at a cafe's site, or asking one for
+      // help, can see it without going near a terminal.
+      appVersion: APP_VERSION,
     };
   });
 

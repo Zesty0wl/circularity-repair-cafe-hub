@@ -55,6 +55,8 @@ export interface CafeInfo {
    * and keeps the whole site out of search results.
    */
   demoMode?: boolean;
+  /** Which version of the hub software this cafe is running. */
+  appVersion?: string;
 }
 
 export const cafe = writable<CafeInfo | null>(null);

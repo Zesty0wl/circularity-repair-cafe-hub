@@ -79,7 +79,7 @@
         rel="noopener"
         class="inline-flex items-center gap-2 hover:text-white/80"
       >
-        <span>Powered by Repair Cafe Hub</span>
+        <span>Powered by Repair Cafe Hub{$cafe?.appVersion ? ` ${$cafe.appVersion}` : ''}</span>
       </a>
       <a
         href="https://github.com/Zesty0wl/circularity-repair-cafe-hub"

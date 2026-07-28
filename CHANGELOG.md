@@ -2,6 +2,23 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
+## 1.8.1 — 28 July 2026
+
+### Fixed
+
+- There is now a way back to your own site from the admin area. On a phone
+  there always was, in the header, but on a laptop the only way out was the
+  browser's back button. "View site" now sits at the bottom of the menu on
+  both.
+
+### Added
+
+- The version you are running is shown at the bottom of the admin menu, and in
+  the footer of your public site. It is the first thing anybody helping you
+  will ask for, and until now the only way to find it was to log in to the
+  machine. The one in the admin menu links to Settings, About, where the
+  update instructions are.
+
 ## 1.8.0 — 28 July 2026
 
 ### Added

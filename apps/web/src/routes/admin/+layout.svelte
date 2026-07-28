@@ -2,7 +2,8 @@
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
   import { auth, isAdmin } from '$lib/stores/auth';
-  import { LayoutDashboard, Calendar, Users, Wrench, BarChart3, Tags, MapPin, Settings, LogOut, Menu, X, MonitorPlay, UserCircle2 } from 'lucide-svelte';
+  import { cafe } from '$lib/stores/cafe';
+  import { LayoutDashboard, Calendar, Users, Wrench, BarChart3, Tags, MapPin, Settings, LogOut, Menu, X, MonitorPlay, UserCircle2, Globe } from 'lucide-svelte';
   import { api, restoreSession } from '$lib/api';
   import UpdateBanner from '$lib/components/UpdateBanner.svelte';
 
@@ -50,12 +51,27 @@
           </a>
         {/each}
       </nav>
+      <!-- The way back to the cafe's own site. The narrow-screen header has had
+           one all along; on a laptop there was no way out of the admin area
+           except the browser's back button. -->
+      <a href="/" class="mx-3 text-sm flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100 text-slate-700">
+        <Globe size={16} /> View site
+      </a>
       <a href="/repairer/profile" class="mx-3 text-sm flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100 text-slate-700">
         <UserCircle2 size={16} /> My profile
       </a>
-      <button on:click={logout} class="m-3 text-sm flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100 text-slate-700">
+      <button on:click={logout} class="mx-3 text-sm flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100 text-slate-700">
         <LogOut size={16} /> Sign out
       </button>
+      <!-- Which version this hub is on. Worth having in front of an admin: it
+           is the first thing anybody helping them will ask for. -->
+      <a
+        href="/admin/settings?tab=about"
+        class="m-3 mt-2 pt-3 border-t border-slate-200 text-xs text-slate-400 hover:text-slate-600"
+        title="Version, licence and how to update"
+      >
+        Repair Cafe Hub {$cafe?.appVersion ?? ''}
+      </a>
     </aside>
 
     <!-- Mobile -->
@@ -73,8 +89,12 @@
             </a>
           {/each}
         </nav>
+        <a href="/" on:click={() => (sidebarOpen = false)} class="mx-3 text-sm flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100"><Globe size={16} /> View site</a>
         <a href="/repairer/profile" on:click={() => (sidebarOpen = false)} class="mx-3 text-sm flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100"><UserCircle2 size={16} /> My profile</a>
-        <button on:click={logout} class="m-3 text-sm flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100"><LogOut size={16} /> Sign out</button>
+        <button on:click={logout} class="mx-3 text-sm flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100"><LogOut size={16} /> Sign out</button>
+        <a href="/admin/settings?tab=about" on:click={() => (sidebarOpen = false)} class="m-3 mt-2 pt-3 border-t border-slate-200 text-xs text-slate-400">
+          Repair Cafe Hub {$cafe?.appVersion ?? ''}
+        </a>
       </aside>
     {/if}
 

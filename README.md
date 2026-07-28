@@ -101,51 +101,83 @@ corner.
 | Infra    | Docker (multi-stage), s6-overlay, exposed on host port **5026**; Cloudflare Tunnel for public access |
 | Images   | Built for amd64 and arm64 by GitHub Actions, published to [GHCR](https://github.com/Zesty0wl/circularity-repair-cafe-hub/pkgs/container/circularity-repair-cafe-hub) |
 
-## Quick start (Docker)
+## Install
 
-> **Deploying to a Raspberry Pi for real use?** Skip this section and follow
-> the [**Raspberry Pi setup guide**](./docs/raspberry-pi-setup.md) — it
-> wraps everything below plus a Cloudflare Tunnel into a single
-> [`install.sh`](./install.sh) you can run on a fresh Pi.
+There are two ways to run this. Pick the one that matches you.
 
-The steps below are for trying the app out on any Linux host with Docker and
-Docker Compose v2 installed. Everything else lives inside the container.
+|                  | **Guided install**                                  | **Just the container**                          |
+| ---------------- | --------------------------------------------------- | ----------------------------------------------- |
+| What you get     | A working public website, with HTTPS                | A container listening on `127.0.0.1:5026`        |
+| Who handles TLS  | Cloudflare, nothing to set up or renew              | You do, with your own reverse proxy              |
+| What you need    | A domain whose nameservers point at Cloudflare      | A reverse proxy you already know how to run      |
+| How long         | About five minutes, mostly waiting                  | About one minute                                 |
+| Good for         | Most repair cafes                                   | People who already run servers                   |
 
-What you need:
+Both use the same ready-made image, so nothing is compiled on your machine.
+That is why 2 GB of memory is enough. Building the front end needs about 4 GB,
+and you no longer have to do it.
 
-- A 64-bit Linux machine, Intel/AMD or Arm (a Raspberry Pi 4 or 5 counts).
-- **2 GB of memory** and about 3 GB of free disk space.
-- Docker, plus Docker Compose v2.
+## Guided install
+
+One command takes a bare 64-bit Linux machine to a public website behind a
+[Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/).
+There is no reverse proxy to configure, no port to forward on your router, and
+no certificate to renew. It also works from behind NAT or CGNAT, which most UK
+home broadband uses, so a Raspberry Pi in the corner of your venue is a
+perfectly good home for it.
+
+**Before you start you need:**
+
+- A 64-bit Linux machine with **2 GB of memory** and 3 GB of free disk. A VPS
+  or a Raspberry Pi 4 or 5 on 64-bit Raspberry Pi OS both work.
+- Root access, either as `root` or as a user with `sudo`.
+- A free Cloudflare account.
+- A domain **whose nameservers point at Cloudflare**. Creating a Cloudflare
+  account is not enough on its own. The domain has to be added to that account
+  and its nameservers changed at your registrar. This is the step people get
+  wrong most often, so the installer checks it before doing anything else.
+
+**Then run:**
 
 ```bash
-git clone https://github.com/Zesty0wl/circularity-repair-cafe-hub.git
-cd circularity-repair-cafe-hub
-
-# 1. Generate a strong SECRET_KEY (used to sign auth tokens)
-cp .env.example .env
-sed -i "s|please-change-me-32-or-more-random-chars|$(openssl rand -hex 32)|" .env
-
-# 2. Download the image and start it
-docker compose pull
-docker compose up -d
+curl -fsSL https://raw.githubusercontent.com/Zesty0wl/circularity-repair-cafe-hub/main/install.sh | bash
 ```
 
-Nothing is compiled on your machine. `docker compose pull` downloads a
-ready-made image from the GitHub Container Registry, built for both amd64 and
-arm64 by [GitHub Actions](./.github/workflows/docker-publish.yml). Docker picks
-the right one for your machine on its own. This is why 2 GB is enough: building
-the SvelteKit front end needs around 4 GB, and you no longer have to do that.
+It asks you two things at the start: the web address you want, and where your
+cafe is. Then it shows a QR code. Scan it with your phone, sign in to
+Cloudflare and click Authorize. After that it runs on its own for a few
+minutes and prints your website address at the end.
 
-### Or skip the clone
+It is safe to re-run. It skips whatever is already done and remembers your
+Cloudflare sign-in.
 
-You do not need the source code to run the hub. The
-[`docker-compose.yml`](./docker-compose.yml) works on its own, so two files in
+**To check a machine is suitable without changing anything on it:**
+
+```bash
+./install.sh --check
+```
+
+That confirms memory, disk, a free port, internet access and your domain, then
+stops. It takes about ten seconds and touches nothing.
+
+The full walk-through, including what the Cloudflare screens look like and how
+to fix things when they go wrong, is in
+**[docs/raspberry-pi-setup.md](./docs/raspberry-pi-setup.md)**. It is written
+around a Pi, but every step applies to any machine.
+
+## Just the container
+
+Use this if you already have a reverse proxy, or you just want to look at the
+software before committing to a domain.
+
+You do not need the source code. The
+[`docker-compose.yml`](./docker-compose.yml) stands on its own, so two files in
 an empty folder are enough:
 
 ```bash
 mkdir repair-cafe-hub && cd repair-cafe-hub
 
-# 1. Grab the compose file
+# 1. Get the compose file
 curl -fsSL -O https://raw.githubusercontent.com/Zesty0wl/circularity-repair-cafe-hub/main/docker-compose.yml
 
 # 2. Write a .env with a strong SECRET_KEY
@@ -155,156 +187,101 @@ printf 'SECRET_KEY=%s\n' "$(openssl rand -hex 32)" > .env
 docker compose up -d
 ```
 
-The file is commented throughout, and it explains the port binding, the volume
-you need to back up, and how to pin a version. If you forget the `.env`,
-Compose stops and tells you what to do rather than starting a broken container.
+That file is commented throughout. It explains the port binding, the folder to
+back up, and how to pin a version. If you forget the `.env`, Compose stops and
+tells you what to do instead of starting a container that cannot boot.
 
-Clone the repo instead if you want the [documentation](./docs/README.md), the
-Raspberry Pi [installer](./install.sh) and the sample
-[`nginx.conf`](./nginx.conf) on the machine too.
+Clone the repo instead if you also want the [documentation](./docs/README.md),
+the [installer](./install.sh), [`doctor.sh`](./doctor.sh) and the sample
+[`nginx.conf`](./nginx.conf) on the machine:
+
+```bash
+git clone https://github.com/Zesty0wl/circularity-repair-cafe-hub.git
+cd circularity-repair-cafe-hub
+cp .env.example .env
+sed -i "s|please-change-me-32-or-more-random-chars|$(openssl rand -hex 32)|" .env
+docker compose pull
+docker compose up -d
+```
+
+### Set your timezone
+
+Event times, session dates and reports all use it, so if it is wrong every time
+on your site is out. It defaults to `Europe/London`. Set it to where your cafe
+actually is:
+
+```bash
+echo "TZ=Europe/Berlin" >> .env
+docker compose up -d
+```
+
+The guided installer does this for you from the machine's own clock.
+
+### Reaching it before you have a domain
+
+The container only listens on `127.0.0.1:5026`, so it is not reachable from
+anywhere else. That is deliberate. To open the setup wizard from your laptop,
+forward the port over SSH:
+
+```bash
+ssh -L 5026:127.0.0.1:5026 user@your-server
+```
+
+Then open <http://127.0.0.1:5026>. The forward lasts as long as the SSH session.
+
+### Putting your own proxy in front
+
+Point it at `127.0.0.1:5026` and forward the standard `X-Forwarded-Proto`,
+`-For` and `-Host` headers. `TRUST_PROXY=true` is already set in the compose
+file, so the app will issue secure cookies and rate-limit by real client IP.
+Caddy, Traefik, nginx and hosted platforms all work.
 
 ### Staying on one version
 
-By default you get `latest`, which is the newest release. To stay on one
-version until you choose to move, set `HUB_VERSION` in your `.env`:
+By default you get `latest`, which is the newest release. To stay put until you
+choose to move:
 
 ```bash
-echo "HUB_VERSION=1.5.0" >> .env
+echo "HUB_VERSION=1.6.0" >> .env
 docker compose up -d
 ```
 
 <details>
 <summary>Building the image yourself instead</summary>
 
-You only need this if you have changed the code, or if there is no published
-image for your machine (32-bit Raspberry Pi OS, for example, because PostgreSQL
-does not ship 32-bit Arm packages).
+You only need this if you have changed the code, or there is no published image
+for your machine. 32-bit Raspberry Pi OS is the usual case, because PostgreSQL
+publishes no 32-bit Arm packages.
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 ```
 
-Or run [`./rebuild.sh`](./rebuild.sh), which does the same and then tails the
-logs. Building needs about 4 GB of memory. If your machine has less, add swap
-first, or build on a bigger machine and copy the image over.
+Or run [`./rebuild.sh`](./rebuild.sh), which does the same then tails the logs.
+Building needs about 4 GB of memory. If your machine has less, add swap first,
+or build somewhere bigger and copy the image over.
 
 </details>
-
-By default the container only listens on `127.0.0.1:5026` on the server. To
-**open the setup wizard from your laptop**, you have two options:
-
-**Option A — quick: SSH tunnel** (great for trying it out before setting up
-a domain). On your Windows / Mac / Linux laptop, run:
-
-```bash
-ssh -L 5026:127.0.0.1:5026 user@your-server
-```
-
-Then open <http://127.0.0.1:5026> in your browser. The tunnel stays open as
-long as the SSH session is.
-
-**Option B — production with a real domain.** Pick one of the deployment
-paths below:
-
-- **[Deploying to a Raspberry Pi (recommended)](#deploying-to-a-raspberry-pi-recommended)**
-  — Pi + Cloudflare Tunnel, no reverse proxy or certificates to manage.
-- **[Advanced: nginx + Cloudflare Origin Certificate](#advanced-nginx--cloudflare-origin-certificate)**
-  — for VPS or static-IP servers where you want full control.
-
-The first request bootstraps the database, runs migrations, seeds the default
-skill categories, then walks you through creating the super-admin account and
-filling in your cafe details.
-
-To upgrade later, run `git pull && docker compose pull && docker compose up -d`.
-The `git pull` keeps your compose file and docs in step with the code, and
-`docker compose pull` fetches the new image. Migrations are idempotent and run
-automatically on container start.
-
-## Documentation
-
-Once you're up and running, the **[user documentation in `docs/`](./docs/README.md)**
-walks repair cafe organisers through the whole platform — getting started,
-branding, skills, venues & events, running an event day, reporting and GDPR.
-There's also a [short repairer guide](./docs/repairer-guide.md) for your
-volunteers. The docs live in this repo so they always match the version of the
-software you're running.
-
-## Deploying to a Raspberry Pi (recommended)
-
-The simplest production setup is a Pi 4 or 5 in the corner of your venue (or
-your house) running this container behind a [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/).
-There's no nginx to configure, no port to forward on the router, no TLS
-certificate to renew — Cloudflare's edge handles all of it, and the tunnel
-works from behind NAT / CGNAT (common on UK home broadband).
-
-From a fresh Raspberry Pi OS Lite 64-bit install:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/Zesty0wl/circularity-repair-cafe-hub/main/install.sh | bash
-```
-
-The same script works on any 64-bit Linux machine, not just a Pi. It runs
-either as root, which is how most rented servers hand you your machine, or as
-a user with `sudo`, which is how a Pi does.
-
-**What you need before you start:**
-
-- A 64-bit Linux machine with 2 GB of memory and 3 GB of free disk
-- Root access, directly or through `sudo`
-- A free Cloudflare account
-- A domain **whose nameservers point at Cloudflare**. Creating a Cloudflare
-  account is not enough. The domain has to be added to it and its nameservers
-  changed at your registrar. This is the step people get wrong most often.
-
-To check a machine is ready without changing anything on it:
-
-```bash
-./install.sh --check
-```
-
-That confirms memory, disk, a free port, internet access and, most usefully,
-that your domain really is on Cloudflare. It takes about ten seconds and
-changes nothing.
-
-The installer asks you two questions at the start, then needs you to approve
-one thing in your browser, which it shows as a QR code you can scan with your
-phone. After that it runs on its own for a few minutes.
-
-If something is not working afterwards, run:
-
-```bash
-./doctor.sh
-```
-
-It checks the container, the database, the tunnel, your web address and disk
-space, and says in plain English what is wrong. If you are asking for help,
-send us everything it prints.
-
-The full step-by-step guide, including the Cloudflare login flow, verification,
-updates and troubleshooting, is in
-**[docs/raspberry-pi-setup.md](./docs/raspberry-pi-setup.md)**.
 
 ## Advanced: nginx + Cloudflare Origin Certificate
 
 <details>
-<summary>Click to expand — for VPS deployments or anyone who prefers a
+<summary>Click to expand, for VPS deployments or anyone who prefers a
 self-managed reverse proxy</summary>
 
-The container intentionally only listens on `127.0.0.1:5026` — it's designed to
-sit behind a reverse proxy for TLS, HTTP/2 and any host-level rate-limiting you
-want. The original setup (and the one used at
-[`repaircafe.circularity.org`](https://repaircafe.circularity.org)) is:
+The setup used at
+[`repaircafe.circularity.org`](https://repaircafe.circularity.org) is:
 
-1. **Cloudflare** in front, with the orange cloud on, set to "Full (strict)" SSL.
-   Generate a Cloudflare **Origin Certificate** for your domain (or a wildcard
-   for `*.example.org`) — these certs are trusted by Cloudflare's edge but not
+1. **Cloudflare** in front, with the orange cloud on, set to "Full (strict)"
+   SSL. Generate a Cloudflare **Origin Certificate** for your domain, or a
+   wildcard for `*.example.org`. These are trusted by Cloudflare's edge but not
    by browsers, which is exactly what you want for an origin behind Cloudflare.
-2. **nginx** on your host terminating TLS using that origin cert and proxying
-   to the container.
+2. **nginx** on your host terminating TLS with that certificate and proxying to
+   the container.
 
 A production-ready [`nginx.conf`](./nginx.conf) is included. It expects the
-Cloudflare cert at `/etc/ssl/certs/cloudflare/cloudflare_<name>.{pem,key}` —
-edit those paths and `server_name` for your domain, then:
+certificate at `/etc/ssl/certs/cloudflare/cloudflare_<name>.{pem,key}`. Edit
+those paths and `server_name` for your domain, then:
 
 ```bash
 sudo cp nginx.conf /etc/nginx/sites-available/<your-domain>
@@ -312,26 +289,49 @@ sudo ln -s /etc/nginx/sites-available/<your-domain> /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-The proxy forwards `X-Forwarded-Proto` / `-For` / `-Host`. Because
-`TRUST_PROXY=true` is set in [`docker-compose.yml`](./docker-compose.yml), the
-app issues secure cookies and rate-limits per real client IP correctly.
-
-> Cloudflare not your style? Any other reverse proxy works — Caddy, Traefik,
-> a hosted PaaS, etc. The only requirement is the proxy forwards the standard
-> `X-Forwarded-*` headers.
-
 </details>
 
-## Backup & restore
+## After it is running
 
-Everything persists in the named volume `circularity-repair-cafe-hub-data`.
+### The first visit
+
+Opening the site for the first time sets up the database, runs the migrations
+and seeds the default skill categories, then walks you through creating your
+admin account and filling in your cafe's details.
+
+### Checking it is healthy
 
 ```bash
-# Backup the Postgres database
+./doctor.sh
+```
+
+This looks at the machine, your settings, the container, the database, the
+tunnel, your web address and whether a newer version is out, then says in plain
+English what is fine and what is not. It only reads things, so it is always safe
+to run. If you are asking for help, run it and send us everything it prints.
+
+### Updating
+
+```bash
+git pull && docker compose pull && docker compose up -d
+```
+
+Or without a clone, just `docker compose pull && docker compose up -d`.
+Migrations run automatically on start and are safe to run again. Expect about
+30 seconds of downtime, so do it the day before an event rather than on the
+morning.
+
+### Backup and restore
+
+Everything worth keeping is in the named volume
+`circularity-repair-cafe-hub-data`.
+
+```bash
+# Back up the database
 docker exec circularity-repair-cafe-hub \
   pg_dump -U circularity circularity > backup.sql
 
-# Backup the uploads (photos, QR codes, branding)
+# Back up the uploads (photos, QR codes, branding)
 docker run --rm -v circularity-repair-cafe-hub-data:/data \
   -v "$PWD":/backup alpine \
   tar czf /backup/uploads.tar.gz -C /data uploads
@@ -340,6 +340,18 @@ docker run --rm -v circularity-repair-cafe-hub-data:/data \
 docker exec -i circularity-repair-cafe-hub \
   psql -U circularity -d circularity < backup.sql
 ```
+
+Copy those files somewhere other than the machine they came from. A backup on
+the same SD card is no backup at all.
+
+## Documentation
+
+Once you are up and running, the
+**[user documentation in `docs/`](./docs/README.md)** walks organisers through
+the whole platform: getting started, branding, skills, venues and events,
+running an event day, reporting and GDPR. There is also a
+[short repairer guide](./docs/repairer-guide.md) for your volunteers. The docs
+live in this repo, so they always match the version you are running.
 
 ## Environment variables
 

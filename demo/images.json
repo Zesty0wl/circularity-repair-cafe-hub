@@ -1,0 +1,135 @@
+{
+  "_readme": [
+    "Photographs for the public demo site only. Nothing here ships in the container",
+    "or is used by a real cafe. demo/seed.py downloads them at seeding time, so the",
+    "repository and the image both stay small.",
+    "",
+    "Every picture is CC0, Public Domain Mark, or CC BY 2.0, found through",
+    "Openverse. CC BY requires the photographer to be named wherever the picture",
+    "appears, so the credit below is written into the photo's caption in the app.",
+    "The others do not require it and are credited anyway."
+  ],
+  "images": [
+    {
+      "role": "gallery",
+      "caption": "A bike getting some attention",
+      "credit": "Photo by gcrjimll (CC0)",
+      "url": "https://live.staticflickr.com/608/21754673322_ba7998ceb6_b.jpg",
+      "licence": "cc0-1.0",
+      "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "creator": "gcrjimll",
+      "source_page": "https://www.flickr.com/photos/22878638@N03/21754673322",
+      "title": "Bike repairing"
+    },
+    {
+      "role": "gallery",
+      "caption": "Computer repairs underway",
+      "credit": "Photo by karenblakeman (CC0)",
+      "url": "https://live.staticflickr.com/8621/16473176888_b06c01e06e_b.jpg",
+      "licence": "cc0-1.0",
+      "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "creator": "karenblakeman",
+      "source_page": "https://www.flickr.com/photos/11569642@N00/16473176888",
+      "title": "Computer repairs at Reading Repair Cafe"
+    },
+    {
+      "role": "gallery",
+      "caption": "Setting up before the doors open",
+      "credit": "Photo by karenblakeman (CC0)",
+      "url": "https://live.staticflickr.com/2922/14539091227_2c53bf848f_b.jpg",
+      "licence": "cc0-1.0",
+      "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "creator": "karenblakeman",
+      "source_page": "https://www.flickr.com/photos/11569642@N00/14539091227",
+      "title": "July 20th, Reading Repair Cafe"
+    },
+    {
+      "role": "gallery",
+      "caption": "Sharpening tools at the bench",
+      "credit": "Photo by karenblakeman (CC0)",
+      "url": "https://live.staticflickr.com/3868/14538893549_05d333ed5f_b.jpg",
+      "licence": "cc0-1.0",
+      "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "creator": "karenblakeman",
+      "source_page": "https://www.flickr.com/photos/11569642@N00/14538893549",
+      "title": "Reading Repair Cafe, July 2014 - Tool sharpening desk"
+    },
+    {
+      "role": "gallery",
+      "caption": "The tool library and electrical bench",
+      "credit": "Photo by karenblakeman (CC0)",
+      "url": "https://live.staticflickr.com/5611/15387654727_47c630877e_b.jpg",
+      "licence": "cc0-1.0",
+      "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "creator": "karenblakeman",
+      "source_page": "https://www.flickr.com/photos/11569642@N00/15387654727",
+      "title": "reading Repair Cafe - tool library and electrics"
+    },
+    {
+      "role": "gallery",
+      "caption": "Bringing an old food mixer back to life",
+      "credit": "Photo by karenblakeman (CC0)",
+      "url": "https://live.staticflickr.com/5600/15550025956_0a43af4b6d_b.jpg",
+      "licence": "cc0-1.0",
+      "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "creator": "karenblakeman",
+      "source_page": "https://www.flickr.com/photos/11569642@N00/15550025956",
+      "title": "Reading Repair Cafe - maintenance on a Sunbeam Mixmaster"
+    },
+    {
+      "role": "gallery",
+      "caption": "Two of our repairers puzzling over a fault",
+      "credit": "Photo by karenblakeman (CC0)",
+      "url": "https://live.staticflickr.com/3698/10403675514_c47bdb317c_b.jpg",
+      "licence": "cc0-1.0",
+      "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "creator": "karenblakeman",
+      "source_page": "https://www.flickr.com/photos/11569642@N00/10403675514",
+      "title": "October 20th, 2013 Reading Repair Cafe - tool and knife sharpening tab"
+    },
+    {
+      "role": "banner",
+      "caption": "The textiles and sewing table",
+      "credit": "Photo by karenblakeman (CC0)",
+      "url": "https://live.staticflickr.com/3950/15387521798_31caf36c5d_b.jpg",
+      "licence": "cc0-1.0",
+      "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "creator": "karenblakeman",
+      "source_page": "https://www.flickr.com/photos/11569642@N00/15387521798",
+      "title": "Reading Repair Cafe - textiles and sewing repairs"
+    },
+    {
+      "role": "gallery",
+      "caption": "Working on a sewing machine",
+      "credit": "Photo by Mussi Katz (public domain)",
+      "url": "https://live.staticflickr.com/5672/23436324721_7335bc3f84_b.jpg",
+      "licence": "pdm-1.0",
+      "licence_url": "https://creativecommons.org/publicdomain/mark/1.0/",
+      "creator": "Mussi Katz",
+      "source_page": "https://www.flickr.com/photos/52775988@N00/23436324721",
+      "title": "Repairing the Sewing Machine"
+    },
+    {
+      "role": "gallery",
+      "caption": "The soldering bench, ready to go",
+      "credit": "Photo by oskay (CC BY 2.0)",
+      "url": "https://live.staticflickr.com/4052/4439774205_0fe0cbe38e_b.jpg",
+      "licence": "by-2.0",
+      "licence_url": "https://creativecommons.org/licenses/by/2.0/",
+      "creator": "oskay",
+      "source_page": "https://www.flickr.com/photos/17425845@N00/4439774205",
+      "title": "Soldering bench"
+    },
+    {
+      "role": "gallery",
+      "caption": "Everything within reach",
+      "credit": "Photo by 1lenore (CC BY 2.0)",
+      "url": "https://live.staticflickr.com/3290/2514975647_4bc9c276fd_b.jpg",
+      "licence": "by-2.0",
+      "licence_url": "https://creativecommons.org/licenses/by/2.0/",
+      "creator": "1lenore",
+      "source_page": "https://www.flickr.com/photos/80522246@N00/2514975647",
+      "title": "Workbench"
+    }
+  ]
+}

@@ -55,6 +55,11 @@ services:
       # Read the real visitor address from the X-Forwarded-* headers your proxy
       # sends. Leave this on when anything sits in front of the container.
       TRUST_PROXY: "true"
+      # Only for a public try-it-out site, where the login is published and
+      # anyone can sign in as an administrator. It refuses all uploads, keeps
+      # the site out of search engines, freezes passwords and never sends
+      # telemetry. A normal cafe should leave this alone.
+      DEMO_MODE: "${DEMO_MODE:-false}"
     volumes:
       # Everything worth keeping lives here: the database, uploaded photos,
       # your branding and the QR codes. Back this up. See the README.

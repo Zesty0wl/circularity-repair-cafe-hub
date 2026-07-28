@@ -132,7 +132,14 @@ else
       # visitor mid-click is the rudest thing this script could do, and it will
       # still be here to clean up in an hour.
       DEFERRALS=$((DEFERRALS + 1))
-      printf 'deferrals=%s\n' "$DEFERRALS" >> "$STATE"
+      # Replace the line rather than appending one. The state file is sourced,
+      # so the name has to match exactly and the count has to actually move,
+      # otherwise the cap never bites and a busy site is never cleaned up.
+      if grep -q '^DEFERRALS=' "$STATE" 2>/dev/null; then
+        sed -i "s/^DEFERRALS=.*/DEFERRALS=${DEFERRALS}/" "$STATE"
+      else
+        printf 'DEFERRALS=%s\n' "$DEFERRALS" >> "$STATE"
+      fi
       ok "Somebody was using it ${IDLE}s ago. Leaving them alone (deferral ${DEFERRALS} of ${MAX_DEFERRALS})."
       exit 0
     fi

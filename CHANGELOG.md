@@ -2,6 +2,27 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
+## 1.8.2 — 28 July 2026
+
+### Changed
+
+- The footer credits Circularity again, and links back to them. This is a
+  Circularity project, and removing that in 1.6.0 went too far. What was
+  actually wrong was the picture being used, not the credit itself.
+- It uses the real wordmark this time, drawn as shapes, and the words
+  "Supported by" are ordinary text on the page rather than part of the image.
+  The artwork that had those words built into it relies on a font being
+  installed, so it came out in whatever the machine happened to have.
+- The footer now reads: supported by Circularity, powered by Repair Cafe Hub
+  with the version, and a link to the source.
+
+### Removed
+
+- Four logo files that were never right. Two drew "Circularity.org" in a serif
+  face, when the real wordmark is a bold sans. Two others were live text rather
+  than shapes, so they changed appearance depending on the machine. Nothing
+  used any of them.
+
 ## 1.8.1 — 28 July 2026
 
 ### Fixed

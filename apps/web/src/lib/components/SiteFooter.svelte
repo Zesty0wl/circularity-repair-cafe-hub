@@ -72,7 +72,26 @@
     </div>
 
     <!-- Attribution: equal-sized icons + text, lined up on one baseline -->
-    <div class="mt-12 pt-6 border-t border-white/15 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-sm text-white/50">
+    <div class="mt-12 pt-6 border-t border-white/15 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 gap-y-2 flex-wrap text-sm text-white/50">
+      <!-- Circularity built this and keeps it going. The wordmark is the real
+           one, drawn as paths, so it does not depend on a font being installed
+           the way the earlier "supported by" artwork did. The words are HTML
+           rather than part of the picture for the same reason. -->
+      <a
+        href="https://circularity.org"
+        target="_blank"
+        rel="noopener"
+        class="inline-flex items-center gap-2 hover:text-white/80"
+      >
+        <span>Supported by</span>
+        <!-- h-5, not smaller. The wordmark stacks ".org" under "Circularity",
+             so at 16px each line is about seven pixels tall and unreadable. -->
+        <img
+          src="/brand/logo-wordmark-white.svg"
+          alt="Circularity.org"
+          class="h-5 w-auto opacity-80"
+        />
+      </a>
       <a
         href="https://circularity.org/repair-cafe"
         target="_blank"

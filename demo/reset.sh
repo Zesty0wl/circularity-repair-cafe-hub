@@ -55,17 +55,31 @@ command -v python3 >/dev/null || die "python3 is not installed. Try: apt-get ins
 # the one taken at the end of the last rebuild, nobody has changed anything.
 # The audit log covers signing in and checking an item in; the counts and the
 # newest timestamps cover anything that edits a row without being audited.
+# Only cafes, events, repair_jobs and users carry updated_at. The rest are
+# insert-only from a visitor's point of view, so a count and the newest
+# created_at is enough to notice a change. Getting this wrong is quiet: psql
+# writes the error to stderr and prints nothing, so the fingerprint comes back
+# empty and every comparison fails. Hence the warning below rather than 2>/dev/null.
 fingerprint() {
-  docker exec circularity-repair-cafe-hub psql -U circularity -d circularity -tAc "
+  local out err
+  err="$(mktemp)"
+  out="$(docker exec circularity-repair-cafe-hub psql -U circularity -d circularity -tAc "
     SELECT
-      (SELECT COALESCE(MAX(id), 0)                     FROM audit_log),
-      (SELECT COUNT(*) FROM repair_jobs), (SELECT COALESCE(MAX(updated_at)::text,'') FROM repair_jobs),
-      (SELECT COUNT(*) FROM events),      (SELECT COALESCE(MAX(updated_at)::text,'') FROM events),
-      (SELECT COUNT(*) FROM users),       (SELECT COALESCE(MAX(updated_at)::text,'') FROM users),
-      (SELECT COUNT(*) FROM venues),      (SELECT COALESCE(MAX(updated_at)::text,'') FROM venues),
-      (SELECT COUNT(*) FROM cafe_gallery),(SELECT COALESCE(MAX(updated_at)::text,'') FROM cafes),
-      (SELECT COUNT(*) FROM event_images)
-  " 2>/dev/null | tr -d ' \n'
+      (SELECT COALESCE(MAX(id),0) FROM audit_log),
+      (SELECT COUNT(*) FROM repair_jobs),  (SELECT COALESCE(MAX(updated_at)::text,'') FROM repair_jobs),
+      (SELECT COUNT(*) FROM events),       (SELECT COALESCE(MAX(updated_at)::text,'') FROM events),
+      (SELECT COUNT(*) FROM users),        (SELECT COALESCE(MAX(updated_at)::text,'') FROM users),
+      (SELECT COALESCE(MAX(updated_at)::text,'') FROM cafes),
+      (SELECT COUNT(*) FROM venues),       (SELECT COALESCE(MAX(created_at)::text,'') FROM venues),
+      (SELECT COUNT(*) FROM cafe_gallery), (SELECT COALESCE(MAX(created_at)::text,'') FROM cafe_gallery),
+      (SELECT COUNT(*) FROM event_images), (SELECT COALESCE(MAX(created_at)::text,'') FROM event_images),
+      (SELECT COUNT(*) FROM skill_categories)
+  " 2>"$err" | tr -d ' \n')"
+  if [[ -z "$out" ]]; then
+    warn "Could not read the database: $(head -2 "$err" | tr '\n' ' ')"
+  fi
+  rm -f "$err"
+  printf '%s' "$out"
 }
 
 # Seconds since the newest audit entry, or a big number if there is none.

@@ -36,3 +36,7 @@ coverage/
 # Personal scratchpads
 todo.md
 
+
+# Python bytecode, e.g. from running demo/seed.py
+__pycache__/
+*.pyc

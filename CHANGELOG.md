@@ -2,6 +2,29 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
+## 1.7.0 — 28 July 2026
+
+### Added
+
+- There is now a demo site you can try without installing anything. It is a
+  made-up repair cafe with real sessions, repairs, volunteers and photographs,
+  and it is wiped and rebuilt from nothing every hour, so you can click
+  anything you like. The address and the logins are in the README.
+- A new `DEMO_MODE` setting, which is what makes running such a site sensible.
+  A demo publishes its own password, so anyone can sign in as an administrator.
+  When it is on, no file can be uploaded by anybody, search engines are told to
+  stay out of the whole site, passwords cannot be changed and accounts cannot
+  be removed, and nothing is ever sent to the telemetry collector.
+- It is switched off unless you turn it on, and a normal cafe is unaffected. If
+  you are running a cafe for real, you never need to think about it.
+
+### Why it works this way
+
+- Uploads are refused for everyone rather than for certain accounts. The
+  check-in flow deliberately has no login, because visitors reach it by
+  scanning a QR code on a poster, so the thing most worth preventing on a
+  public demo cannot be handled by limiting what a signed-in account may do.
+
 ## 1.6.0 — 28 July 2026
 
 ### Changed

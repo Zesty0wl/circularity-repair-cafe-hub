@@ -101,6 +101,33 @@ corner.
 | Infra    | Docker (multi-stage), s6-overlay, exposed on host port **5026**; Cloudflare Tunnel for public access |
 | Images   | Built for amd64 and arm64 by GitHub Actions, published to [GHCR](https://github.com/Zesty0wl/circularity-repair-cafe-hub/pkgs/container/circularity-repair-cafe-hub) |
 
+## Try it first
+
+There is a live demo, so you can see the whole thing working before you install
+anything:
+
+**<https://repaircafe.hyperspanner.net>**
+
+| | |
+| --- | --- |
+| Admin | `demo@example.com` / `DemoDemo123` |
+| Repairer | `repairer@example.com` / `DemoDemo123` |
+
+Sign in as the admin to see the reports, the events, the settings and the
+volunteer list. Sign in as the repairer to see the shop-floor board the way a
+volunteer does on the day. Or use neither, and check an item in through the
+QR-code flow the way a visitor would.
+
+**Click anything.** Tinkerton Repair Café is invented, every repair and
+volunteer in it is made up, and the whole site is wiped and rebuilt from
+nothing every hour. You cannot break it in a way that lasts.
+
+Two things are switched off, because the password is published on this page:
+you cannot upload photographs, and you cannot change a password or remove an
+account. Everything else works exactly as it would on your own install.
+
+Please do not type real names, emails or phone numbers into it.
+
 ## Install
 
 There are two ways to run this. Pick the one that matches you.

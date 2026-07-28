@@ -15,9 +15,23 @@
 #
 # Safe to run at any time. It never touches anything but this project's own
 # container and volume.
+#
+# It does not rebuild blindly. Most hours nobody has touched the site, and
+# there is nothing to clean up, so it works out whether a rebuild is worth
+# doing first. See should_rebuild() for what counts.
 set -uo pipefail
 
 cd "$(dirname "$0")/.." || exit 1
+
+FORCE=0
+[[ "${1:-}" == "--force" ]] && FORCE=1
+# Kept outside the checkout so git pull never touches it.
+STATE_DIR=/var/lib/repaircafe-demo
+STATE="$STATE_DIR/reset-state"
+# Never let a rebuild be put off for longer than this, however busy the site
+# looks. Somebody poking it every few minutes must not be able to keep a
+# defaced demo up indefinitely.
+MAX_DEFERRALS=3
 
 if [[ -t 1 ]]; then B=$'\033[1m'; G=$'\033[32m'; R=$'\033[31m'; Y=$'\033[33m'; N=$'\033[0m'
 else B=''; G=''; R=''; Y=''; N=''; fi
@@ -35,6 +49,88 @@ LOCAL="http://127.0.0.1:${PORT}"
 command -v docker  >/dev/null || die "Docker is not installed."
 command -v python3 >/dev/null || die "python3 is not installed. Try: apt-get install -y python3"
 [[ -f .env ]] || die "No .env here. Run this from the folder the hub was installed into."
+
+# ── is a rebuild worth doing? ─────────────────────────────────────────────────
+# A fingerprint of everything the database would show a visitor. If it matches
+# the one taken at the end of the last rebuild, nobody has changed anything.
+# The audit log covers signing in and checking an item in; the counts and the
+# newest timestamps cover anything that edits a row without being audited.
+fingerprint() {
+  docker exec circularity-repair-cafe-hub psql -U circularity -d circularity -tAc "
+    SELECT
+      (SELECT COALESCE(MAX(id), 0)                     FROM audit_log),
+      (SELECT COUNT(*) FROM repair_jobs), (SELECT COALESCE(MAX(updated_at)::text,'') FROM repair_jobs),
+      (SELECT COUNT(*) FROM events),      (SELECT COALESCE(MAX(updated_at)::text,'') FROM events),
+      (SELECT COUNT(*) FROM users),       (SELECT COALESCE(MAX(updated_at)::text,'') FROM users),
+      (SELECT COUNT(*) FROM venues),      (SELECT COALESCE(MAX(updated_at)::text,'') FROM venues),
+      (SELECT COUNT(*) FROM cafe_gallery),(SELECT COALESCE(MAX(updated_at)::text,'') FROM cafes),
+      (SELECT COUNT(*) FROM event_images)
+  " 2>/dev/null | tr -d ' \n'
+}
+
+# Seconds since the newest audit entry, or a big number if there is none.
+seconds_since_activity() {
+  local secs
+  secs="$(docker exec circularity-repair-cafe-hub psql -U circularity -d circularity -tAc \
+    "SELECT COALESCE(EXTRACT(EPOCH FROM (now() - MAX(created_at)))::bigint, 999999) FROM audit_log" \
+    2>/dev/null | tr -d ' \n')"
+  [[ "$secs" =~ ^[0-9]+$ ]] && printf '%s' "$secs" || printf '999999'
+}
+
+WAS_FP=""; WAS_DAY=""; WAS_IMAGE=""; DEFERRALS=0
+# shellcheck disable=SC1090
+[[ -r "$STATE" ]] && . "$STATE"
+
+say "Working out whether a rebuild is needed"
+REASON=""
+NOW_IMAGE="$(docker image inspect --format '{{.Id}}' \
+  "ghcr.io/zesty0wl/circularity-repair-cafe-hub:${HUB_VERSION:-latest}" 2>/dev/null || echo none)"
+
+if [[ "$FORCE" -eq 1 ]]; then
+  REASON="you asked for it"
+elif [[ -z "$WAS_FP" ]]; then
+  REASON="there is no record of a previous rebuild"
+elif ! docker compose ps --status running 2>/dev/null | grep -q circularity-repair-cafe-hub; then
+  REASON="the hub is not running"
+elif [[ "$WAS_DAY" != "$(date +%F)" ]]; then
+  # The seed dates a session today and leaves it running. Left alone overnight
+  # it would show visitors an open session dated yesterday, so the day rolling
+  # over is reason enough on its own.
+  REASON="the date has changed, so today's session is out of date"
+else
+  # Ask the registry whether there is a newer release. The demo follows
+  # `latest`, which makes each rebuild a check that the release we tell cafes
+  # to install still works. Skipping that check would lose the point of it.
+  docker compose pull >/dev/null 2>&1
+  PULLED_IMAGE="$(docker image inspect --format '{{.Id}}' \
+    "ghcr.io/zesty0wl/circularity-repair-cafe-hub:${HUB_VERSION:-latest}" 2>/dev/null || echo none)"
+  NOW_IMAGE="$PULLED_IMAGE"
+  NOW_FP="$(fingerprint)"
+
+  if [[ "$PULLED_IMAGE" != "$WAS_IMAGE" ]]; then
+    REASON="a new release has been published"
+  elif [[ -z "$NOW_FP" ]]; then
+    REASON="the database could not be read"
+  elif [[ "$NOW_FP" != "$WAS_FP" ]]; then
+    IDLE="$(seconds_since_activity)"
+    if [[ "$IDLE" -lt 600 && "$DEFERRALS" -lt "$MAX_DEFERRALS" ]]; then
+      # Somebody is looking at it right now. Wiping the site out from under a
+      # visitor mid-click is the rudest thing this script could do, and it will
+      # still be here to clean up in an hour.
+      DEFERRALS=$((DEFERRALS + 1))
+      printf 'deferrals=%s\n' "$DEFERRALS" >> "$STATE"
+      ok "Somebody was using it ${IDLE}s ago. Leaving them alone (deferral ${DEFERRALS} of ${MAX_DEFERRALS})."
+      exit 0
+    fi
+    REASON="somebody has changed something"
+  fi
+fi
+
+if [[ -z "$REASON" ]]; then
+  ok "Nothing has changed and nobody has been in. Leaving it as it is."
+  exit 0
+fi
+ok "Rebuilding because ${REASON}"
 
 # ── 1. throw everything away ──────────────────────────────────────────────────
 say "Wiping the current demo"
@@ -94,6 +190,18 @@ repairs="$(printf '%s' "$stats" | grep -oE '"repairCount":[0-9]+' | cut -d: -f2)
 
 printf '\n'
 if [[ "$FAILED" -eq 0 ]]; then
+  # Remember what a clean, untouched demo looks like, so next hour can tell
+  # whether anybody has been in. Only written after the checks pass, so a
+  # half-built site is never mistaken for a good one.
+  mkdir -p "$STATE_DIR"
+  {
+    printf 'WAS_FP=%q\n'    "$(fingerprint)"
+    printf 'WAS_DAY=%q\n'   "$(date +%F)"
+    printf 'WAS_IMAGE=%q\n' "$(docker image inspect --format '{{.Id}}' \
+      "ghcr.io/zesty0wl/circularity-repair-cafe-hub:${HUB_VERSION:-latest}" 2>/dev/null || echo none)"
+    printf 'DEFERRALS=0\n'
+  } > "$STATE"
+
   printf '%s%sDemo rebuilt: %s%s\n' "$G" "$B" "$PUBLIC_URL" "$N"
   printf 'Started %s, finished %s\n\n' "$STARTED" "$(date -Is)"
 else

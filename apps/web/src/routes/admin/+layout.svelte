@@ -4,6 +4,7 @@
   import { auth, isAdmin } from '$lib/stores/auth';
   import { LayoutDashboard, Calendar, Users, Wrench, BarChart3, Tags, MapPin, Settings, LogOut, Menu, X, MonitorPlay, UserCircle2 } from 'lucide-svelte';
   import { api, restoreSession } from '$lib/api';
+  import UpdateBanner from '$lib/components/UpdateBanner.svelte';
 
   let sidebarOpen = false;
 
@@ -85,6 +86,7 @@
       </div>
       <!-- Centred in the space next to the sidebar so wide screens stay balanced. -->
       <main class="p-4 md:p-8 max-w-6xl mx-auto">
+        <UpdateBanner />
         <slot />
       </main>
     </div>

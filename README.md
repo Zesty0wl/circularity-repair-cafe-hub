@@ -340,13 +340,30 @@ to run. If you are asking for help, run it and send us everything it prints.
 ### Updating
 
 ```bash
-git pull && docker compose pull && docker compose up -d
+cd ~/circularity-repair-cafe-hub
+git pull            # leave this out if you only have a docker-compose.yml
+docker compose pull
+docker compose up -d
 ```
 
-Or without a clone, just `docker compose pull && docker compose up -d`.
-Migrations run automatically on start and are safe to run again. Expect about
-30 seconds of downtime, so do it the day before an event rather than on the
-morning.
+Your data lives in a separate volume, so nothing is lost. Migrations run
+automatically on start and are safe to run again. Expect about 30 seconds of
+downtime, so do it the day before an event rather than on the morning. Run
+`./doctor.sh` afterwards to check everything came back.
+
+The same instructions are in the app itself, under **Settings → About**.
+
+**You will be told when there is one.** Once a day the hub asks GitHub which
+versions have been released, and the admin area shows a line when a newer one
+exists. It never updates itself: someone has to pick the moment, because it
+restarts the site.
+
+That check sends nothing about your cafe. No version, no counts, no identifier.
+It is an ordinary request for a public page, so GitHub sees an IP address and
+nothing else, the same as if you visited the repository in a browser. To switch
+it off completely, so no request is ever made, set `UPDATE_CHECK_DISABLED=true`
+in your `.env`. The admin page will then say the check is off rather than
+implying you are up to date.
 
 ### Backup and restore
 
@@ -388,6 +405,7 @@ live in this repo, so they always match the version you are running.
 | `TZ`            | no       | `Europe/London`. Set this to where your cafe is, or every time shown on the site will be out. The installer fills it in from the machine |
 | `HUB_VERSION`   | no       | `latest`. The published image tag to run, for example `1.6.0`     |
 | `HUB_PORT`      | no       | `5026`. The port on the host. Change it if 5026 is already used   |
+| `UPDATE_CHECK_DISABLED` | no | `false`. Set `true` to never ask GitHub about new versions        |
 | `DATABASE_URL`  | no       | `postgresql://circularity:circularity@127.0.0.1:5432/circularity` |
 | `PORT`          | no       | `3000` (mapped to host `5026` by the included compose file)       |
 | `UPLOADS_DIR`   | no       | `/data/uploads`                                                   |

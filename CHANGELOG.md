@@ -2,6 +2,36 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
+## 1.8.0 — 28 July 2026
+
+### Added
+
+- The hub now tells you when a newer version has been released. A line appears
+  in the admin area saying which version is out and how to get it. Until now, a
+  hub sitting on a shelf would stay on whatever version it was installed with
+  for years, including through fixes, because nobody watches a code repository
+  for releases.
+- It never updates itself. Someone has to choose the moment, because updating
+  restarts the site and the middle of a session is the wrong time.
+- Hide the notice and it stays hidden until the version after next, so saying
+  "not now" once does not mean never hearing about it again.
+- **Settings → About** now has the instructions to copy, and says what to
+  expect: about 30 seconds of downtime, your data untouched, and `./doctor.sh`
+  to check afterwards.
+
+### What it sends
+
+- Nothing about your cafe. No version, no counts, no identifier. Once a day the
+  hub asks GitHub which versions exist, which is an ordinary request for a
+  public page. GitHub sees an IP address and nothing else, exactly as if you
+  opened the repository in a browser.
+- To stop it entirely, set `UPDATE_CHECK_DISABLED=true`, and no request is ever
+  made. The admin page then says the check is switched off, rather than leaving
+  you to assume you are up to date.
+- A hub with no internet access, or one that cannot reach GitHub, says nothing
+  and carries on. A version check is never worth an error a volunteer has to
+  think about.
+
 ## 1.7.0 — 28 July 2026
 
 ### Added

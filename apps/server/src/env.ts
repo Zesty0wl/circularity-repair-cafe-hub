@@ -28,6 +28,18 @@ const envSchema = z.object({
     .string()
     .default('false')
     .transform((v) => v.toLowerCase() === 'true'),
+  // ── Update check ─────────────────────────────────────────────────────────
+  // Once a day the hub asks GitHub which versions have been released, so the
+  // admin area can say when a newer one exists. It sends nothing about the
+  // cafe: no version, no counts, no identifier. It is an ordinary request for
+  // a public page, so GitHub sees an IP address and nothing else.
+  //
+  // Set this to true and no request is ever made. The admin page then says the
+  // check is switched off rather than pretending it is up to date.
+  UPDATE_CHECK_DISABLED: z
+    .string()
+    .default('false')
+    .transform((v) => v.toLowerCase() === 'true'),
   // ── Demo mode ────────────────────────────────────────────────────────────
   // For a public try-before-you-install site, where the login details are
   // published and anyone can sign in as an administrator.

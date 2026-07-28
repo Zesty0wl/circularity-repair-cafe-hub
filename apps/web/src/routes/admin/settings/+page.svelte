@@ -998,5 +998,38 @@
       <p>Source: <a class="text-brand-700 hover:underline" href="https://github.com/Zesty0wl/circularity-repair-cafe-hub" target="_blank" rel="noopener">github.com/Zesty0wl/circularity-repair-cafe-hub</a></p>
       <p>Released under the MIT licence.</p>
     </div>
+
+    <div class="card p-6 mt-4 max-w-2xl text-sm space-y-3">
+      <h2 class="font-semibold text-base">Updating</h2>
+      <p class="text-slate-700">
+        Log in to the machine running the hub, go to the folder you installed it
+        into, and run these three commands. Your data is kept in a separate
+        volume, so nothing is lost.
+      </p>
+      <pre class="bg-slate-900 text-slate-100 rounded-lg p-3 overflow-x-auto text-xs leading-relaxed"><code>cd ~/circularity-repair-cafe-hub
+git pull
+docker compose pull
+docker compose up -d</code></pre>
+      <p class="text-slate-700">
+        If you did not clone the repository, and only have a
+        <code class="bg-slate-100 px-1 rounded">docker-compose.yml</code>, leave
+        out the <code class="bg-slate-100 px-1 rounded">git pull</code>.
+      </p>
+      <p class="text-slate-700">
+        The site is unavailable for about 30 seconds while it restarts, so do it
+        the day before a session rather than on the morning. Database changes are
+        applied automatically on start, and are safe to run more than once.
+      </p>
+      <p class="text-slate-700">
+        Afterwards, <code class="bg-slate-100 px-1 rounded">./doctor.sh</code>
+        checks everything came back up.
+      </p>
+      <p class="text-slate-600">
+        To stay on one version rather than always taking the newest, set
+        <code class="bg-slate-100 px-1 rounded">HUB_VERSION</code> in your
+        <code class="bg-slate-100 px-1 rounded">.env</code>, for example
+        <code class="bg-slate-100 px-1 rounded">HUB_VERSION=1.7.0</code>.
+      </p>
+    </div>
   {/if}
 {/if}

@@ -153,12 +153,39 @@ else
   ok "Wrote .env with a fresh SECRET_KEY"
 fi
 
-# ── 4. Build & start container ────────────────────────────────────────────────
-step "4/8  Build and start the container"
-info "Running:  docker compose up -d --build  (this can take 5–15 min on a Pi)"
-if ! docker compose up -d --build; then
-  die "docker compose up failed." \
-      "See logs with:  docker compose logs"
+# ── 4. Start the container ────────────────────────────────────────────────────
+step "4/8  Start the container"
+
+# There is a ready-made image for 64-bit machines, so nothing has to be
+# compiled here. 32-bit Pi OS (armhf) has no published image, because
+# PostgreSQL does not ship 32-bit Arm packages, so that case builds from source.
+BUILD_FROM_SOURCE=0
+if [[ "$ARCH" == "armhf" ]]; then
+  warn "There is no ready-made image for 32-bit Pi OS (armhf), so we will build one here."
+  warn "That needs about 4 GB of memory and takes 15-40 minutes."
+  warn "64-bit Raspberry Pi OS is a lot faster to install. Consider reflashing later."
+  BUILD_FROM_SOURCE=1
+else
+  info "Downloading the ready-made image (usually 1-3 minutes)…"
+  if docker compose pull; then
+    ok "Image downloaded"
+  else
+    warn "Could not download the image. Falling back to building it here."
+    warn "That needs about 4 GB of memory and takes 15-40 minutes."
+    BUILD_FROM_SOURCE=1
+  fi
+fi
+
+if [[ "$BUILD_FROM_SOURCE" -eq 1 ]]; then
+  if ! docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build; then
+    die "Building the container failed." \
+        "See logs with:  docker compose logs"
+  fi
+else
+  if ! docker compose up -d; then
+    die "docker compose up failed." \
+        "See logs with:  docker compose logs"
+  fi
 fi
 ok "Container is up. Check status with:  docker compose ps"
 
@@ -331,6 +358,12 @@ step "8/8  All done"
 
 PUBLIC_DOMAIN="${DOMAIN:-$(grep -E '^\s*-\s*hostname:' "$CF_DIR/config.yml" 2>/dev/null | head -n1 | awk '{print $3}')}"
 
+if [[ "$BUILD_FROM_SOURCE" -eq 1 ]]; then
+  UPDATE_CMD="git pull && ./rebuild.sh"
+else
+  UPDATE_CMD="git pull && docker compose pull && docker compose up -d"
+fi
+
 cat <<EOF
 
 ${C_GREEN}${C_BOLD}Your Repair Cafe Hub is live.${C_RESET}
@@ -345,7 +378,7 @@ Useful commands:
   ${C_BOLD}sudo journalctl -u cloudflared -f${C_RESET} — tunnel logs
 
 To update later:
-  ${C_BOLD}cd $REPO_DIR && git pull && docker compose up -d --build${C_RESET}
+  ${C_BOLD}cd $REPO_DIR && $UPDATE_CMD${C_RESET}
 
 First-run setup will start the moment you visit the URL above. Enjoy.
 EOF

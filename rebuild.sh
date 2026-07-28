@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
-# Rebuild and restart the repair-cafe-hub container.
+# Build the repair-cafe-hub image from this checkout and restart the container.
+#
+# Most people do not need this. To run the published image, use:
+#   docker compose pull && docker compose up -d
+# Use this script when you have changed the code, or when there is no published
+# image for your architecture.
 #
 # Usage:
 #   ./rebuild.sh           # rebuild with cache and restart
@@ -9,6 +14,10 @@
 set -euo pipefail
 
 cd "$(dirname "$0")"
+
+# Both files together: the main one for settings, the build one to compile from
+# source instead of downloading the published image.
+COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.build.yml)
 
 BUILD_ARGS=()
 for arg in "$@"; do
@@ -31,13 +40,13 @@ if [[ ! -f .env ]]; then
 fi
 
 echo "==> Building image…"
-docker compose build "${BUILD_ARGS[@]}"
+"${COMPOSE[@]}" build "${BUILD_ARGS[@]}"
 
 echo "==> Recreating container…"
-docker compose up -d --force-recreate
+"${COMPOSE[@]}" up -d --force-recreate
 
 echo "==> Pruning dangling images…"
 docker image prune -f >/dev/null
 
 echo "==> Done. Tailing logs (Ctrl-C to detach)…"
-docker compose logs -f --tail=50
+"${COMPOSE[@]}" logs -f --tail=50

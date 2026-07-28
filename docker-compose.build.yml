@@ -1,0 +1,20 @@
+# Build the image on this machine instead of downloading the ready-made one.
+#
+# You only need this if you have changed the code, or if there is no published
+# image for your architecture (32-bit Raspberry Pi OS, for example).
+#
+# Use it alongside the main file:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+#
+# Or just run ./rebuild.sh, which does the same thing.
+#
+# The build needs about 4 GB of memory and 2 GB of free disk space. On a
+# Raspberry Pi it takes 15 to 40 minutes.
+services:
+  hub:
+    build:
+      context: .
+    # A separate name, so a local build never gets confused with, or written
+    # over by, the published image.
+    image: circularity-repair-cafe-hub:local

@@ -1,7 +1,10 @@
 services:
   hub:
-    build: .
-    image: circularity-repair-cafe-hub:latest
+    # Ready-made image, built for amd64 and arm64 by GitHub Actions.
+    # Nothing is compiled on your server, so a 2 GB machine is plenty.
+    # Set HUB_VERSION in .env to pin a release, for example HUB_VERSION=1.5.0.
+    # To build from source instead, see docker-compose.build.yml.
+    image: "ghcr.io/zesty0wl/circularity-repair-cafe-hub:${HUB_VERSION:-latest}"
     container_name: circularity-repair-cafe-hub
     restart: unless-stopped
     # Use the default Docker bridge network — the host has many other networks

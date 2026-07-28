@@ -2,6 +2,32 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
+## 1.5.0 — 28 July 2026
+
+### Changed
+
+- We now build the container for you and publish it, so your server does not
+  have to. GitHub builds one image for 64-bit Intel/AMD machines and 64-bit Arm
+  machines (a Raspberry Pi 4 or 5), and Docker picks the right one when you
+  install. Nothing is compiled on your machine any more.
+- This halves what hosting costs. Compiling the front end needed about 4 GB of
+  memory, which forced people onto a 4 GB server at roughly £5 a month. Running
+  the finished image needs 2 GB, at roughly £2.50 a month.
+- Installing on a Raspberry Pi now takes minutes instead of the best part of an
+  hour. The Pi downloads the image rather than building it.
+- To install, run `docker compose pull` then `docker compose up -d`. To update,
+  run `git pull`, then those same two commands. The old
+  `docker compose up -d --build` is no longer the normal path.
+- `latest` now means the newest release, not the newest commit. Set
+  `HUB_VERSION` in your `.env` to stay on one version, for example
+  `HUB_VERSION=1.5.0`.
+- You can still build the image yourself. Use
+  `docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build`,
+  or run `./rebuild.sh`. You need this if you have changed the code, or if you
+  are on 32-bit Raspberry Pi OS, which has no ready-made image because
+  PostgreSQL does not publish 32-bit Arm packages. The Pi installer spots that
+  case and builds for you.
+
 ## 1.4.1 — 27 July 2026
 
 ### Changed

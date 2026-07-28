@@ -20,7 +20,8 @@ Most repair cafes run on a clipboard, a spreadsheet and a WhatsApp group. That
 works, but it doesn't scale, it loses the data that proves your impact, and it
 puts a lot of admin on the volunteers. This project is the tool we wished
 existed: simple enough to set up in an afternoon, capable enough to track
-hundreds of repairs, and yours to host on a £5/month VPS or a Pi in the corner.
+hundreds of repairs, and yours to host on a £2.50/month VPS or a Pi in the
+corner.
 
 ## Features
 
@@ -98,6 +99,7 @@ hundreds of repairs, and yours to host on a £5/month VPS or a Pi in the corner.
 | Backend  | Node 22, Fastify 4, Drizzle ORM, PostgreSQL 16, sharp, qrcode     |
 | Frontend | SvelteKit (SSR via adapter-node), Tailwind CSS, Iconify, Chart.js |
 | Infra    | Docker (multi-stage), s6-overlay, exposed on host port **5026**; Cloudflare Tunnel for public access |
+| Images   | Built for amd64 and arm64 by GitHub Actions, published to [GHCR](https://github.com/Zesty0wl/circularity-repair-cafe-hub/pkgs/container/circularity-repair-cafe-hub) |
 
 ## Quick start (Docker)
 
@@ -109,6 +111,12 @@ hundreds of repairs, and yours to host on a £5/month VPS or a Pi in the corner.
 The steps below are for trying the app out on any Linux host with Docker and
 Docker Compose v2 installed. Everything else lives inside the container.
 
+What you need:
+
+- A 64-bit Linux machine, Intel/AMD or Arm (a Raspberry Pi 4 or 5 counts).
+- **2 GB of memory** and about 3 GB of free disk space.
+- Docker, plus Docker Compose v2.
+
 ```bash
 git clone https://github.com/Zesty0wl/circularity-repair-cafe-hub.git
 cd circularity-repair-cafe-hub
@@ -117,9 +125,41 @@ cd circularity-repair-cafe-hub
 cp .env.example .env
 sed -i "s|please-change-me-32-or-more-random-chars|$(openssl rand -hex 32)|" .env
 
-# 2. Build and start
-docker compose up -d --build
+# 2. Download the image and start it
+docker compose pull
+docker compose up -d
 ```
+
+Nothing is compiled on your machine. `docker compose pull` downloads a
+ready-made image from the GitHub Container Registry, built for both amd64 and
+arm64 by [GitHub Actions](./.github/workflows/docker-publish.yml). Docker picks
+the right one for your machine on its own. This is why 2 GB is enough: building
+the SvelteKit front end needs around 4 GB, and you no longer have to do that.
+
+By default you get `latest`, which is the newest release. To stay on one
+version until you choose to move, set `HUB_VERSION` in your `.env`:
+
+```bash
+echo "HUB_VERSION=1.5.0" >> .env
+docker compose up -d
+```
+
+<details>
+<summary>Building the image yourself instead</summary>
+
+You only need this if you have changed the code, or if there is no published
+image for your machine (32-bit Raspberry Pi OS, for example, because PostgreSQL
+does not ship 32-bit Arm packages).
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
+
+Or run [`./rebuild.sh`](./rebuild.sh), which does the same and then tails the
+logs. Building needs about 4 GB of memory. If your machine has less, add swap
+first, or build on a bigger machine and copy the image over.
+
+</details>
 
 By default the container only listens on `127.0.0.1:5026` on the server. To
 **open the setup wizard from your laptop**, you have two options:
@@ -146,8 +186,10 @@ The first request bootstraps the database, runs migrations, seeds the default
 skill categories, then walks you through creating the super-admin account and
 filling in your cafe details.
 
-To upgrade later, `git pull && docker compose up -d --build`. Migrations are
-idempotent and run automatically on container start.
+To upgrade later, run `git pull && docker compose pull && docker compose up -d`.
+The `git pull` keeps your compose file and docs in step with the code, and
+`docker compose pull` fetches the new image. Migrations are idempotent and run
+automatically on container start.
 
 ## Documentation
 
@@ -242,6 +284,7 @@ docker exec -i circularity-repair-cafe-hub \
 | --------------- | -------- | ----------------------------------------------------------------- |
 | `SECRET_KEY`    | **yes**  | —                                                                 |
 | `TZ`            | no       | `Europe/London`                                                   |
+| `HUB_VERSION`   | no       | `latest`. The published image tag to run, for example `1.5.0`     |
 | `DATABASE_URL`  | no       | `postgresql://circularity:circularity@127.0.0.1:5432/circularity` |
 | `PORT`          | no       | `3000` (mapped to host `5026` by the included compose file)       |
 | `UPLOADS_DIR`   | no       | `/data/uploads`                                                   |
@@ -256,8 +299,12 @@ apps/
 packages/
   shared/    Shared Zod schemas / TypeScript types
 docker/      cont-init scripts and s6-rc service definitions
+.github/
+  workflows/ GitHub Actions: builds the amd64 + arm64 images and publishes them
 nginx.conf   Production reverse-proxy config
 Dockerfile   Multi-stage build (builder → s6-overlay runtime)
+docker-compose.yml        Runs the published image
+docker-compose.build.yml  Add-on file for building from source instead
 ```
 
 ## Development

@@ -14,7 +14,10 @@ container, and one [Cloudflare Tunnel](https://developers.cloudflare.com/cloudfl
 ## 1. Prerequisites
 
 - [ ] Raspberry Pi 4 or 5 (a Pi 3 works but will feel sluggish on event day)
-- [ ] **Raspberry Pi OS Lite 64-bit (Bookworm)**, freshly flashed
+- [ ] **Raspberry Pi OS Lite 64-bit (Bookworm)**, freshly flashed. The 64-bit
+      version matters: it is the one with a ready-made image, so the Pi never
+      has to compile anything.
+- [ ] 2 GB of memory, and about 3 GB of free space on the card
 - [ ] SSH access to the Pi from your laptop
 - [ ] A domain name added to **Cloudflare** (a free account is fine)
 - [ ] That domain's DNS records are **proxied through Cloudflare** — the orange
@@ -93,18 +96,28 @@ sed -i "s|please-change-me-32-or-more-random-chars|$(openssl rand -hex 32)|" .en
 This generates a 256-bit random secret used to sign auth tokens. **Don't reuse
 the example value, ever.**
 
-### 3.4 Build and start the container
+### 3.4 Download the image and start the container
 
 ```bash
-docker compose up -d --build
+docker compose pull
+docker compose up -d
 ```
 
-The build takes 5–15 minutes on a Pi the first time (it's compiling the
-SvelteKit frontend and bundling Postgres into the image). Subsequent rebuilds
-re-use the cache and are much faster.
+This downloads a ready-made image, so the Pi does not have to compile anything.
+It usually takes 1 to 3 minutes on a normal home connection. We publish one
+image that covers both 64-bit Arm (your Pi) and 64-bit Intel/AMD, and Docker
+picks the right one.
 
-Once it's done, the app is listening on `127.0.0.1:5026` — that is, only on
-the Pi itself. Nothing is exposed to the world yet.
+Once it's done, the app is listening on `127.0.0.1:5026`, that is, only on the
+Pi itself. Nothing is exposed to the world yet.
+
+> **On 32-bit Raspberry Pi OS?** There is no ready-made image, because
+> PostgreSQL does not publish 32-bit Arm packages. Build one on the Pi instead:
+> ```bash
+> docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+> ```
+> That takes 15 to 40 minutes and needs about 4 GB of memory, so a 2 GB Pi will
+> need swap. Reflashing with the 64-bit image is the easier road.
 
 ### 3.5 Install `cloudflared`
 
@@ -299,11 +312,16 @@ The `link/ether xx:xx:xx:xx:xx:xx` value is the MAC.
 ```bash
 cd ~/circularity-repair-cafe-hub
 git pull
-docker compose up -d --build
+docker compose pull
+docker compose up -d
 ```
 
-This rebuilds the container and rolls it over with about 30 seconds of
-downtime. The Cloudflare Tunnel keeps running across the restart; visitors
+`git pull` brings down the newest compose file and docs. `docker compose pull`
+fetches the new image, which is already built, so the Pi only has to download
+it. If you built your own image instead, run `./rebuild.sh` in place of the two
+`docker compose` lines.
+
+This rolls the container over with about 30 seconds of downtime. The Cloudflare Tunnel keeps running across the restart; visitors
 during that 30-second window see a `502 Bad Gateway` until the new container
 finishes booting. For event days, do the update the day before.
 
@@ -325,7 +343,12 @@ Most common causes:
   is under 32 characters. Regenerate with `openssl rand -hex 32`.
 - **Postgres still initialising** — give it a minute on first run; the s6
   supervisor brings Postgres up before the Node app.
-- **Out of disk space** — `df -h`. The build needs ~2 GB of free space.
+- **Out of disk space**. Check with `df -h`. The image needs about 3 GB of free
+  space.
+- **Could not pull the image**. Check the Pi can reach `ghcr.io`:
+  `curl -fsS -o /dev/null https://ghcr.io/v2/ && echo ok`. If your network
+  blocks it, build the image on the Pi instead, as shown in
+  [3.4](#34-download-the-image-and-start-the-container).
 
 ### Tunnel isn't connecting
 

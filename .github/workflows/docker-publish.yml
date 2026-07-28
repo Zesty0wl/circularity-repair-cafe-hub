@@ -1,0 +1,191 @@
+name: Build and publish the image
+
+# What this does
+# --------------
+# Builds the container image for 64-bit Intel/AMD (amd64) and 64-bit Arm
+# (arm64, which is what a Raspberry Pi 4 or 5 runs), then pushes both to the
+# GitHub Container Registry (GHCR) as one image.
+#
+# Why: without this, every cafe has to run the full pnpm and SvelteKit build on
+# their own server, which needs about 4 GB of memory. With a ready-made image
+# they just download it, so a 2 GB server is enough and a Pi install takes
+# minutes instead of half an hour.
+#
+# Each architecture is built on a runner with that same architecture. That is
+# far quicker than emulating Arm on an Intel machine. Both runner types are
+# free for public repositories. Each build pushes only its own layers, and the
+# last job joins them into a single tag that works on either architecture.
+#
+# One-off setup, needed after the first successful run:
+#   1. Open the repository page on GitHub and click "Packages".
+#   2. Pick this package, then "Package settings".
+#   3. Change the visibility to Public.
+# New packages start out private, and cafes need to pull the image without
+# logging in.
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+# A push to main followed quickly by another push should not race. Tag builds
+# get their own group so a release is never cancelled by a later commit.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build:
+    name: Build ${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-24.04
+          - platform: linux/arm64
+            # Free Arm runner for public repositories. If your fork is private,
+            # change this to ubuntu-24.04 and add the docker/setup-qemu-action
+            # step before "Set up Buildx". The build will still work, but it
+            # will be a lot slower.
+            runner: ubuntu-24.04-arm
+
+    steps:
+      - name: Work out the names we need
+        run: |
+          # GHCR only accepts lowercase names, and the owner name may not be.
+          echo "IMAGE=${REGISTRY}/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+          platform='${{ matrix.platform }}'
+          echo "PLATFORM_SLUG=${platform//\//-}" >> "$GITHUB_ENV"
+
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Work out the labels
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE }}
+          labels: |
+            org.opencontainers.image.title=Circularity Repair Cafe Hub
+            org.opencontainers.image.description=Self-hosted software for running a repair cafe, with its own database built in.
+            org.opencontainers.image.licenses=MIT
+
+      - name: Build and push this architecture
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: ${{ matrix.platform }}
+          labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
+          # Cache is kept per architecture so the two builds do not overwrite
+          # each other's layers.
+          cache-from: type=gha,scope=${{ env.PLATFORM_SLUG }}
+          cache-to: type=gha,mode=max,scope=${{ env.PLATFORM_SLUG }}
+          # Push without a tag. The publish job below collects the two digests
+          # and tags them together.
+          outputs: type=image,name=${{ env.IMAGE }},push-by-digest=true,name-canonical=true,push=true
+
+      - name: Save the digest
+        run: |
+          mkdir -p "${{ runner.temp }}/digests"
+          digest='${{ steps.build.outputs.digest }}'
+          touch "${{ runner.temp }}/digests/${digest#sha256:}"
+
+      - name: Hand the digest to the publish job
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ env.PLATFORM_SLUG }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    name: Publish one image for both architectures
+    runs-on: ubuntu-24.04
+    needs: [build]
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Work out the image name
+        run: echo "IMAGE=${REGISTRY}/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
+      - name: Collect the digests
+        uses: actions/download-artifact@v4
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digests-*
+          merge-multiple: true
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Which tags we write:
+      #   a push to main        -> :main            (the newest code, for testing)
+      #   a tag like v1.5.0     -> :1.5.0 :1.5 :latest
+      # Cafes follow :latest, so it only ever moves when we tag a release.
+      - name: Work out the tags
+        id: meta
+        uses: docker/metadata-action@v5
+        env:
+          # Put the description and the link back to this repository on the
+          # image itself, so the package page on GitHub shows them.
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: index
+        with:
+          images: ${{ env.IMAGE }}
+          flavor: latest=false
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+          labels: |
+            org.opencontainers.image.title=Circularity Repair Cafe Hub
+            org.opencontainers.image.description=Self-hosted software for running a repair cafe, with its own database built in.
+            org.opencontainers.image.licenses=MIT
+
+      - name: Join the two builds into one image
+        working-directory: ${{ runner.temp }}/digests
+        env:
+          ANNOTATIONS: ${{ steps.meta.outputs.annotations }}
+        run: |
+          # One --annotation flag per line of the annotations output.
+          args=()
+          while IFS= read -r a; do
+            [ -n "$a" ] && args+=(--annotation "$a")
+          done <<< "$ANNOTATIONS"
+
+          docker buildx imagetools create "${args[@]}" \
+            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf "${IMAGE}@sha256:%s " *)
+
+      - name: Show what we published
+        run: docker buildx imagetools inspect "${IMAGE}:${{ steps.meta.outputs.version }}"

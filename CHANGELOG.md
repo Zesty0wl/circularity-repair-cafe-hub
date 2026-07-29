@@ -2,6 +2,26 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
+## 1.8.4 — 29 July 2026
+
+### Fixed
+
+- You can now correct a session after creating it. The event page only ever
+  offered the venue, the admin notes and whether it was published, so a session
+  entered with the wrong date, the wrong time or a typo in its name could not
+  be put right at all. Name, date, start and end times, venue and description
+  are all editable now.
+- You can delete a session. There was no way to remove one, so a duplicate or
+  one entered by mistake stayed on the calendar for good.
+
+### About deleting
+
+- A session with repairs recorded against it cannot be deleted, and says so.
+  Cancel it instead, which keeps the record of what happened. The database
+  refused this all along, but as an unexplained error; now it explains.
+- Deleting a session does remove its photographs and the list of who was
+  coming. The confirmation says so first.
+
 ## 1.8.3 — 28 July 2026
 
 ### Fixed

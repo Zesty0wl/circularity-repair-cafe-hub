@@ -3,7 +3,7 @@
   import { onMount } from 'svelte';
   import { api } from '$lib/api';
   import { goto } from '$app/navigation';
-  import { Printer, Download, RotateCw, Copy, Images } from 'lucide-svelte';
+  import { Printer, Download, RotateCw, Copy, Images, Trash2 } from 'lucide-svelte';
 
   $: id = $page.params.id;
   let detail: any = null;
@@ -39,9 +39,48 @@
 
   onMount(load);
 
+  let error = '';
+
   async function update(data: any) {
-    await api(`/api/admin/events/${id}`, { method: 'PATCH', json: data });
-    await load();
+    error = '';
+    try {
+      await api(`/api/admin/events/${id}`, { method: 'PATCH', json: data });
+      await load();
+    } catch (err: any) {
+      error = err?.message || 'Could not save that change';
+    }
+  }
+
+  /**
+   * Remove a session entirely.
+   *
+   * Only for one entered by mistake. A session that happened should be
+   * cancelled, so the record of it survives. The server refuses to delete
+   * anything with repairs against it and says so, which is the case worth
+   * protecting.
+   */
+  async function remove() {
+    const jobs = detail?.jobs?.length ?? 0;
+    if (jobs > 0) {
+      alert(
+        `This session has ${jobs} repair${jobs === 1 ? '' : 's'} recorded against it, so it ` +
+          'cannot be deleted.\n\nUse Cancel instead. That keeps the record of what happened.',
+      );
+      return;
+    }
+    const ok = confirm(
+      `Delete "${detail.event.name}" on ${detail.event.date}?\n\n` +
+        'Its photographs and the list of who was coming go with it. This cannot be undone.\n\n' +
+        'If this session actually happened, use Cancel instead so the record survives.',
+    );
+    if (!ok) return;
+    error = '';
+    try {
+      await api(`/api/admin/events/${id}`, { method: 'DELETE' });
+      goto('/admin/events');
+    } catch (err: any) {
+      error = err?.message || 'Could not delete this session';
+    }
   }
 
   async function activate() {
@@ -106,8 +145,15 @@
         <Images size={16} /> Photos{#if photoCounts && photoCounts.total > 0}<span class="font-normal text-slate-500"> ({photoCounts.total})</span>{/if}
       </a>
       <button class="btn-secondary" on:click={clone}><Copy size={16} /> Clone</button>
+      <!-- Quiet, not a solid red button: deleting a session is rare and should
+           not sit here looking like the obvious next step. -->
+      <button class="btn-danger-outline" on:click={remove}><Trash2 size={16} /> Delete</button>
     </div>
   </div>
+
+  {#if error}
+    <p class="mt-4 rounded-lg bg-red-50 text-red-800 px-4 py-2 text-sm">{error}</p>
+  {/if}
 
   {#if photoCounts && photoCounts.total === 0}
     <p class="mt-3 text-sm text-slate-500">
@@ -132,18 +178,59 @@
       {/if}
     </div>
 
+    <!-- Everything about the session is editable here. It used to offer only
+         the venue, the notes and whether it was published, so a session put in
+         with the wrong date or a typo in its name could never be corrected. -->
     <div class="card p-5">
-      <h2 class="text-lg font-semibold">Settings</h2>
-      <label class="mt-3 flex items-center gap-2"><input type="checkbox" checked={detail.event.isPublished} on:change={(e) => update({ isPublished: e.currentTarget.checked })} /> Published on public calendar</label>
+      <h2 class="text-lg font-semibold">Details</h2>
+      <p class="text-xs text-slate-500 mt-1">Changes save as you go.</p>
+
+      <div class="mt-3">
+        <label class="label" for="ename">Name</label>
+        <input id="ename" class="input" value={detail.event.name}
+          on:blur={(e) => e.currentTarget.value !== detail.event.name && update({ name: e.currentTarget.value })} />
+      </div>
+
+      <div class="mt-3">
+        <label class="label" for="edate">Date</label>
+        <input id="edate" type="date" class="input" value={detail.event.date}
+          on:change={(e) => update({ date: e.currentTarget.value })} />
+      </div>
+
+      <div class="mt-3 grid grid-cols-2 gap-3">
+        <div>
+          <label class="label" for="estart">Starts</label>
+          <input id="estart" type="time" class="input" value={detail.event.startTime.slice(0, 5)}
+            on:change={(e) => update({ startTime: e.currentTarget.value })} />
+        </div>
+        <div>
+          <label class="label" for="eend">Ends</label>
+          <input id="eend" type="time" class="input" value={detail.event.endTime.slice(0, 5)}
+            on:change={(e) => update({ endTime: e.currentTarget.value })} />
+        </div>
+      </div>
+
       <div class="mt-3">
         <label class="label" for="vid">Venue</label>
         <select id="vid" class="input" value={detail.event.venueId} on:change={(e) => update({ venueId: e.currentTarget.value })}>
           {#each venues as v}<option value={v.id}>{v.name}</option>{/each}
         </select>
       </div>
+
+      <div class="mt-3">
+        <label class="label" for="edesc">Description</label>
+        <textarea id="edesc" class="input" rows="3"
+          on:blur={(e) => e.currentTarget.value !== (detail.event.description ?? '') && update({ description: e.currentTarget.value || null })}
+        >{detail.event.description ?? ''}</textarea>
+        <p class="mt-1 text-xs text-slate-500">Shown to visitors on the public events page.</p>
+      </div>
+
+      <label class="mt-3 flex items-center gap-2"><input type="checkbox" checked={detail.event.isPublished} on:change={(e) => update({ isPublished: e.currentTarget.checked })} /> Published on public calendar</label>
+
       <div class="mt-3">
         <label class="label" for="notes">Admin notes</label>
         <textarea id="notes" class="input" rows="3" on:blur={(e) => update({ notes: e.currentTarget.value })}>{detail.event.notes ?? ''}</textarea>
+        <p class="mt-1 text-xs text-slate-500">Only visible here, never to visitors.</p>
       </div>
     </div>
   </div>

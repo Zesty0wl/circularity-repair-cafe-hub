@@ -136,6 +136,56 @@ export async function adminEventsRoutes(app: FastifyInstance): Promise<void> {
     return updated;
   });
 
+  // Delete a session outright.
+  //
+  // Only for one put in by mistake, like a duplicate or the wrong date. A
+  // session that actually happened should be cancelled or completed instead,
+  // so the record of it stays.
+  //
+  // The database already refuses to remove a session that has repairs against
+  // it: repair_jobs.event_id is NO ACTION, so PostgreSQL raises a foreign key
+  // error. That is the right answer, but it reaches the browser as an
+  // unexplained failure, so we check first and say why in words. Photographs
+  // and the list of who was coming are removed with it, because those cascade,
+  // which is worth warning about before rather than explaining after.
+  app.delete('/api/admin/events/:id', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const me = request.auth!;
+
+    const [existing] = await db.select().from(events).where(eq(events.id, id)).limit(1);
+    if (!existing) {
+      reply.code(404).send({ error: 'Event not found', code: 'event/not_found' });
+      return;
+    }
+
+    const [{ count }] = await db
+      .select({ count: sql<number>`COUNT(*)::int` })
+      .from(repairJobs)
+      .where(eq(repairJobs.eventId, id));
+
+    if (count > 0) {
+      reply.code(409).send({
+        error:
+          `This session has ${count} repair${count === 1 ? '' : 's'} recorded against it, ` +
+          'so it cannot be deleted. Cancel it instead, which keeps the record of what happened.',
+        code: 'event/has_repairs',
+      });
+      return;
+    }
+
+    await db.delete(events).where(eq(events.id, id));
+    await audit({
+      request,
+      actorId: me.sub,
+      actorType: me.role,
+      action: 'event.deleted',
+      entityType: 'event',
+      entityId: id,
+      metadata: { name: existing.name, date: existing.date },
+    });
+    return { ok: true };
+  });
+
   app.post('/api/admin/events/:id/activate', async (request, reply) => {
     const { id } = request.params as { id: string };
     const me = request.auth!;

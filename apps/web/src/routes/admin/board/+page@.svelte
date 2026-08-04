@@ -257,6 +257,11 @@
 
   // ──────────────────────────── lifecycle ──────────────────────────────
   onMount(async () => {
+    // Darken the page behind the board, including any overscroll beyond it.
+    // Set as inline styles so onDestroy can remove them again; the rest of
+    // the site keeps its own light background.
+    document.documentElement.style.background = '#0b1220';
+    document.body.style.background = '#0b1220';
     // Wait for the session restore before deciding the user is signed out,
     // otherwise every page refresh bounces signed-in users to /login.
     await restoreSession();
@@ -283,6 +288,10 @@
   });
 
   onDestroy(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.style.removeProperty('background');
+      document.body.style.removeProperty('background');
+    }
     if (pollTimer) clearInterval(pollTimer);
     if (clockTimer) clearInterval(clockTimer);
     if (pageTimer) clearInterval(pageTimer);
@@ -572,8 +581,11 @@
 
 <style>
   /* This page intentionally fills the viewport and ignores the admin chrome.
-     It's mounted with +page@.svelte so the only parent layout is the root one. */
-  :global(body), :global(html) { background: #0b1220; }
+     It's mounted with +page@.svelte so the only parent layout is the root one.
+     The dark backdrop behind the board is set in onMount, not with a
+     :global(body) rule. A route's CSS stays loaded for the rest of the
+     browsing session, so a global rule here would keep darkening every page
+     the user visits after this one until they do a full reload. */
 
   .board {
     /* Master scale — every sized thing on the page derives from this var.

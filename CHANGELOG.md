@@ -2,7 +2,24 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
-## 1.9.0 — 4 August 2026
+## 1.9.1 (4 August 2026)
+
+### Fixed
+
+- Public pages no longer turn dark after someone opens the live repairs
+  board. The board painted the whole browser window dark, and that style
+  stayed active when an admin left the board without a full page reload. On
+  the home page, the "What & Who" section and every second section after it
+  then sat on a near-black background instead of cream. A refresh always
+  cured it, which is what made it look random. The board now darkens the
+  window only while it is on screen, and puts the normal background back
+  when it closes. Visitors never saw this: it took a visit to the board in
+  the same tab to trigger it.
+- The print QR page had the same kind of fault with a white background, so
+  it could quietly swap the site's cream background for white for the rest
+  of the visit. Fixed the same way. Printed posters are unchanged.
+
+## 1.9.0 (4 August 2026)
 
 ### Added
 
@@ -25,7 +42,7 @@ Notable changes to the Repair Café Hub. Newest first.
 - Volunteers who have hidden themselves from the public team page get no
   card, matching their public profile.
 
-## 1.8.4 — 29 July 2026
+## 1.8.4 (29 July 2026)
 
 ### Fixed
 
@@ -45,7 +62,7 @@ Notable changes to the Repair Café Hub. Newest first.
 - Deleting a session does remove its photographs and the list of who was
   coming. The confirmation says so first.
 
-## 1.8.3 — 28 July 2026
+## 1.8.3 (28 July 2026)
 
 ### Fixed
 
@@ -64,7 +81,7 @@ Notable changes to the Repair Café Hub. Newest first.
   for sitting inside a line of table text.
 - The repeating events list now shows the venue, which it was never given.
 
-## 1.8.2 — 28 July 2026
+## 1.8.2 (28 July 2026)
 
 ### Changed
 
@@ -85,7 +102,7 @@ Notable changes to the Repair Café Hub. Newest first.
   than shapes, so they changed appearance depending on the machine. Nothing
   used any of them.
 
-## 1.8.1 — 28 July 2026
+## 1.8.1 (28 July 2026)
 
 ### Fixed
 
@@ -102,7 +119,7 @@ Notable changes to the Repair Café Hub. Newest first.
   machine. The one in the admin menu links to Settings, About, where the
   update instructions are.
 
-## 1.8.0 — 28 July 2026
+## 1.8.0 (28 July 2026)
 
 ### Added
 
@@ -132,7 +149,7 @@ Notable changes to the Repair Café Hub. Newest first.
   and carries on. A version check is never worth an error a volunteer has to
   think about.
 
-## 1.7.0 — 28 July 2026
+## 1.7.0 (28 July 2026)
 
 ### Added
 
@@ -155,7 +172,7 @@ Notable changes to the Repair Café Hub. Newest first.
   scanning a QR code on a poster, so the thing most worth preventing on a
   public demo cannot be handled by limiting what a signed-in account may do.
 
-## 1.6.0 — 28 July 2026
+## 1.6.0 (28 July 2026)
 
 ### Changed
 
@@ -226,7 +243,7 @@ Notable changes to the Repair Café Hub. Newest first.
   It is a plain cup and nut. This only applies until you upload your own
   favicon under Settings, which still replaces it.
 
-## 1.5.0 — 28 July 2026
+## 1.5.0 (28 July 2026)
 
 ### Changed
 
@@ -258,7 +275,7 @@ Notable changes to the Repair Café Hub. Newest first.
   PostgreSQL does not publish 32-bit Arm packages. The Pi installer spots that
   case and builds for you.
 
-## 1.4.1 — 27 July 2026
+## 1.4.1 (27 July 2026)
 
 ### Changed
 
@@ -275,7 +292,7 @@ Notable changes to the Repair Café Hub. Newest first.
   software handed out to other people does not point at them. Any café can
   install this hub, so every copy would have been doing exactly that.
 
-## 1.4.0 — 27 July 2026
+## 1.4.0 (27 July 2026)
 
 ### Changed
 
@@ -308,7 +325,7 @@ Notable changes to the Repair Café Hub. Newest first.
 - CesiumJS, and the 14 MB of runtime files that were copied into the site at
   build time.
 
-## 1.3.0 — 27 July 2026
+## 1.3.0 (27 July 2026)
 
 ### Added
 
@@ -328,7 +345,7 @@ Notable changes to the Repair Café Hub. Newest first.
   more than the nine needed, and the result is cached for a day, so the page
   costs one call to iFixit however many people visit it.
 
-## 1.2.0 — 27 July 2026
+## 1.2.0 (27 July 2026)
 
 ### Added
 
@@ -349,7 +366,7 @@ Notable changes to the Repair Café Hub. Newest first.
 - The endpoint answers `404` when you have not agreed to share, so switching
   telemetry off also stops it answering.
 
-## 1.1.0 — 27 July 2026
+## 1.1.0 (27 July 2026)
 
 ### Added
 

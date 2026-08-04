@@ -58,6 +58,15 @@ export interface SeoVenue {
   postcode?: string | null;
 }
 
+/**
+ * The looks a repairer's sharing card can be drawn in. The first one is the
+ * default when a shared link does not name a style. The server draws the
+ * cards (apps/server/src/services/shareCard.ts) and the web app offers the
+ * choice in the profile share menu.
+ */
+export const SHARE_CARD_STYLES = ['classic', 'bold', 'photo'] as const;
+export type ShareCardStyle = (typeof SHARE_CARD_STYLES)[number];
+
 export interface SeoRepairer {
   id: string;
   displayName: string;
@@ -88,6 +97,8 @@ export interface BuildSeoOptions {
   event?: SeoEvent | null; // event detail
   venue?: SeoVenue | null; // home venue (address / opening-hours source)
   repairer?: SeoRepairer | null; // team profile
+  /** Card style for the team profile share picture (?style= on the page URL). */
+  shareStyle?: string | null;
   categories?: string[]; // skills page (category names)
 }
 
@@ -589,8 +600,13 @@ export function buildSeo(opts: BuildSeoOptions): PageSeo {
         300,
       );
       ogType = 'profile';
-      const avatar = absoluteUrl(repairer.avatarUrl, origin);
-      if (avatar) ogImage = avatar;
+      // A profile link shares the drawn card: portrait, what they fix, and
+      // the next session, on one picture. The style rides on the page URL so
+      // the card a volunteer chose is the card their friends see.
+      const style = SHARE_CARD_STYLES.find((s) => s === opts.shareStyle);
+      ogImage = `${origin}/og/repairer/${repairer.id}.png${
+        style && style !== 'classic' ? `?style=${style}` : ''
+      }`;
       graph.push(
         breadcrumbNode(origin, [
           { name: 'Home', path: '/' },

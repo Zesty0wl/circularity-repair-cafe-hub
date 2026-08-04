@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { api } from '$lib/api';
+  import ShareProfile from '$lib/components/ShareProfile.svelte';
   import { ExternalLink, Upload, Trash2, Eye, EyeOff, Save } from 'lucide-svelte';
 
   interface Me {
@@ -61,6 +62,7 @@
         },
       });
       Object.assign(me, updated);
+      me = me; // trigger reactivity (the share section watches showOnPublicPage)
       savedAt = Date.now();
     } catch (e: any) {
       error = e?.message ?? 'Could not save';
@@ -221,6 +223,26 @@
           <Save size={16} /> {saving ? 'Saving…' : 'Save changes'}
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- Share -->
+  <div class="card p-6 mt-4">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <div class="max-w-xl">
+        <p class="kicker">Share</p>
+        <p class="mt-2 text-sm text-slate-600">
+          Invite people to the next session with a card made for you. It shows your photo, your
+          name, what you fix, what else people can bring, and when and where the next session is.
+        </p>
+      </div>
+      {#if me.showOnPublicPage}
+        <ShareProfile repairerId={me.id} displayName={me.displayName} />
+      {:else}
+        <p class="text-sm text-slate-500">
+          Turn on "Show me on the public team page" and save, then you can share your profile.
+        </p>
+      {/if}
     </div>
   </div>
 

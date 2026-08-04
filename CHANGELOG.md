@@ -2,6 +2,29 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
+## 1.9.0 — 4 August 2026
+
+### Added
+
+- Repairers can now invite people to the next session from their own profile.
+  The My profile page has a new "Share my profile" button. It opens a menu
+  with a picture card drawn just for them: their photo, their name, what they
+  fix, what else people can bring, and the date and venue of the next
+  session. They can pick one of three styles (Classic, Bold or Photo), share
+  straight to Facebook, X, Bluesky or WhatsApp, copy the link, or download
+  the picture to post it themselves.
+- Anyone can share a volunteer from the public team page too. Each profile
+  has a "Share this profile" button with the same menu, and the suggested
+  wording speaks about the volunteer rather than as them.
+- Sharing a link to any volunteer's public profile now shows the same card in
+  the link preview, so the next session travels with every share. Before, the
+  preview showed only their photo.
+- A volunteer's public profile now shows the next session as a card of its
+  own. People who arrive from a shared card can click it to reach the event
+  page, with the time, the venue and how to get there.
+- Volunteers who have hidden themselves from the public team page get no
+  card, matching their public profile.
+
 ## 1.8.4 — 29 July 2026
 
 ### Fixed

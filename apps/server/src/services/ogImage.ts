@@ -8,9 +8,11 @@
 //
 //  This draws a card per section instead: the cafe's own colour and name, and
 //  the name of the section, at the 1200x630 that every platform expects. Pages
-//  that have a real photograph worth showing (a volunteer's portrait, a repair
-//  guide's opening shot) keep the photograph. These cards are for the pages
-//  that have no picture of their own.
+//  that have a real photograph worth showing (a repair guide's opening shot)
+//  keep the photograph. A volunteer's profile gets a richer card of its own,
+//  with their portrait drawn onto it: see shareCard.ts, which reuses the
+//  helpers exported here. These cards are for the pages that have no picture
+//  of their own.
 //
 //  Cards are drawn once and cached on disk under a hash of everything they are
 //  made from, so changing the cafe's colour or name quietly produces new ones.
@@ -25,14 +27,14 @@ export const OG_WIDTH = 1200;
 export const OG_HEIGHT = 630;
 
 /** Circularity teal, used when a cafe has not chosen a colour. */
-const DEFAULT_COLOUR = '#1B6B5A';
+export const DEFAULT_COLOUR = '#1B6B5A';
 
 /**
  * The one font we can rely on being installed (see the Dockerfile). Text is
  * drawn by the SVG renderer, which reads fonts from the system rather than
  * from the web app, so this cannot be the site's own typeface.
  */
-const FONT = 'DejaVu Sans';
+export const FONT = 'DejaVu Sans';
 
 export interface CardContent {
   /** The big line, e.g. "Repair guides". */
@@ -47,12 +49,12 @@ export interface CardBranding {
   accentColor: string | null;
 }
 
-function safeColour(hex: string | null | undefined, fallback: string): string {
+export function safeColour(hex: string | null | undefined, fallback: string): string {
   return /^#[0-9a-fA-F]{6}$/.test((hex ?? '').trim()) ? (hex as string).trim() : fallback;
 }
 
 /** Escape text so a name containing & or < cannot break the drawing. */
-function escapeXml(value: string): string {
+export function escapeXml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -68,7 +70,7 @@ function escapeXml(value: string): string {
  * limits are set well inside what fits, which is why a long word is allowed to
  * run on rather than being broken mid-word.
  */
-function wrap(text: string, charsPerLine: number, maxLines: number): string[] {
+export function wrap(text: string, charsPerLine: number, maxLines: number): string[] {
   const words = text.replace(/\s+/g, ' ').trim().split(' ');
   const lines: string[] = [];
   let line = '';
@@ -96,7 +98,7 @@ function wrap(text: string, charsPerLine: number, maxLines: number): string[] {
   return lines;
 }
 
-function darken(hex: string, amount: number): string {
+export function darken(hex: string, amount: number): string {
   const int = parseInt(hex.replace('#', ''), 16);
   const r = Math.max(0, Math.round(((int >> 16) & 255) * (1 - amount)));
   const g = Math.max(0, Math.round(((int >> 8) & 255) * (1 - amount)));

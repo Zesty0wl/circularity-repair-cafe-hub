@@ -1,9 +1,10 @@
 <script lang="ts">
   import SiteHeader from '$lib/components/SiteHeader.svelte';
   import SiteFooter from '$lib/components/SiteFooter.svelte';
+  import ShareProfile from '$lib/components/ShareProfile.svelte';
   import Icon from '@iconify/svelte';
   import { categoryIcon } from '$lib/categoryIcon';
-  import { ArrowLeft, Wrench, Calendar } from 'lucide-svelte';
+  import { ArrowLeft, ArrowRight, Wrench, Calendar, MapPin } from 'lucide-svelte';
   import type { PageData } from './$types';
 
   interface Skill { id: string; name: string; colour: string; icon: string }
@@ -16,11 +17,30 @@
     repairCount: number;
     skills: Skill[];
   }
+  interface NextEvent {
+    id: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+    venue: { name: string; postcode: string | null };
+  }
 
   export let data: PageData;
   $: repairer = (data.repairer ?? null) as Repairer | null;
+  $: nextEvent = (data.nextEvent ?? null) as NextEvent | null;
   $: notFound = data.notFound;
   const loading = false;
+
+  function dateParts(d: string) {
+    const dt = new Date(`${d}T12:00:00Z`);
+    return {
+      monthShort: dt.toLocaleDateString('en-GB', { month: 'short', timeZone: 'UTC' }),
+      day: dt.toLocaleDateString('en-GB', { day: 'numeric', timeZone: 'UTC' }),
+      full: dt.toLocaleDateString('en-GB', {
+        weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC',
+      }),
+    };
+  }
 
   function joinedDisplay(d: string | null): string {
     if (!d) return '';
@@ -81,8 +101,41 @@
             </span>
           {/if}
         </div>
+        <div class="mt-4 flex justify-center sm:justify-start">
+          <ShareProfile repairerId={repairer.id} displayName={repairer.displayName} mode="public" />
+        </div>
       </div>
     </header>
+
+    <!-- Next session. People often arrive here from a shared card inviting
+         them to it, so the whole card clicks through to the event page with
+         the venue, directions and everything else they need. -->
+    {#if nextEvent}
+      {@const p = dateParts(nextEvent.date)}
+      <a
+        href="/events/{nextEvent.id}"
+        class="card-link p-5 sm:p-6 flex items-center gap-5"
+        aria-label={`Next session, ${p.full}, view details and directions`}
+      >
+        <div class="shrink-0 w-16 overflow-hidden rounded-xl bg-brand-600 text-white text-center">
+          <div class="bg-black/15 text-[11px] font-bold uppercase tracking-wider py-1">{p.monthShort}</div>
+          <div class="text-2xl font-bold font-display leading-none py-2">{p.day}</div>
+        </div>
+        <div class="min-w-0 flex-1">
+          <p class="kicker">Next session</p>
+          <p class="mt-1 text-lg font-semibold text-pine">
+            {p.full}, {nextEvent.startTime.slice(0, 5)}–{nextEvent.endTime.slice(0, 5)}
+          </p>
+          <p class="mt-0.5 flex items-center gap-1.5 text-sm text-slate-600">
+            <MapPin size={14} class="shrink-0" />
+            <span class="truncate">{nextEvent.venue.name}{#if nextEvent.venue.postcode}, {nextEvent.venue.postcode}{/if}</span>
+          </p>
+          <p class="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-brand-700">
+            See details and directions <ArrowRight size={14} />
+          </p>
+        </div>
+      </a>
+    {/if}
 
     <!-- Bio -->
     {#if repairer.bio}

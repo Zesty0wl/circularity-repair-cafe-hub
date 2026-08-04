@@ -1,8 +1,10 @@
 import type { FastifyInstance } from 'fastify';
+import { SHARE_CARD_STYLES, type ShareCardStyle } from '@circularity/shared';
 import { db } from '../db/index.js';
-import { cafes, events, venues } from '../db/schema.js';
-import { asc, eq, gte } from 'drizzle-orm';
+import { cafes, events, skillCategories, users, venues } from '../db/schema.js';
+import { and, asc, eq, gte, ne } from 'drizzle-orm';
 import { renderCard, type CardContent } from '../services/ogImage.js';
+import { avatarDiskPath, renderRepairerCard } from '../services/shareCard.js';
 
 /**
  * Sharing pictures, one per section.
@@ -116,5 +118,84 @@ export async function ogRoutes(app: FastifyInstance): Promise<void> {
       title: event.name,
       subtitle: [longDate(event.date), event.venue].filter(Boolean).join(' · '),
     });
+  });
+
+  // A volunteer's sharing card: their portrait, what they fix, what else
+  // people can bring, and the next session. Drawn in one of a few styles,
+  // chosen with ?style=. The web app's share menu previews all of them.
+  app.get('/og/repairer/:id.png', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const { style: styleRaw } = request.query as { style?: string };
+    const style: ShareCardStyle =
+      SHARE_CARD_STYLES.find((s) => s === styleRaw) ?? SHARE_CARD_STYLES[0];
+
+    if (!/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(id)) {
+      reply.code(404).send({ error: 'Repairer not found', code: 'og/unknown' });
+      return;
+    }
+    // Hidden and inactive volunteers get no card, matching their public page.
+    const [user] = await db
+      .select({ displayName: users.displayName, avatarUrl: users.avatarUrl, skills: users.skills })
+      .from(users)
+      .where(and(eq(users.id, id), eq(users.isActive, true), eq(users.showOnPublicPage, true)))
+      .limit(1);
+    if (!user) {
+      reply.code(404).send({ error: 'Repairer not found', code: 'og/unknown' });
+      return;
+    }
+
+    // Their own categories become "Fixes ...", the rest of the cafe's active
+    // categories become "You can also bring ...".
+    const cats = await db
+      .select({ id: skillCategories.id, name: skillCategories.name })
+      .from(skillCategories)
+      .where(eq(skillCategories.isActive, true))
+      .orderBy(asc(skillCategories.sortOrder), asc(skillCategories.name));
+    const mine = new Set(user.skills ?? []);
+    const skills = cats.filter((c) => mine.has(c.id)).map((c) => c.name);
+    const otherSkills = cats.filter((c) => !mine.has(c.id)).map((c) => c.name);
+
+    // The next published session, same filter as the public events list.
+    const today = new Date().toISOString().slice(0, 10);
+    const [next] = await db
+      .select({
+        date: events.date,
+        startTime: events.startTime,
+        endTime: events.endTime,
+        venue: venues.name,
+      })
+      .from(events)
+      .leftJoin(venues, eq(events.venueId, venues.id))
+      .where(and(eq(events.isPublished, true), ne(events.status, 'cancelled'), gte(events.date, today)))
+      .orderBy(asc(events.date), asc(events.startTime))
+      .limit(1);
+    const event = next
+      ? {
+          dateLine: `${longDate(next.date)}, ${next.startTime.slice(0, 5)} to ${next.endTime.slice(0, 5)}`,
+          venueLine: next.venue ?? '',
+        }
+      : null;
+
+    const png = await renderRepairerCard(
+      {
+        displayName: user.displayName,
+        avatarPath: avatarDiskPath(user.avatarUrl),
+        skills,
+        otherSkills,
+        event,
+        brand: await branding(),
+      },
+      style,
+    );
+    if (!png) {
+      reply.code(404).send({ error: 'Sharing image not available', code: 'og/failed' });
+      return;
+    }
+    void reply
+      .type('image/png')
+      // Shorter than the section cards, because a profile and the session
+      // list change more often than a section title does.
+      .header('Cache-Control', 'public, max-age=3600')
+      .send(png);
   });
 }

@@ -56,6 +56,13 @@ export const cafes = pgTable('cafes', {
   ogImageUrl: text('og_image_url'),
   plausibleDomain: text('plausible_domain'),
   plausibleSrc: text('plausible_src'),
+  /**
+   * The cafe's own key for CARTO's free map tiles, used by the map on the home
+   * page and the Worldwide map. CARTO asks every site to use its own key and
+   * puts a watermark on tiles fetched without one. Optional: the maps still
+   * work without it, only with the watermark.
+   */
+  cartoApiKey: text('carto_api_key'),
   repaircafeSlug: text('repaircafe_slug'),
   /**
    * Nearby Repair Cafes this cafe knows and wants to point people at, held as

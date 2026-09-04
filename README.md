@@ -84,7 +84,10 @@ corner.
   (Leaflet over CARTO tiles) beside a numbered list, where a pin and a list row
   point at each other, and each cafe links to its own site. Only the
   repaircafe.org slug is stored, so names, addresses and pins are always read
-  fresh from the directory rather than going stale in your database.
+  fresh from the directory rather than going stale in your database. Both
+  this map and the worldwide one use CARTO's free tiles, and CARTO asks every
+  site to use its own free key. Paste yours under Settings, Maps; without one
+  the tiles carry a watermark.
 - **SEO + analytics** — every public page is server-rendered with Open Graph /
   Twitter tags and schema.org structured data, plus an auto-generated sitemap.
   Previews work in Facebook / LinkedIn / Slack and events can surface as rich

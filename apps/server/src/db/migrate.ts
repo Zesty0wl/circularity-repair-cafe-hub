@@ -393,6 +393,11 @@ const STATEMENTS: string[] = [
   'CREATE INDEX IF NOT EXISTS idx_linux_installs_repairer_id ON linux_installs(repairer_id)',
   'CREATE INDEX IF NOT EXISTS idx_linux_installs_created_at ON linux_installs(created_at)',
   'CREATE INDEX IF NOT EXISTS idx_linux_installs_outcome ON linux_installs(outcome)',
+
+  // ── CARTO map key (additive, idempotent) ─────────────────────────
+  // CARTO started asking every site to use its own key for its free map
+  // tiles. Each cafe pastes theirs under Settings, Maps.
+  `ALTER TABLE cafes ADD COLUMN IF NOT EXISTS carto_api_key TEXT`,
 ];
 
 const DEFAULT_CATEGORIES: Array<{ name: string; icon: string; colour: string }> = [

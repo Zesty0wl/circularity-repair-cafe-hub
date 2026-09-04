@@ -54,6 +54,14 @@ Notable changes to the Repair Café Hub. Newest first.
   Switching the feature off hides everything but deletes nothing. Turn it back
   on and every record is exactly as it was.
 
+- **Your own CARTO map key.** CARTO serves the free map tiles behind the map
+  on your home page and the Worldwide map, and now asks every site to use its
+  own key. Without one the maps still work, but every tile carries an "API key
+  required" watermark. The key is free: fill in a short form at
+  [carto.com/basemaps/apikey](https://carto.com/basemaps/apikey/) and CARTO
+  emails it straight back. Paste it under Settings, Maps. That tab and
+  [the docs](docs/07-settings-reference.md) walk you through it.
+
 ### Changed
 
 - The "Purge expired PII now" button under Settings, GDPR now clears visitor

@@ -518,6 +518,7 @@
             cafes={localCafes}
             ours={localOurs}
             selectedSlug={selectedLocalSlug}
+            cartoApiKey={$cafe?.cartoApiKey ?? null}
             height="24rem"
             on:select={(e) => pickLocalCafe(e.detail.slug)}
           />

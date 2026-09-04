@@ -25,6 +25,7 @@
     type CafeIndex,
     type NetworkCafe,
   } from '$lib/repairCafeNetwork';
+  import { CARTO_ATTRIBUTION, CARTO_SUBDOMAINS, cartoTileUrl } from '$lib/mapTiles';
 
   export let cafes: NetworkCafe[] = [];
   /** This cafe's own entry, drawn larger and never folded into a group. */
@@ -33,6 +34,8 @@
   export let selected: NetworkCafe | null = null;
   /** True once the map is drawn, so the page can drop its placeholder. */
   export let loaded = false;
+  /** The cafe's CARTO key, from the public profile. Null means watermarked tiles. */
+  export let cartoApiKey: string | null = null;
 
   const dispatch = createEventDispatcher<{ select: NetworkCafe }>();
 
@@ -46,17 +49,11 @@
   const MINE = '#e07a1f';
 
   /**
-   * The OpenStreetMap look, served by CARTO.
-   *
-   * These are OpenStreetMap's own roads, parks and place names, drawn in
-   * CARTO's Voyager style. We do not use tile.openstreetmap.org itself: that
-   * service is donated, and the people who run it ask that software handed out
-   * to other people does not point at it. This hub is meant to be installed by
-   * any cafe that wants it, so every copy would be doing exactly that.
+   * The OpenStreetMap look, served by CARTO in its Voyager style: OpenStreetMap's
+   * own roads, parks and place names. See $lib/mapTiles for why the tiles come
+   * from CARTO rather than tile.openstreetmap.org, and for the cafe's key.
    */
-  const TILE_URL = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-  const TILE_ATTRIBUTION =
-    '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>';
+  const TILE_STYLE = 'rastertiles/voyager';
 
   const HOME_ZOOM = 2;
   const CAFE_ZOOM = 12;
@@ -66,6 +63,7 @@
   let container: HTMLDivElement;
   let L: any = null;
   let map: any = null;
+  let tiles: any = null;
   let groupLayer: any = null;
   let cafeLayer: any = null;
   let oursLayer: any = null;
@@ -263,9 +261,9 @@
       attributionControl: true,
     }).setView([home?.lat ?? 25, home?.lng ?? 5], HOME_ZOOM);
 
-    L.tileLayer(TILE_URL, {
-      attribution: TILE_ATTRIBUTION,
-      subdomains: 'abcd',
+    tiles = L.tileLayer(cartoTileUrl(TILE_STYLE, cartoApiKey), {
+      attribution: CARTO_ATTRIBUTION,
+      subdomains: CARTO_SUBDOMAINS,
       maxZoom: MAX_ZOOM,
     }).addTo(map);
 
@@ -293,6 +291,11 @@
     selected;
     redraw();
   }
+
+  // The key can arrive after the map is drawn, or change while the page is
+  // open. Leaflet swaps the address and fetches fresh tiles. Nothing happens
+  // when the address is the same as before.
+  $: if (tiles) tiles.setUrl(cartoTileUrl(TILE_STYLE, cartoApiKey));
 
   onDestroy(() => {
     if (map) {

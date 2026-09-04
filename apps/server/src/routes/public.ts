@@ -60,6 +60,10 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
       ogImageUrl: cafe.ogImageUrl,
       plausibleDomain: cafe.plausibleDomain,
       plausibleSrc: cafe.plausibleSrc,
+      // The cafe's key for CARTO's free map tiles. The visitor's browser
+      // fetches the tiles, so the key has to reach it, and it is in every
+      // tile address anyway. Null until an admin pastes one under Settings.
+      cartoApiKey: cafe.cartoApiKey,
       // Set when the cafe is listed on repaircafe.org. The world map uses it
       // to highlight our own pin.
       repaircafeSlug: cafe.repaircafeSlug,

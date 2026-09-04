@@ -112,7 +112,14 @@
       <!-- Stage -->
       <div class="map-frame">
         {#if status === 'ready'}
-          <WorldMap bind:this={worldMap} {cafes} {ours} {selected} on:select={(e) => choose(e.detail)} />
+          <WorldMap
+            bind:this={worldMap}
+            {cafes}
+            {ours}
+            {selected}
+            cartoApiKey={$cafe?.cartoApiKey ?? null}
+            on:select={(e) => choose(e.detail)}
+          />
 
           <div class="map-counts">
             <p><strong>{number(cafes.length)}</strong> Repair Cafés on the map</p>

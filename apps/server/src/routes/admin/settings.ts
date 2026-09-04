@@ -26,6 +26,23 @@ function normaliseRepaircafeSlug(value: string | null | undefined): string | nul
   return /^[a-z0-9à-ſ._-]+$/.test(slug) ? slug : null;
 }
 
+/**
+ * Reduce whatever an admin pasted to a bare CARTO key.
+ * CARTO's email shows the key on its own and again inside a full tile
+ * address, so accept either. Returns null when the field is empty, which
+ * clears the setting, and false when what was pasted cannot be a key.
+ */
+function normaliseCartoKey(value: unknown): string | null | false {
+  const raw = typeof value === 'string' ? value.trim() : '';
+  if (!raw) return null;
+  // A whole tile address, or "key=..." copied out of one: keep the key part.
+  const fromUrl = raw.match(/(?:^|[?&])key=([^&\s]+)/);
+  const key = (fromUrl ? fromUrl[1]! : raw).trim();
+  // Keys are short tokens. Anything else (spaces, braces, a sentence) would
+  // either break the tile address or is not a key at all.
+  return /^[A-Za-z0-9_.-]{8,200}$/.test(key) ? key : false;
+}
+
 export async function adminSettingsRoutes(app: FastifyInstance): Promise<void> {
   app.get('/api/admin/settings', async () => {
     const [cafe] = await db.select().from(cafes).limit(1);
@@ -169,6 +186,44 @@ export async function adminSettingsRoutes(app: FastifyInstance): Promise<void> {
     const [updated] = await db.update(cafes).set(update).where(eq(cafes.id, cafe.id)).returning();
     await audit({ request, actorId: me.sub, actorType: me.role, action: 'cafe.seo_updated', entityType: 'cafe', entityId: cafe.id });
     return updated;
+  });
+
+  // ──────────────────────── Map background ──────────────────────────
+  // The key for CARTO's free map tiles. The visitor's browser fetches the
+  // tiles, so the key goes out in the public cafe profile and in every tile
+  // address. That is how CARTO keys are meant to work: one per site, not
+  // kept secret.
+  app.patch('/api/admin/settings/maps', async (request, reply) => {
+    const me = request.auth!;
+    const body = (request.body ?? {}) as { cartoApiKey?: unknown };
+    const key = normaliseCartoKey(body.cartoApiKey);
+    if (key === false) {
+      reply.code(400).send({
+        error: "That does not look like a CARTO key. Paste the key from CARTO's email, or the whole tile address.",
+        code: 'maps/invalid_key',
+      });
+      return;
+    }
+    const [cafe] = await db.select({ id: cafes.id }).from(cafes).limit(1);
+    if (!cafe) {
+      reply.code(404).send({ error: 'Cafe not initialized', code: 'cafe/missing' });
+      return;
+    }
+    const [updated] = await db
+      .update(cafes)
+      .set({ cartoApiKey: key, updatedAt: new Date() })
+      .where(eq(cafes.id, cafe.id))
+      .returning({ cartoApiKey: cafes.cartoApiKey });
+    await audit({
+      request,
+      actorId: me.sub,
+      actorType: me.role,
+      action: 'cafe.maps_updated',
+      entityType: 'cafe',
+      entityId: cafe.id,
+      metadata: { hasCartoKey: Boolean(key) },
+    });
+    return { cartoApiKey: updated?.cartoApiKey ?? key };
   });
 
   // ─────────────── Neighbouring cafes we know and support ───────────

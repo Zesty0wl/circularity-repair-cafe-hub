@@ -15,28 +15,30 @@
   import { createEventDispatcher, onDestroy, onMount } from 'svelte';
   import 'leaflet/dist/leaflet.css';
   import type { LocalCafe } from '$lib/localCafes';
+  import { CARTO_ATTRIBUTION, CARTO_SUBDOMAINS, cartoTileUrl } from '$lib/mapTiles';
 
   export let cafes: LocalCafe[] = [];
   /** Our own cafe, drawn differently so it is clearly the middle of the group. */
   export let ours: LocalCafe | null = null;
   export let selectedSlug: string | null = null;
   export let height = '22rem';
+  /** The cafe's CARTO key, from the public profile. Null means watermarked tiles. */
+  export let cartoApiKey: string | null = null;
 
   const dispatch = createEventDispatcher<{ select: { slug: string | null } }>();
 
   let container: HTMLDivElement;
   let map: any = null;
   let L: any = null;
+  let tiles: any = null;
   let markers = new Map<string, any>();
   let ready = false;
   let failed = false;
 
   // Map tiles from CARTO, the same source the world map uses. Their light
-  // style sits quietly under the brand-coloured pins. Both OpenStreetMap and
-  // CARTO ask to be credited, which Leaflet puts in the corner.
-  const TILE_URL = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
-  const TILE_ATTRIBUTION =
-    '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>';
+  // style sits quietly under the brand-coloured pins. See $lib/mapTiles for
+  // the address, the credit line and the cafe's key.
+  const TILE_STYLE = 'light_all';
 
   /**
    * A pin drawn as HTML rather than an image. It keeps the pins in the cafe's
@@ -124,9 +126,9 @@
         attributionControl: true,
         zoomControl: true,
       });
-      L.tileLayer(TILE_URL, {
-        attribution: TILE_ATTRIBUTION,
-        subdomains: 'abcd',
+      tiles = L.tileLayer(cartoTileUrl(TILE_STYLE, cartoApiKey), {
+        attribution: CARTO_ATTRIBUTION,
+        subdomains: CARTO_SUBDOMAINS,
         maxZoom: 19,
       }).addTo(map);
       map.on('click', () => map.scrollWheelZoom.enable());
@@ -139,6 +141,11 @@
       failed = true;
     }
   });
+
+  // The key can arrive after the map is drawn, or change while the page is
+  // open. Leaflet swaps the address and fetches fresh tiles. Nothing happens
+  // when the address is the same as before.
+  $: if (tiles) tiles.setUrl(cartoTileUrl(TILE_STYLE, cartoApiKey));
 
   onDestroy(() => {
     if (map) {

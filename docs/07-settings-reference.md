@@ -90,6 +90,61 @@ Photo grid that appears on the home page. Each photo:
 Multiple files at once supported. There's no save button on this tab —
 all changes are immediate.
 
+## Tab: Local cafes
+
+Pick up to ten nearby Repair Cafes you know and want to support. They show on
+your home page as a small map beside a numbered list, so a visitor you cannot
+help can find someone who can.
+
+Search by name or town. Once your own repaircafe.org page is set under Cafe
+profile, the list starts with your closest neighbours. Only the repaircafe.org
+slug is stored, so names, addresses and pins are read fresh from the directory
+and never go stale.
+
+**Save local cafes** commits the list.
+
+## Tab: Maps
+
+The map on your home page and the map on the Worldwide page both use free map
+tiles from [CARTO](https://carto.com/basemaps/). CARTO asks every site to use
+its own key. Without one the maps still work, but every tile carries an
+"API key required" watermark.
+
+The key is free. To get one:
+
+1. Go to [carto.com/basemaps/apikey](https://carto.com/basemaps/apikey/).
+2. Fill in the short form: your email address, the web address of your site,
+   and a line about what the map is for. Something like "Repair Cafe website
+   showing nearby Repair Cafes" is enough.
+3. CARTO emails the key straight back. There is no approval queue, and you do
+   not need a CARTO account or a bank card.
+4. Paste the key into the **CARTO API key** field under Settings, Maps, and
+   click **Save map key**.
+   You can paste the whole tile address from the email if that is easier. Only
+   the key is kept.
+
+| Field         | Notes                                                                    |
+| ------------- | ------------------------------------------------------------------------ |
+| CARTO API key | The key from CARTO's email. Blank means no key, and the watermark stays. |
+
+The tab says whether a key is saved, and the steps above are folded away once
+one is.
+
+Things worth knowing:
+
+- The free plan allows 5 million tile requests a calendar month. A cafe website
+  uses a tiny fraction of that.
+- The key is for this site. CARTO asks that one key is not shared between
+  unrelated projects.
+- The CARTO and OpenStreetMap credits in the corner of the map must stay
+  visible. That is the condition of the free plan. The hub shows them for you.
+- The key is not a secret. The visitor's browser fetches the tiles, so the key
+  is in every tile address and in the public cafe profile. That is how CARTO
+  keys are designed to work.
+- If the watermark is still there after you save, reload the page with a hard
+  refresh (Ctrl+Shift+R, or Cmd+Shift+R on a Mac). Browsers keep old map tiles
+  for a while.
+
 ## Tab: Check-in & preferences
 
 Three controls that change the customer check-in flow.

@@ -3,13 +3,19 @@
   import { afterNavigate } from '$app/navigation';
   import { auth, type AuthState } from '$lib/stores/auth';
   import { cafe } from '$lib/stores/cafe';
-  import { LogOut, Wrench, Menu, X } from 'lucide-svelte';
+  import { LogOut, Wrench, Menu, X, Laptop } from 'lucide-svelte';
   import { api } from '$lib/api';
 
   export let variant: 'public' | 'admin' | 'repairer' = 'public';
   export let user: AuthState['user'] | null = null;
 
   let mobileOpen = false;
+
+  // The Linux Repair Cafe menu item, which only exists for cafes that offer
+  // it. Admins can rename it, so a cafe that calls it something else in its
+  // own town is not stuck with our wording.
+  $: linuxEnabled = $cafe?.linuxEnabled === true;
+  $: linuxLabel = $cafe?.linuxPage?.navLabel?.trim() || 'Linux Repair Cafe';
 
   afterNavigate(() => {
     mobileOpen = false;
@@ -50,6 +56,17 @@
         <a href="/world" class="px-3 py-2 rounded-lg hover:bg-slate-100">Worldwide</a>
         <a href="/about" class="px-3 py-2 rounded-lg hover:bg-slate-100">About</a>
         <a href="/contact" class="px-3 py-2 rounded-lg hover:bg-slate-100">Contact</a>
+        {#if linuxEnabled}
+          <!-- Its own menu, styled apart from the rest. A Linux Repair Cafe is
+               a different offer from a repair session, and a visitor looking
+               for it should be able to see it at a glance. -->
+          <a
+            href="/linux"
+            class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg whitespace-nowrap font-medium text-brand-800 bg-brand-50 ring-1 ring-brand-200 hover:bg-brand-100"
+          >
+            <Laptop size={16} /> {linuxLabel}
+          </a>
+        {/if}
         {#if $auth}
           {#if $auth.user.role === 'admin' || $auth.user.role === 'super_admin'}
             <a href="/admin/dashboard" class="btn-primary btn-sm">Admin</a>
@@ -105,6 +122,14 @@
           <a href="/world" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">Worldwide</a>
           <a href="/about" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">About</a>
           <a href="/contact" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">Contact</a>
+          {#if linuxEnabled}
+            <a
+              href="/linux"
+              class="mt-2 inline-flex items-center gap-2 px-3 py-3 rounded-lg font-medium text-brand-800 bg-brand-50 ring-1 ring-brand-200 hover:bg-brand-100"
+            >
+              <Laptop size={16} /> {linuxLabel}
+            </a>
+          {/if}
           <div class="h-px bg-slate-200 my-2"></div>
           {#if $auth}
             {#if $auth.user.role === 'admin' || $auth.user.role === 'super_admin'}

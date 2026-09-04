@@ -86,7 +86,8 @@ export type SeoRoute =
   | 'team'
   | 'world'
   | 'guides'
-  | 'about';
+  | 'about'
+  | 'linux';
 
 export interface BuildSeoOptions {
   route: SeoRoute;
@@ -451,6 +452,7 @@ export function buildSeo(opts: BuildSeoOptions): PageSeo {
     contact: 'contact',
     world: 'world',
     guides: 'guides',
+    linux: 'linux',
   };
   const card = CARD_FOR[route];
   // The home page is the one place a cafe's own banner photograph beats a
@@ -537,6 +539,20 @@ export function buildSeo(opts: BuildSeoOptions): PageSeo {
         breadcrumbNode(origin, [
           { name: 'Home', path: '/' },
           { name: 'Worldwide', path: '/world' },
+        ]),
+      );
+      break;
+    }
+    case 'linux': {
+      title = `Linux Repair Cafe | ${name}`;
+      description = clamp(
+        `Is your computer too old for Windows 11? ${name} can install Linux on it for free, so it keeps working and stays out of the bin. Come to a Linux Repair Cafe session.`,
+        300,
+      );
+      graph.push(
+        breadcrumbNode(origin, [
+          { name: 'Home', path: '/' },
+          { name: 'Linux Repair Cafe', path: '/linux' },
         ]),
       );
       break;

@@ -349,6 +349,50 @@ const STATEMENTS: string[] = [
   // a cafe can be more cautious.
   `ALTER TABLE cafes ADD COLUMN IF NOT EXISTS co2_displacement_rate NUMERIC(4,3) NOT NULL DEFAULT 0.5`,
   `ALTER TABLE cafes ADD COLUMN IF NOT EXISTS co2_enabled BOOLEAN NOT NULL DEFAULT TRUE`,
+
+  // ── Linux Repair Cafe (additive, idempotent) ─────────────────────
+  // Helping people move an ageing computer to Linux rather than replace it.
+  // Off on every existing install, and on every new one, until an admin turns
+  // it on. Nothing about Linux appears anywhere public while it is off.
+  `ALTER TABLE cafes ADD COLUMN IF NOT EXISTS linux_enabled BOOLEAN NOT NULL DEFAULT FALSE`,
+  `ALTER TABLE cafes ADD COLUMN IF NOT EXISTS linux_page JSONB NOT NULL DEFAULT '{}'`,
+
+  // Which sessions offer Linux help. A cafe usually runs Linux alongside its
+  // ordinary repairs, so this is a flag on a session rather than a new kind.
+  `ALTER TABLE events ADD COLUMN IF NOT EXISTS supports_linux BOOLEAN NOT NULL DEFAULT FALSE`,
+  `ALTER TABLE event_templates ADD COLUMN IF NOT EXISTS supports_linux BOOLEAN NOT NULL DEFAULT FALSE`,
+
+  // Volunteers who help at Linux sessions.
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS linux_repairer BOOLEAN NOT NULL DEFAULT FALSE`,
+
+  // What happened to each computer somebody brought in. See the table comment
+  // in db/schema.ts for why these are not repair jobs.
+  `CREATE TABLE IF NOT EXISTS linux_installs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    event_id UUID NOT NULL REFERENCES events(id),
+    repairer_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    device_description TEXT NOT NULL,
+    device_brand TEXT,
+    device_type TEXT NOT NULL DEFAULT 'laptop',
+    device_age_years INT,
+    previous_os TEXT,
+    distro TEXT,
+    outcome TEXT NOT NULL DEFAULT 'installed',
+    customer_name TEXT,
+    customer_contact TEXT,
+    gdpr_consent BOOLEAN NOT NULL DEFAULT FALSE,
+    data_retention_date DATE,
+    notes TEXT,
+    co2_factor_id UUID REFERENCES co2_factors(id) ON DELETE SET NULL,
+    co2_saving_kg NUMERIC(8,3),
+    co2_saving_source TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`,
+  'CREATE INDEX IF NOT EXISTS idx_linux_installs_event_id ON linux_installs(event_id)',
+  'CREATE INDEX IF NOT EXISTS idx_linux_installs_repairer_id ON linux_installs(repairer_id)',
+  'CREATE INDEX IF NOT EXISTS idx_linux_installs_created_at ON linux_installs(created_at)',
+  'CREATE INDEX IF NOT EXISTS idx_linux_installs_outcome ON linux_installs(outcome)',
 ];
 
 const DEFAULT_CATEGORIES: Array<{ name: string; icon: string; colour: string }> = [
@@ -408,6 +452,89 @@ const DEFAULT_HOME_PAGE = {
   ],
 };
 
+/**
+ * Default wording for the Linux Repair Cafe page.
+ *
+ * Seeded once, then owned by the cafe: every field is editable under Admin,
+ * Settings, Linux Repair Cafe. The page itself only appears once an admin
+ * turns the feature on, so this text sits unused until somebody wants it.
+ *
+ * The dates are the real ones. Microsoft stopped supporting Windows 10 on
+ * 14 October 2025, and the paid extension for home users runs out on
+ * 12 October 2027.
+ */
+const DEFAULT_LINUX_PAGE = {
+  navLabel: 'Linux Repair Cafe',
+  hero: {
+    heading: 'Linux Repair Cafe',
+    tagline: 'Give your old computer years more life, for free.',
+  },
+  intro: {
+    heading: 'What is a Linux Repair Cafe?',
+    body:
+      'Microsoft stopped supporting Windows 10 in October 2025. Millions of computers ' +
+      'that still work perfectly well are now called too old, and many of them will be ' +
+      'thrown away.\n\n' +
+      'They do not have to be. Linux is a free operating system that runs happily on ' +
+      'older machines, and it keeps getting updates for as long as you use it. You can ' +
+      'try Linux on one of our computers, ask us anything, and have it installed on your ' +
+      'own laptop, free of charge.\n\n' +
+      'This runs as part of our ordinary repair sessions, at the same place and the same ' +
+      'time. Come along with your computer, the same as anybody bringing a broken lamp.\n\n' +
+      'You can do everything on a Linux computer that you can do on any other one: ' +
+      'browse the web, send email, write letters, watch videos, and print.',
+  },
+  howItWorks: [
+    { title: 'Come to any session', body: 'We run Linux help at our normal repair sessions. Try Linux on one of our computers first. There is no need to decide anything on the day.' },
+    { title: 'Back up your files', body: 'Copy your photos and documents to a USB stick or a hard drive before you come. Installing Linux erases the computer.' },
+    { title: 'We install it with you', body: 'A volunteer installs Linux on your laptop and sets it up while you watch, so you know what is happening.' },
+    { title: 'Take it home and use it', body: 'We show you round the desktop, help you find your programs, and tell you where to get help later.' },
+  ],
+  whatToBring: {
+    heading: 'What to bring',
+    body:
+      '• Your laptop or computer, and its power supply\n' +
+      '• A backup of everything you want to keep. Installing Linux erases the whole computer\n' +
+      '• Your wifi password, so we can get the machine online\n' +
+      '• Any passwords you need for email or websites you use\n' +
+      '• Time. An install usually takes about an hour',
+  },
+  faqs: [
+    {
+      q: 'Will I lose my files?',
+      a: 'Yes, unless you copy them somewhere else first. Installing Linux wipes the computer completely. Please back up your photos, documents and anything else you care about before you come. Bring the backup with you and we will help you copy it back afterwards.',
+    },
+    {
+      q: 'Is Linux free?',
+      a: 'Yes. Linux costs nothing, and so does our help. There is no licence to buy and no subscription. Donations towards the hall and the tea are always welcome.',
+    },
+    {
+      q: 'Can I still use my usual programs?',
+      a: 'Most of what people do every day works straight away: the web, email, documents, spreadsheets, photos, music and video. Some Windows-only programs do not run on Linux, and there is usually a free alternative. Tell us what you use and we will check before you commit.',
+    },
+    {
+      q: 'Is my computer too old?',
+      a: 'Probably not. Linux runs well on computers that Windows 11 will not accept. Bring it along and we will tell you honestly if it is not worth it.',
+    },
+    {
+      q: 'What if I do not like it?',
+      a: 'Try it first. We can run Linux from a USB stick without changing anything on your computer, so you can have a proper look before you decide.',
+    },
+    {
+      q: 'Is this a separate event?',
+      a: 'No. Linux help runs at our normal repair sessions, at the same place and the same time. Check our list of dates, bring your computer along, and ask for the Linux table.',
+    },
+  ],
+  homeCard: {
+    heading: 'We are a Linux Repair Cafe',
+    body:
+      'Is your computer too old for Windows 11? We can put Linux on it instead, for free. ' +
+      'It keeps working, it keeps getting updates, and it stays out of the bin.',
+    ctaLabel: 'Find out about Linux',
+  },
+  showStats: true,
+};
+
 export async function runMigrations(): Promise<void> {
   const client = await pool.connect();
   try {
@@ -424,6 +551,13 @@ export async function runMigrations(): Promise<void> {
     await client.query(
       `UPDATE cafes SET home_page = $1::jsonb WHERE home_page IS NULL OR home_page = '{}'::jsonb`,
       [JSON.stringify(DEFAULT_HOME_PAGE)],
+    );
+    // The same for the Linux page. Writing it now, rather than when the
+    // feature is switched on, means an admin who turns it on finds a finished
+    // page to edit instead of an empty form.
+    await client.query(
+      `UPDATE cafes SET linux_page = $1::jsonb WHERE linux_page IS NULL OR linux_page = '{}'::jsonb`,
+      [JSON.stringify(DEFAULT_LINUX_PAGE)],
     );
     // Seed default skill categories if empty
     const skillCount = await client.query<{ count: string }>(

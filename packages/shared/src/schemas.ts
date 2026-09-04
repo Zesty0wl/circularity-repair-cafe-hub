@@ -168,6 +168,9 @@ export const eventTemplateSchema = z.object({
   recurrenceEndDate: z.string().optional().nullable(),
   maxItemsPerSession: z.number().int().positive().optional().nullable(),
   isPublished: z.boolean().default(false),
+  // Every session made from this template also offers help moving a computer
+  // to Linux. Ignored unless the cafe has the feature switched on.
+  supportsLinux: z.boolean().default(false),
 });
 
 export const oneOffEventSchema = z.object({
@@ -179,6 +182,8 @@ export const oneOffEventSchema = z.object({
   endTime: z.string().regex(/^\d{2}:\d{2}$/),
   isPublished: z.boolean().default(false),
   maxItems: z.number().int().positive().optional().nullable(),
+  /** People can also get help moving a computer to Linux at this session. */
+  supportsLinux: z.boolean().default(false),
 });
 
 export const venueSchema = z.object({
@@ -212,6 +217,8 @@ export const userCreateSchema = z.object({
   joinDate: z.string().optional().nullable(),
   showOnPublicPage: z.boolean().default(true),
   showOnHomePage: z.boolean().default(true),
+  // Helps at Linux sessions. Only asked for when the cafe runs them.
+  linuxRepairer: z.boolean().default(false),
 });
 
 export const userUpdateSchema = userCreateSchema.partial().extend({
@@ -231,6 +238,102 @@ export const repairUpdateSchema = z.object({
   itemCategoryId: z.string().uuid().optional().nullable(),
   itemBrand: z.string().max(100).optional().nullable(),
 });
+
+// ─────────────────────────── Linux Repair Cafe ───────────────────────────
+// A Linux Repair Cafe helps people move an ageing computer to Linux instead of
+// replacing it. See https://www.repaircafe.org/en/linux-repair-cafe/.
+//
+// The lists below are the choices a volunteer picks from when they write up an
+// install. They live here so the form, the server and the reports all read from
+// one place, and a value can never mean one thing in a form and another in a
+// chart.
+
+/** What kind of machine somebody brought in. */
+export const LINUX_DEVICE_TYPES = [
+  { value: 'laptop', label: 'Laptop' },
+  { value: 'desktop', label: 'Desktop (tower)' },
+  { value: 'all_in_one', label: 'All-in-one' },
+  { value: 'other', label: 'Something else' },
+] as const;
+
+/**
+ * What it ran before. Windows 10 is listed on its own because losing its
+ * support is why most machines arrive, and a cafe will want to say so.
+ */
+export const LINUX_PREVIOUS_OS = [
+  { value: 'windows_10', label: 'Windows 10' },
+  { value: 'windows_11', label: 'Windows 11' },
+  { value: 'windows_older', label: 'Windows 8 or older' },
+  { value: 'macos', label: 'macOS' },
+  { value: 'chromeos', label: 'ChromeOS' },
+  { value: 'linux', label: 'Another Linux' },
+  { value: 'none', label: 'Nothing (the machine would not start)' },
+  { value: 'other', label: 'Something else' },
+] as const;
+
+/**
+ * How it went. Only `installed` and `dual_boot` leave somebody with Linux on
+ * their own machine, so the reports count those two as a success and say so.
+ */
+export const LINUX_OUTCOMES = [
+  { value: 'installed', label: 'Linux installed' },
+  { value: 'dual_boot', label: 'Installed alongside the old system' },
+  { value: 'tried_live', label: 'Tried it from a USB stick' },
+  { value: 'advice_only', label: 'Advice only' },
+  { value: 'not_possible', label: 'Could not be done' },
+] as const;
+
+export type LinuxDeviceType = (typeof LINUX_DEVICE_TYPES)[number]['value'];
+export type LinuxPreviousOs = (typeof LINUX_PREVIOUS_OS)[number]['value'];
+export type LinuxOutcome = (typeof LINUX_OUTCOMES)[number]['value'];
+
+/** The outcomes where somebody went home with Linux on their own computer. */
+export const LINUX_SUCCESS_OUTCOMES: readonly LinuxOutcome[] = ['installed', 'dual_boot'];
+
+const values = <T extends readonly { value: string }[]>(list: T) =>
+  list.map((o) => o.value) as [T[number]['value'], ...T[number]['value'][]];
+
+export const linuxDeviceTypeSchema = z.enum(values(LINUX_DEVICE_TYPES));
+export const linuxPreviousOsSchema = z.enum(values(LINUX_PREVIOUS_OS));
+export const linuxOutcomeSchema = z.enum(values(LINUX_OUTCOMES));
+
+/** Recording one computer that came to a Linux session. */
+export const linuxInstallSchema = z.object({
+  eventId: z.string().uuid(),
+  deviceDescription: z.string().min(1, 'Say what the computer is').max(200),
+  deviceBrand: z.string().max(100).optional().nullable(),
+  deviceType: linuxDeviceTypeSchema.default('laptop'),
+  deviceAgeYears: z.number().int().min(0).max(60).optional().nullable(),
+  previousOs: linuxPreviousOsSchema.optional().nullable(),
+  distro: z.string().max(100).optional().nullable(),
+  outcome: linuxOutcomeSchema.default('installed'),
+  repairerId: z.string().uuid().optional().nullable(),
+  customerName: z.string().max(50).optional().nullable(),
+  customerContact: z.string().max(100).optional().nullable(),
+  gdprConsent: z.boolean().optional(),
+  notes: z.string().max(2000).optional().nullable(),
+  // What kind of thing it is, used to look up the CO2 saved by keeping it in
+  // use. Optional, the same as it is for a repair.
+  co2FactorId: z.string().uuid().optional().nullable(),
+});
+
+// Personal details are only kept when somebody has said they may be. The
+// visitor is not present when this is written up, so the volunteer confirms it
+// on their behalf, exactly as they do for an assisted check-in.
+export const linuxInstallCreateSchema = linuxInstallSchema.refine(
+  (v) => {
+    const hasPersonalDetails = Boolean(v.customerName?.trim()) || Boolean(v.customerContact?.trim());
+    return !hasPersonalDetails || v.gdprConsent === true;
+  },
+  {
+    message: 'Please confirm the visitor is happy for their details to be stored',
+    path: ['gdprConsent'],
+  },
+);
+
+export const linuxInstallUpdateSchema = linuxInstallSchema.partial().omit({ eventId: true });
+
+export type LinuxInstallPayload = z.infer<typeof linuxInstallSchema>;
 
 export const cafeSettingsSchema = z.object({
   name: z.string().min(1).max(200).optional(),

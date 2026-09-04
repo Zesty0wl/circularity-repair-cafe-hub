@@ -12,6 +12,7 @@ import { adminBoardRoutes } from './board.js';
 import { adminBackupRoutes } from './backup.js';
 import { adminTelemetryRoutes } from './telemetry.js';
 import { adminUpdatesRoutes } from './updates.js';
+import { adminLinuxRoutes } from './linux.js';
 
 export async function adminRoutes(app: FastifyInstance): Promise<void> {
   app.addHook('preHandler', app.requireRole('super_admin', 'admin'));
@@ -28,4 +29,5 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
   await app.register(adminBackupRoutes);
   await app.register(adminTelemetryRoutes);
   await app.register(adminUpdatesRoutes);
+  await app.register(adminLinuxRoutes);
 }

@@ -6,7 +6,7 @@
   import Icon from '@iconify/svelte';
   import { categoryIcon, categoryTint, categoryInk } from '$lib/categoryIcon';
   import type { GalleryPhoto } from '$lib/gallery';
-  import { ArrowLeft, Clock, MapPin, ArrowUpRight, CalendarX2, Camera, BarChart3 } from 'lucide-svelte';
+  import { ArrowLeft, Clock, MapPin, ArrowUpRight, CalendarX2, Camera, BarChart3, Laptop } from 'lucide-svelte';
   import type { PageData } from './$types';
 
   interface Venue {
@@ -32,9 +32,13 @@
     startTime: string;
     endTime: string;
     status: string;
+    /** Help moving a computer to Linux is on offer at this session too. */
+    supportsLinux?: boolean;
     venue: Venue;
     gallery?: GalleryPhoto[];
     stats?: EventStats | null;
+    /** Computers seen at this session, when the cafe offers Linux help. */
+    linuxStats?: { installedCount: number; advisedCount: number } | null;
   }
 
   export let data: PageData;
@@ -42,18 +46,29 @@
   $: notFound = data.notFound;
   $: gallery = event?.gallery ?? [];
   $: stats = event?.stats ?? null;
+  // Linux help is offered at an ordinary session, so its figures belong in the
+  // same summary rather than in a box of their own.
+  $: linuxStats = event?.linuxStats ?? null;
 
   // Only the figures worth reading. A tile that would say "0" is dropped, so a
   // quiet session shows a short honest row rather than a wall of noughts.
-  $: statTiles = !stats
-    ? []
-    : [
-        { value: String(stats.repairCount), label: stats.repairCount === 1 ? 'Item brought in' : 'Items brought in', show: stats.repairCount > 0 },
-        { value: String(stats.completedCount), label: 'Went home working', show: stats.completedCount > 0 },
-        { value: `${stats.successRate}%`, label: 'Fixed on the day', show: stats.successRate > 0 },
-        { value: String(stats.volunteerCount), label: stats.volunteerCount === 1 ? 'Volunteer repairer' : 'Volunteer repairers', show: stats.volunteerCount > 0 },
-        { value: `${stats.co2SavedKg} kg`, label: 'CO₂ saved', show: stats.co2SavedKg > 0 },
-      ].filter((t) => t.show);
+  $: statTiles = [
+    ...(!stats
+      ? []
+      : [
+          { value: String(stats.repairCount), label: stats.repairCount === 1 ? 'Item brought in' : 'Items brought in', show: stats.repairCount > 0 },
+          { value: String(stats.completedCount), label: 'Went home working', show: stats.completedCount > 0 },
+          { value: `${stats.successRate}%`, label: 'Fixed on the day', show: stats.successRate > 0 },
+          { value: String(stats.volunteerCount), label: stats.volunteerCount === 1 ? 'Volunteer repairer' : 'Volunteer repairers', show: stats.volunteerCount > 0 },
+          { value: `${stats.co2SavedKg} kg`, label: 'CO₂ saved', show: stats.co2SavedKg > 0 },
+        ]),
+    ...(!linuxStats
+      ? []
+      : [
+          { value: String(linuxStats.installedCount), label: linuxStats.installedCount === 1 ? 'Computer moved to Linux' : 'Computers moved to Linux', show: linuxStats.installedCount > 0 },
+          { value: String(linuxStats.advisedCount), label: 'Advised about Linux', show: linuxStats.advisedCount > 0 },
+        ]),
+  ].filter((t) => t.show);
 
   // Anchored at UTC noon + a fixed locale so SSR and the browser render
   // identical text (no hydration mismatch).
@@ -121,6 +136,24 @@
 
       <!-- Body -->
       <div class="p-6 sm:p-8 space-y-5">
+        {#if event.supportsLinux}
+          <!-- Stated up front, because it is the reason some people come at
+               all, and they need to know to bring the computer and a backup. -->
+          <a
+            href="/linux"
+            class="flex items-start gap-3 rounded-xl bg-brand-50 ring-1 ring-brand-200 p-4 transition-colors hover:bg-brand-100"
+          >
+            <Laptop size={20} class="shrink-0 mt-0.5 text-brand-700" />
+            <span class="min-w-0">
+              <span class="block font-semibold text-pine">Linux help at this session</span>
+              <span class="block mt-0.5 text-sm text-slate-600">
+                Bring an old computer and we can put Linux on it, free of charge. Back up your
+                files first. Read what to expect.
+              </span>
+            </span>
+          </a>
+        {/if}
+
         <div class="space-y-2.5 text-slate-700">
           <p class="flex items-center gap-2.5">
             <Clock size={18} class="text-clay shrink-0" />
@@ -154,7 +187,7 @@
     </article>
 
     <!-- ─────────────── What happened at this session ─────────────── -->
-    {#if statTiles.length > 0 && stats}
+    {#if statTiles.length > 0}
       <section class="card p-6 sm:p-8">
         <h2 class="text-xl font-semibold font-display text-pine flex items-center gap-2">
           <BarChart3 size={20} class="text-clay shrink-0" /> What happened at this session
@@ -171,7 +204,7 @@
           {/each}
         </dl>
 
-        {#if stats.categories.length > 0}
+        {#if stats && stats.categories.length > 0}
           <h3 class="mt-6 text-base font-semibold text-slate-800">What we worked on</h3>
           <ul class="mt-3 flex flex-wrap gap-2">
             {#each stats.categories as cat}
@@ -188,7 +221,7 @@
           </ul>
         {/if}
 
-        {#if stats.awaitingReturnCount > 0}
+        {#if stats && stats.awaitingReturnCount > 0}
           <p class="mt-4 text-sm text-slate-600">
             {stats.awaitingReturnCount}
             {stats.awaitingReturnCount === 1 ? 'item is' : 'items are'} waiting for a part and will be finished at a later session.

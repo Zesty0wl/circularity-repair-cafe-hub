@@ -41,6 +41,22 @@ corner.
   chooses to show them. Star any photo to bring it into the main gallery on the
   home page. Past events also show what happened at the session (items in, items
   fixed, categories, volunteers, waste saved) with no visitor details.
+- **Linux Repair Cafe** (off until you switch it on). Help people move an ageing
+  computer to Linux instead of throwing it away. Microsoft stopped supporting
+  Windows 10 in October 2025, so a lot of working machines are being called too
+  old. Turning this on under Settings adds its own menu item, a public page you
+  write yourself (heading, intro, steps, what to bring, FAQs), and a card on your
+  home page explaining what it is. Linux help is an extra you offer at your normal
+  sessions rather than a separate event, so you tick the sessions where it is
+  available and those sessions say so on the public calendar. Volunteers can be
+  marked as Linux helpers, and they are listed on the page so visitors know who
+  will help them. Each computer is written up afterwards (what it was, what it ran
+  before, which Linux went on, and how it went), which gives you install counts,
+  a breakdown by previous system and by distribution, per-volunteer and
+  per-session figures, a CSV export, and CO2 saved worked out the same way as a
+  repair so the two totals can be added together. Everything is hidden while the
+  feature is off, and switching it off never deletes a record. Read about the
+  movement at [repaircafe.org](https://www.repaircafe.org/en/linux-repair-cafe/).
 - **Carbon savings that add up** — visitors say what kind of thing they have brought,
   and the CO2 saved is looked up from
   [The Restart Project's reference data](https://zenodo.org/records/5900046) rather

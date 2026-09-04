@@ -4,6 +4,8 @@
   import { api } from '$lib/api';
   import { goto } from '$app/navigation';
   import { Printer, Download, RotateCw, Copy, Images, Trash2 } from 'lucide-svelte';
+  // Aliased: this page already has its own `cafe` holding the admin settings.
+  import { cafe as cafeProfile } from '$lib/stores/cafe';
 
   $: id = $page.params.id;
   let detail: any = null;
@@ -226,6 +228,18 @@
       </div>
 
       <label class="mt-3 flex items-center gap-2"><input type="checkbox" checked={detail.event.isPublished} on:change={(e) => update({ isPublished: e.currentTarget.checked })} /> Published on public calendar</label>
+
+      {#if $cafeProfile?.linuxEnabled}
+        <label class="mt-3 flex items-start gap-2">
+          <input type="checkbox" class="mt-1" checked={detail.event.supportsLinux} on:change={(e) => update({ supportsLinux: e.currentTarget.checked })} />
+          <span>
+            Linux help at this session
+            <span class="block text-xs text-slate-500">
+              Says so on your public calendar, and lets you file Linux installs against this session.
+            </span>
+          </span>
+        </label>
+      {/if}
 
       <div class="mt-3">
         <label class="label" for="notes">Admin notes</label>

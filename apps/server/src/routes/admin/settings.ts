@@ -106,6 +106,44 @@ export async function adminSettingsRoutes(app: FastifyInstance): Promise<void> {
     return updated;
   });
 
+  // ──────────────────── Linux Repair Cafe ───────────────────────────
+  // The switch that decides whether this cafe offers Linux help at all, plus
+  // the wording of the page it turns on. Held together because an admin
+  // setting one almost always wants the other.
+  //
+  // Like the home page, the wording is a single JSONB blob so sections can be
+  // reshaped without a migration. It is only writable by admins and the pages
+  // render known fields only, so it is not deeply validated here.
+  app.patch('/api/admin/settings/linux', async (request, reply) => {
+    const me = request.auth!;
+    const body = (request.body ?? {}) as { linuxEnabled?: unknown; linuxPage?: unknown };
+    const [cafe] = await db.select().from(cafes).limit(1);
+    if (!cafe) {
+      reply.code(404).send({ error: 'Cafe not initialized', code: 'cafe/missing' });
+      return;
+    }
+    const update: Record<string, unknown> = { updatedAt: new Date() };
+    if (typeof body.linuxEnabled === 'boolean') update.linuxEnabled = body.linuxEnabled;
+    if (body.linuxPage !== undefined) {
+      if (typeof body.linuxPage !== 'object' || body.linuxPage === null || Array.isArray(body.linuxPage)) {
+        reply.code(400).send({ error: 'linuxPage must be an object', code: 'validation/failed' });
+        return;
+      }
+      update.linuxPage = body.linuxPage;
+    }
+    const [updated] = await db.update(cafes).set(update).where(eq(cafes.id, cafe.id)).returning();
+    await audit({
+      request,
+      actorId: me.sub,
+      actorType: me.role,
+      action: 'cafe.linux_updated',
+      entityType: 'cafe',
+      entityId: cafe.id,
+      metadata: { enabled: updated?.linuxEnabled ?? null },
+    });
+    return updated;
+  });
+
   // ────────────────── SEO + analytics settings ──────────────────────
   // All fields are optional. Plausible is only loaded by the SPA when
   // both `plausibleDomain` and `plausibleSrc` are present.

@@ -4,6 +4,7 @@
   import { page } from '$app/stores';
   import { api } from '$lib/api';
   import { describeRecurrence } from '$lib/recurrence';
+  import { cafe } from '$lib/stores/cafe';
 
   const id = $page.params.id;
 
@@ -22,6 +23,7 @@
     weekday: 'SA',
     bySetPos: 2,
     isPublished: false,
+    supportsLinux: false,
   };
 
   // What to do about sessions already on the calendar. Changing the day a
@@ -59,6 +61,7 @@
         weekday: Array.isArray(rule.byWeekday) ? rule.byWeekday[0] : (rule.byWeekday ?? 'SA'),
         bySetPos: Array.isArray(rule.bySetPos) ? rule.bySetPos[0] : (rule.bySetPos ?? 2),
         isPublished: Boolean(t.isPublished),
+        supportsLinux: Boolean(t.supportsLinux),
       };
     } catch (err: any) {
       error = err?.message || 'Could not load that repeating event';
@@ -85,6 +88,7 @@
             endTime: form.endTime,
             recurrenceRule: rule,
             isPublished: form.isPublished,
+            supportsLinux: form.supportsLinux,
           },
         },
       });
@@ -184,6 +188,19 @@
         Show these sessions on the public site
       </label>
 
+      {#if $cafe?.linuxEnabled}
+        <label class="flex items-start gap-2 text-sm">
+          <input type="checkbox" class="mt-1" bind:checked={form.supportsLinux} />
+          <span>
+            Linux help at every one of these sessions
+            <span class="block text-xs text-slate-500">
+              Applies to dates this template creates from now on. Sessions already on the calendar
+              keep what they have, unless you rebuild them below.
+            </span>
+          </span>
+        </label>
+      {/if}
+
       <div class="border-t border-slate-200 pt-4">
         <p class="label">Sessions already on the calendar</p>
         <label class="flex items-start gap-2 text-sm mb-2">
@@ -198,6 +215,11 @@
           <span>
             <strong>Rebuild the future ones.</strong> Use this when you have changed the
             day or the time. Sessions that have already happened are never touched.
+            <span class="block text-xs text-slate-500 mt-0.5">
+              A session that already has repairs or Linux installs recorded against it is
+              kept, not rebuilt. It keeps its date, its check-in link and its QR poster,
+              and picks up your changes.
+            </span>
           </span>
         </label>
       </div>

@@ -14,7 +14,7 @@
 
   let cafe: any = null;
   let busy = false;
-  type Tab = 'profile' | 'home' | 'gallery' | 'local' | 'preferences' | 'seo' | 'gdpr' | 'telemetry' | 'backup' | 'about';
+  type Tab = 'profile' | 'home' | 'linux' | 'gallery' | 'local' | 'preferences' | 'seo' | 'gdpr' | 'telemetry' | 'backup' | 'about';
   let tab: Tab = 'profile';
 
   $: isSuperAdmin = $auth?.user.role === 'super_admin';
@@ -44,6 +44,50 @@
   let showStats = false;
   // Show what happened at each session on its own page in Past events.
   let showEventStats = true;
+
+  // ── Linux Repair Cafe ─────────────────────────────────────────────
+  // Off unless an admin turns it on. Everything below is the wording of the
+  // page that switch turns on, in the same shape as the home page above.
+  let linuxEnabled = false;
+  let linuxNavLabel = '';
+  let linuxHero = { heading: '', tagline: '' };
+  let linuxIntro = { heading: '', body: '' };
+  let linuxHowItWorks: Step[] = [];
+  let linuxWhatToBring = { heading: '', body: '' };
+  let linuxFaqs: Faq[] = [];
+  let linuxHomeCard = { heading: '', body: '', ctaLabel: '' };
+  let linuxShowStats = true;
+  let linuxSaved = false;
+
+  async function saveLinux() {
+    busy = true;
+    linuxSaved = false;
+    try {
+      const linuxPage = {
+        navLabel: linuxNavLabel || '',
+        hero: { heading: linuxHero.heading || '', tagline: linuxHero.tagline || '' },
+        intro: { heading: linuxIntro.heading || '', body: linuxIntro.body || '' },
+        howItWorks: linuxHowItWorks.filter((s) => s.title || s.body),
+        whatToBring: { heading: linuxWhatToBring.heading || '', body: linuxWhatToBring.body || '' },
+        faqs: linuxFaqs.filter((f) => f.q || f.a),
+        homeCard: {
+          heading: linuxHomeCard.heading || '',
+          body: linuxHomeCard.body || '',
+          ctaLabel: linuxHomeCard.ctaLabel || '',
+        },
+        showStats: linuxShowStats,
+      };
+      await api('/api/admin/settings/linux', {
+        method: 'PATCH',
+        json: { linuxEnabled, linuxPage },
+      });
+      linuxSaved = true;
+      // Reload the shared cafe profile so the menu item appears or disappears
+      // straight away, rather than after the next full page load.
+      await loadCafe();
+      await load();
+    } finally { busy = false; }
+  }
 
   // Gallery
   let gallery: ManagedPhoto[] = [];
@@ -218,6 +262,23 @@
     // On unless it has been turned off, so cafes that saved their home page
     // before this setting existed still get the session summaries.
     showEventStats = hp.showEventStats !== false;
+
+    linuxEnabled = cafe?.linuxEnabled === true;
+    const lp = cafe?.linuxPage ?? {};
+    linuxNavLabel = lp.navLabel ?? '';
+    linuxHero = { heading: lp.hero?.heading ?? '', tagline: lp.hero?.tagline ?? '' };
+    linuxIntro = { heading: lp.intro?.heading ?? '', body: lp.intro?.body ?? '' };
+    linuxHowItWorks = Array.isArray(lp.howItWorks)
+      ? lp.howItWorks.map((s: any) => ({ title: s.title ?? '', body: s.body ?? '' }))
+      : [];
+    linuxWhatToBring = { heading: lp.whatToBring?.heading ?? '', body: lp.whatToBring?.body ?? '' };
+    linuxFaqs = Array.isArray(lp.faqs) ? lp.faqs.map((f: any) => ({ q: f.q ?? '', a: f.a ?? '' })) : [];
+    linuxHomeCard = {
+      heading: lp.homeCard?.heading ?? '',
+      body: lp.homeCard?.body ?? '',
+      ctaLabel: lp.homeCard?.ctaLabel ?? '',
+    };
+    linuxShowStats = lp.showStats !== false;
   }
   async function loadGallery() {
     gallery = await api<ManagedPhoto[]>('/api/admin/gallery');
@@ -428,7 +489,7 @@
 <h1 class="text-2xl font-bold">Settings</h1>
 
 <div class="mt-3 flex gap-2 flex-wrap">
-  {#each [['profile','Cafe profile'],['home','Home page'],['gallery','Gallery'],['local','Local cafes'],['preferences','Check-in & preferences'],['seo','SEO & analytics'],['gdpr','GDPR'],['telemetry','Sharing our numbers'], ...(isSuperAdmin ? [['backup','Backup & restore']] : []),['about','About']] as [key, label]}
+  {#each [['profile','Cafe profile'],['home','Home page'],['linux','Linux Repair Cafe'],['gallery','Gallery'],['local','Local cafes'],['preferences','Check-in & preferences'],['seo','SEO & analytics'],['gdpr','GDPR'],['telemetry','Sharing our numbers'], ...(isSuperAdmin ? [['backup','Backup & restore']] : []),['about','About']] as [key, label]}
     <button class="btn-{tab === key ? 'primary' : 'secondary'} btn-sm" on:click={() => (tab = key as Tab)}>{label}</button>
   {/each}
   <a href="/admin/settings/users" class="btn-secondary btn-sm">Users…</a>
@@ -634,6 +695,174 @@
 
       <div class="flex justify-end pt-2 border-t">
         <button class="btn-primary" on:click={saveHome} disabled={busy}>Save home page</button>
+      </div>
+    </div>
+  {/if}
+
+  {#if tab === 'linux'}
+    <div class="card p-6 mt-4 max-w-2xl space-y-6">
+      <section>
+        <h2 class="text-lg font-semibold">Linux Repair Cafe</h2>
+        <p class="text-sm text-slate-600 mt-1">
+          A Linux Repair Cafe helps people move an ageing computer to Linux instead of throwing it
+          away. Microsoft stopped supporting Windows 10 in October 2025, so a lot of working
+          computers are being called too old. Linux keeps them going, and it is free.
+        </p>
+        <p class="text-sm text-slate-600 mt-2">
+          This is an extra you offer at your normal sessions, not a separate event. You tick the
+          sessions where Linux help is available, and most cafes tick all of them.
+        </p>
+        <p class="text-sm text-slate-600 mt-2">
+          Read about the movement at
+          <a
+            href="https://www.repaircafe.org/en/linux-repair-cafe/"
+            target="_blank"
+            rel="noopener"
+            class="text-brand-700 underline underline-offset-2"
+          >repaircafe.org</a>.
+        </p>
+
+        <label class="mt-4 flex items-start gap-3 cursor-pointer rounded-xl bg-slate-50 ring-1 ring-slate-200 p-4">
+          <input
+            type="checkbox"
+            class="mt-1 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+            bind:checked={linuxEnabled}
+          />
+          <span class="text-sm text-slate-700">
+            <span class="font-semibold text-slate-800">We are a Linux Repair Cafe</span>
+            <span class="block text-xs text-slate-500 mt-0.5">
+              Adds a Linux Repair Cafe menu item to your site, a page explaining what it is, and a
+              card about it on your home page. It also adds a Linux section to your admin area for
+              recording installs. Leave this off if you do not offer Linux help.
+            </span>
+          </span>
+        </label>
+
+        {#if !linuxEnabled}
+          <p class="mt-3 text-xs text-slate-500">
+            Everything below is saved either way. You can write your page first, then switch it on
+            when you are ready.
+          </p>
+        {:else}
+          <div class="mt-3 rounded-xl bg-emerald-50 ring-1 ring-emerald-200 p-3 text-sm text-emerald-900">
+            <p class="font-semibold">Two more things to do.</p>
+            <ol class="list-decimal ml-5 mt-1 space-y-0.5">
+              <li>
+                Tick <span class="font-medium">Linux help at this session</span> on the sessions
+                where you offer it, under <a href="/admin/events" class="underline underline-offset-2">Events</a>.
+              </li>
+              <li>
+                Mark your Linux volunteers under
+                <a href="/admin/repairers" class="underline underline-offset-2">Repairers</a>,
+                so visitors can see who will help them.
+              </li>
+            </ol>
+          </div>
+        {/if}
+      </section>
+
+      <section class="pt-2 border-t">
+        <h2 class="text-lg font-semibold">Menu item</h2>
+        <p class="text-xs text-slate-500 mt-0.5">What the menu item on your site is called.</p>
+        <input class="input mt-2" placeholder="Linux Repair Cafe" bind:value={linuxNavLabel} />
+      </section>
+
+      <section class="pt-2 border-t">
+        <h2 class="text-lg font-semibold">Top of the page</h2>
+        <div class="mt-2 space-y-2">
+          <input class="input" placeholder="Heading (e.g. Linux Repair Cafe)" bind:value={linuxHero.heading} />
+          <input class="input" placeholder="One line under it (e.g. Give your old computer years more life, for free.)" bind:value={linuxHero.tagline} />
+        </div>
+      </section>
+
+      <section class="pt-2 border-t">
+        <h2 class="text-lg font-semibold">Card on your home page</h2>
+        <p class="text-xs text-slate-500 mt-0.5">
+          A short explanation on your home page that links to the Linux page. This is what most
+          visitors will read first, so keep it plain.
+        </p>
+        <div class="mt-2 space-y-2">
+          <input class="input" placeholder="Heading (e.g. We are a Linux Repair Cafe)" bind:value={linuxHomeCard.heading} />
+          <textarea class="input" rows="3" placeholder="A sentence or two explaining what it is." bind:value={linuxHomeCard.body}></textarea>
+          <input class="input" placeholder="Button label (e.g. Find out about Linux)" bind:value={linuxHomeCard.ctaLabel} />
+        </div>
+      </section>
+
+      <section class="pt-2 border-t">
+        <h2 class="text-lg font-semibold">What a Linux Repair Cafe is</h2>
+        <p class="text-xs text-slate-500 mt-0.5">The opening explanation on the Linux page.</p>
+        <div class="mt-2 space-y-2">
+          <input class="input" placeholder="Heading (e.g. What is a Linux Repair Cafe?)" bind:value={linuxIntro.heading} />
+          <textarea class="input" rows="8" placeholder="Body text. Blank lines start a new paragraph." bind:value={linuxIntro.body}></textarea>
+        </div>
+      </section>
+
+      <section class="pt-2 border-t">
+        <h2 class="text-lg font-semibold">How it works</h2>
+        <p class="text-xs text-slate-500 mt-0.5">Numbered steps that show visitors what to expect.</p>
+        <div class="mt-2 space-y-3">
+          {#each linuxHowItWorks as step, i}
+            <div class="border border-slate-200 rounded-lg p-3 space-y-2">
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-mono text-slate-400 w-6">{i + 1}</span>
+                <input class="input flex-1" placeholder="Step title" bind:value={step.title} />
+                <button class="p-2 rounded-lg text-rose-600 hover:bg-rose-50" type="button" on:click={() => linuxHowItWorks = linuxHowItWorks.filter((_, k) => k !== i)} title="Remove" aria-label="Remove step"><Trash2 size={16} /></button>
+              </div>
+              <textarea class="input" rows="2" placeholder="Short description" bind:value={step.body}></textarea>
+            </div>
+          {/each}
+          <button class="btn-secondary btn-sm" type="button" on:click={() => linuxHowItWorks = [...linuxHowItWorks, { title: '', body: '' }]}><Plus size={14} /> Add step</button>
+        </div>
+      </section>
+
+      <section class="pt-2 border-t">
+        <h2 class="text-lg font-semibold">What to bring</h2>
+        <p class="text-xs text-slate-500 mt-0.5">
+          Bullet points work well (start each line with “• ”). Please keep the reminder about
+          backing up files: installing Linux erases the whole computer.
+        </p>
+        <div class="mt-2 space-y-2">
+          <input class="input" placeholder="Heading (e.g. What to bring)" bind:value={linuxWhatToBring.heading} />
+          <textarea class="input" rows="6" placeholder="One line per bullet." bind:value={linuxWhatToBring.body}></textarea>
+        </div>
+      </section>
+
+      <section class="pt-2 border-t">
+        <h2 class="text-lg font-semibold">FAQs</h2>
+        <div class="mt-2 space-y-3">
+          {#each linuxFaqs as faq, i}
+            <div class="border border-slate-200 rounded-lg p-3 space-y-2">
+              <div class="flex items-center gap-2">
+                <input class="input flex-1" placeholder="Question" bind:value={faq.q} />
+                <button class="p-2 rounded-lg text-rose-600 hover:bg-rose-50" type="button" on:click={() => linuxFaqs = linuxFaqs.filter((_, k) => k !== i)} title="Remove" aria-label="Remove FAQ"><Trash2 size={16} /></button>
+              </div>
+              <textarea class="input" rows="2" placeholder="Answer" bind:value={faq.a}></textarea>
+            </div>
+          {/each}
+          <button class="btn-secondary btn-sm" type="button" on:click={() => linuxFaqs = [...linuxFaqs, { q: '', a: '' }]}><Plus size={14} /> Add FAQ</button>
+        </div>
+      </section>
+
+      <section class="pt-2 border-t">
+        <h2 class="text-lg font-semibold">Our numbers</h2>
+        <label class="mt-2 flex items-start gap-3 cursor-pointer">
+          <input type="checkbox" class="mt-1 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" bind:checked={linuxShowStats} />
+          <span class="text-sm text-slate-700">
+            Show how many computers we have saved
+            <span class="block text-xs text-slate-500">
+              Counted from the installs your volunteers write up. Figures that are still zero stay
+              hidden, so a cafe that has just started never shows an empty row.
+            </span>
+          </span>
+        </label>
+      </section>
+
+      <div class="flex items-center justify-end gap-3 pt-2 border-t">
+        {#if linuxSaved}<span class="text-sm text-emerald-700">Saved</span>{/if}
+        {#if linuxEnabled}
+          <a href="/linux" target="_blank" rel="noopener" class="btn-secondary">Preview the page</a>
+        {/if}
+        <button class="btn-primary" on:click={saveLinux} disabled={busy}>Save Linux settings</button>
       </div>
     </div>
   {/if}

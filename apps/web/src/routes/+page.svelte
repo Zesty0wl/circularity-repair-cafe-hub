@@ -9,7 +9,7 @@
   import PhotoGrid from '$lib/components/PhotoGrid.svelte';
   import LocalCafeMap from '$lib/components/LocalCafeMap.svelte';
   import { formatDistance, repairCafeOrgUrl, type LocalCafe } from '$lib/localCafes';
-  import { Calendar, Clock, MapPin, ChevronDown, CheckCircle2 } from 'lucide-svelte';
+  import { Calendar, Clock, MapPin, ChevronDown, CheckCircle2, Laptop, ArrowRight } from 'lucide-svelte';
   import Icon from '@iconify/svelte';
   import { categoryIcon, categoryTint, categoryInk } from '$lib/categoryIcon';
   import type { PageData } from './$types';
@@ -21,6 +21,8 @@
     date: string;
     startTime: string;
     endTime: string;
+    /** Linux help is on offer at this session as well as ordinary repairs. */
+    supportsLinux?: boolean;
     venue: { name: string; address: string | null; postcode: string | null };
   }
   interface SkillCategory { id: string; name: string; icon: string; colour: string; repairerCount: number }
@@ -141,6 +143,21 @@
   // Photos from a session say where and when they were taken, so the gallery
   // lede can promise something the strip actually delivers.
   $: galleryHasSessions = gallery.some((g) => g.eventId);
+
+  // ── Linux Repair Cafe ─────────────────────────────────────────────────────
+  // Only for cafes that offer it. The wording is the admin's, with a sensible
+  // fallback so the card still reads properly if they clear a field.
+  $: linuxEnabled = $cafe?.linuxEnabled === true;
+  $: linuxCard = $cafe?.linuxPage?.homeCard ?? {};
+  $: linuxHeading = linuxCard.heading?.trim() || 'We are a Linux Repair Cafe';
+  $: linuxBody =
+    linuxCard.body?.trim() ||
+    'Is your computer too old for Windows 11? We can put Linux on it instead, for free. ' +
+      'It keeps working, it keeps getting updates, and it stays out of the bin.';
+  $: linuxCta = linuxCard.ctaLabel?.trim() || 'Find out about Linux';
+  // The soonest session where Linux help is on offer, so the card can give a
+  // date rather than only an explanation.
+  $: nextLinuxEvent = upcomingEvents.find((e) => e.supportsLinux) ?? null;
 
   // ── Repair Cafes near us ──────────────────────────────────────────────────
   // Only appears when an admin has picked some under Settings, Local cafes.
@@ -397,6 +414,45 @@
               <p class="text-xs text-slate-500">{cat.repairerCount} volunteer{cat.repairerCount === 1 ? '' : 's'}</p>
             </div>
           {/each}
+        </div>
+      </div>
+    </section>
+  {/if}
+
+  <!-- ─────────────── Linux Repair Cafe ───────────────────────
+       Only for cafes that offer it. It sits straight after "What we repair"
+       because that is the moment a visitor is wondering whether their own
+       broken-ish thing counts, and an old computer is exactly the case people
+       assume is beyond help. -->
+  {#if linuxEnabled}
+    <section class="section">
+      <div class="max-w-4xl mx-auto rounded-2xl bg-brand-50 ring-1 ring-brand-200 overflow-hidden">
+        <div class="p-6 sm:p-10 flex flex-col sm:flex-row gap-6 sm:items-start">
+          <span class="shrink-0 grid place-items-center h-14 w-14 rounded-2xl bg-brand-600 text-white">
+            <Laptop size={26} />
+          </span>
+          <div class="min-w-0 flex-1">
+            <p class="eyebrow">Also here</p>
+            <h2 class="mt-2 text-2xl sm:text-3xl font-bold font-display text-pine">{linuxHeading}</h2>
+            <p class="mt-3 text-slate-700 leading-relaxed whitespace-pre-line">{linuxBody}</p>
+
+            {#if nextLinuxEvent}
+              <p class="mt-4 inline-flex items-start gap-2 rounded-xl bg-white ring-1 ring-brand-200 px-4 py-2.5 text-sm text-slate-700">
+                <Calendar size={16} class="shrink-0 mt-0.5 text-brand-700" />
+                <span>
+                  Next session with Linux help:
+                  <span class="font-semibold text-pine">{formatDateShort(nextLinuxEvent.date)}</span>,
+                  {nextLinuxEvent.startTime.slice(0, 5)}–{nextLinuxEvent.endTime.slice(0, 5)}
+                </span>
+              </p>
+            {/if}
+
+            <div class="mt-6">
+              <a href="/linux" class="btn-primary">
+                {linuxCta} <ArrowRight size={18} />
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     </section>

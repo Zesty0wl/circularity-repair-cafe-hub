@@ -1,6 +1,8 @@
 import type { FastifyInstance } from 'fastify';
 import { db } from '../../db/index.js';
+import { cafes } from '../../db/schema.js';
 import { sql } from 'drizzle-orm';
+import { linuxStatsForEvent } from '../../services/linux.js';
 
 // ─── Stats: kept deliberately small and useful ─────────────────────
 // The dashboard surfaces "what we did, how often, who, and how long".
@@ -224,6 +226,13 @@ export async function adminStatsRoutes(app: FastifyInstance): Promise<void> {
       ORDER BY rj.created_at
     `);
 
+    // Linux help is something a cafe offers at an ordinary session rather than
+    // a separate event, so the report for a session covers both. Null when the
+    // cafe does not run Linux, or nothing was written up here, and the page
+    // then leaves the block out.
+    const [cafeRow] = await db.select({ linuxEnabled: cafes.linuxEnabled }).from(cafes).limit(1);
+    const linux = cafeRow?.linuxEnabled ? await linuxStatsForEvent(id) : null;
+
     return {
       event: {
         id: event.id,
@@ -235,6 +244,7 @@ export async function adminStatsRoutes(app: FastifyInstance): Promise<void> {
         venueName: event.venue_name,
         venueAddress: event.venue_address,
       },
+      linux,
       totals: {
         repairCount: Number(t.repair_count ?? 0),
         completedCount: completed,

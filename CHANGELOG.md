@@ -2,6 +2,65 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
+## 1.10.0 (4 September 2026)
+
+### Added
+
+- **Linux Repair Cafes.** You can now help people move an ageing computer to
+  Linux instead of throwing it away, and keep a record of it. Microsoft stopped
+  supporting Windows 10 in October 2025, so a lot of computers that still work
+  are being called too old. The
+  [Linux Repair Cafe movement](https://www.repaircafe.org/en/linux-repair-cafe/)
+  exists to keep them going.
+
+  This is off on every install, new and existing, until an admin turns it on
+  under Settings, Linux Repair Cafe. While it is off, nothing about Linux
+  appears anywhere: no menu item, no page, no card, no admin section.
+
+  Linux help is an extra you offer at your normal sessions, not a separate kind
+  of event. You tick "Linux help at this session" on the sessions where it is
+  available, either one at a time or on a repeating event so every date gets
+  it. Those sessions say so on your public calendar and on their own page, so
+  somebody with an old laptop knows to bring it, and knows to back it up first.
+
+  When you switch it on you get:
+
+  - A menu item of its own on your public site. You can rename it.
+  - A public page with the same kind of editable sections as your home page: a
+    heading and tagline, an explanation, numbered steps, what to bring, and
+    FAQs. It is seeded with plain-English wording you can use as it stands or
+    rewrite completely, including the warning that installing Linux erases the
+    computer and files must be backed up first.
+  - A card on your home page explaining what a Linux Repair Cafe is, with the
+    date of your next session that offers it, linking through to the page.
+  - Volunteers who can be marked as Linux helpers, listed on the page so
+    visitors can see who will help them. This is kept separate from Skills,
+    because helping somebody move to Linux is a different job from mending a
+    broken item.
+  - A Linux section in the admin area for writing up each computer: what it
+    was, roughly how old, what it ran before, which Linux went on, how it went,
+    and who did it. Visitor details are optional, and are only kept when
+    somebody has said they may be.
+  - Reporting: how many computers were seen, how many went home running Linux,
+    how many people were advised, a breakdown by previous operating system and
+    by distribution, per-volunteer and per-session figures, and a CSV export
+    for funders. Because Linux help happens at an ordinary session, the figures
+    also appear on that session's own report, next to the repairs.
+  - CO2 saved, worked out from the same reference data and the same sum as a
+    repair, so a cafe can add its Linux total and its repair total together and
+    defend the answer. It is only counted for a computer that actually went
+    home running Linux.
+
+  Switching the feature off hides everything but deletes nothing. Turn it back
+  on and every record is exactly as it was.
+
+### Changed
+
+- The "Purge expired PII now" button under Settings, GDPR now clears visitor
+  names and contact details from Linux install records as well as repairs.
+  Both are kept for the same retention period and are now forgotten on the
+  same day.
+
 ## 1.9.1 (4 August 2026)
 
 ### Fixed

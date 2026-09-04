@@ -4,7 +4,7 @@
   import { api } from '$lib/api';
   import Icon from '@iconify/svelte';
   import { categoryIcon } from '$lib/categoryIcon';
-  import { ArrowLeft, Wrench, CheckCircle2, XCircle, PackageX, Hourglass, Clock, Users, Leaf } from 'lucide-svelte';
+  import { ArrowLeft, Wrench, CheckCircle2, XCircle, PackageX, Hourglass, Clock, Users, Leaf, Laptop } from 'lucide-svelte';
 
   type Status = 'waiting' | 'in_progress' | 'completed' | 'cannot_repair' | 'awaiting_return' | 'returned';
 
@@ -30,6 +30,13 @@
       totalDurationMin: number;
       environmentalSavingKg: number;
     };
+    /** Computers seen here, when the cafe offers Linux help. Null otherwise. */
+    linux: {
+      installCount: number;
+      installedCount: number;
+      advisedCount: number;
+      co2SavedKg: number;
+    } | null;
     repairers: Array<{ id: string; displayName: string; count: number; completedCount: number; avgDurationMin: number }>;
     categories: Array<{ id: string | null; name: string; icon: string | null; colour: string | null; count: number; completedCount: number }>;
     jobs: Array<{
@@ -135,6 +142,35 @@
       <p class="text-2xl font-bold mt-1">{detail.totals.environmentalSavingKg.toFixed(1)}<span class="text-sm font-normal text-slate-500"> kg</span></p>
     </div>
   </div>
+
+  <!-- Linux help is an extra offered at an ordinary session, so it is reported
+       alongside the repairs rather than on a page of its own. -->
+  {#if detail.linux}
+    <div class="card p-4 mt-4">
+      <div class="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 class="text-lg font-semibold flex items-center gap-2"><Laptop size={18} class="text-brand-600" /> Linux help at this session</h2>
+        <a href="/admin/linux" class="text-sm text-brand-700 hover:underline">See all Linux records</a>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+        <div>
+          <p class="text-xs text-slate-500">Computers seen</p>
+          <p class="text-2xl font-bold mt-0.5">{detail.linux.installCount}</p>
+        </div>
+        <div>
+          <p class="text-xs text-slate-500">Now on Linux</p>
+          <p class="text-2xl font-bold mt-0.5 text-emerald-700">{detail.linux.installedCount}</p>
+        </div>
+        <div>
+          <p class="text-xs text-slate-500">Advised</p>
+          <p class="text-2xl font-bold mt-0.5">{detail.linux.advisedCount}</p>
+        </div>
+        <div>
+          <p class="text-xs text-slate-500">CO₂ saved</p>
+          <p class="text-2xl font-bold mt-0.5">{detail.linux.co2SavedKg.toFixed(1)}<span class="text-sm font-normal text-slate-500"> kg</span></p>
+        </div>
+      </div>
+    </div>
+  {/if}
 
   <div class="grid md:grid-cols-2 gap-4 mt-4">
     <!-- Volunteers -->

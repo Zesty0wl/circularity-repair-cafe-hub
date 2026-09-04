@@ -196,6 +196,12 @@ export function renderSitemap(data: SeoData, origin: string): string {
     { loc: `${origin}/contact`, changefreq: 'yearly', priority: '0.4' },
   ];
 
+  // The Linux page only exists for cafes that offer it, so it is only listed
+  // for them. Listing it otherwise would send crawlers to a redirect.
+  if (data.cafe?.linuxEnabled) {
+    urls.push({ loc: `${origin}/linux`, changefreq: 'monthly', priority: '0.7' });
+  }
+
   // One crawlable URL per published event.
   for (const event of data.events) {
     urls.push({

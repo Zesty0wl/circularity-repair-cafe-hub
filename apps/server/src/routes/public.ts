@@ -19,6 +19,7 @@ import { uploadUrl } from '../services/imageUpload.js';
 import { findOurs, getNetwork, resolveSlugs } from '../services/repairCafeNetwork.js';
 import { getGuide, recentGuides, searchGuides } from '../services/ifixit.js';
 import { co2Settings, listFactors } from '../services/co2.js';
+import { linuxStats, linuxStatsForEvent } from '../services/linux.js';
 
 /** How many photos the site's main gallery will ever return. */
 const MAIN_GALLERY_LIMIT = 60;
@@ -40,6 +41,13 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
       socialLinks: cafe.socialLinks,
       homePage: cafe.homePage,
       gallery,
+      // ── Linux Repair Cafe ────────────────────────────────────────
+      // The flag is always sent, because every page uses it to decide whether
+      // the menu item and the home page card appear. The wording only follows
+      // when the feature is on, so cafes that do not offer it are not sending
+      // a page nobody will read on every request.
+      linuxEnabled: cafe.linuxEnabled,
+      linuxPage: cafe.linuxEnabled ? cafe.linuxPage : null,
       primaryColor: cafe.primaryColor,
       accentColor: cafe.accentColor,
       headingFont: cafe.headingFont,
@@ -309,6 +317,9 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
     const today = new Date().toISOString().slice(0, 10);
     const conditions = [eq(events.isPublished, true), ne(events.status, 'cancelled')];
     if (!includePast) conditions.push(gte(events.date, today));
+    // A session is only flagged as a Linux one while the cafe still runs them.
+    const [cafeRow] = await db.select({ linuxEnabled: cafes.linuxEnabled }).from(cafes).limit(1);
+    const linuxEnabled = cafeRow?.linuxEnabled ?? false;
     const rows = await db
       .select({
         id: events.id,
@@ -318,6 +329,7 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
         startTime: events.startTime,
         endTime: events.endTime,
         status: events.status,
+        supportsLinux: events.supportsLinux,
         venueName: venues.name,
         venueAddress: venues.address,
         venuePostcode: venues.postcode,
@@ -353,6 +365,7 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
       startTime: r.startTime,
       endTime: r.endTime,
       status: r.status,
+      supportsLinux: r.supportsLinux && linuxEnabled,
       venue: { name: r.venueName, address: r.venueAddress, postcode: r.venuePostcode },
       photoCount: Number(r.photoCount ?? 0),
       coverUrl: r.coverUrl ? uploadUrl(r.coverUrl) : null,
@@ -377,6 +390,7 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
         startTime: events.startTime,
         endTime: events.endTime,
         status: events.status,
+        supportsLinux: events.supportsLinux,
         venueName: venues.name,
         venueAddress: venues.address,
         venuePostcode: venues.postcode,
@@ -400,8 +414,12 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
     const [gallery, stats, cafeRow] = await Promise.all([
       hasHappened ? eventGallery(row.id) : Promise.resolve([]),
       hasHappened ? eventStats(row.id) : Promise.resolve(null),
-      db.select({ homePage: cafes.homePage }).from(cafes).limit(1),
+      db.select({ homePage: cafes.homePage, linuxEnabled: cafes.linuxEnabled }).from(cafes).limit(1),
     ]);
+    // Linux help happens at an ordinary session, so what a session achieved
+    // includes the computers kept in use as well as the items mended.
+    const linuxSummary =
+      hasHappened && cafeRow[0]?.linuxEnabled ? await linuxStatsForEvent(row.id) : null;
     // Admins can turn the per-session figures off under Settings. Anything
     // saved before that switch existed keeps showing them.
     const showEventStats = (cafeRow[0]?.homePage as { showEventStats?: boolean } | undefined)?.showEventStats !== false;
@@ -414,9 +432,13 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
       startTime: row.startTime,
       endTime: row.endTime,
       status: row.status,
+      // Only ever true while the cafe runs Linux sessions. A cafe that turns
+      // the feature off should not still be telling visitors about it.
+      supportsLinux: row.supportsLinux && (cafeRow[0]?.linuxEnabled ?? false),
       venue: { name: row.venueName, address: row.venueAddress, postcode: row.venuePostcode },
       gallery,
       stats: showEventStats ? stats : null,
+      linuxStats: showEventStats ? linuxSummary : null,
     };
   });
 
@@ -515,6 +537,87 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
       .from(skillCategories)
       .where(eq(skillCategories.isActive, true))
       .orderBy(asc(skillCategories.sortOrder));
+  });
+
+  // ── The Linux Repair Cafe page ──────────────────────────────────────────
+  // Everything that page needs in one call: the wording an admin wrote, the
+  // next sessions where Linux help is on offer, who will be there to give it,
+  // and what the cafe has managed so far.
+  //
+  // Returns 404 while the feature is off, which is what the page checks before
+  // it redirects. A cafe that does not run Linux sessions has no such page.
+  app.get('/api/public/linux', async (_request, reply) => {
+    const [cafe] = await db
+      .select({ enabled: cafes.linuxEnabled, page: cafes.linuxPage })
+      .from(cafes)
+      .limit(1);
+    if (!cafe?.enabled) {
+      reply.code(404).send({ error: 'Not found', code: 'linux/not_enabled' });
+      return;
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+    const upcoming = await db
+      .select({
+        id: events.id,
+        name: events.name,
+        description: events.description,
+        date: events.date,
+        startTime: events.startTime,
+        endTime: events.endTime,
+        status: events.status,
+        venueName: venues.name,
+        venueAddress: venues.address,
+        venuePostcode: venues.postcode,
+      })
+      .from(events)
+      .innerJoin(venues, eq(venues.id, events.venueId))
+      .where(
+        and(
+          eq(events.isPublished, true),
+          ne(events.status, 'cancelled'),
+          eq(events.supportsLinux, true),
+          gte(events.date, today),
+        ),
+      )
+      .orderBy(asc(events.date), asc(events.startTime));
+
+    // The volunteers who help at these sessions. Same visibility rules as the
+    // rest of the site: a repairer who has hidden themselves stays hidden.
+    const volunteers = await db
+      .select({
+        id: users.id,
+        displayName: users.displayName,
+        bio: users.bio,
+        avatarUrl: users.avatarUrl,
+        joinDate: users.joinDate,
+      })
+      .from(users)
+      .where(
+        and(
+          eq(users.isActive, true),
+          eq(users.showOnPublicPage, true),
+          eq(users.linuxRepairer, true),
+        ),
+      )
+      .orderBy(asc(users.displayName));
+
+    return {
+      page: cafe.page,
+      upcomingEvents: upcoming.map((r) => ({
+        id: r.id,
+        name: r.name,
+        description: r.description,
+        date: r.date,
+        startTime: r.startTime,
+        endTime: r.endTime,
+        status: r.status,
+        supportsLinux: true,
+        venue: { name: r.venueName, address: r.venueAddress, postcode: r.venuePostcode },
+      })),
+      volunteers,
+      stats: await linuxStats(),
+    };
   });
 
   // Allow checking if URL is reachable for setup wizard

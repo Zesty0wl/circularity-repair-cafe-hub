@@ -206,6 +206,10 @@ export async function adminRepairsRoutes(app: FastifyInstance): Promise<void> {
   });
 
   // GDPR PII purge
+  //
+  // Covers every place a visitor's name or contact detail is written down, not
+  // just repairs. A Linux install records the same details for the same
+  // reason, so it has to be forgotten on the same day.
   app.post('/api/admin/repairs/purge-expired-pii', async (request) => {
     const me = request.auth!;
     const result = await db.execute(sql`
@@ -213,7 +217,21 @@ export async function adminRepairsRoutes(app: FastifyInstance): Promise<void> {
       WHERE data_retention_date IS NOT NULL AND data_retention_date < CURRENT_DATE
       AND (customer_name IS NOT NULL OR customer_contact IS NOT NULL)
     `);
-    await audit({ request, actorId: me.sub, actorType: me.role, action: 'repair.pii_purged', entityType: 'system', metadata: { rows: result.rowCount } });
-    return { purged: result.rowCount ?? 0 };
+    const linuxResult = await db.execute(sql`
+      UPDATE linux_installs SET customer_name = NULL, customer_contact = NULL, updated_at = NOW()
+      WHERE data_retention_date IS NOT NULL AND data_retention_date < CURRENT_DATE
+      AND (customer_name IS NOT NULL OR customer_contact IS NOT NULL)
+    `);
+    const repairs = result.rowCount ?? 0;
+    const linuxInstalls = linuxResult.rowCount ?? 0;
+    await audit({
+      request,
+      actorId: me.sub,
+      actorType: me.role,
+      action: 'repair.pii_purged',
+      entityType: 'system',
+      metadata: { rows: repairs + linuxInstalls, repairs, linuxInstalls },
+    });
+    return { purged: repairs + linuxInstalls, repairs, linuxInstalls };
   });
 }

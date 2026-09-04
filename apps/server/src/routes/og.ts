@@ -28,6 +28,10 @@ const SECTIONS: Record<string, { title: string; subtitle?: string }> = {
     title: 'Repair guides',
     subtitle: 'Thousands of step-by-step guides from iFixit',
   },
+  linux: {
+    title: 'Linux Repair Cafe',
+    subtitle: 'Give your old computer years more life, for free',
+  },
 };
 
 /** Long date, e.g. "Saturday 9 August". */

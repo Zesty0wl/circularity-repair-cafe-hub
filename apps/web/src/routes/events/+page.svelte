@@ -6,7 +6,7 @@
   import PageHeader from '$lib/components/PageHeader.svelte';
   import NextSessionCta from '$lib/components/NextSessionCta.svelte';
   import AddToCalendar from '$lib/components/AddToCalendar.svelte';
-  import { Clock, MapPin, CalendarDays, CalendarX2, History, ChevronRight, Camera } from 'lucide-svelte';
+  import { Clock, MapPin, CalendarDays, CalendarX2, History, ChevronRight, Camera, Laptop } from 'lucide-svelte';
   import type { PageData } from './$types';
 
   interface Venue { name: string; address: string | null; postcode: string | null }
@@ -18,6 +18,8 @@
     startTime: string;
     endTime: string;
     status: string;
+    /** Help moving a computer to Linux is on offer at this session too. */
+    supportsLinux?: boolean;
     venue: Venue;
     /** Photos a visitor can see for this session, and the first of them. */
     photoCount?: number;
@@ -142,6 +144,13 @@
               {#if !uniformVenue}
                 <p class="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
                   <MapPin size={13} class="text-clay shrink-0" /> <span class="truncate">{evt.venue.name}</span>
+                </p>
+              {/if}
+              {#if evt.supportsLinux}
+                <!-- Said plainly on the listing, so somebody with an old
+                     computer knows before they set out. -->
+                <p class="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-800 ring-1 ring-brand-200">
+                  <Laptop size={12} class="shrink-0" /> Linux help too
                 </p>
               {/if}
             </div>

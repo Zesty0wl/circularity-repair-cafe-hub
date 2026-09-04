@@ -2,6 +2,11 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { api } from '$lib/api';
+  import { cafe } from '$lib/stores/cafe';
+
+  // Only asked for by cafes that run Linux sessions. Turned on under Settings,
+  // Linux Repair Cafe.
+  $: linuxEnabled = $cafe?.linuxEnabled === true;
 
   let venues: any[] = [];
   let mode: 'oneoff' | 'recurring' = 'oneoff';
@@ -17,6 +22,7 @@
     startTime: '10:00',
     endTime: '14:00',
     isPublished: false,
+    supportsLinux: false,
   };
 
   // Template
@@ -30,6 +36,7 @@
     weekday: 'SA',
     bySetPos: 2,
     isPublished: false,
+    supportsLinux: false,
   };
 
   onMount(async () => {
@@ -64,6 +71,7 @@
             endTime: template.endTime,
             recurrenceRule: rule,
             isPublished: template.isPublished,
+            supportsLinux: template.supportsLinux,
           },
         });
         goto('/admin/events');
@@ -108,6 +116,17 @@
       <textarea id="ds" class="input" rows="3" bind:value={oneoff.description}></textarea>
     </div>
     <label class="flex items-center gap-2"><input type="checkbox" bind:checked={oneoff.isPublished} /> Publish on public calendar</label>
+    {#if linuxEnabled}
+      <label class="flex items-start gap-2">
+        <input type="checkbox" class="mt-1" bind:checked={oneoff.supportsLinux} />
+        <span>
+          Linux help at this session
+          <span class="block text-xs text-slate-500">
+            Says so on your public calendar, and lets you file Linux installs against this session.
+          </span>
+        </span>
+      </label>
+    {/if}
   {:else}
     <div>
       <label class="label" for="tn">Template name</label>
@@ -153,6 +172,17 @@
       <textarea id="td" class="input" rows="3" bind:value={template.description}></textarea>
     </div>
     <label class="flex items-center gap-2"><input type="checkbox" bind:checked={template.isPublished} /> Publish on public calendar</label>
+    {#if linuxEnabled}
+      <label class="flex items-start gap-2">
+        <input type="checkbox" class="mt-1" bind:checked={template.supportsLinux} />
+        <span>
+          Linux help at every one of these sessions
+          <span class="block text-xs text-slate-500">
+            Applies to the dates this template creates. You can still change an individual date later.
+          </span>
+        </span>
+      </label>
+    {/if}
   {/if}
   {#if error}<p class="text-rose-600 text-sm">{error}</p>{/if}
   <div class="flex justify-end"><button class="btn-primary" on:click={submit} disabled={busy}>Create</button></div>

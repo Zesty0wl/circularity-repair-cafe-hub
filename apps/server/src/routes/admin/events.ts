@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { db } from '../../db/index.js';
-import { cafes, eventTemplates, events, repairImages, repairJobs, repairerEvents, skillCategories, users, venues } from '../../db/schema.js';
-import { and, asc, desc, eq, sql } from 'drizzle-orm';
+import { cafes, eventTemplates, events, linuxInstalls, repairImages, repairJobs, repairerEvents, skillCategories, users, venues } from '../../db/schema.js';
+import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { eventTemplateSchema, oneOffEventSchema } from '@circularity/shared';
 import { addMonthsIso, generateInstances, todayIso } from '../../services/recurrence.js';
 import { generateEventQrPng } from '../../services/qrcode.js';
@@ -38,6 +38,7 @@ export async function adminEventsRoutes(app: FastifyInstance): Promise<void> {
         endTime: events.endTime,
         status: events.status,
         isPublished: events.isPublished,
+        supportsLinux: events.supportsLinux,
         templateId: events.templateId,
         venueId: events.venueId,
         venueName: venues.name,
@@ -107,6 +108,7 @@ export async function adminEventsRoutes(app: FastifyInstance): Promise<void> {
         endTime: data.endTime,
         isPublished: data.isPublished ?? false,
         maxItems: data.maxItems ?? null,
+        supportsLinux: data.supportsLinux ?? false,
         checkInToken: token,
         createdBy: me.sub,
       })
@@ -127,7 +129,7 @@ export async function adminEventsRoutes(app: FastifyInstance): Promise<void> {
       return;
     }
     const update: any = { updatedAt: new Date() };
-    for (const k of ['name', 'venueId', 'description', 'date', 'startTime', 'endTime', 'isPublished', 'notes', 'maxItems', 'status']) {
+    for (const k of ['name', 'venueId', 'description', 'date', 'startTime', 'endTime', 'isPublished', 'notes', 'maxItems', 'status', 'supportsLinux']) {
       if (body[k] !== undefined) update[k === 'venueId' ? 'venueId' : k] = body[k];
     }
     if (existing.templateId) update.isTemplateOverride = true;
@@ -169,6 +171,25 @@ export async function adminEventsRoutes(app: FastifyInstance): Promise<void> {
           `This session has ${count} repair${count === 1 ? '' : 's'} recorded against it, ` +
           'so it cannot be deleted. Cancel it instead, which keeps the record of what happened.',
         code: 'event/has_repairs',
+      });
+      return;
+    }
+
+    // Linux installs point at the session the same way, so the database would
+    // refuse in the same manner. Say so in words rather than letting a foreign
+    // key error reach the browser.
+    const [{ count: linuxCount }] = await db
+      .select({ count: sql<number>`COUNT(*)::int` })
+      .from(linuxInstalls)
+      .where(eq(linuxInstalls.eventId, id));
+
+    if (linuxCount > 0) {
+      reply.code(409).send({
+        error:
+          `This session has ${linuxCount} Linux install${linuxCount === 1 ? '' : 's'} recorded ` +
+          'against it, so it cannot be deleted. Cancel it instead, which keeps the record of ' +
+          'what happened.',
+        code: 'event/has_linux_installs',
       });
       return;
     }
@@ -259,6 +280,7 @@ export async function adminEventsRoutes(app: FastifyInstance): Promise<void> {
         endTime: orig.endTime,
         isPublished: orig.isPublished,
         maxItems: orig.maxItems,
+        supportsLinux: orig.supportsLinux,
         checkInToken: token,
         templateId: null,
         createdBy: me.sub,
@@ -311,6 +333,7 @@ export async function adminEventsRoutes(app: FastifyInstance): Promise<void> {
         recurrenceEndDate: eventTemplates.recurrenceEndDate,
         maxItemsPerSession: eventTemplates.maxItemsPerSession,
         isPublished: eventTemplates.isPublished,
+        supportsLinux: eventTemplates.supportsLinux,
       })
       .from(eventTemplates)
       .leftJoin(venues, eq(eventTemplates.venueId, venues.id))
@@ -338,6 +361,7 @@ export async function adminEventsRoutes(app: FastifyInstance): Promise<void> {
         recurrenceEndDate: data.recurrenceEndDate ?? null,
         maxItemsPerSession: data.maxItemsPerSession ?? null,
         isPublished: data.isPublished ?? false,
+        supportsLinux: data.supportsLinux ?? false,
         createdBy: me.sub,
       })
       .returning();
@@ -369,13 +393,21 @@ export async function adminEventsRoutes(app: FastifyInstance): Promise<void> {
     if (data.recurrenceEndDate !== undefined) update.recurrenceEndDate = data.recurrenceEndDate;
     if (data.maxItemsPerSession !== undefined) update.maxItemsPerSession = data.maxItemsPerSession;
     if (data.isPublished !== undefined) update.isPublished = data.isPublished;
+    if (data.supportsLinux !== undefined) update.supportsLinux = data.supportsLinux;
     const [updated] = await db.update(eventTemplates).set(update).where(eq(eventTemplates.id, id)).returning();
 
     if (body.regenerate === 'all_future') {
-      await db.delete(events).where(
-        and(eq(events.templateId, id), sql`${events.date} >= ${todayIso()}`, eq(events.isTemplateOverride, false))
-      );
-      await generateInstancesForTemplate(id, me.sub);
+      const rebuilt = await regenerateFutureInstances(id, me.sub);
+      await audit({
+        request,
+        actorId: me.sub,
+        actorType: me.role,
+        action: 'template.regenerated',
+        entityType: 'event_template',
+        entityId: id,
+        metadata: rebuilt,
+      });
+      return { ...updated, regenerated: rebuilt };
     }
     return updated;
   });
@@ -396,6 +428,87 @@ export async function adminEventsRoutes(app: FastifyInstance): Promise<void> {
     }
     return reply.redirect(evt.qrCodeUrl);
   });
+}
+
+/**
+ * Rebuild the sessions a repeating event has put on the calendar, from today on.
+ *
+ * A session that already has something recorded against it is never deleted.
+ * Somebody checked an item in there, or a computer was written up, and that is
+ * the record of a real day. Deleting it used to fail outright: the database
+ * refuses to remove a session that repairs point at, so the whole request
+ * ended in an unexplained error and nothing was rebuilt at all. A session
+ * running today is the usual victim, because "future" includes today.
+ *
+ * So those sessions are updated in place instead. They keep their date, their
+ * check-in link and their QR poster, which are all in use, and they pick up the
+ * changes to the template, which is what the organiser asked for.
+ *
+ * Everything else is a placeholder nobody has used yet, so it is removed and
+ * built again from the current rule. Sessions edited by hand are left alone
+ * either way, as they always were.
+ */
+async function regenerateFutureInstances(
+  templateId: string,
+  actorId: string,
+): Promise<{ kept: number; removed: number }> {
+  const [tpl] = await db.select().from(eventTemplates).where(eq(eventTemplates.id, templateId)).limit(1);
+  if (!tpl) return { kept: 0, removed: 0 };
+
+  const future = await db
+    .select({ id: events.id })
+    .from(events)
+    .where(
+      and(
+        eq(events.templateId, templateId),
+        sql`${events.date} >= ${todayIso()}`,
+        eq(events.isTemplateOverride, false),
+      ),
+    );
+  const futureIds = future.map((e) => e.id);
+
+  const inUse = new Set<string>();
+  if (futureIds.length > 0) {
+    const [withRepairs, withLinux] = await Promise.all([
+      db
+        .selectDistinct({ id: repairJobs.eventId })
+        .from(repairJobs)
+        .where(inArray(repairJobs.eventId, futureIds)),
+      db
+        .selectDistinct({ id: linuxInstalls.eventId })
+        .from(linuxInstalls)
+        .where(inArray(linuxInstalls.eventId, futureIds)),
+    ]);
+    for (const row of [...withRepairs, ...withLinux]) inUse.add(row.id);
+  }
+
+  const removable = futureIds.filter((eventId) => !inUse.has(eventId));
+  if (removable.length > 0) {
+    await db.delete(events).where(inArray(events.id, removable));
+  }
+
+  // The edit still has to reach the sessions we kept, otherwise an organiser
+  // who moves the start time, or ticks Linux help, would find today's session
+  // quietly left on the old details.
+  if (inUse.size > 0) {
+    await db
+      .update(events)
+      .set({
+        name: tpl.name,
+        venueId: tpl.venueId,
+        description: tpl.description,
+        startTime: tpl.startTime,
+        endTime: tpl.endTime,
+        isPublished: tpl.isPublished,
+        maxItems: tpl.maxItemsPerSession,
+        supportsLinux: tpl.supportsLinux,
+        updatedAt: new Date(),
+      })
+      .where(inArray(events.id, [...inUse]));
+  }
+
+  await generateInstancesForTemplate(templateId, actorId);
+  return { kept: inUse.size, removed: removable.length };
 }
 
 async function generateInstancesForTemplate(templateId: string, createdBy: string): Promise<void> {
@@ -426,6 +539,7 @@ async function generateInstancesForTemplate(templateId: string, createdBy: strin
         endTime: tpl.endTime,
         isPublished: tpl.isPublished,
         maxItems: tpl.maxItemsPerSession,
+        supportsLinux: tpl.supportsLinux,
         checkInToken: token,
         createdBy,
       })

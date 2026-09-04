@@ -19,6 +19,9 @@ top and work down — each guide builds on the one before it.
    CSV export, statistics dashboard, PII purge.
 7. **[Settings reference](./07-settings-reference.md)** — every setting in
    the admin area, what it does and where to find it.
+8. **[Linux Repair Cafe](./08-linux-repair-cafe.md)** — help people move an
+   ageing computer to Linux instead of binning it, and keep a record of it.
+   Optional, and off until you turn it on.
 
 ## For volunteers (repairers)
 

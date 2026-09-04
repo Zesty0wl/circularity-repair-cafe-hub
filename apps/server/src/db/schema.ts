@@ -95,6 +95,20 @@ export const cafes = pgTable('cafes', {
   // CO2 figure is worked out and shown at all.
   co2DisplacementRate: numeric('co2_displacement_rate', { precision: 4, scale: 3 }).notNull().default('0.5'),
   co2Enabled: boolean('co2_enabled').notNull().default(true),
+
+  // ── Linux Repair Cafe ─────────────────────────────────────────────
+  // A Linux Repair Cafe helps people move an ageing computer to Linux instead
+  // of throwing it away. See https://www.repaircafe.org/en/linux-repair-cafe/.
+  // Off until an admin turns it on, so a cafe that does not offer this never
+  // shows a page, a menu or a card about it.
+  linuxEnabled: boolean('linux_enabled').notNull().default(false),
+  /**
+   * The wording on the Linux page, in the same shape as `homePage`, so admins
+   * can rewrite every section without a schema change. Seeded with sensible
+   * copy the first time the feature is switched on.
+   */
+  linuxPage: jsonb('linux_page').default({}).notNull(),
+
   setupCompleted: boolean('setup_completed').notNull().default(false),
   allowSkipPhoto: boolean('allow_skip_photo').notNull().default(true),
   enableContactField: boolean('enable_contact_field').notNull().default(true),
@@ -123,6 +137,13 @@ export const users = pgTable('users', {
   showOnPublicPage: boolean('show_on_public_page').notNull().default(true),
   showOnHomePage: boolean('show_on_home_page').notNull().default(true),
   skills: text('skills').array().default([]).notNull(),
+  /**
+   * This volunteer helps at Linux sessions: installing Linux, showing people
+   * round it, and answering questions afterwards. Kept apart from `skills`,
+   * which lists the kinds of thing a repairer mends, because helping somebody
+   * move to Linux is a different job from fixing a broken item.
+   */
+  linuxRepairer: boolean('linux_repairer').notNull().default(false),
   joinDate: date('join_date'),
   repairCountCache: integer('repair_count_cache').notNull().default(0),
   notificationPreferences: jsonb('notification_preferences').default({}).notNull(),
@@ -210,6 +231,8 @@ export const eventTemplates = pgTable('event_templates', {
   recurrenceEndDate: date('recurrence_end_date'),
   maxItemsPerSession: integer('max_items_per_session'),
   isPublished: boolean('is_published').notNull().default(false),
+  /** Every session made from this template offers Linux help as well. */
+  supportsLinux: boolean('supports_linux').notNull().default(false),
   createdBy: uuid('created_by').references(() => users.id),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -233,6 +256,12 @@ export const events = pgTable(
     status: eventStatusEnum('status').notNull().default('scheduled'),
     isPublished: boolean('is_published').notNull().default(false),
     isTemplateOverride: boolean('is_template_override').notNull().default(false),
+    /**
+     * People can also get help moving a computer to Linux at this session.
+     * Shown on the public event listings so a visitor knows before they set
+     * out, and it is what the Linux page lists as its next dates.
+     */
+    supportsLinux: boolean('supports_linux').notNull().default(false),
     notes: text('notes'),
     qrCodeUrl: text('qr_code_url'),
     checkInToken: text('check_in_token').unique(),
@@ -358,6 +387,70 @@ export const eventImages = pgTable(
   })
 );
 
+/**
+ * What happened when somebody brought a computer to a Linux session.
+ *
+ * These are kept apart from `repair_jobs` on purpose. A repair job is about a
+ * broken thing and asks "did it work again?". A Linux install is about a
+ * working computer that is losing its operating system support, and asks a
+ * different question: what was on it, what went on instead, and did the person
+ * leave able to use it. Mixing the two would spoil both sets of figures.
+ */
+export const linuxInstalls = pgTable(
+  'linux_installs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    eventId: uuid('event_id')
+      .notNull()
+      .references(() => events.id),
+    /** The volunteer who did the install. Kept if they later leave the cafe. */
+    repairerId: uuid('repairer_id').references(() => users.id, { onDelete: 'set null' }),
+    deviceDescription: text('device_description').notNull(),
+    deviceBrand: text('device_brand'),
+    /** 'laptop', 'desktop', 'all_in_one' or 'other'. */
+    deviceType: text('device_type').notNull().default('laptop'),
+    /** Roughly how old the machine was, in years. Optional, and often a guess. */
+    deviceAgeYears: integer('device_age_years'),
+    /**
+     * What the computer ran before: 'windows_10', 'windows_11',
+     * 'windows_older', 'macos', 'chromeos', 'linux', 'none' or 'other'.
+     * Windows 10 support ends in October 2027, which is why most machines
+     * arrive at all, so it is worth counting them separately.
+     */
+    previousOs: text('previous_os'),
+    /** Which Linux went on, for example "Linux Mint 22". Free text on purpose. */
+    distro: text('distro'),
+    /**
+     * How it went:
+     *   installed     Linux is now the only system on the machine.
+     *   dual_boot     Linux alongside what was there before.
+     *   tried_live    they ran it from a USB stick to try it, nothing installed.
+     *   advice_only   we talked it through, they took the machine home as it was.
+     *   not_possible  the machine could not run it, or it went wrong.
+     */
+    outcome: text('outcome').notNull().default('installed'),
+    customerName: text('customer_name'),
+    customerContact: text('customer_contact'),
+    /** Whether they were happy for us to keep their details, same as a repair. */
+    gdprConsent: boolean('gdpr_consent').notNull().default(false),
+    dataRetentionDate: date('data_retention_date'),
+    notes: text('notes'),
+    // What keeping this computer in use saves, worked out the same way as a
+    // repair so the two totals can be added up together. See services/co2.ts.
+    co2FactorId: uuid('co2_factor_id').references(() => co2Factors.id, { onDelete: 'set null' }),
+    co2SavingKg: numeric('co2_saving_kg', { precision: 8, scale: 3 }),
+    co2SavingSource: text('co2_saving_source'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    eventIdx: index('idx_linux_installs_event_id').on(t.eventId),
+    repairerIdx: index('idx_linux_installs_repairer_id').on(t.repairerId),
+    createdIdx: index('idx_linux_installs_created_at').on(t.createdAt),
+    outcomeIdx: index('idx_linux_installs_outcome').on(t.outcome),
+  })
+);
+
 export const auditLog = pgTable(
   'audit_log',
   {
@@ -386,3 +479,4 @@ export type RepairJob = typeof repairJobs.$inferSelect;
 export type RepairImage = typeof repairImages.$inferSelect;
 export type EventImage = typeof eventImages.$inferSelect;
 export type SkillCategory = typeof skillCategories.$inferSelect;
+export type LinuxInstall = typeof linuxInstalls.$inferSelect;

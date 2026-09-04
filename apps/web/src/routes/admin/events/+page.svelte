@@ -2,7 +2,8 @@
   import { onMount } from 'svelte';
   import { api } from '$lib/api';
   import { describeRecurrence, describeTimes } from '$lib/recurrence';
-  import { Pencil, Trash2 } from 'lucide-svelte';
+  import { Pencil, Trash2, Laptop } from 'lucide-svelte';
+  import { cafe } from '$lib/stores/cafe';
 
   let events: any[] = [];
   let templates: any[] = [];
@@ -117,7 +118,14 @@
         {#each events as e}
           <tr>
             <td class="px-3 py-1.5 whitespace-nowrap">{e.date}</td>
-            <td class="px-3 py-1.5"><a href={`/admin/events/${e.id}`} class="text-brand-700 hover:underline">{e.name}</a></td>
+            <td class="px-3 py-1.5">
+              <a href={`/admin/events/${e.id}`} class="text-brand-700 hover:underline">{e.name}</a>
+              {#if $cafe?.linuxEnabled && e.supportsLinux}
+                <span class="ml-1.5 inline-flex items-center gap-1 rounded-full bg-brand-50 px-1.5 py-0.5 text-[10px] font-medium text-brand-800 ring-1 ring-brand-200 align-middle">
+                  <Laptop size={10} /> Linux
+                </span>
+              {/if}
+            </td>
             <td class="px-3 py-1.5">{e.venueName}</td>
             <td class="px-3 py-1.5"><span class="badge badge-{e.status}">{e.status}</span></td>
             <td class="px-3 py-1.5"><button class="badge {e.isPublished ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'}" on:click={() => publish(e, !e.isPublished)}>{e.isPublished ? 'Yes' : 'No'}</button></td>

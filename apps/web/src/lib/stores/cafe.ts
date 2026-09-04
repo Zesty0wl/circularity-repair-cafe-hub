@@ -10,6 +10,25 @@ export interface HomePageContent {
   showEventStats?: boolean;
 }
 
+/**
+ * The wording on the Linux Repair Cafe page, all of it editable by an admin.
+ * Every field is optional: a section with nothing in it is left out of the
+ * page rather than shown empty.
+ */
+export interface LinuxPageContent {
+  /** What the menu item is called. Defaults to "Linux Repair Cafe". */
+  navLabel?: string;
+  hero?: { heading?: string; tagline?: string };
+  intro?: { heading?: string; body?: string };
+  howItWorks?: Array<{ title: string; body: string }>;
+  whatToBring?: { heading?: string; body?: string };
+  faqs?: Array<{ q: string; a: string }>;
+  /** The card on the home page that explains what this is and links here. */
+  homeCard?: { heading?: string; body?: string; ctaLabel?: string };
+  /** Show how many computers have been saved so far. */
+  showStats?: boolean;
+}
+
 export interface GalleryImage {
   id: string;
   url: string;
@@ -31,6 +50,14 @@ export interface CafeInfo {
   address: string | null;
   socialLinks: Record<string, string>;
   homePage: HomePageContent;
+  /**
+   * Whether this cafe helps people move a computer to Linux. Off unless an
+   * admin turns it on. While it is off there is no menu item, no home page
+   * card and no /linux page.
+   */
+  linuxEnabled?: boolean;
+  /** Only sent while the feature is on. Null otherwise. */
+  linuxPage?: LinuxPageContent | null;
   gallery: GalleryImage[];
   primaryColor: string | null;
   accentColor: string | null;

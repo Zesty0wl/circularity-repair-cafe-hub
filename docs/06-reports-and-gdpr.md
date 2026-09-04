@@ -117,11 +117,16 @@ Go to **Settings → GDPR** and click **Purge expired PII now**. This:
 
 - Finds every job whose `dataRetentionDate` is in the past.
 - Sets `customer_name` and `customer_contact` to NULL on those jobs.
+- Does the same to any expired
+  [Linux install record](./08-linux-repair-cafe.md), which stores the same
+  two fields for the same reason, so both are forgotten together.
 - Logs the count and timestamp in the audit log.
 
 The repair history (item, fault, photos, outcome, environmental savings)
 is *kept* — only the personally-identifying fields are wiped. Your
-historical statistics stay accurate.
+historical statistics stay accurate. The same is true of a Linux record:
+what the computer was and what happened to it survives, the visitor's
+name does not.
 
 > **Note**: this is a manual button, not a scheduled job. Decide on a
 > rhythm (monthly? quarterly? after each event?) and put it in your

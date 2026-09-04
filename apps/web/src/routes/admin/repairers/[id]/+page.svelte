@@ -4,7 +4,8 @@
   import { api } from '$lib/api';
   import { goto } from '$app/navigation';
   import { auth } from '$lib/stores/auth';
-  import { ArrowLeft, ExternalLink, Upload, Trash2, Eye, EyeOff } from 'lucide-svelte';
+  import { ArrowLeft, ExternalLink, Upload, Trash2, Eye, EyeOff, Laptop } from 'lucide-svelte';
+  import { cafe } from '$lib/stores/cafe';
 
   $: id = $page.params.id;
   let user: any = null;
@@ -18,6 +19,8 @@
   let bio = ''; let isActive = true; let skills: string[] = [];
   let showOnPublicPage = true;
   let showOnHomePage = true;
+  // Helps at Linux sessions. Only asked for when the cafe runs them.
+  let linuxRepairer = false;
 
   async function load() {
     [user, categories] = await Promise.all([
@@ -28,6 +31,7 @@
     bio = user.bio ?? ''; isActive = user.isActive; skills = user.skills ?? [];
     showOnPublicPage = user.showOnPublicPage ?? true;
     showOnHomePage = user.showOnHomePage ?? true;
+    linuxRepairer = user.linuxRepairer === true;
   }
 
   onMount(load);
@@ -37,7 +41,7 @@
     try {
       await api(`/api/admin/users/${id}`, {
         method: 'PATCH',
-        json: { displayName, email, role, bio: bio || null, isActive, skills, showOnPublicPage, showOnHomePage },
+        json: { displayName, email, role, bio: bio || null, isActive, skills, showOnPublicPage, showOnHomePage, linuxRepairer },
       });
       await load();
     } catch (e: any) { error = e?.message || 'Could not save'; }
@@ -194,6 +198,26 @@
         {/each}
       </div>
     </div>
+    {#if $cafe?.linuxEnabled}
+      <!-- Kept apart from Skills above, because helping somebody move to Linux
+           is a different job from mending a broken item. -->
+      <div class="border-t border-slate-200 pt-4">
+        <span class="label">Linux Repair Cafe</span>
+        <label class="flex items-start gap-2">
+          <input type="checkbox" class="mt-0.5" bind:checked={linuxRepairer} />
+          <span class="text-sm">
+            <span class="font-medium inline-flex items-center gap-1.5">
+              <Laptop size={14} class={linuxRepairer ? 'text-emerald-600' : 'text-slate-400'} />
+              Helps at Linux sessions
+            </span>
+            <span class="block text-xs text-slate-500">
+              Lists them on your Linux Repair Cafe page as somebody who can help, and offers them
+              first when an install is written up.
+            </span>
+          </span>
+        </label>
+      </div>
+    {/if}
     {#if error}<p class="text-rose-600 text-sm">{error}</p>{/if}
     <div class="flex justify-between gap-2 flex-wrap">
       <button class="btn-ghost" on:click={resetLink}>Generate password reset link</button>

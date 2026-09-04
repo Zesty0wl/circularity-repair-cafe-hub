@@ -1,7 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { api } from '$lib/api';
-  import { ArrowLeft } from 'lucide-svelte';
+  import { ArrowLeft, Laptop } from 'lucide-svelte';
+  import { cafe } from '$lib/stores/cafe';
 
   let categories: any[] = [];
   let displayName = '';
@@ -9,6 +10,8 @@
   let role: 'admin' | 'repairer' = 'repairer';
   let bio = '';
   let skills: string[] = [];
+  /** Helps at Linux sessions. Only asked for when the cafe runs them. */
+  let linuxRepairer = false;
   let busy = false;
   let result: { token: string; userId: string } | null = null;
   let error = '';
@@ -22,7 +25,7 @@
     try {
       const res = await api<{ user: { id: string }; resetToken: string }>('/api/admin/users', {
         method: 'POST',
-        json: { displayName, email, role, bio: bio || null, skills },
+        json: { displayName, email, role, bio: bio || null, skills, linuxRepairer },
       });
       result = { userId: res.user.id, token: res.resetToken };
     } catch (e: any) {
@@ -74,6 +77,23 @@
         {/each}
       </div>
     </div>
+    {#if $cafe?.linuxEnabled}
+      <div class="border-t border-slate-200 pt-4">
+        <span class="label">Linux Repair Cafe</span>
+        <label class="flex items-start gap-2">
+          <input type="checkbox" class="mt-0.5" bind:checked={linuxRepairer} />
+          <span class="text-sm">
+            <span class="font-medium inline-flex items-center gap-1.5">
+              <Laptop size={14} class={linuxRepairer ? 'text-emerald-600' : 'text-slate-400'} />
+              Helps at Linux sessions
+            </span>
+            <span class="block text-xs text-slate-500">
+              Lists them on your Linux Repair Cafe page as somebody who can help.
+            </span>
+          </span>
+        </label>
+      </div>
+    {/if}
     {#if error}<p class="text-rose-600 text-sm">{error}</p>{/if}
     <div class="flex justify-end"><button class="btn-primary" on:click={submit} disabled={busy}>Create</button></div>
   </div>

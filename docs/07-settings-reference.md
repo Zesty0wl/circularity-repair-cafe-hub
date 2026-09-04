@@ -45,6 +45,38 @@ DB migrations.
 
 **Save home page** commits this tab.
 
+## Tab: Linux Repair Cafe
+
+Optional, and **off until you turn it on**. Helps people move an ageing
+computer to Linux instead of throwing it away.
+
+- **We are a Linux Repair Cafe**. The master switch. On, it adds a menu
+  item, a public page, a card on your home page and a Linux section in
+  the admin sidebar. Off, none of that exists. Switching it off hides
+  everything but deletes nothing.
+- **Menu item**. What the public menu link is called.
+- **Top of the page**. The big heading and the line under it.
+- **Card on your home page**. Heading, body and button label for the
+  card that explains what this is and links to the page.
+- **What a Linux Repair Cafe is**. The opening explanation. Blank lines
+  start a new paragraph.
+- **How it works**. Numbered steps, same editor as the home page.
+- **What to bring**. Bullet points. **Keep the warning that installing
+  Linux erases the computer.**
+- **FAQs**. Question and answer pairs.
+- **Our numbers**. Show how many computers you have saved.
+
+Stored the same way as the home page: a JSONB blob on the cafe row, so
+sections can change without a database migration.
+
+**Save Linux settings** commits this tab. **Preview the page** opens the
+public page in a new tab.
+
+Two things live outside this tab: ticking **Linux help at this session**
+on your events, and ticking **Helps at Linux sessions** on your
+volunteers. See the
+[Linux Repair Cafe guide](./08-linux-repair-cafe.md).
+
 ## Tab: Gallery
 
 Photo grid that appears on the home page. Each photo:
@@ -110,7 +142,10 @@ Google Analytics integration, but you can paste any compatible
 ## Tab: GDPR
 
 One button: **Purge expired PII now**. Finds every job whose retention
-date has passed and blanks out the customer name + contact fields.
+date has passed and blanks out the customer name + contact fields. If you
+run a [Linux Repair Cafe](./08-linux-repair-cafe.md), it clears the same
+fields on expired Linux install records too, so both are forgotten on the
+same day.
 
 Run this on a schedule that matches your retention promise — monthly is
 a sensible default for most cafes. Logged in the audit log with the row

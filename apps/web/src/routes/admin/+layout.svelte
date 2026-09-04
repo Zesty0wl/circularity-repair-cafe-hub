@@ -3,7 +3,7 @@
   import { onMount } from 'svelte';
   import { auth, isAdmin } from '$lib/stores/auth';
   import { cafe } from '$lib/stores/cafe';
-  import { LayoutDashboard, Calendar, Users, Wrench, BarChart3, Tags, MapPin, Settings, LogOut, Menu, X, MonitorPlay, UserCircle2, Globe } from 'lucide-svelte';
+  import { LayoutDashboard, Calendar, Users, Wrench, BarChart3, Tags, MapPin, Settings, LogOut, Menu, X, MonitorPlay, UserCircle2, Globe, Laptop } from 'lucide-svelte';
   import { api, restoreSession } from '$lib/api';
   import UpdateBanner from '$lib/components/UpdateBanner.svelte';
 
@@ -18,10 +18,13 @@
     }
   });
 
-  const items = [
+  // The Linux section only appears for cafes that run Linux sessions. It is
+  // turned on under Settings, Linux Repair Cafe.
+  $: items = [
     { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/admin/events', label: 'Events', icon: Calendar },
     { href: '/admin/repairs', label: 'Repairs', icon: Wrench },
+    ...($cafe?.linuxEnabled ? [{ href: '/admin/linux', label: 'Linux', icon: Laptop }] : []),
     { href: '/admin/board', label: 'Live board', icon: MonitorPlay },
     { href: '/admin/repairers', label: 'Repairers', icon: Users },
     { href: '/admin/stats', label: 'Statistics', icon: BarChart3 },

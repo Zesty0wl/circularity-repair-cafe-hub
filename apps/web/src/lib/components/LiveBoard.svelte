@@ -319,7 +319,7 @@
   /* Being repaired */
   .cards { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.6em; }
   .card-row { height: 4em; }
-  .card-inner { display: flex; align-items: center; gap: 0.8em; height: 100%; padding: 0 0.8em; border-radius: 0.7em; background: var(--blue-soft); border-left: 0.35em solid var(--blue); }
+  .card-inner { display: flex; align-items: center; gap: 0.8em; height: 100%; padding: 0 0.8em; border-radius: 0.7em; background: var(--blue-soft); }
   .control .card-row { height: 3.8em; }
   .thumb { width: 3em; height: 3em; border-radius: 0.5em; overflow: hidden; background: white; display: flex; align-items: center; justify-content: center; color: #94a3b8; flex-shrink: 0; }
   .thumb img { width: 100%; height: 100%; object-fit: cover; }

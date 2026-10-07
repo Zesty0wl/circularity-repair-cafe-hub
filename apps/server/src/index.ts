@@ -21,6 +21,7 @@ import { checkInRoutes } from './routes/checkin.js';
 import { repairerRoutes } from './routes/repairer.js';
 import { eventGalleryRoutes } from './routes/eventGallery.js';
 import { adminRoutes } from './routes/admin/index.js';
+import { displayRoutes } from './routes/display.js';
 import { startTelemetrySchedule } from './services/telemetry.js';
 
 // Shape of the SvelteKit (adapter-node) request handler: a connect-style
@@ -92,6 +93,8 @@ async function start(): Promise<void> {
   // Event photo galleries. Repairers and admins share these routes; the
   // handlers check the role for anything only an admin may do.
   await app.register(eventGalleryRoutes);
+  // The waiting-room display link, and the admin routes that manage it.
+  await app.register(displayRoutes);
   await app.register(adminRoutes);
 
   // Setup-required gate. If setup not completed, JSON API responses redirect through 409 on most endpoints,

@@ -1,12 +1,14 @@
 import type { App } from '../../lib/router.js';
 import { db } from '../../db/index.js';
-import { auditLog, events, repairJobs, users, venues } from '../../db/schema.js';
+import { auditLog, events, repairJobs, skillCategories, users, venues } from '../../db/schema.js';
 import { and, asc, count, desc, eq, ne, sql, sum } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
+import { localToday } from '../../lib/dates.js';
 
 export async function adminDashboardRoutes(app: App): Promise<void> {
   app.get('/api/admin/dashboard', async () => {
-    const today = new Date().toISOString().slice(0, 10);
+    // The cafe's own date. See lib/dates.ts.
+    const today = localToday();
 
     // Active event
     const activeRows = await db
@@ -88,10 +90,75 @@ export async function adminDashboardRoutes(app: App): Promise<void> {
       .orderBy(desc(auditLog.createdAt))
       .limit(10);
 
+
+    // ── What the dashboard needs to run today's session ──────────────
+    // Every repair at the active session, oldest first, so the dashboard can
+    // show the queue, who is working on what, and anything waiting too long.
+    const activeJobs = activeEvent
+      ? await db
+          .select({
+            id: repairJobs.id,
+            jobNumber: repairJobs.jobNumber,
+            itemDescription: repairJobs.itemDescription,
+            customerName: repairJobs.customerName,
+            status: repairJobs.status,
+            createdAt: repairJobs.createdAt,
+            acceptedAt: repairJobs.acceptedAt,
+            completedAt: repairJobs.completedAt,
+            repairerId: repairJobs.repairerId,
+            repairerName: users.displayName,
+            category: skillCategories.name,
+            categoryColour: skillCategories.colour,
+          })
+          .from(repairJobs)
+          .leftJoin(skillCategories, eq(skillCategories.id, repairJobs.itemCategoryId))
+          .leftJoin(users, eq(users.id, repairJobs.repairerId))
+          .where(eq(repairJobs.eventId, (activeEvent as { id: string }).id))
+          .orderBy(asc(repairJobs.createdAt))
+      : [];
+
+    // The next few sessions, so planning is one glance away.
+    const upcomingEvents = await db
+      .select({
+        id: events.id,
+        name: events.name,
+        date: events.date,
+        startTime: events.startTime,
+        endTime: events.endTime,
+        isPublished: events.isPublished,
+        supportsLinux: events.supportsLinux,
+        venueName: venues.name,
+      })
+      .from(events)
+      .innerJoin(venues, eq(venues.id, events.venueId))
+      .where(and(eq(events.status, 'scheduled'), sql`${events.date} >= ${today}`))
+      .orderBy(asc(events.date), asc(events.startTime))
+      .limit(4);
+
+    // Repairs paused until the visitor comes back with a part. Easy to forget
+    // between sessions, so they stay on the dashboard until they are finished.
+    const awaitingReturn = await db
+      .select({
+        id: repairJobs.id,
+        jobNumber: repairJobs.jobNumber,
+        itemDescription: repairJobs.itemDescription,
+        customerName: repairJobs.customerName,
+        outcomeNotes: repairJobs.outcomeNotes,
+        eventDate: events.date,
+      })
+      .from(repairJobs)
+      .innerJoin(events, eq(events.id, repairJobs.eventId))
+      .where(eq(repairJobs.status, 'awaiting_return'))
+      .orderBy(desc(events.date))
+      .limit(20);
+
     return {
       activeEvent,
       activeCounts,
       nextEvent,
+      activeJobs,
+      upcomingEvents,
+      awaitingReturn,
       stats: {
         totalRepairs: Number(totalRepairs),
         totalEvents: Number(totalEvents),

@@ -172,6 +172,7 @@ export function renderRobots(origin: string): string {
     'Disallow: /login',
     'Disallow: /reset',
     'Disallow: /setup',
+    'Disallow: /display',
     '',
     `Sitemap: ${origin}/sitemap.xml`,
     '',

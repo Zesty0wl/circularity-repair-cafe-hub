@@ -20,8 +20,12 @@ import { DEFAULT_CATEGORIES, DEFAULT_HOME_PAGE, DEFAULT_LINUX_PAGE } from '../..
 import { bindings } from '../env.js';
 import { APP_VERSION } from '../version.js';
 import m0001 from './migrations/0001_init.js';
+import m0002 from './migrations/0002_display_token.js';
 
-const MIGRATIONS: Array<{ id: string; sql: string }> = [{ id: '0001_init', sql: m0001 }];
+const MIGRATIONS: Array<{ id: string; sql: string }> = [
+  { id: '0001_init', sql: m0001 },
+  { id: '0002_display_token', sql: m0002 },
+];
 
 /** Split a migration into statements. Our SQL never puts ";" inside a string. */
 export function splitStatements(source: string): string[] {

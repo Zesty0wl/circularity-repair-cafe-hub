@@ -19,6 +19,9 @@
 
   export let data: LayoutData;
 
+  $: screenPage = $page.url.pathname.startsWith('/display/') || $page.url.pathname === '/admin/board';
+  $: staffPage = $page.url.pathname.startsWith('/admin') || $page.url.pathname.startsWith('/repairer');
+
   // Keep the module-level stores in sync with the (server-)loaded data so the
   // many child components that read $cafe keep working. The cafe is a
   // per-deployment singleton (one row), so writing it during SSR is safe —
@@ -163,8 +166,14 @@
   {/if}
 </svelte:head>
 
-<DemoBanner show={c?.demoMode === true} />
+<!-- The live board and the waiting-room screen fill the whole display, so
+     nothing else is drawn over them. -->
+{#if !screenPage}
+  <DemoBanner show={c?.demoMode === true} />
+{/if}
 
 <slot />
 
-<InstallPrompt />
+{#if !screenPage}
+  <InstallPrompt raised={staffPage} />
+{/if}

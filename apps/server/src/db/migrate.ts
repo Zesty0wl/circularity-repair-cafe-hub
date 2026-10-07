@@ -399,6 +399,10 @@ const STATEMENTS: string[] = [
   // CARTO started asking every site to use its own key for its free map
   // tiles. Each cafe pastes theirs under Settings, Maps.
   `ALTER TABLE cafes ADD COLUMN IF NOT EXISTS carto_api_key TEXT`,
+  // ── Waiting-room display link (additive, idempotent) ─────────────
+  // The secret in /display/<token>, so a screen in the waiting area can show
+  // the queue without an admin signed in on it.
+  `ALTER TABLE cafes ADD COLUMN IF NOT EXISTS display_token TEXT`,
 ];
 
 export async function runMigrations(): Promise<void> {

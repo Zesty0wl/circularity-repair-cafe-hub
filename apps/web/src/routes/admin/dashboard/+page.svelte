@@ -1,18 +1,69 @@
 <script lang="ts">
+  // The admin's home page, built around the question an organiser actually
+  // has: "what needs me right now?"
+  //
+  //   During a session: the queue at a glance, anything waiting too long, who
+  //   is working on what, and the buttons to run the day (check someone in,
+  //   put the queue on a screen, end the session).
+  //   Between sessions: the next session, with a button to start it, and the
+  //   repairs still waiting for a visitor to come back with a part.
+  //
+  // The all-time totals and the activity log are still here, but out of the
+  // way. They are for reading, not for doing.
   import { onMount } from 'svelte';
   import { api } from '$lib/api';
-  import { goto } from '$app/navigation';
   import { formatDistanceToNowStrict } from 'date-fns';
   import { cafe } from '$lib/stores/cafe';
   import TelemetryChoice from '$lib/components/TelemetryChoice.svelte';
-  import { X } from 'lucide-svelte';
+  import ScreenLinkDialog from '$lib/components/ScreenLinkDialog.svelte';
+  import { activityLink, describeActivity } from '$lib/staff/activity';
+  import {
+    WAIT_TONE_CLASS,
+    averageRepairMinutes,
+    firstName,
+    formatMinutes,
+    minutesBetween,
+    sessionTimes,
+    waitTone,
+  } from '$lib/staff/queue';
+  import {
+    AlertTriangle,
+    CalendarPlus,
+    ChevronRight,
+    MonitorPlay,
+    Package,
+    Play,
+    Square,
+    Tv,
+    UserPlus,
+    X,
+  } from 'lucide-svelte';
+
+  interface DashJob {
+    id: string;
+    jobNumber: string;
+    itemDescription: string;
+    customerName: string | null;
+    status: string;
+    createdAt: string;
+    acceptedAt: string | null;
+    completedAt: string | null;
+    repairerId: string | null;
+    repairerName: string | null;
+    category: string | null;
+    categoryColour: string | null;
+  }
 
   let data: any = null;
+  let loadError = '';
+  let now = Date.now();
+  let showScreenLink = false;
+  let confirmEnd = false;
+  let busy = false;
 
   // ── Sharing our numbers with the project ──────────────────────────
   // Only ever shown when nobody has said yes yet, and only once per version:
-  // the server decides, using the version it last asked at. So the offer comes
-  // back after an upgrade rather than nagging or disappearing forever.
+  // the server decides, using the version it last asked at.
   let askTelemetry = false;
   let telemetryLevel: 'none' | 'standard' | 'community' = 'standard';
   let telemetryBusy = false;
@@ -32,7 +83,7 @@
     try {
       await api('/api/admin/telemetry', { method: 'PATCH', json: { level: telemetryLevel } });
       telemetryDone = telemetryLevel === 'none' ? 'Nothing will be sent.' : 'Thank you, that really helps.';
-      setTimeout(() => { askTelemetry = false; }, 2200);
+      setTimeout(() => (askTelemetry = false), 2200);
     } finally {
       telemetryBusy = false;
     }
@@ -42,109 +93,101 @@
     askTelemetry = false;
     await api('/api/admin/telemetry/dismiss', { method: 'POST', json: {} }).catch(() => {});
   }
-  let timer: ReturnType<typeof setInterval> | null = null;
-
-  // Turn an audit log row into "who did what" in plain English. The name is
-  // returned separately so the template can show it in bold.
-  function describeActivity(a: any): { who: string | null; rest: string } {
-    const who =
-      a.actorName ??
-      (a.actorType === 'customer' ? 'A visitor' : a.actorType === 'system' ? 'The system' : 'Someone');
-    const item = a.itemDescription
-      ? `${a.itemDescription} (#${a.jobNumber})`
-      : a.metadata?.jobNumber
-        ? `repair #${a.metadata.jobNumber}`
-        : 'a repair';
-    const ev = a.eventName ? `"${a.eventName}"` : 'an event';
-    const person = a.targetUserName ?? 'a team member';
-    switch (a.action) {
-      case 'checkin.created': return { who, rest: `checked in ${item}` };
-      case 'checkin.assisted': return { who, rest: `checked in ${item} for a visitor` };
-      case 'repair.accepted': return { who, rest: `started work on ${item}` };
-      case 'repair.taken_over': return { who, rest: `took over ${item}` };
-      case 'repair.released': return { who, rest: `put ${item} back in the queue` };
-      case 'repair.completed': return { who, rest: `fixed ${item}` };
-      case 'repair.cannot_repair': return { who, rest: `could not fix ${item}` };
-      case 'repair.admin_updated': return { who, rest: `updated ${item}` };
-      case 'repair.deleted': return { who, rest: `deleted ${item}` };
-      case 'repair.pii_purged': return { who: null, rest: `Personal details were removed from ${item}` };
-      case 'event.created': return { who, rest: `created the event ${ev}` };
-      case 'event.updated': return { who, rest: `updated the event ${ev}` };
-      case 'event.activated': return { who, rest: `started the event ${ev}` };
-      case 'event.completed': return { who, rest: `ended the event ${ev}` };
-      case 'event.cancelled': return { who, rest: `cancelled the event ${ev}` };
-      case 'user.created': return { who, rest: `added ${person} to the team` };
-      case 'user.updated': return { who, rest: `updated the profile of ${person}` };
-      case 'user.reset_link_generated': return { who, rest: `created a password reset link for ${person}` };
-      case 'user.self_updated': return { who, rest: 'updated their profile' };
-      case 'user.avatar_updated': return { who, rest: `updated the photo of ${person}` };
-      case 'user.avatar_removed': return { who, rest: `removed the photo of ${person}` };
-      case 'user.avatar_self_updated': return { who, rest: 'updated their photo' };
-      case 'user.avatar_self_removed': return { who, rest: 'removed their photo' };
-      case 'auth.password_reset': return { who, rest: 'reset their password' };
-      case 'venue.created': return { who, rest: 'added a venue' };
-      case 'venue.updated': return { who, rest: 'updated a venue' };
-      case 'template.created': return { who, rest: 'created an event template' };
-      case 'skill_category.created': return { who, rest: 'added a skill category' };
-      case 'backup.downloaded': return { who, rest: 'downloaded a backup' };
-      case 'backup.restored': return { who, rest: 'restored a backup' };
-      case 'setup.completed': return { who: null, rest: 'Setup was completed' };
-      case 'co2.backfilled': return { who: null, rest: 'Older repairs were given their item type, so they count towards the CO₂ total' };
-      case 'event.photo_added': return { who, rest: 'added a photo of a session' };
-      case 'event.photo_deleted': return { who, rest: 'removed a session photo' };
-      case 'event.repair_photos_published': return { who, rest: 'showed repair photos on the public site' };
-      case 'event.repair_photos_hidden': return { who, rest: 'hid repair photos from the public site' };
-      default: {
-        if (a.action?.startsWith('event.photo') || a.action?.startsWith('event.repair_photo')) {
-          return { who, rest: 'updated the photos for a session' };
-        }
-        if (a.action?.startsWith('cafe.gallery')) return { who, rest: 'updated the photo gallery' };
-        if (a.action?.startsWith('cafe.')) return { who, rest: 'updated the cafe settings' };
-        return { who, rest: `updated ${String(a.entityType).replace(/_/g, ' ')}` };
-      }
-    }
-  }
-
-  function activityLink(a: any): string | null {
-    if (a.entityType === 'repair_job' && a.entityId && a.itemDescription) return `/admin/repairs/${a.entityId}`;
-    if (a.entityType === 'event' && a.entityId && a.eventName) return `/admin/events/${a.entityId}`;
-    return null;
-  }
 
   async function load() {
-    data = await api('/api/admin/dashboard');
+    try {
+      data = await api('/api/admin/dashboard');
+      loadError = '';
+      now = Date.now();
+    } catch (err: any) {
+      loadError = err?.message ?? 'Could not load the dashboard';
+    }
   }
 
   onMount(() => {
     load();
     void loadTelemetryPrompt();
-    timer = setInterval(load, 30000);
-    return () => { if (timer) clearInterval(timer); };
+    const poll = setInterval(load, 20_000);
+    const tick = setInterval(() => (now = Date.now()), 30_000);
+    return () => {
+      clearInterval(poll);
+      clearInterval(tick);
+    };
   });
 
-  async function activate(id: string) {
-    await api(`/api/admin/events/${id}/activate`, { method: 'POST', json: {} });
-    await load();
+  async function start(id: string) {
+    busy = true;
+    try {
+      await api(`/api/admin/events/${id}/activate`, { method: 'POST', json: {} });
+      await load();
+    } finally {
+      busy = false;
+    }
   }
-  async function endEvent(id: string) {
-    if (!confirm('End the active event? This cannot be undone.')) return;
-    await api(`/api/admin/events/${id}/complete`, { method: 'POST', json: {} });
-    await load();
+
+  async function endSession(id: string) {
+    busy = true;
+    try {
+      await api(`/api/admin/events/${id}/complete`, { method: 'POST', json: {} });
+      confirmEnd = false;
+      await load();
+    } finally {
+      busy = false;
+    }
   }
+
+  function longDate(iso: string): string {
+    return new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+  }
+  function shortDate(iso: string): string {
+    return new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+  }
+  function isToday(iso: string): boolean {
+    const d = new Date();
+    const local = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    return iso === local;
+  }
+
+  $: jobs = (data?.activeJobs ?? []) as DashJob[];
+  $: waiting = jobs.filter((j) => j.status === 'waiting');
+  $: inProgress = jobs.filter((j) => j.status === 'in_progress');
+  $: fixed = jobs.filter((j) => j.status === 'completed');
+  $: notFixed = jobs.filter((j) => j.status === 'cannot_repair');
+  $: paused = jobs.filter((j) => j.status === 'awaiting_return');
+  $: overdue = waiting.filter((j) => minutesBetween(j.createdAt, now) >= 30);
+  $: typicalRepair = averageRepairMinutes(jobs);
+  $: typicalWait = (() => {
+    const waits = jobs.filter((j) => j.acceptedAt).map((j) => minutesBetween(j.createdAt, new Date(j.acceptedAt!).getTime()));
+    return waits.length ? Math.round(waits.reduce((a, b) => a + b, 0) / waits.length) : null;
+  })();
+  $: segments = [
+    { label: 'Waiting', n: waiting.length, cls: 'bg-amber-400' },
+    { label: 'Being repaired', n: inProgress.length, cls: 'bg-blue-500' },
+    { label: 'Fixed', n: fixed.length, cls: 'bg-emerald-500' },
+    { label: 'Could not fix', n: notFixed.length, cls: 'bg-rose-400' },
+    { label: 'Coming back', n: paused.length, cls: 'bg-violet-400' },
+  ];
+  $: segmentTotal = Math.max(1, segments.reduce((n, s) => n + s.n, 0));
+  $: todayPlanned = !data?.activeEvent ? (data?.upcomingEvents ?? []).find((e: any) => isToday(e.date)) ?? null : null;
+  $: nextPlanned = !data?.activeEvent && !todayPlanned ? data?.upcomingEvents?.[0] ?? null : null;
 </script>
 
-<h1 class="text-2xl font-bold mb-4">Dashboard</h1>
+<svelte:head><title>Dashboard</title></svelte:head>
+
+<div class="flex flex-wrap items-end justify-between gap-3 mb-5">
+  <div>
+    <h1 class="text-2xl font-bold">Dashboard</h1>
+    <p class="text-sm text-slate-500">{new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <a href="/admin/events/new" class="btn-secondary btn-sm"><CalendarPlus size={16} /> Plan a session</a>
+  </div>
+</div>
 
 {#if askTelemetry}
-  <!-- Quiet by design: a card in the flow of the page, not a dialog over it.
-       It can be dismissed, and it stays gone until the next upgrade. -->
-  <section class="card p-5 mb-4 ring-brand-200 bg-brand-50/40 relative">
-    <button
-      class="absolute top-3 right-3 p-1.5 rounded-lg text-slate-400 hover:bg-white hover:text-slate-700"
-      type="button"
-      aria-label="Not now"
-      on:click={dismissTelemetry}
-    >
+  <!-- Quiet by design: a card in the flow of the page, not a dialog over it. -->
+  <section class="card p-5 mb-5 ring-brand-200 bg-brand-50/40 relative">
+    <button class="absolute top-3 right-3 p-1.5 rounded-lg text-slate-400 hover:bg-white hover:text-slate-700" type="button" aria-label="Not now" on:click={dismissTelemetry}>
       <X size={16} />
     </button>
     {#if telemetryDone}
@@ -162,79 +205,234 @@
 {/if}
 
 {#if !data}
-  <p class="text-slate-500">Loading…</p>
+  <p class="text-slate-500">{loadError || 'Loading…'}</p>
 {:else}
-  {#if data.activeEvent}
-    <div class="card p-6">
-      <div class="flex justify-between items-start gap-3">
-        <div class="min-w-0">
-          <p class="kicker text-brand-700">Active event</p>
-          <h2 class="text-xl font-semibold mt-1 break-words">{data.activeEvent.name}</h2>
-          <p class="text-slate-600 text-sm">{data.activeEvent.venueName} · {data.activeEvent.startTime.slice(0,5)}–{data.activeEvent.endTime.slice(0,5)}</p>
-        </div>
-        <span class="badge badge-active shrink-0">Active</span>
-      </div>
-      {#if data.activeCounts}
-        <!-- The paused tile only appears when there is something in it, so a
-             normal session still shows a tidy block of four. -->
-        <div class="mt-5 grid gap-3 text-center {data.activeCounts.awaiting_return > 0 ? 'grid-cols-2 sm:grid-cols-5' : 'grid-cols-2 sm:grid-cols-4'}">
-          <div class="rounded-xl bg-slate-50 p-3 flex flex-col"><p class="text-xs text-slate-600 flex items-center justify-center gap-1.5"><span class="status-dot status-dot-waiting"></span>Waiting</p><p class="mt-auto text-2xl sm:text-3xl font-bold text-slate-900">{data.activeCounts.waiting}</p></div>
-          <div class="rounded-xl bg-slate-50 p-3 flex flex-col"><p class="text-xs text-slate-600 flex items-center justify-center gap-1.5"><span class="status-dot status-dot-in_progress"></span>In progress</p><p class="mt-auto text-2xl sm:text-3xl font-bold text-slate-900">{data.activeCounts.in_progress}</p></div>
-          <div class="rounded-xl bg-slate-50 p-3 flex flex-col"><p class="text-xs text-slate-600 flex items-center justify-center gap-1.5"><span class="status-dot status-dot-completed"></span>Done</p><p class="mt-auto text-2xl sm:text-3xl font-bold text-slate-900">{data.activeCounts.completed}</p></div>
-          <div class="rounded-xl bg-slate-50 p-3 flex flex-col"><p class="text-xs text-slate-600 flex items-center justify-center gap-1.5"><span class="status-dot status-dot-cannot_repair"></span>Cannot repair</p><p class="mt-auto text-2xl sm:text-3xl font-bold text-slate-900">{data.activeCounts.cannot_repair}</p></div>
-          {#if data.activeCounts.awaiting_return > 0}
-            <div class="rounded-xl bg-slate-50 p-3 flex flex-col"><p class="text-xs text-slate-600 flex items-center justify-center gap-1.5"><span class="status-dot status-dot-awaiting_return"></span>Awaiting return</p><p class="mt-auto text-2xl sm:text-3xl font-bold text-slate-900">{data.activeCounts.awaiting_return}</p></div>
+  <div class="grid lg:grid-cols-3 gap-5 items-start">
+    <!-- ── Left: today ───────────────────────────────────────────── -->
+    <div class="lg:col-span-2 space-y-5">
+      {#if data.activeEvent}
+        <section class="card p-5 md:p-6">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="kicker flex items-center gap-2"><span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span> Session running</p>
+              <h2 class="text-xl md:text-2xl font-semibold mt-1">{data.activeEvent.name}</h2>
+              <p class="text-sm text-slate-600">{data.activeEvent.venueName} · {sessionTimes(data.activeEvent.startTime, data.activeEvent.endTime)}</p>
+            </div>
+            <a href={`/admin/events/${data.activeEvent.id}`} class="text-sm text-brand-700 hover:underline">Session details</a>
+          </div>
+
+          <!-- The day so far, as one bar. -->
+          <div class="mt-5 h-3 rounded-full bg-slate-100 overflow-hidden flex" aria-hidden="true">
+            {#each segments as s}
+              {#if s.n}<div class={s.cls} style="width: {(s.n / segmentTotal) * 100}%"></div>{/if}
+            {/each}
+          </div>
+          <dl class="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div><dt class="text-xs text-slate-500 flex items-center gap-1.5"><span class="status-dot status-dot-waiting"></span> Waiting</dt><dd class="text-2xl font-bold">{waiting.length}</dd></div>
+            <div><dt class="text-xs text-slate-500 flex items-center gap-1.5"><span class="status-dot status-dot-in_progress"></span> Being repaired</dt><dd class="text-2xl font-bold">{inProgress.length}</dd></div>
+            <div><dt class="text-xs text-slate-500 flex items-center gap-1.5"><span class="status-dot status-dot-completed"></span> Fixed</dt><dd class="text-2xl font-bold">{fixed.length}</dd></div>
+            <div><dt class="text-xs text-slate-500 flex items-center gap-1.5"><span class="status-dot status-dot-cannot_repair"></span> Could not fix</dt><dd class="text-2xl font-bold">{notFixed.length}</dd></div>
+          </dl>
+          {#if typicalWait !== null || typicalRepair !== null}
+            <p class="mt-3 text-sm text-slate-600">
+              {#if typicalWait !== null}People wait about <strong>{formatMinutes(typicalWait).toLowerCase()}</strong> to be seen.{/if}
+              {#if typicalRepair !== null} A repair takes about <strong>{formatMinutes(typicalRepair).toLowerCase()}</strong>.{/if}
+            </p>
           {/if}
+
+          <div class="mt-5 flex flex-wrap gap-2">
+            <a href="/repairer/checkin" class="btn-primary btn-sm"><UserPlus size={16} /> Check in a visitor</a>
+            <a href="/admin/board" class="btn-secondary btn-sm"><MonitorPlay size={16} /> Live board</a>
+            <button class="btn-secondary btn-sm" on:click={() => (showScreenLink = true)}><Tv size={16} /> Show on a screen</button>
+            {#if confirmEnd}
+              <span class="inline-flex items-center gap-2 text-sm">
+                <span class="text-slate-700">{waiting.length + inProgress.length ? `${waiting.length + inProgress.length} still open. End anyway?` : 'End the session?'}</span>
+                <button class="btn-ghost btn-sm" on:click={() => (confirmEnd = false)}>No</button>
+                <button class="btn-danger btn-sm" disabled={busy} on:click={() => endSession(data.activeEvent.id)}>Yes, end it</button>
+              </span>
+            {:else}
+              <button class="btn-danger-outline btn-sm ml-auto" on:click={() => (confirmEnd = true)}><Square size={14} /> End session</button>
+            {/if}
+          </div>
+        </section>
+
+        {#if overdue.length || (waiting.length && !inProgress.length)}
+          <section class="rounded-2xl bg-amber-50 ring-1 ring-amber-200 p-4 md:p-5">
+            <h2 class="font-semibold text-amber-900 flex items-center gap-2"><AlertTriangle size={18} /> Needs a look</h2>
+            <ul class="mt-2 space-y-1 text-sm text-amber-900">
+              {#if waiting.length && !inProgress.length}
+                <li>{waiting.length} waiting and nobody repairing. Is everyone on a break?</li>
+              {/if}
+              {#each overdue as j}
+                <li><a class="underline underline-offset-2" href={`/admin/repairs/${j.id}`}>{j.itemDescription}</a> ({j.jobNumber}) has waited {formatMinutes(minutesBetween(j.createdAt, now)).toLowerCase()}.</li>
+              {/each}
+            </ul>
+          </section>
+        {/if}
+
+        <div class="grid md:grid-cols-2 gap-5">
+          <section class="card">
+            <h2 class="px-4 pt-4 pb-2 font-semibold flex items-center justify-between">Waiting next <span class="text-sm font-normal text-slate-500">{waiting.length}</span></h2>
+            {#if waiting.length}
+              <ol class="divide-y divide-slate-100">
+                {#each waiting.slice(0, 6) as j, i}
+                  {@const m = minutesBetween(j.createdAt, now)}
+                  <li>
+                    <a href={`/admin/repairs/${j.id}`} class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50">
+                      <span class="h-6 w-6 rounded-full bg-slate-100 text-xs font-semibold flex items-center justify-center shrink-0">{i + 1}</span>
+                      <span class="min-w-0 flex-1">
+                        <span class="block text-sm font-medium truncate">{j.itemDescription}</span>
+                        <span class="block text-xs text-slate-500 truncate">{j.jobNumber}{#if j.category} · {j.category}{/if}</span>
+                      </span>
+                      <span class="text-xs shrink-0 {WAIT_TONE_CLASS[waitTone(m)]}">{formatMinutes(m)}</span>
+                    </a>
+                  </li>
+                {/each}
+              </ol>
+              {#if waiting.length > 6}<p class="px-4 py-2 text-xs text-slate-500">and {waiting.length - 6} more</p>{/if}
+            {:else}
+              <p class="px-4 pb-4 text-sm text-slate-500">Nobody is waiting.</p>
+            {/if}
+          </section>
+
+          <section class="card">
+            <h2 class="px-4 pt-4 pb-2 font-semibold flex items-center justify-between">Being repaired <span class="text-sm font-normal text-slate-500">{inProgress.length}</span></h2>
+            {#if inProgress.length}
+              <ul class="divide-y divide-slate-100">
+                {#each inProgress as j}
+                  <li>
+                    <a href={`/admin/repairs/${j.id}`} class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50">
+                      <span class="h-8 w-8 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold flex items-center justify-center shrink-0" title={j.repairerName ?? ''}>{(j.repairerName ?? '?').split(/\s+/).map((p) => p[0]).slice(0, 2).join('')}</span>
+                      <span class="min-w-0 flex-1">
+                        <span class="block text-sm font-medium truncate">{j.itemDescription}</span>
+                        <span class="block text-xs text-slate-500 truncate">{firstName(j.repairerName) || 'Someone'} · {j.jobNumber}</span>
+                      </span>
+                      <span class="text-xs text-slate-500 shrink-0">{formatMinutes(minutesBetween(j.acceptedAt ?? j.createdAt, now))}</span>
+                    </a>
+                  </li>
+                {/each}
+              </ul>
+            {:else}
+              <p class="px-4 pb-4 text-sm text-slate-500">Nothing is being repaired.</p>
+            {/if}
+          </section>
         </div>
-      {/if}
-      <div class="mt-5 flex flex-col sm:flex-row sm:flex-wrap gap-2">
-        <a href="/repairer/checkin" class="btn-primary">Add a repair</a>
-        <a href={`/admin/events/${data.activeEvent.id}`} class="btn-secondary">View event</a>
-        <button on:click={() => endEvent(data.activeEvent.id)} class="btn-danger-outline">End event</button>
-      </div>
-    </div>
-  {:else if data.nextEvent}
-    <div class="card p-6">
-      <p class="kicker">Next event</p>
-      <h2 class="text-xl font-semibold mt-1">{data.nextEvent.name}</h2>
-      <p class="text-slate-600 text-sm">{data.nextEvent.venueName} · {data.nextEvent.date}</p>
-      <div class="mt-4 flex flex-col sm:flex-row gap-2">
-        <button class="btn-primary" on:click={() => activate(data.nextEvent.id)}>Activate event</button>
-        <a href={`/admin/events/${data.nextEvent.id}`} class="btn-secondary">View</a>
-      </div>
-    </div>
-  {:else}
-    <div class="card p-6">
-      <p class="text-slate-600">No upcoming events scheduled.</p>
-      <a href="/admin/events/new" class="btn-primary mt-4">Create event</a>
-    </div>
-  {/if}
-
-  <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
-    <div class="card p-4 text-center flex flex-col"><p class="text-2xl sm:text-3xl font-bold">{data.stats.totalRepairs}</p><p class="mt-auto text-xs text-slate-500">Total repairs</p></div>
-    <div class="card p-4 text-center flex flex-col"><p class="text-2xl sm:text-3xl font-bold">{data.stats.totalEvents}</p><p class="mt-auto text-xs text-slate-500">Events held</p></div>
-    <div class="card p-4 text-center flex flex-col"><p class="text-2xl sm:text-3xl font-bold">{Number(data.stats.totalSavingsKg).toFixed(1)}<span class="text-base">kg</span></p><p class="mt-auto text-xs text-slate-500">Saved</p></div>
-    <div class="card p-4 text-center flex flex-col"><p class="text-2xl sm:text-3xl font-bold">{data.stats.activeRepairers}</p><p class="mt-auto text-xs text-slate-500">Active repairers</p></div>
-  </div>
-
-  <section class="mt-6">
-    <h2 class="text-lg font-semibold mb-3">Recent activity</h2>
-    <ul class="card divide-y divide-slate-100">
-      {#each data.recentActivity as a}
-        {@const d = describeActivity(a)}
-        {@const link = activityLink(a)}
-        <li class="px-4 py-2.5 text-sm flex justify-between items-baseline gap-3">
-          <span class="text-slate-700 min-w-0">
-            {#if d.who}<span class="font-semibold text-slate-900">{d.who}</span>{/if}
-            {#if link}<a href={link} class="hover:underline">{d.rest}</a>{:else}{d.rest}{/if}
-          </span>
-          <span class="text-slate-400 text-xs whitespace-nowrap shrink-0" title={new Date(a.createdAt).toLocaleString()}>
-            {formatDistanceToNowStrict(new Date(a.createdAt), { addSuffix: true })}
-          </span>
-        </li>
+      {:else if todayPlanned}
+        <section class="card p-6 ring-2 ring-brand-200">
+          <p class="kicker text-brand-700">Today</p>
+          <h2 class="text-xl md:text-2xl font-semibold mt-1">{todayPlanned.name}</h2>
+          <p class="text-sm text-slate-600">{todayPlanned.venueName} · {sessionTimes(todayPlanned.startTime, todayPlanned.endTime)}</p>
+          <p class="mt-3 text-slate-700">Start the session when the doors open. Visitors can check in, and repairers see the queue.</p>
+          <div class="mt-4 flex flex-wrap gap-2">
+            <button class="btn-primary" disabled={busy} on:click={() => start(todayPlanned.id)}><Play size={18} /> Start the session</button>
+            <button class="btn-secondary" on:click={() => (showScreenLink = true)}><Tv size={18} /> Show on a screen</button>
+          </div>
+        </section>
+      {:else if nextPlanned}
+        <section class="card p-6">
+          <p class="kicker">Next session</p>
+          <h2 class="text-xl md:text-2xl font-semibold mt-1">{longDate(nextPlanned.date)}</h2>
+          <p class="text-sm text-slate-600">{nextPlanned.name} · {nextPlanned.venueName} · {sessionTimes(nextPlanned.startTime, nextPlanned.endTime)}</p>
+          {#if !nextPlanned.isPublished}
+            <p class="mt-3 text-sm text-amber-800">This session is not on the website yet. <a class="underline" href={`/admin/events/${nextPlanned.id}`}>Publish it</a> so people know to come.</p>
+          {/if}
+          <div class="mt-4 flex flex-wrap gap-2">
+            <a href={`/admin/events/${nextPlanned.id}`} class="btn-secondary btn-sm">Session details</a>
+            <button class="btn-ghost btn-sm" disabled={busy} on:click={() => start(nextPlanned.id)}>Start it now instead</button>
+          </div>
+        </section>
       {:else}
-        <li class="px-4 py-3 text-sm text-slate-500">No activity yet.</li>
-      {/each}
-    </ul>
-  </section>
+        <section class="card p-6">
+          <h2 class="text-xl font-semibold">No sessions planned</h2>
+          <p class="mt-2 text-slate-600">Plan your next session so it appears on the website and visitors can check in on the day.</p>
+          <a href="/admin/events/new" class="btn-primary mt-4"><CalendarPlus size={18} /> Plan a session</a>
+        </section>
+      {/if}
+
+      <section class="card">
+        <h2 class="px-4 pt-4 pb-2 font-semibold">Recent activity</h2>
+        <ul class="divide-y divide-slate-100">
+          {#each data.recentActivity as a}
+            {@const d = describeActivity(a)}
+            {@const link = activityLink(a)}
+            <li class="px-4 py-2.5 text-sm flex justify-between items-baseline gap-3">
+              <span class="text-slate-700 min-w-0">
+                {#if d.who}<span class="font-semibold text-slate-900">{d.who}</span>{/if}
+                {#if link}<a href={link} class="hover:underline">{d.rest}</a>{:else}{d.rest}{/if}
+              </span>
+              <span class="text-slate-400 text-xs whitespace-nowrap shrink-0" title={new Date(a.createdAt).toLocaleString()}>
+                {formatDistanceToNowStrict(new Date(a.createdAt), { addSuffix: true })}
+              </span>
+            </li>
+          {:else}
+            <li class="px-4 py-3 text-sm text-slate-500">Nothing yet.</li>
+          {/each}
+        </ul>
+      </section>
+    </div>
+
+    <!-- ── Right: what is coming, and what is outstanding ─────────── -->
+    <aside class="space-y-5">
+      <section class="card">
+        <div class="px-4 pt-4 pb-2 flex items-center justify-between">
+          <h2 class="font-semibold">Coming up</h2>
+          <a href="/admin/events" class="text-sm text-brand-700 hover:underline">All events</a>
+        </div>
+        {#if data.upcomingEvents?.length}
+          <ul class="divide-y divide-slate-100">
+            {#each data.upcomingEvents as e}
+              <li>
+                <a href={`/admin/events/${e.id}`} class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50">
+                  <span class="w-12 shrink-0 text-center rounded-lg bg-slate-50 ring-1 ring-slate-200 py-1">
+                    <span class="block text-[0.65rem] uppercase text-slate-500">{shortDate(e.date).split(' ')[0]}</span>
+                    <span class="block text-lg font-bold leading-none">{shortDate(e.date).split(' ')[1]}</span>
+                  </span>
+                  <span class="min-w-0 flex-1">
+                    <span class="block text-sm font-medium truncate">{e.name}</span>
+                    <span class="block text-xs text-slate-500 truncate">{shortDate(e.date).split(' ').slice(2).join(' ')} · {sessionTimes(e.startTime, e.endTime)}</span>
+                  </span>
+                  {#if !e.isPublished}<span class="badge badge-scheduled shrink-0">Draft</span>{/if}
+                  <ChevronRight size={16} class="text-slate-300 shrink-0" />
+                </a>
+              </li>
+            {/each}
+          </ul>
+        {:else}
+          <p class="px-4 pb-4 text-sm text-slate-500">Nothing planned. <a class="underline" href="/admin/events/new">Plan a session</a>.</p>
+        {/if}
+      </section>
+
+      {#if data.awaitingReturn?.length}
+        <section class="card">
+          <h2 class="px-4 pt-4 pb-1 font-semibold flex items-center gap-2"><Package size={18} class="text-violet-600" /> Coming back with a part</h2>
+          <p class="px-4 text-xs text-slate-500">Paused until the visitor returns. They stay here until someone finishes them.</p>
+          <ul class="mt-2 divide-y divide-slate-100">
+            {#each data.awaitingReturn as j}
+              <li>
+                <a href={`/admin/repairs/${j.id}`} class="block px-4 py-2.5 hover:bg-slate-50">
+                  <span class="block text-sm font-medium truncate">{j.itemDescription}</span>
+                  <span class="block text-xs text-slate-500 truncate">{j.jobNumber} · {shortDate(j.eventDate)}{#if j.customerName} · {firstName(j.customerName)}{/if}</span>
+                </a>
+              </li>
+            {/each}
+          </ul>
+        </section>
+      {/if}
+
+      <section class="card p-4">
+        <h2 class="font-semibold">Since you started</h2>
+        <dl class="mt-3 grid grid-cols-2 gap-3">
+          <div><dt class="text-xs text-slate-500">Repairs</dt><dd class="text-xl font-bold">{data.stats.totalRepairs}</dd></div>
+          <div><dt class="text-xs text-slate-500">Sessions</dt><dd class="text-xl font-bold">{data.stats.totalEvents}</dd></div>
+          <div><dt class="text-xs text-slate-500">CO₂ saved</dt><dd class="text-xl font-bold">{Math.round(Number(data.stats.totalSavingsKg))}<span class="text-sm font-medium"> kg</span></dd></div>
+          <div><dt class="text-xs text-slate-500">Volunteers</dt><dd class="text-xl font-bold">{data.stats.activeRepairers}</dd></div>
+        </dl>
+        <a href="/admin/stats" class="mt-3 inline-block text-sm text-brand-700 hover:underline">All the statistics</a>
+      </section>
+    </aside>
+  </div>
+{/if}
+
+{#if showScreenLink}
+  <ScreenLinkDialog on:close={() => (showScreenLink = false)} />
 {/if}

@@ -18,6 +18,7 @@ import { checkInRoutes } from './routes/checkin.js';
 import { repairerRoutes } from './routes/repairer.js';
 import { eventGalleryRoutes } from './routes/eventGallery.js';
 import { adminRoutes } from './routes/admin/index.js';
+import { displayRoutes } from './routes/display.js';
 import { importRoutes, setupImportRoutes } from './routes/admin/backup.js';
 import { fileRoutes } from './routes/files.js';
 
@@ -39,6 +40,7 @@ const registered = (async () => {
   await app.register(checkInRoutes);
   await app.register(repairerRoutes);
   await app.register(eventGalleryRoutes);
+  await app.register(displayRoutes);
   await app.register(adminRoutes);
   await app.register(importRoutes);
   await app.register(fileRoutes);

@@ -40,3 +40,16 @@ export function inList(column: SQLWrapper, values: readonly (string | number)[])
 }
 
 export { schema };
+
+/**
+ * Whether an error is a broken UNIQUE rule, optionally on one column
+ * ("users.email"). Postgres reports these with code 23505, which the Docker
+ * edition checks. D1 reports them in the message, and Drizzle wraps that
+ * error in its own, so look at the cause as well.
+ */
+export function isUniqueViolation(err: unknown, column?: string): boolean {
+  const e = err as { message?: string; cause?: { message?: string } } | null;
+  const text = `${e?.message ?? ''} ${e?.cause?.message ?? ''}`;
+  if (!/UNIQUE constraint failed/i.test(text)) return false;
+  return column ? text.includes(column) : true;
+}

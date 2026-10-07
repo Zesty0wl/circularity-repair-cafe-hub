@@ -133,6 +133,8 @@ export const cafes = sqliteTable('cafes', {
   plausibleDomain: text('plausible_domain'),
   plausibleSrc: text('plausible_src'),
   cartoApiKey: text('carto_api_key'),
+  /** The secret part of the waiting-room display link. See routes/display.ts. */
+  displayToken: text('display_token'),
   repaircafeSlug: text('repaircafe_slug'),
   localCafeSlugs: textArray('local_cafe_slugs').notNull().default([]),
   telemetryLevel: text('telemetry_level').notNull().default('none'),

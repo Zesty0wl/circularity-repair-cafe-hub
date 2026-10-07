@@ -1,5 +1,5 @@
 import type { App } from '../../lib/router.js';
-import { db } from '../../db/index.js';
+import { db, isUniqueViolation } from '../../db/index.js';
 import { repairJobs, users } from '../../db/schema.js';
 import { asc, eq, sql } from 'drizzle-orm';
 import { userCreateSchema, userUpdateSchema } from '@circularity/shared';
@@ -74,7 +74,7 @@ export async function adminUsersRoutes(app: App): Promise<void> {
         })
         .returning();
     } catch (err: any) {
-      if (err?.code === '23505') {
+      if (isUniqueViolation(err, 'users.email')) {
         reply.code(409).send({ error: 'Email already in use', code: 'user/email_taken' });
         return;
       }

@@ -2,9 +2,7 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
-## Unreleased
-
-These are on `main` and are not in a release yet.
+## 1.11.0 (7 October 2026)
 
 ### The hub now runs on Cloudflare only
 

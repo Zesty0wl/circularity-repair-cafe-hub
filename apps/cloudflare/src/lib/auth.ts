@@ -50,6 +50,11 @@ export function signingSecret(): Promise<string> {
   return secretPromise;
 }
 
+/** For tests: forget the key read from the database. */
+export function resetSigningSecret(): void {
+  secretPromise = null;
+}
+
 // ── Access tokens ────────────────────────────────────────────────────────────
 
 interface TokenUser {

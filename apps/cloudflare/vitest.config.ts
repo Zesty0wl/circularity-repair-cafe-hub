@@ -12,5 +12,8 @@ export default defineConfig({
   ],
   test: {
     testTimeout: 30_000,
+    // The files share one local database, so they run one at a time and each
+    // starts by clearing it (freshHub in test/helpers.ts).
+    fileParallelism: false,
   },
 });

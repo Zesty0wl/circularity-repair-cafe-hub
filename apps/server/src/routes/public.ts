@@ -82,6 +82,9 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
       // admin sidebar, so anybody looking at a cafe's site, or asking one for
       // help, can see it without going near a terminal.
       appVersion: APP_VERSION,
+      // Where this hub runs, so the admin area shows the right way to update
+      // and back up. See apps/cloudflare for the other edition.
+      edition: 'docker' as const,
     };
   });
 

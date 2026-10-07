@@ -22,18 +22,17 @@
     "binding": "ASSETS"
   },
 
-  // Your cafe's own web address. Cloudflare creates the DNS record and the
-  // HTTPS certificate for it. The domain must already be on your account.
-  "routes": [{ "pattern": "experimental-repair-cafe.bzwrd.co.uk", "custom_domain": true }],
+  // The cafe's own web address is not set here, so this file works for any
+  // cafe. Pass it when deploying instead:
+  //   pnpm deploy -- --domain repair.example.org
+  // Cloudflare then creates the DNS record and the HTTPS certificate. The
+  // domain must already be on your Cloudflare account. Until then the hub is
+  // also reachable at <name>.<your-subdomain>.workers.dev.
   "workers_dev": true,
 
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "repair-cafe-hub",
-      "database_id": "00000000-0000-0000-0000-000000000000"
-    }
-  ],
+  // The database and the file bucket. No ids are written here: the first
+  // `wrangler deploy` creates both on your account and remembers them.
+  "d1_databases": [{ "binding": "DB", "database_name": "repair-cafe-hub" }],
   "r2_buckets": [{ "binding": "UPLOADS", "bucket_name": "repair-cafe-hub-uploads" }],
 
   // Once an hour: send telemetry if it is due and agreed, and refresh the

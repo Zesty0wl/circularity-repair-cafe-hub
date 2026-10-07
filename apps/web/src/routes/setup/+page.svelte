@@ -2,10 +2,11 @@
   import { goto } from '$app/navigation';
   import { api } from '$lib/api';
   import { auth } from '$lib/stores/auth';
-  import { loadCafe, loadSetupStatus } from '$lib/stores/cafe';
+  import { loadCafe, loadSetupStatus, setupCompleted } from '$lib/stores/cafe';
   import { FONT_OPTIONS } from '@circularity/shared';
   import ProgressBar from '$lib/components/ProgressBar.svelte';
   import TelemetryChoice from '$lib/components/TelemetryChoice.svelte';
+  import BackupImport from '$lib/components/BackupImport.svelte';
   import { CheckCircle2 } from 'lucide-svelte';
   import { onMount } from 'svelte';
 
@@ -40,9 +41,24 @@
   let validating = false;
   let urlOk: boolean | null = null;
 
-  onMount(() => {
+  // A Cloudflare hub can take over from an existing hub instead of starting
+  // empty. The status call says whether this one can.
+  let canImport = false;
+  let importing = false;
+
+  onMount(async () => {
     if (typeof window !== 'undefined') publicUrl = window.location.origin;
+    try {
+      const status = await api<{ canImport?: boolean }>('/api/setup/status', { autoRefresh: false });
+      canImport = status.canImport === true;
+    } catch {
+      canImport = false;
+    }
   });
+
+  async function imported() {
+    await loadSetupStatus();
+  }
 
   function passwordValid(): string | null {
     if (admin.password.length < 10) return 'At least 10 characters';
@@ -155,10 +171,31 @@
     <ProgressBar current={step} total={TOTAL} />
 
     <div class="mt-6 card p-8">
-      {#if step === 1}
+      {#if step === 1 && importing}
+        <h1 class="text-2xl font-semibold">Move from an existing hub</h1>
+        <p class="mt-3 text-slate-700">
+          Bring everything across from the hub you use now: accounts, sessions, repairs, photos and
+          settings. Your volunteers keep their passwords.
+        </p>
+        <div class="mt-6">
+          <BackupImport mode="setup" on:done={imported} />
+        </div>
+        <div class="mt-6 flex gap-3">
+          <button class="btn-secondary" on:click={() => (importing = false)}>Back</button>
+          {#if $setupCompleted}
+            <button class="btn-primary flex-1" on:click={() => goto('/login')}>Sign in</button>
+          {/if}
+        </div>
+      {:else if step === 1}
         <h1 class="text-2xl font-semibold">Welcome</h1>
         <p class="mt-3 text-slate-700">This wizard will set up your repair cafe hub. We'll create your admin account, configure your cafe details and home venue, and have you ready in just a few minutes.</p>
         <button class="btn-primary mt-8 w-full" on:click={next}>Let's get started</button>
+        {#if canImport}
+          <div class="mt-6 border-t border-slate-200 pt-6">
+            <p class="text-sm text-slate-700">Already running a hub somewhere else?</p>
+            <button class="btn-secondary mt-3 w-full" on:click={() => (importing = true)}>Move from an existing hub</button>
+          </div>
+        {/if}
       {:else if step === 2}
         <h1 class="text-2xl font-semibold">Create your admin account</h1>
         <p class="mt-2 text-slate-600">This account will be the system administrator. You can add more team members later.</p>

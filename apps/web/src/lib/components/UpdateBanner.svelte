@@ -11,6 +11,7 @@
   import { onMount } from 'svelte';
   import { api } from '$lib/api';
   import { ArrowUpCircle, X } from 'lucide-svelte';
+  import { cafe } from '$lib/stores/cafe';
 
   interface UpdateStatus {
     current: string;
@@ -59,10 +60,17 @@
       <p class="font-semibold text-brand-900">
         Version {status.latest} is out. You are running {status.current}.
       </p>
-      <p class="mt-1 text-brand-800">
-        Updating takes about a minute, and the site is down for roughly 30 seconds of
-        it, so it is best done the day before a session rather than on the morning.
-      </p>
+      {#if $cafe?.edition === 'cloudflare'}
+        <p class="mt-1 text-brand-800">
+          Updating takes a few minutes and the site stays up the whole time. It is still best
+          done the day before a session, so you can check everything afterwards.
+        </p>
+      {:else}
+        <p class="mt-1 text-brand-800">
+          Updating takes about a minute, and the site is down for roughly 30 seconds of
+          it, so it is best done the day before a session rather than on the morning.
+        </p>
+      {/if}
       <p class="mt-2">
         <a
           class="font-medium text-brand-800 underline underline-offset-2 hover:no-underline"

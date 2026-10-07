@@ -1,7 +1,7 @@
 // A whole repair session, from an empty hub to the reports, through the API
 // the web app uses. Each step depends on the one before, so they run in order.
-import { describe, expect, it } from 'vitest';
-import { ADMIN, call, photoForm, refreshCookie, setUpHub } from './helpers.js';
+import { beforeAll, describe, expect, it } from 'vitest';
+import { ADMIN, call, photoForm, refreshCookie, setUpHub, freshHub } from './helpers.js';
 import { bytes, JPEG_WITH_GPS } from './fixtures.js';
 
 const today = new Date().toISOString().slice(0, 10);
@@ -21,11 +21,13 @@ const state: {
   categoryId?: string;
 } = {};
 
+beforeAll(freshHub);
+
 describe('a repair session from start to finish', () => {
   it('starts with setup not done, and every page sends people to the wizard', async () => {
     const res = await call('/api/setup/status');
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ setupCompleted: false });
+    expect(res.body).toEqual({ setupCompleted: false, edition: 'cloudflare', canImport: true });
   });
 
   it('completes the setup wizard', async () => {
@@ -34,7 +36,7 @@ describe('a repair session from start to finish', () => {
     state.adminCookie = cookie;
     expect(token).toMatch(/^ey/);
     expect(cookie).toMatch(/^circ_refresh=/);
-    expect((await call('/api/setup/status')).body).toEqual({ setupCompleted: true });
+    expect((await call('/api/setup/status')).body.setupCompleted).toBe(true);
     // Doing it twice is refused.
     const again = await call('/api/setup/complete', { json: {} });
     expect(again.status).toBe(409);

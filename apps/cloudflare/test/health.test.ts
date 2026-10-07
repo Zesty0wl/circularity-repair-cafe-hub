@@ -1,5 +1,7 @@
-import { worker } from './helpers.js';
-import { describe, expect, it } from 'vitest';
+import { worker, freshHub } from './helpers.js';
+import { beforeAll, describe, expect, it } from 'vitest';
+
+beforeAll(freshHub);
 
 describe('health', () => {
   it('answers and creates the database', async () => {

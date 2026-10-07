@@ -90,6 +90,13 @@ export interface CafeInfo {
   demoMode?: boolean;
   /** Which version of the hub software this cafe is running. */
   appVersion?: string;
+  /**
+   * Where this hub runs: 'docker' on a machine of the cafe's own, or
+   * 'cloudflare' on a Cloudflare account. The admin area uses it to show the
+   * right way to update and back up. Older hubs do not send it, which means
+   * Docker.
+   */
+  edition?: 'docker' | 'cloudflare';
 }
 
 export const cafe = writable<CafeInfo | null>(null);

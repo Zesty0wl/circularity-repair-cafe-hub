@@ -1,7 +1,7 @@
 import type { App } from '../lib/router.js';
 import { setupCompleteSchema } from '@circularity/shared';
 import { db } from '../db/index.js';
-import { APP_VERSION } from '../version.js';
+import { APP_VERSION, EDITION } from '../version.js';
 import { cafes, users, venues } from '../db/schema.js';
 import { hashPassword } from '../utils/password.js';
 import { audit } from '../utils/audit.js';
@@ -9,8 +9,10 @@ import { eq } from 'drizzle-orm';
 import { isSetupCompleted } from '../services/cafeCache.js';
 
 export async function setupRoutes(app: App): Promise<void> {
+  // `edition` and `canImport` tell the setup page it can offer to move an
+  // existing hub across, which only the Cloudflare edition can do.
   app.get('/api/setup/status', async () => {
-    return { setupCompleted: await isSetupCompleted() };
+    return { setupCompleted: await isSetupCompleted(), edition: EDITION, canImport: true };
   });
 
   app.post('/api/setup/complete', async (request, reply) => {

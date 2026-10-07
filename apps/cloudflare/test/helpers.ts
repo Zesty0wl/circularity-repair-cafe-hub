@@ -71,3 +71,28 @@ export function photoForm(bytes: Uint8Array, type = 'image/jpeg', name = 'photo.
   form.append('image', new File([bytes], name, { type }));
   return form;
 }
+
+/**
+ * Start a test file with an empty hub. The test files share one local
+ * database and bucket, so each one clears them first, and forgets anything
+ * the Worker remembered about the old data.
+ */
+export async function freshHub(): Promise<void> {
+  const { env } = await import('cloudflare:workers');
+  const bindings = env as unknown as { DB: D1Database; UPLOADS: R2Bucket };
+  const tables = await bindings.DB.prepare(
+    "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%'",
+  ).all<{ name: string }>();
+  await bindings.DB.batch([
+    bindings.DB.prepare('PRAGMA defer_foreign_keys = on'),
+    ...(tables.results ?? []).map((t) => bindings.DB.prepare(`DROP TABLE IF EXISTS "${t.name}"`)),
+  ]);
+  const listed = await bindings.UPLOADS.list();
+  if (listed.objects.length) await bindings.UPLOADS.delete(listed.objects.map((o) => o.key));
+  const { resetDatabaseCheck } = await import('../src/db/migrate.js');
+  const { resetCafeCache } = await import('../src/services/cafeCache.js');
+  const { resetSigningSecret } = await import('../src/lib/auth.js');
+  resetDatabaseCheck();
+  resetCafeCache();
+  resetSigningSecret();
+}

@@ -38,9 +38,6 @@ importers:
       '@cloudflare/workers-types':
         specifier: ^5.20260930.1
         version: 5.20260930.1
-      fflate:
-        specifier: ^0.8.2
-        version: 0.8.3
       typescript:
         specifier: ^5.6.3
         version: 5.9.3
@@ -165,9 +162,6 @@ importers:
       date-fns:
         specifier: ^4.1.0
         version: 4.3.0
-      fflate:
-        specifier: ^0.8.3
-        version: 0.8.3
       leaflet:
         specifier: ^1.9.4
         version: 1.9.4
@@ -2688,9 +2682,6 @@ packages:
     peerDependenciesMeta:
       picomatch:
         optional: true
-
-  fflate@0.8.3:
-    resolution: {integrity: sha1-vCfY6zA0PU1RKrsDSAICzmXYJfw=, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/fflate/-/fflate-0.8.3.tgz}
 
   fill-range@7.1.1:
     resolution: {integrity: sha1-RCZdPKwH4+p9wkdRY4BkN1SgUpI=, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/fill-range/-/fill-range-7.1.1.tgz}
@@ -5673,8 +5664,6 @@ snapshots:
   fdir@6.5.0(picomatch@4.0.4):
     optionalDependencies:
       picomatch: 4.0.4
-
-  fflate@0.8.3: {}
 
   fill-range@7.1.1:
     dependencies:

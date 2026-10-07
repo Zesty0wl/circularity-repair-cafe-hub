@@ -1,6 +1,6 @@
 {
   "name": "circularity-hub",
-  "version": "1.10.0",
+  "version": "1.11.0",
   "private": true,
   "description": "Circularity Repair Cafe Hub: repair cafe management on a free Cloudflare account",
   "license": "MIT",

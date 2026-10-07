@@ -1,6 +1,6 @@
 {
   "name": "@circularity/cloudflare",
-  "version": "1.10.0",
+  "version": "1.11.0",
   "private": true,
   "type": "module",
   "description": "The hub: the API on Cloudflare Workers, D1 and R2, wrapped round the SvelteKit app.",

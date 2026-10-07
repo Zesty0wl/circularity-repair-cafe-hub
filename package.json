@@ -19,7 +19,10 @@
     "build:server": "pnpm --filter @circularity/server build",
     "build": "pnpm build:shared && pnpm build:web && pnpm build:server",
     "dev:server": "pnpm --filter @circularity/server dev",
-    "dev:web": "pnpm --filter @circularity/web dev"
+    "dev:web": "pnpm --filter @circularity/web dev",
+    "cf:dev": "pnpm --filter @circularity/cloudflare run build:web && pnpm --filter @circularity/cloudflare exec wrangler dev",
+    "cf:deploy": "pnpm --filter @circularity/cloudflare run deploy",
+    "cf:test": "pnpm --filter @circularity/shared build && pnpm --filter @circularity/cloudflare test"
   },
   "engines": {
     "node": ">=22"

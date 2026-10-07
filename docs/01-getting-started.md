@@ -1,20 +1,22 @@
 # 1. Getting started
 
-This guide gets you from a freshly-installed container to a fully-configured
-admin account in about ten minutes.
+This guide gets you from a new install to a fully set-up admin account in
+about ten minutes.
 
 ## Before you start
 
-You need a working install of the hub running on a server somewhere. If you
-don't have one yet, follow the [Quick start](../README.md#quick-start-docker)
-in the main README.
+You need a working install of the hub, either on Cloudflare or in Docker. If
+you don't have one yet, follow [Install](../README.md#install) in the main
+README. On the Cloudflare edition you already have a web address, so skip to
+[the setup wizard](#the-setup-wizard).
 
-You also need a way to reach it from your laptop's browser:
+On Docker, you also need a way to reach it from your laptop's browser:
 
-- **Easy / temporary**: an SSH tunnel — `ssh -L 5026:127.0.0.1:5026 user@your-server`,
+- **Easy / temporary**: an SSH tunnel, `ssh -L 5026:127.0.0.1:5026 user@your-server`,
   then open <http://127.0.0.1:5026> on your laptop.
 - **Production**: a public hostname pointing at your server, with a reverse
-  proxy in front (see [README → Deploying behind Cloudflare + nginx](../README.md#deploying-behind-cloudflare--nginx)).
+  proxy in front. The [guided install](../README.md#guided-install) sets this
+  up for you.
 
 ## The setup wizard
 

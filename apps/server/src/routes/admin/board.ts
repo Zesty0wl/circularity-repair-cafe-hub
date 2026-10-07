@@ -8,7 +8,7 @@ import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
  * shop-floor screen. By default it includes every active event (status =
  * 'active') plus every event scheduled for today, and limits the visible
  * status set to those a repairer can still act on (waiting / in_progress)
- * plus any job completed in the last 30 minutes (so the room sees the win
+ * plus any job completed in the last 45 minutes (so the room sees the win
  * for a moment before it scrolls off).
  *
  * Optional ?eventId=<uuid> scopes everything to a single event.
@@ -31,6 +31,8 @@ export async function adminBoardRoutes(app: FastifyInstance): Promise<void> {
         id: events.id,
         name: events.name,
         date: events.date,
+        startTime: events.startTime,
+        endTime: events.endTime,
         status: events.status,
         qrCodeUrl: events.qrCodeUrl,
       })
@@ -68,7 +70,7 @@ export async function adminBoardRoutes(app: FastifyInstance): Promise<void> {
             sql`(
               ${repairJobs.status} IN ('waiting','in_progress')
               OR (${repairJobs.completedAt} IS NOT NULL
-                  AND ${repairJobs.completedAt} >= NOW() - INTERVAL '30 minutes')
+                  AND ${repairJobs.completedAt} >= NOW() - INTERVAL '45 minutes')
             )`,
           ),
         )
@@ -105,10 +107,39 @@ export async function adminBoardRoutes(app: FastifyInstance): Promise<void> {
       });
     }
 
+    // Today's totals for the footer of the board, over every repair at the
+    // sessions shown, not just the ones still on screen.
+    let today = { checkedIn: 0, fixed: 0, co2SavedKg: 0, averageRepairMinutes: null as number | null };
+    if (visibleEvents.length > 0) {
+      const all = await db
+        .select({
+          status: repairJobs.status,
+          co2SavingKg: repairJobs.co2SavingKg,
+          acceptedAt: repairJobs.acceptedAt,
+          completedAt: repairJobs.completedAt,
+        })
+        .from(repairJobs)
+        .where(inArray(repairJobs.eventId, visibleEvents.map((e) => e.id)));
+      const fixed = all.filter((r) => r.status === 'completed');
+      const durations = all
+        .filter((r) => r.acceptedAt && r.completedAt)
+        .map((r) => new Date(r.completedAt!).getTime() - new Date(r.acceptedAt!).getTime())
+        .filter((ms) => ms > 0 && ms < 4 * 60 * 60 * 1000);
+      today = {
+        checkedIn: all.length,
+        fixed: fixed.length,
+        co2SavedKg: Math.round(fixed.reduce((sum, r) => sum + Number(r.co2SavingKg ?? 0), 0) * 10) / 10,
+        averageRepairMinutes: durations.length
+          ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length / 60000)
+          : null,
+      };
+    }
+
     return {
       generatedAt: new Date().toISOString(),
       events: visibleEvents,
       jobs,
+      today,
     };
   });
 }

@@ -21,6 +21,7 @@
     "supercluster": "^8.0.1"
   },
   "devDependencies": {
+    "@sveltejs/adapter-cloudflare": "^7.2.9",
     "@sveltejs/adapter-node": "^5.2.9",
     "@sveltejs/kit": "^2.7.4",
     "@sveltejs/vite-plugin-svelte": "^4.0.0",

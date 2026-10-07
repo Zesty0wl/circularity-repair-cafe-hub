@@ -119,7 +119,7 @@
 
 <div class="max-w-2xl mx-auto">
   <a href="/repairer" class="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700">
-    <ArrowLeft size={16} /> Back to dashboard
+    <ArrowLeft size={16} /> Back to the queue
   </a>
 
   {#if loading}
@@ -134,7 +134,7 @@
       <span class="h-12 w-12 mx-auto rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center"><CalendarOff size={22} /></span>
       <h1 class="text-2xl font-bold mt-4">No active event</h1>
       <p class="mt-2 text-slate-700">An admin needs to start (activate) today's event before you can register repairs.</p>
-      <a href="/repairer" class="btn-secondary mt-6">Back to dashboard</a>
+      <a href="/repairer" class="btn-secondary mt-6">Back to the queue</a>
     </div>
   {:else if created}
     <div class="card p-8 text-center mt-4">
@@ -149,7 +149,7 @@
         <button type="button" class="btn-primary" on:click={registerAnother}>
           <Plus size={18} /> Register another item
         </button>
-        <a href="/repairer" class="btn-secondary">Back to dashboard</a>
+        <a href="/repairer" class="btn-secondary">Back to the queue</a>
       </div>
     </div>
   {:else}

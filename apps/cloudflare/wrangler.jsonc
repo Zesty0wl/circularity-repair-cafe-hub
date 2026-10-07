@@ -1,0 +1,59 @@
+// =============================================================================
+//  The Cloudflare edition of the Circularity Repair Cafe Hub
+//  ---------------------------------------------------------------------------
+//  One Worker serves the whole site: the pages, the API, the photos and the
+//  daily jobs. See docs/cloudflare/README.md for how to set one up.
+//
+//  The names below are what this project uses for its own test site. If you
+//  are setting up your own cafe, the setup script fills these in for you.
+// =============================================================================
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "repair-cafe-hub",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-08-15",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // The web app's static files: scripts, styles, fonts and images. Requests
+  // for these are answered by Cloudflare directly, without running the Worker,
+  // so they cost no CPU time at all.
+  "assets": {
+    "directory": "../web/.svelte-kit/cloudflare",
+    "binding": "ASSETS"
+  },
+
+  // The cafe's own web address is not set here, so this file works for any
+  // cafe. Pass it when deploying instead:
+  //   pnpm deploy -- --domain repair.example.org
+  // Cloudflare then creates the DNS record and the HTTPS certificate. The
+  // domain must already be on your Cloudflare account. Until then the hub is
+  // also reachable at <name>.<your-subdomain>.workers.dev.
+  "workers_dev": true,
+
+  // The database and the file bucket. No ids are written here: the first
+  // `wrangler deploy` creates both on your account and remembers them.
+  "d1_databases": [{ "binding": "DB", "database_name": "repair-cafe-hub" }],
+  "r2_buckets": [{ "binding": "UPLOADS", "bucket_name": "repair-cafe-hub-uploads" }],
+
+  // The hourly jobs (telemetry if agreed, the update check, refreshing the
+  // Repair Cafe directory) run after ordinary visits, so no cron trigger is
+  // needed. The free plan allows only five per account. If you have one to
+  // spare, add  "triggers": { "crons": ["17 * * * *"] }  here as well.
+  // See src/housekeeping.ts.
+
+  "vars": {
+    // Where your cafe is. Session dates, "today" and reports use it.
+    "TZ": "Europe/London",
+    "DEMO_MODE": "false",
+    "TELEMETRY_DISABLED": "false",
+    "UPDATE_CHECK_DISABLED": "false"
+  },
+
+  // Bundle .wasm (the picture renderer) and .ttf (its fonts) as modules.
+  "rules": [
+    { "type": "CompiledWasm", "globs": ["**/*.wasm"], "fallthrough": true },
+    { "type": "Data", "globs": ["**/*.ttf"], "fallthrough": true }
+  ],
+
+  "observability": { "enabled": true }
+}

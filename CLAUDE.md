@@ -22,3 +22,11 @@ Rules:
 
 When you edit existing text, keep the meaning, simplify the wording, and remove
 any em dashes.
+
+## Visual design
+
+- Never put a coloured stripe or "flash" along one edge of a card, row,
+  banner or panel: not on the left, right, top or bottom. Show a status or
+  category with a soft tinted background, an icon, a badge or a coloured dot
+  instead. Neutral one-pixel dividers between sections are fine. This is a
+  firm rule.

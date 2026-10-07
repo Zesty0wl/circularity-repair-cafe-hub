@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { prepareImage } from '$lib/imagePrep';
   import { page } from '$app/stores';
   import { onMount } from 'svelte';
   import { api } from '$lib/api';
@@ -55,8 +56,10 @@
     uploading = true;
     uploadError = '';
     try {
+      // Shrunk in the browser first: see $lib/imagePrep.ts.
+      const prepared = await prepareImage(file, { maxLongestEdge: 600, quality: 0.85 });
       const fd = new FormData();
-      fd.append('file', file);
+      fd.append('file', prepared, 'avatar.jpg');
       const r = await api<{ url: string }>(`/api/admin/uploads/avatar/${id}`, { method: 'POST', formData: fd });
       user.avatarUrl = r.url;
       user = user;

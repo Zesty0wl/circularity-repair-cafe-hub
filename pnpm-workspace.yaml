@@ -3,11 +3,13 @@ packages:
   - "packages/*"
 
 # Allowed install scripts. pnpm 11 refuses to run native module postinstalls
-# unless they're explicitly approved. These three need it:
+# unless they're explicitly approved. These need it:
 #   bcrypt  — compiles native bindings
 #   sharp   — downloads its prebuilt binary
 #   esbuild — downloads its native binary
+#   workerd — downloads the Cloudflare Workers runtime (Cloudflare edition only)
 allowBuilds:
   bcrypt: true
   sharp: true
   esbuild: true
+  workerd: true

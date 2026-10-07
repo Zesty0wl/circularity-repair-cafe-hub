@@ -32,6 +32,10 @@ top and work down — each guide builds on the one before it.
 
 - See the main [README](../README.md) for installation, reverse-proxy setup,
   backups, and environment variables.
+- [The Cloudflare edition](./cloudflare/README.md): running the hub on a free
+  Cloudflare account, with no server.
+- [Moving between Docker and Cloudflare](./cloudflare/MIGRATION.md), in either
+  direction.
 
 ## Reporting bugs / suggesting features
 

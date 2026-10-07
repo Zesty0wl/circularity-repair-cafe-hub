@@ -9,7 +9,8 @@ import { db, pool } from '../db/index.js';
 import { cafes, users, events, repairJobs, repairImages, auditLog } from '../db/schema.js';
 import { count } from 'drizzle-orm';
 import { env } from '../env.js';
-import { APP_VERSION, BACKUP_FORMAT_VERSION } from '../version.js';
+import { APP_VERSION, BACKUP_FORMAT_READABLE, BACKUP_FORMAT_VERSION } from '../version.js';
+import { BACKUP_TABLE_ORDER } from '@circularity/shared';
 
 /**
  * Backup zip layout (v1):
@@ -21,6 +22,14 @@ import { APP_VERSION, BACKUP_FORMAT_VERSION } from '../version.js';
  * Restore wipes the `public` schema and replays dump.sql, then swaps the
  * uploads directory wholesale. The node process is expected to exit
  * afterwards so s6 restarts it (re-running idempotent migrations on boot).
+ *
+ * Restore also reads format 2, which the Cloudflare edition writes:
+ *
+ *   manifest.json
+ *   data/<table>.json      one JSON array of rows per table
+ *   uploads/…
+ *
+ * See restorePortable() below and packages/shared/src/backup.ts.
  */
 
 export interface BackupManifest {
@@ -298,9 +307,9 @@ export interface RestoreResult {
  */
 export async function restoreBackup(zipPath: string): Promise<RestoreResult> {
   const manifest = await readManifestFromZip(zipPath);
-  if (manifest.backupFormatVersion > BACKUP_FORMAT_VERSION) {
+  if (manifest.backupFormatVersion > BACKUP_FORMAT_READABLE) {
     throw new Error(
-      `Backup format v${manifest.backupFormatVersion} is newer than this server (v${BACKUP_FORMAT_VERSION}). Upgrade the app first.`,
+      `Backup format v${manifest.backupFormatVersion} is newer than this server (v${BACKUP_FORMAT_READABLE}). Upgrade the app first.`,
     );
   }
 
@@ -309,12 +318,22 @@ export async function restoreBackup(zipPath: string): Promise<RestoreResult> {
     await extractZip(zipPath, workDir);
 
     const dumpPath = path.join(workDir, 'postgres', 'dump.sql');
-    if (!fs.existsSync(dumpPath)) {
+    const dataDir = path.join(workDir, 'data');
+    const portable = !fs.existsSync(dumpPath) && fs.existsSync(dataDir);
+    if (!fs.existsSync(dumpPath) && !portable) {
       throw new Error('Backup is missing postgres/dump.sql');
     }
 
     const uploadsSrc = path.join(workDir, 'uploads');
     const hasUploads = fs.existsSync(uploadsSrc);
+
+    if (portable) {
+      // Format 2, from the Cloudflare edition. Loaded through the open pool,
+      // inside one transaction, so a failure leaves the hub as it was.
+      await restorePortable(dataDir);
+      if (hasUploads) await swapUploads(uploadsSrc);
+      return { manifest };
+    }
 
     // Release Drizzle's pool so pg_dump's DROP statements don't deadlock on
     // open queries. We're about to exit the process anyway.
@@ -331,21 +350,7 @@ export async function restoreBackup(zipPath: string): Promise<RestoreResult> {
     await runPsql(['-f', dumpPath]);
 
     // 3. Swap uploads
-    if (hasUploads) {
-      const existing = env.UPLOADS_DIR;
-      const stash = `${existing}.pre-restore-${Date.now()}`;
-      if (fs.existsSync(existing)) {
-        await fsp.rename(existing, stash);
-      }
-      await fsp.mkdir(path.dirname(existing), { recursive: true });
-      await fsp.rename(uploadsSrc, existing);
-      // Best-effort cleanup of the stash directory. We don't keep it because
-      // /data fills up fast; the operator can take a fresh backup before
-      // restoring if they want a safety net.
-      if (fs.existsSync(stash)) {
-        await fsp.rm(stash, { recursive: true, force: true });
-      }
-    }
+    if (hasUploads) await swapUploads(uploadsSrc);
 
     return { manifest };
   } finally {
@@ -354,3 +359,101 @@ export async function restoreBackup(zipPath: string): Promise<RestoreResult> {
     await fsp.rm(workDir, { recursive: true, force: true }).catch(() => {});
   }
 }
+
+/** Put a restored uploads folder in place of the current one. */
+async function swapUploads(uploadsSrc: string): Promise<void> {
+  const existing = env.UPLOADS_DIR;
+  const stash = `${existing}.pre-restore-${Date.now()}`;
+  if (fs.existsSync(existing)) {
+    await fsp.rename(existing, stash);
+  }
+  await fsp.mkdir(path.dirname(existing), { recursive: true });
+  await fsp.rename(uploadsSrc, existing);
+  // Pictures the hub draws for itself (sharing cards, icons) are drawn again
+  // when asked for. A Cloudflare backup leaves them out, and old ones would
+  // only be stale, so make sure their folders exist and are empty.
+  for (const dir of ['og', 'pwa']) {
+    await fsp.mkdir(path.join(existing, dir), { recursive: true });
+  }
+  // Best-effort cleanup of the stash directory. We don't keep it because
+  // /data fills up fast; the operator can take a fresh backup before
+  // restoring if they want a safety net.
+  if (fs.existsSync(stash)) {
+    await fsp.rm(stash, { recursive: true, force: true });
+  }
+}
+
+/**
+ * Load a format 2 backup: one JSON file of "portable rows" per table. Each row
+ * is keyed by column name, with plain JSON values (ISO times, true and false,
+ * arrays, objects). Columns this server does not have are skipped and columns
+ * the backup lacks get their defaults, so a backup from a newer or older hub
+ * still loads.
+ */
+async function restorePortable(dataDir: string): Promise<void> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const tables = [...BACKUP_TABLE_ORDER];
+    const present = new Set(
+      (
+        await client.query<{ table_name: string }>(
+          `SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'`,
+        )
+      ).rows.map((r) => r.table_name),
+    );
+    const known = tables.filter((t) => present.has(t));
+    await client.query(`TRUNCATE TABLE ${known.map((t) => `"${t}"`).join(', ')} RESTART IDENTITY CASCADE`);
+
+    for (const table of known) {
+      const file = path.join(dataDir, `${table}.json`);
+      if (!fs.existsSync(file)) continue;
+      const rows = JSON.parse(await fsp.readFile(file, 'utf8')) as Array<Record<string, unknown>>;
+      if (!Array.isArray(rows) || rows.length === 0) continue;
+
+      const columns = (
+        await client.query<{ column_name: string; data_type: string }>(
+          `SELECT column_name, data_type FROM information_schema.columns
+           WHERE table_schema = 'public' AND table_name = $1`,
+          [table],
+        )
+      ).rows;
+      const typeOf = new Map(columns.map((c) => [c.column_name, c.data_type]));
+      const names = [...typeOf.keys()].filter((name) => rows.some((r) => name in r));
+      if (names.length === 0) continue;
+
+      // Postgres allows 65,535 values in one statement.
+      const perStatement = Math.max(1, Math.floor(60_000 / names.length));
+      for (let start = 0; start < rows.length; start += perStatement) {
+        const slice = rows.slice(start, start + perStatement);
+        const values: unknown[] = [];
+        const tuples = slice.map((row) => {
+          const marks = names.map((name) => {
+            // A column this row does not have takes the table's default.
+            if (!(name in row)) return 'DEFAULT';
+            const type = typeOf.get(name);
+            let value = row[name];
+            if (value !== null && (type === 'jsonb' || type === 'json')) value = JSON.stringify(value);
+            values.push(value);
+            return `$${values.length}`;
+          });
+          return `(${marks.join(', ')})`;
+        });
+        const list = names.map((n) => `"${n}"`).join(', ');
+        await client.query(`INSERT INTO "${table}" (${list}) VALUES ${tuples.join(', ')}`, values);
+      }
+    }
+
+    // The audit log numbers its entries. Carry on from the highest restored.
+    await client.query(
+      `SELECT setval(pg_get_serial_sequence('audit_log', 'id'), GREATEST(COALESCE((SELECT MAX(id) FROM audit_log), 0), 1))`,
+    );
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+

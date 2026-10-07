@@ -1,4 +1,6 @@
 <script lang="ts">
+  /** In the staff area: above the tab bar on a phone, beside the menu on a laptop. */
+  export let raised = false;
   import { onMount } from 'svelte';
   import { Download, X } from 'lucide-svelte';
   import { cafe } from '$lib/stores/cafe';
@@ -66,7 +68,7 @@
 
 {#if visible}
   <div
-    class="no-print fixed inset-x-0 bottom-0 z-40 border-t border-brand-700 bg-brand-800 text-white"
+    class="no-print fixed inset-x-0 {raised ? 'bottom-16 md:bottom-0 md:left-64' : 'bottom-0'} z-40 border-t border-brand-700 bg-brand-800 text-white"
     style="padding-bottom: env(safe-area-inset-bottom)"
     role="region"
     aria-label="Install this app"

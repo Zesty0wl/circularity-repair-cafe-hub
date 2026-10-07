@@ -1,985 +1,223 @@
 <script lang="ts">
+  // The live board, for an admin. Two ways to look at it:
+  //
+  //   Admin view          the whole picture with the detail behind it: who
+  //                       brought what, photos, and a link to every repair.
+  //   Waiting-room view   exactly what the screen in the waiting area shows,
+  //                       for when this laptop is the screen.
+  //
+  // For a screen that stays up all day, "Show on a screen" gives a private
+  // link that needs nobody signed in on it (/display/<token>). That is better
+  // than leaving an admin signed in where anyone can walk up to it.
+  //
+  // This page uses +page@.svelte so it fills the window without the admin
+  // menu around it.
   import { onDestroy, onMount } from 'svelte';
   import { goto } from '$app/navigation';
-  import { auth, isAdmin } from '$lib/stores/auth';
   import { api, restoreSession } from '$lib/api';
-  import {
-    Maximize2, Minimize2, Volume2, VolumeX, Zap, ZapOff, ArrowLeft,
-    Image as ImageIcon, ZoomIn, ZoomOut, QrCode, X,
-  } from 'lucide-svelte';
+  import { auth, isAdmin } from '$lib/stores/auth';
+  import { cafe } from '$lib/stores/cafe';
+  import LiveBoard from '$lib/components/LiveBoard.svelte';
+  import ScreenLinkDialog from '$lib/components/ScreenLinkDialog.svelte';
+  import { fromAdminBoard, type BoardData } from '$lib/staff/board';
+  import { TEXT_SCALES, chime, keepAwake, loadNumber, newlyWaiting, saveNumber, unlockSound } from '$lib/staff/screen';
+  import { ArrowLeft, Bell, BellOff, Maximize2, Minimize2, Minus, Plus, Tv, UserPlus, Users } from 'lucide-svelte';
 
-  type Job = {
-    id: string;
-    jobNumber: string;
-    customerName: string | null;
-    itemDescription: string;
-    itemBrand: string | null;
-    status: 'waiting' | 'in_progress' | 'completed' | 'cannot_repair' | 'awaiting_return' | 'returned';
-    createdAt: string;
-    acceptedAt: string | null;
-    completedAt: string | null;
-    eventId: string;
-    eventName: string;
-    category: string | null;
-    categoryColour: string | null;
-    repairerName: string | null;
-    thumbnailUrl: string | null;
-  };
-  type EventLite = { id: string; name: string; date: string; status: string; qrCodeUrl: string | null };
+  const POLL_MS = 5_000;
 
-  let jobs: Job[] = [];
-  let eventsList: EventLite[] = [];
+  let ready = false;
+  let data: BoardData | null = null;
+  let eventIds: Array<{ id: string; name: string }> = [];
   let selectedEventId = '';
   let lastError = '';
+  let fresh = new Set<string>();
+  let view: 'control' | 'display' = 'control';
+  let soundOn = false;
+  let fullscreen = false;
+  let textScale = 1;
+  let showScreenLink = false;
+  let controlsVisible = true;
+  let hideTimer: ReturnType<typeof setTimeout> | undefined;
+  let poll: ReturnType<typeof setInterval> | undefined;
+  let release: (() => void) | undefined;
 
-  let seenIds = new Set<string>();
-  let highlightIds = new Set<string>();
-  let firstLoadDone = false;
-  let now = Date.now();
-
-  // User-controlled toggles
-  let soundEnabled = false;
-  let isFullscreen = false;
-  let wakeLockOn = false;
-  let wakeLock: any = null;
-  // QR-code side panel for customer check-in. Persisted so a venue can
-  // leave it on once they've positioned the screen for walk-up customers.
-  let qrEnabled = true;
-  // Modal-size QR for customers far from the screen — toggled by tapping the panel.
-  let qrZoomed = false;
-
-  // ───────────── Scale ─────────────
-  // Default 1.0 is tuned to fit ~10 rows on a 1080p screen with the standard
-  // chrome above. Stored in localStorage so it persists between visits.
-  let scale = 1.0;
-  const SCALE_MIN = 0.6;
-  const SCALE_MAX = 2.0;
-  const SCALE_STEP = 0.1;
-
-  // ───────────── Paging ─────────────
-  // Page size adapts to viewport so phones don't have to scroll to see
-  // every row. We recompute on resize/orientation change. Auto-rotation
-  // walks through the pages every PAGE_INTERVAL.
-  const PAGE_INTERVAL_MS = 60_000;
-  let pageSize = 10;
-  let currentPage = 0;
-  function computePageSize(): number {
-    if (typeof window === 'undefined') return 10;
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    if (w < 540) return 5;                     // phone portrait
-    if (w < 900) return h < 700 ? 6 : 8;       // tablet / phone landscape
-    return h < 800 ? 8 : 10;                   // desktop / TV
-  }
-  function syncPageSize() {
-    const next = computePageSize();
-    if (next !== pageSize) {
-      pageSize = next;
-      // Keep the first item of the current page visible when paging shrinks
-      if (currentPage * pageSize >= jobs.length) currentPage = 0;
-    }
-  }
-
-  // Polling cadence (ms)
-  const POLL_MS = 4000;
-  // Highlight a new row for this many ms
-  const HIGHLIGHT_MS = 12_000;
-
-  let pollTimer: ReturnType<typeof setInterval> | null = null;
-  let clockTimer: ReturnType<typeof setInterval> | null = null;
-  let pageTimer: ReturnType<typeof setInterval> | null = null;
-  let audioCtx: AudioContext | null = null;
-
-  // ────────────────────────────── data ────────────────────────────────
   async function load() {
     try {
-      const params = new URLSearchParams();
-      if (selectedEventId) params.set('eventId', selectedEventId);
-      const data = await api<{ events: EventLite[]; jobs: Job[] }>(
-        `/api/admin/board${params.toString() ? `?${params}` : ''}`,
-      );
-      eventsList = data.events;
-      const incoming = data.jobs;
-
-      const incomingIds = new Set(incoming.map((j) => j.id));
-      let newWaitingCount = 0;
-      if (firstLoadDone) {
-        for (const j of incoming) {
-          if (!seenIds.has(j.id)) {
-            highlightIds.add(j.id);
-            window.setTimeout(() => {
-              highlightIds.delete(j.id);
-              highlightIds = new Set(highlightIds);
-            }, HIGHLIGHT_MS);
-            if (j.status === 'waiting') newWaitingCount++;
-          }
-        }
-        if (newWaitingCount > 0) {
-          // Always jump back to page 1 so the new check-in is on screen
-          currentPage = 0;
-          if (soundEnabled) playChime(newWaitingCount);
-        }
+      const qs = selectedEventId ? `?eventId=${encodeURIComponent(selectedEventId)}` : '';
+      const body = await api<any>(`/api/admin/board${qs}`);
+      eventIds = (body.events ?? []).map((e: any) => ({ id: e.id, name: e.name }));
+      const next = fromAdminBoard(body, $cafe);
+      const arrived = newlyWaiting(data?.jobs ?? null, next.jobs);
+      if (arrived.length) {
+        fresh = new Set(arrived);
+        setTimeout(() => (fresh = new Set()), 8000);
+        if (soundOn) chime();
       }
-      seenIds = incomingIds;
-      jobs = incoming;
-      firstLoadDone = true;
+      data = next;
       lastError = '';
-    } catch (e: any) {
-      lastError = e?.message ?? 'Failed to load';
+    } catch (err: any) {
+      lastError = err?.message ?? 'Could not refresh';
     }
   }
 
-  // ───────────────────────────── audio ─────────────────────────────────
-  function playChime(count = 1) {
-    if (!audioCtx) return;
-    const t0 = audioCtx.currentTime;
-    const tones = [880, 1320];
-    for (let n = 0; n < Math.min(count, 3); n++) {
-      const offset = n * 0.18;
-      tones.forEach((freq, i) => {
-        const osc = audioCtx!.createOscillator();
-        const gain = audioCtx!.createGain();
-        osc.type = 'sine';
-        osc.frequency.value = freq;
-        osc.connect(gain);
-        gain.connect(audioCtx!.destination);
-        const start = t0 + offset + i * 0.12;
-        gain.gain.setValueAtTime(0.0001, start);
-        gain.gain.exponentialRampToValueAtTime(0.32, start + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.45);
-        osc.start(start);
-        osc.stop(start + 0.5);
-      });
+  async function toggleSound() {
+    if (soundOn) {
+      soundOn = false;
+    } else {
+      soundOn = await unlockSound();
+      if (soundOn) chime();
     }
   }
 
-  async function enableSound() {
-    try {
-      audioCtx = audioCtx ?? new (window.AudioContext || (window as any).webkitAudioContext)();
-      if (audioCtx.state === 'suspended') await audioCtx.resume();
-      soundEnabled = true;
-      playChime(1);
-    } catch {
-      soundEnabled = false;
-    }
-  }
-  function disableSound() {
-    soundEnabled = false;
-  }
-
-  // ─────────────────────────── fullscreen ──────────────────────────────
   async function toggleFullscreen() {
     try {
-      if (!document.fullscreenElement) {
-        await document.documentElement.requestFullscreen();
-        isFullscreen = true;
-      } else {
-        await document.exitFullscreen();
-        isFullscreen = false;
-      }
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await document.documentElement.requestFullscreen();
     } catch {
-      /* user gesture required, ignored */
+      /* ignored: needs a click */
     }
   }
-  function onFsChange() {
-    isFullscreen = !!document.fullscreenElement;
-  }
 
-  // ─────────────────────────── wake lock ───────────────────────────────
-  async function enableWakeLock() {
+  function setView(next: 'control' | 'display') {
+    view = next;
     try {
-      if ('wakeLock' in navigator) {
-        wakeLock = await (navigator as any).wakeLock.request('screen');
-        wakeLockOn = true;
-        wakeLock.addEventListener('release', () => {
-          wakeLockOn = false;
-        });
-      }
+      localStorage.setItem('board.view', next);
     } catch {
-      wakeLockOn = false;
+      /* fine */
     }
-  }
-  async function disableWakeLock() {
-    try {
-      await wakeLock?.release?.();
-    } catch {
-      /* noop */
-    }
-    wakeLock = null;
-    wakeLockOn = false;
+    showControls();
   }
 
-  // ───────────────────────────── scale ─────────────────────────────────
-  function clampScale(v: number) {
-    return Math.min(SCALE_MAX, Math.max(SCALE_MIN, Math.round(v * 10) / 10));
-  }
-  function bumpScale(delta: number) {
-    scale = clampScale(scale + delta);
-    persistScale();
-  }
-  function persistScale() {
-    try { localStorage.setItem('boardScale', String(scale)); } catch { /* noop */ }
-  }
-  function loadScale() {
-    try {
-      const v = localStorage.getItem('boardScale');
-      if (v) scale = clampScale(parseFloat(v));
-    } catch { /* noop */ }
+  function size(step: number) {
+    const i = Math.max(0, Math.min(TEXT_SCALES.length - 1, TEXT_SCALES.indexOf(textScale) + step));
+    textScale = TEXT_SCALES[i] ?? 1;
+    saveNumber('board.textScale', textScale);
   }
 
-  // ─────────────────────────── QR toggle ───────────────────────────────
-  function persistQrEnabled() {
-    try { localStorage.setItem('boardQrEnabled', qrEnabled ? '1' : '0'); } catch { /* noop */ }
-  }
-  function loadQrEnabled() {
-    try {
-      const v = localStorage.getItem('boardQrEnabled');
-      if (v !== null) qrEnabled = v === '1';
-    } catch { /* noop */ }
-  }
-  function toggleQr() {
-    qrEnabled = !qrEnabled;
-    persistQrEnabled();
-  }
-  function onWheelZoom(e: WheelEvent) {
-    if (!(e.ctrlKey || e.metaKey)) return;
-    e.preventDefault();
-    bumpScale(e.deltaY < 0 ? SCALE_STEP : -SCALE_STEP);
-  }
-  function onKey(e: KeyboardEvent) {
-    if (e.target && (e.target as HTMLElement).tagName === 'INPUT') return;
-    if (e.ctrlKey || e.metaKey) return;
-    if (e.key === '+' || e.key === '=') bumpScale(SCALE_STEP);
-    else if (e.key === '-' || e.key === '_') bumpScale(-SCALE_STEP);
-    else if (e.key === '0') { scale = 1.0; persistScale(); }
-    else if (e.key === 'f' || e.key === 'F') toggleFullscreen();
+  // In the waiting-room view the controls get out of the way after a moment.
+  function showControls() {
+    controlsVisible = true;
+    clearTimeout(hideTimer);
+    if (view === 'display') hideTimer = setTimeout(() => (controlsVisible = false), 4000);
   }
 
-  // ──────────────────────────── lifecycle ──────────────────────────────
+  const onFullscreen = () => (fullscreen = Boolean(document.fullscreenElement));
+
   onMount(async () => {
-    // Darken the page behind the board, including any overscroll beyond it.
-    // Set as inline styles so onDestroy can remove them again; the rest of
-    // the site keeps its own light background.
-    document.documentElement.style.background = '#0b1220';
-    document.body.style.background = '#0b1220';
-    // Wait for the session restore before deciding the user is signed out,
-    // otherwise every page refresh bounces signed-in users to /login.
     await restoreSession();
-    if (!$auth || !isAdmin($auth)) {
-      goto('/login');
+    if (!$auth) {
+      goto('/login?next=/admin/board', { replaceState: true });
       return;
     }
-    loadScale();
-    loadQrEnabled();
-    syncPageSize();
-    document.addEventListener('fullscreenchange', onFsChange);
-    document.addEventListener('keydown', onKey);
-    document.addEventListener('wheel', onWheelZoom, { passive: false });
-    window.addEventListener('resize', syncPageSize);
-    window.addEventListener('orientationchange', syncPageSize);
+    if (!isAdmin($auth)) {
+      goto('/repairer', { replaceState: true });
+      return;
+    }
+    ready = true;
+    try {
+      if (localStorage.getItem('board.view') === 'display') view = 'display';
+    } catch {
+      /* fine */
+    }
+    textScale = loadNumber('board.textScale', 1);
+    if (!TEXT_SCALES.includes(textScale)) textScale = 1;
+    showControls();
     load();
-    pollTimer = setInterval(load, POLL_MS);
-    // Tick every second so timers update live
-    clockTimer = setInterval(() => (now = Date.now()), 1000);
-    // Auto-rotate pages
-    pageTimer = setInterval(() => {
-      if (totalPages > 1) currentPage = (currentPage + 1) % totalPages;
-    }, PAGE_INTERVAL_MS);
+    poll = setInterval(load, POLL_MS);
+    release = keepAwake();
+    document.addEventListener('fullscreenchange', onFullscreen);
   });
 
   onDestroy(() => {
-    if (typeof document !== 'undefined') {
-      document.documentElement.style.removeProperty('background');
-      document.body.style.removeProperty('background');
-    }
-    if (pollTimer) clearInterval(pollTimer);
-    if (clockTimer) clearInterval(clockTimer);
-    if (pageTimer) clearInterval(pageTimer);
-    document.removeEventListener('fullscreenchange', onFsChange);
-    document.removeEventListener('keydown', onKey);
-    document.removeEventListener('wheel', onWheelZoom);
-    window.removeEventListener('resize', syncPageSize);
-    window.removeEventListener('orientationchange', syncPageSize);
-    disableWakeLock();
+    clearInterval(poll);
+    clearTimeout(hideTimer);
+    release?.();
+    if (typeof document !== 'undefined') document.removeEventListener('fullscreenchange', onFullscreen);
   });
-
-  // ────────────────────────── derived state ────────────────────────────
-  // Newest first
-  $: sortedJobs = [...jobs].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  );
-  $: totalPages = Math.max(1, Math.ceil(sortedJobs.length / pageSize));
-  // Clamp page if jobs shrunk
-  $: if (currentPage >= totalPages) currentPage = 0;
-  $: pageJobs = sortedJobs.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
-
-  $: counts = {
-    waiting: jobs.filter((j) => j.status === 'waiting').length,
-    inProgress: jobs.filter((j) => j.status === 'in_progress').length,
-    completed: jobs.filter((j) => j.status === 'completed').length,
-  };
-
-  // Pick the event whose QR we'll display. Prefer the explicitly selected
-  // event; otherwise the first 'active' event; otherwise just the first one.
-  // We skip events that haven't had a QR generated yet.
-  $: qrEvent = (() => {
-    if (eventsList.length === 0) return null;
-    if (selectedEventId) {
-      const sel = eventsList.find((e) => e.id === selectedEventId);
-      if (sel?.qrCodeUrl) return sel;
-      return null;
-    }
-    const active = eventsList.find((e) => e.status === 'active' && e.qrCodeUrl);
-    if (active) return active;
-    return eventsList.find((e) => e.qrCodeUrl) ?? null;
-  })();
-  $: showQrPanel = qrEnabled && !!qrEvent;
-
-  // ─────────────────────────── timer formatting ────────────────────────
-  // Compact, big-from-a-distance "MM:SS" / "H:MM:SS" elapsed format.
-  function fmtElapsedMs(ms: number): string {
-    if (ms < 0) ms = 0;
-    const totalSec = Math.floor(ms / 1000);
-    const h = Math.floor(totalSec / 3600);
-    const m = Math.floor((totalSec % 3600) / 60);
-    const s = totalSec % 60;
-    const pad = (n: number) => String(n).padStart(2, '0');
-    return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
-  }
-
-  /** Returns { primary, secondary } for the time column, depending on status. */
-  function timeFor(j: Job): { primary: string; secondary: string } {
-    const created = new Date(j.createdAt).getTime();
-    const accepted = j.acceptedAt ? new Date(j.acceptedAt).getTime() : null;
-    const completed = j.completedAt ? new Date(j.completedAt).getTime() : null;
-    if (j.status === 'waiting') {
-      return { primary: fmtElapsedMs(now - created), secondary: 'waiting' };
-    }
-    if (j.status === 'in_progress') {
-      return {
-        primary: fmtElapsedMs(now - (accepted ?? created)),
-        secondary: 'in progress',
-      };
-    }
-    if (j.status === 'completed' && completed) {
-      return {
-        primary: fmtElapsedMs(completed - created),
-        secondary: 'total time',
-      };
-    }
-    if (j.status === 'cannot_repair' && completed) {
-      return {
-        primary: fmtElapsedMs(completed - created),
-        secondary: 'cannot repair',
-      };
-    }
-    return { primary: fmtElapsedMs(now - created), secondary: '' };
-  }
-
-  function statusLabel(s: Job['status']): string {
-    return s.replace('_', ' ');
-  }
 </script>
 
-<svelte:head>
-  <title>Repairs board · live</title>
-</svelte:head>
+<svelte:head><title>Live board</title></svelte:head>
 
-<div class="board" style="--scale: {scale}">
-  {#if !soundEnabled && !firstLoadDone}
-    <div class="overlay">
-      <div class="overlay-card">
-        <h1>Loading the board…</h1>
-      </div>
-    </div>
-  {/if}
-
-  {#if !soundEnabled && firstLoadDone}
-    <button class="overlay" on:click={enableSound}>
-      <div class="overlay-card">
-        <h1>Tap to enable alert sound</h1>
-        <p>Browsers require a tap before they will let this page play a chime when a new repair is checked in.</p>
-        <span class="enable-pill">Enable sound</span>
-      </div>
-    </button>
-  {/if}
-
-  <header class="topbar">
-    <div class="topbar-left">
-      <a class="back" href="/admin/dashboard" title="Back to admin"><ArrowLeft size={18} /></a>
-      <div>
-        <p class="brand">Repair Cafe · Live board</p>
-        <p class="sub">
-          {#if eventsList.length === 0}
-            no events today
-          {:else if selectedEventId}
-            {eventsList.find((e) => e.id === selectedEventId)?.name ?? ''}
-          {:else}
-            {eventsList.map((e) => e.name).join(' · ')}
-          {/if}
-          {#if totalPages > 1}
-            <span class="page-pill">page {currentPage + 1} / {totalPages}</span>
-          {/if}
-        </p>
-      </div>
-    </div>
-
-    <div class="topbar-mid">
-      <div class="stat"><span class="stat-num text-amber-300">{counts.waiting}</span><span class="stat-lbl">waiting</span></div>
-      <div class="stat"><span class="stat-num text-sky-300">{counts.inProgress}</span><span class="stat-lbl">in progress</span></div>
-      <div class="stat"><span class="stat-num text-emerald-300">{counts.completed}</span><span class="stat-lbl">just finished</span></div>
-    </div>
-
-    <div class="topbar-right">
-      {#if eventsList.length > 1}
-        <select class="ctl" bind:value={selectedEventId} on:change={load}>
-          <option value="">All events</option>
-          {#each eventsList as e}
-            <option value={e.id}>{e.name}</option>
-          {/each}
-        </select>
-      {/if}
-
-      <div class="scale-group" title="Scale (Ctrl+Wheel · keys + / − / 0 to reset)">
-        <button class="ctl" on:click={() => bumpScale(-SCALE_STEP)} disabled={scale <= SCALE_MIN}><ZoomOut size={16} /></button>
-        <input
-          type="range"
-          min={SCALE_MIN}
-          max={SCALE_MAX}
-          step={SCALE_STEP}
-          bind:value={scale}
-          on:change={persistScale}
-          class="scale-range"
-        />
-        <button class="ctl" on:click={() => bumpScale(SCALE_STEP)} disabled={scale >= SCALE_MAX}><ZoomIn size={16} /></button>
-        <span class="scale-pct">{Math.round(scale * 100)}%</span>
-      </div>
-
-      <button class="ctl" class:active={soundEnabled} on:click={() => (soundEnabled ? disableSound() : enableSound())} title="Toggle sound">
-        {#if soundEnabled}<Volume2 size={18} />{:else}<VolumeX size={18} />{/if}
-      </button>
-      <button class="ctl" class:active={qrEnabled} on:click={toggleQr} title="Show check-in QR code">
-        <QrCode size={18} />
-      </button>
-      <button class="ctl" class:active={wakeLockOn} on:click={() => (wakeLockOn ? disableWakeLock() : enableWakeLock())} title="Keep screen awake">
-        {#if wakeLockOn}<Zap size={18} />{:else}<ZapOff size={18} />{/if}
-      </button>
-      <button class="ctl" on:click={toggleFullscreen} title="Fullscreen (F)">
-        {#if isFullscreen}<Minimize2 size={18} />{:else}<Maximize2 size={18} />{/if}
-      </button>
-      <span class="clock">{new Date(now).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-    </div>
-  </header>
-
-  {#if lastError}
-    <div class="err">Couldn't refresh: {lastError}</div>
-  {/if}
-
-  {#if sortedJobs.length === 0}
-    <div class="board-body" class:with-qr={showQrPanel}>
-      <div class="rows-col">
-        <div class="empty">
-          <p class="empty-big">No repairs yet</p>
-          <p class="empty-sub">When a customer checks in, their job will appear here.</p>
-        </div>
-      </div>
-
-      {#if showQrPanel && qrEvent}
-        <aside class="qr-panel">
-          <p class="qr-title">Scan to check in</p>
-          <button class="qr-img-btn" type="button" on:click={() => (qrZoomed = true)} title="Tap to enlarge">
-            <img src={qrEvent.qrCodeUrl} alt="Check-in QR code" />
-          </button>
-          <p class="qr-event">{qrEvent.name}</p>
-        </aside>
-      {/if}
-    </div>
-  {:else}
-    <div class="board-body" class:with-qr={showQrPanel}>
-      <div class="rows-col">
-        <ul class="rows">
-          {#each pageJobs as j (j.id)}
-            {@const t = timeFor(j)}
-            <li class="row status-{j.status}" class:flash={highlightIds.has(j.id)}>
-              <div class="thumb">
-                {#if j.thumbnailUrl}
-                  <img src={j.thumbnailUrl} alt="" loading="lazy" />
-                {:else}
-                  <div class="thumb-empty"><ImageIcon size={28} /></div>
-                {/if}
-              </div>
-
-              <div class="who">
-                <p class="customer">{j.customerName ?? 'Anonymous'}</p>
-                <p class="job-no">{j.jobNumber}</p>
-              </div>
-
-              <div class="what">
-                <p class="item">{j.itemDescription}</p>
-                <p class="meta-line">
-                  {#if j.itemBrand}<span class="brand-pill">{j.itemBrand}</span>{/if}
-                  {#if j.category}
-                    <span class="cat" style="background-color: {j.categoryColour ?? '#1B6B5A'}33; color: {j.categoryColour ?? '#BFD6C4'}">{j.category}</span>
-                  {/if}
-                  {#if j.repairerName}<span class="repairer-pill">{j.repairerName}</span>{/if}
-                </p>
-              </div>
-
-              <div class="time">
-                <span class="time-big">{t.primary}</span>
-                <span class="time-lbl">{t.secondary}</span>
-              </div>
-
-              <div class="status-col">
-                <span class="badge">{statusLabel(j.status)}</span>
-              </div>
-            </li>
-          {/each}
-        </ul>
-
-        {#if totalPages > 1}
-          <!-- Page-progress bar: visually shows the 60s countdown to the next flip.
-               Wrapped in {#key currentPage} so the bar re-mounts and the CSS
-               animation restarts cleanly when we flip pages. -->
-          <div class="page-bar">
-            {#key currentPage}
-              <div class="page-bar-fill" style="animation-duration: {PAGE_INTERVAL_MS}ms"></div>
-            {/key}
-            <div class="page-dots">
-              {#each Array(totalPages) as _, i}
-                <span class="dot" class:active={i === currentPage}></span>
-              {/each}
-            </div>
-          </div>
+{#if ready}
+  <!-- svelte-ignore a11y-no-static-element-interactions -->
+  <div class="page" class:idle={view === 'display' && !controlsVisible} on:mousemove={showControls} on:touchstart={showControls}>
+    {#if view === 'control'}
+      <header class="bar">
+        <a href="/admin/dashboard" class="bar-btn" title="Back to the dashboard"><ArrowLeft size={18} /> <span class="hide-sm">Dashboard</span></a>
+        <p class="bar-title">Live board</p>
+        {#if eventIds.length > 1}
+          <select class="bar-select" bind:value={selectedEventId} on:change={load} aria-label="Which session">
+            <option value="">All of today's sessions</option>
+            {#each eventIds as e}<option value={e.id}>{e.name}</option>{/each}
+          </select>
         {/if}
+        <div class="seg" role="group" aria-label="View">
+          <button class:on={view === 'control'} on:click={() => setView('control')}><Users size={16} /> <span class="hide-sm">Admin view</span></button>
+          <button class:on={view !== 'control'} on:click={() => setView('display')}><Tv size={16} /> <span class="hide-sm">Waiting-room view</span></button>
+        </div>
+        <span class="spacer"></span>
+        {#if lastError}<span class="bar-error">Could not refresh</span>{/if}
+        <a href="/repairer/checkin" class="bar-btn"><UserPlus size={18} /> <span class="hide-sm">Check in</span></a>
+        <button class="bar-btn" on:click={toggleSound} title={soundOn ? 'Chime is on for new check-ins' : 'Play a chime when someone checks in'}>
+          {#if soundOn}<Bell size={18} />{:else}<BellOff size={18} />{/if}
+        </button>
+        <button class="bar-btn" on:click={() => (showScreenLink = true)}><Tv size={18} /> <span class="hide-sm">Show on a screen</span></button>
+        <button class="bar-btn" on:click={toggleFullscreen} title={fullscreen ? 'Leave full screen' : 'Full screen'}>
+          {#if fullscreen}<Minimize2 size={18} />{:else}<Maximize2 size={18} />{/if}
+        </button>
+      </header>
+    {/if}
+
+    <LiveBoard {data} mode={view} {fresh} {textScale} />
+
+    {#if view === 'display' && controlsVisible}
+      <div class="float">
+        <button on:click={() => setView('control')}><ArrowLeft size={16} /> Admin view</button>
+        <button on:click={() => size(-1)} aria-label="Smaller text"><Minus size={16} /></button>
+        <button on:click={() => size(1)} aria-label="Bigger text"><Plus size={16} /></button>
+        <button on:click={toggleFullscreen} aria-label="Full screen">{#if fullscreen}<Minimize2 size={16} />{:else}<Maximize2 size={16} />{/if}</button>
       </div>
+    {/if}
+  </div>
 
-      {#if showQrPanel && qrEvent}
-        <aside class="qr-panel">
-          <p class="qr-title">Scan to check in</p>
-          <button class="qr-img-btn" type="button" on:click={() => (qrZoomed = true)} title="Tap to enlarge">
-            <img src={qrEvent.qrCodeUrl} alt="Check-in QR code" />
-          </button>
-          <p class="qr-event">{qrEvent.name}</p>
-        </aside>
-      {/if}
-    </div>
+  {#if showScreenLink}
+    <ScreenLinkDialog on:close={() => (showScreenLink = false)} />
   {/if}
-</div>
-
-{#if qrZoomed && qrEvent}
-  <!-- Full-screen overlay so customers across the room can scan. -->
-  <button type="button" class="qr-overlay" on:click={() => (qrZoomed = false)} title="Tap to close">
-    <div class="qr-overlay-inner">
-      <p class="qr-overlay-title">Scan to check in</p>
-      <img src={qrEvent.qrCodeUrl} alt="Check-in QR code" />
-      <p class="qr-overlay-event">{qrEvent.name}</p>
-      <span class="qr-overlay-close" aria-hidden="true"><X size={20} /> Tap anywhere to close</span>
-    </div>
-  </button>
+{:else}
+  <div class="loading">Loading…</div>
 {/if}
 
 <style>
-  /* This page intentionally fills the viewport and ignores the admin chrome.
-     It's mounted with +page@.svelte so the only parent layout is the root one.
-     The dark backdrop behind the board is set in onMount, not with a
-     :global(body) rule. A route's CSS stays loaded for the rest of the
-     browsing session, so a global rule here would keep darkening every page
-     the user visits after this one until they do a full reload. */
-
-  .board {
-    /* Master scale — every sized thing on the page derives from this var.
-       Default 1.0 is tuned so 10 rows + chrome fit on a 1080p screen. */
-    --scale: 1.0;
-    --row-h:        calc(88px  * var(--scale));
-    --thumb-w:      calc(132px * var(--scale));
-    --gap:          calc(8px   * var(--scale));
-    --pad-x:        calc(20px  * var(--scale));
-    --customer-fs:  calc(1.7rem  * var(--scale));
-    --item-fs:      calc(1.45rem * var(--scale));
-    --time-fs:      calc(2.0rem  * var(--scale));
-    --meta-fs:      calc(0.95rem * var(--scale));
-    --badge-fs:     calc(0.95rem * var(--scale));
-    --jobno-fs:     calc(0.9rem  * var(--scale));
-    --stat-fs:      calc(2.4rem  * var(--scale));
-
-    min-height: 100vh;
-    color: #e2e8f0;
-    background: linear-gradient(180deg, #0b1220 0%, #0f172a 100%);
-    padding: 12px var(--pad-x) 24px;
-    box-sizing: border-box;
+  .page { min-height: 100dvh; background: #fbf7ef; }
+  .page.idle { cursor: none; }
+  .bar {
+    height: 3.25rem; display: flex; align-items: center; gap: 0.5rem; padding: 0 0.75rem;
+    background: white; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; color: #334155;
   }
-
-  .topbar {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 12px;
+  .bar-title { font-weight: 700; margin: 0 0.5rem 0 0.25rem; color: #0f172a; }
+  .bar-btn {
+    display: inline-flex; align-items: center; gap: 0.35rem; height: 2.25rem; padding: 0 0.7rem;
+    border-radius: 0.6rem; border: 0; background: transparent; color: inherit; cursor: pointer; text-decoration: none; font: inherit;
   }
-  .topbar-left { display: flex; align-items: center; gap: 12px; }
-  .topbar-left .back {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 36px; height: 36px; border-radius: 8px;
-    background: rgba(148, 163, 184, 0.12); color: #cbd5e1; text-decoration: none;
+  .bar-btn:hover { background: #f1f5f9; }
+  .bar-select { height: 2.25rem; border-radius: 0.6rem; border: 1px solid #cbd5e1; padding: 0 0.5rem; font: inherit; background: white; }
+  .bar-error { color: #b45309; font-size: 0.85rem; }
+  .seg { display: inline-flex; background: #f1f5f9; border-radius: 0.7rem; padding: 0.2rem; }
+  .seg button {
+    display: inline-flex; align-items: center; gap: 0.35rem; height: 1.9rem; padding: 0 0.65rem;
+    border: 0; border-radius: 0.5rem; background: transparent; color: #475569; cursor: pointer; font: inherit;
   }
-  .topbar-left .back:hover { background: rgba(148, 163, 184, 0.22); }
-  .brand { font-weight: 700; font-size: 1.1rem; line-height: 1.1; margin: 0; }
-  .sub { color: #94a3b8; font-size: 0.85rem; margin: 2px 0 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .page-pill {
-    background: rgb(var(--brand-500) / 0.3); color: rgb(var(--brand-200));
-    padding: 2px 8px; border-radius: 999px; font-size: 0.78rem; font-variant-numeric: tabular-nums;
+  .seg button.on { background: white; color: #0f172a; font-weight: 600; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08); }
+  .spacer { flex: 1; }
+  .float {
+    position: fixed; right: 1rem; bottom: 4.5rem; z-index: 10; display: flex; gap: 0.35rem;
+    background: rgba(28, 38, 34, 0.88); border-radius: 999px; padding: 0.35rem;
   }
-
-  .topbar-mid { display: flex; gap: 32px; justify-content: center; }
-  .stat { display: flex; flex-direction: column; align-items: center; line-height: 1; }
-  .stat-num { font-size: var(--stat-fs); font-weight: 800; font-variant-numeric: tabular-nums; }
-  .stat-lbl { color: #94a3b8; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
-
-  .topbar-right { display: flex; align-items: center; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
-  .ctl {
-    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    height: 36px; min-width: 36px; padding: 0 10px;
-    background: rgba(148, 163, 184, 0.12); color: #cbd5e1;
-    border: none; border-radius: 8px; cursor: pointer; font: inherit;
+  .float button {
+    display: inline-flex; align-items: center; gap: 0.35rem; height: 2.2rem; min-width: 2.2rem; padding: 0 0.7rem;
+    border: 0; border-radius: 999px; background: rgba(255, 255, 255, 0.12); color: white; cursor: pointer; font: inherit; font-size: 0.85rem;
   }
-  .ctl:hover:not(:disabled) { background: rgba(148, 163, 184, 0.22); }
-  .ctl:disabled { opacity: 0.4; cursor: not-allowed; }
-  .ctl.active { background: rgb(var(--brand-500) / 0.45); color: white; }
-  select.ctl { padding-right: 24px; }
-
-  .scale-group {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: rgba(148, 163, 184, 0.10); border-radius: 8px; padding: 0 6px;
-  }
-  .scale-range { width: 110px; accent-color: rgb(var(--brand-400)); }
-  .scale-pct {
-    font-variant-numeric: tabular-nums; font-size: 0.85rem; color: #cbd5e1;
-    min-width: 42px; text-align: right; padding-right: 4px;
-  }
-
-  .clock { font-variant-numeric: tabular-nums; color: #cbd5e1; font-size: 1rem; min-width: 64px; text-align: right; }
-
-  .err {
-    background: rgba(244, 63, 94, 0.18); color: #fecaca;
-    padding: 8px 12px; border-radius: 8px; margin-bottom: 12px; font-size: 0.9rem;
-  }
-
-  .empty { text-align: center; padding: 80px 20px; color: #94a3b8; }
-  .empty-big { font-size: 2.4rem; font-weight: 700; color: #cbd5e1; margin: 0; }
-  .empty-sub { margin-top: 8px; }
-
-  /* ──────────────────────────── Rows ──────────────────────────────── */
-  .rows {
-    list-style: none; padding: 0; margin: 0;
-    display: flex; flex-direction: column; gap: var(--gap);
-  }
-  .row {
-    display: grid;
-    grid-template-columns:
-      var(--thumb-w)
-      minmax(180px, 1.1fr)
-      minmax(220px, 2fr)
-      minmax(140px, 0.8fr)
-      minmax(150px, 0.55fr);
-    gap: calc(14px * var(--scale));
-    align-items: center;
-    background: #1e293b;
-    border-left: 8px solid transparent;
-    border-radius: 12px;
-    min-height: var(--row-h);
-    padding: calc(8px * var(--scale)) calc(14px * var(--scale)) calc(8px * var(--scale)) calc(8px * var(--scale));
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-    overflow: hidden;
-  }
-  .row.status-waiting       { border-left-color: #fbbf24; }
-  .row.status-in_progress   { border-left-color: #38bdf8; }
-  .row.status-completed     { border-left-color: #34d399; opacity: 0.85; }
-  .row.status-cannot_repair { border-left-color: #f472b6; opacity: 0.75; }
-  .row.status-awaiting_return { border-left-color: #a78bfa; opacity: 0.85; }
-  .row.status-returned      { border-left-color: #94a3b8; opacity: 0.6; }
-
-  .thumb {
-    width: var(--thumb-w);
-    height: calc(var(--row-h) - 16px);
-    border-radius: 8px; overflow: hidden;
-    background: #0f172a;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-  }
-  .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .thumb-empty { color: #475569; }
-
-  .who { min-width: 0; }
-  .customer {
-    font-size: var(--customer-fs); font-weight: 700; color: white;
-    margin: 0; line-height: 1.1;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  }
-  .job-no {
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size: var(--jobno-fs); color: #94a3b8; margin: 4px 0 0; letter-spacing: 0.04em;
-  }
-
-  .what { min-width: 0; }
-  .item {
-    font-size: var(--item-fs); color: #e2e8f0; line-height: 1.2; margin: 0;
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-    overflow: hidden; word-break: break-word;
-  }
-  .meta-line {
-    margin: 6px 0 0; font-size: var(--meta-fs); color: #94a3b8;
-    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
-  }
-  .brand-pill, .repairer-pill {
-    background: rgba(148, 163, 184, 0.18); color: #cbd5e1;
-    padding: 2px 8px; border-radius: 6px;
-  }
-  .cat { padding: 2px 8px; border-radius: 6px; font-weight: 600; }
-
-  .time {
-    display: flex; flex-direction: column; align-items: flex-end; line-height: 1;
-    min-width: 0;
-  }
-  .time-big {
-    font-size: var(--time-fs); font-weight: 800; color: white;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.02em;
-  }
-  .time-lbl {
-    font-size: var(--meta-fs); color: #94a3b8; margin-top: 4px;
-    text-transform: uppercase; letter-spacing: 0.08em;
-  }
-
-  .status-col { display: flex; justify-content: flex-end; }
-  .badge {
-    text-transform: uppercase; letter-spacing: 0.08em;
-    font-size: var(--badge-fs); font-weight: 700;
-    padding: 6px 14px; border-radius: 999px;
-    background: rgba(148, 163, 184, 0.18); color: #e2e8f0; white-space: nowrap;
-  }
-  .status-waiting       .badge { background: rgba(251, 191, 36, 0.30); color: #fde68a; }
-  .status-in_progress   .badge { background: rgba(56, 189, 248, 0.30); color: #bae6fd; }
-  .status-completed     .badge { background: rgba(52, 211, 153, 0.30); color: #a7f3d0; }
-  .status-cannot_repair .badge { background: rgba(244, 114, 182, 0.30); color: #fbcfe8; }
-  .status-awaiting_return .badge { background: rgba(167, 139, 250, 0.30); color: #ddd6fe; }
-  .status-returned      .badge { background: rgba(148, 163, 184, 0.30); color: #cbd5e1; }
-
-  /* Flash animation for newly arrived rows */
-  @keyframes flashRow {
-    0%   { background: #1e293b; }
-    25%  { background: #423500; }
-    50%  { background: #1e293b; }
-    75%  { background: #423500; }
-    100% { background: #1e293b; }
-  }
-  .row.flash {
-    animation: flashRow 1.6s ease-out 4;
-    border-left-color: #fbbf24 !important;
-    box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.6), 0 2px 8px rgba(0, 0, 0, 0.25);
-  }
-
-  /* ───────────────────────── Body + QR layout ──────────────────────── */
-  .board-body { display: flex; gap: calc(16px * var(--scale)); align-items: flex-start; }
-  .rows-col   { flex: 1 1 auto; min-width: 0; }
-  .qr-panel {
-    flex: 0 0 auto;
-    width: calc(280px * var(--scale));
-    background: #1e293b;
-    border-radius: 12px;
-    padding: calc(14px * var(--scale)) calc(14px * var(--scale)) calc(12px * var(--scale));
-    display: flex; flex-direction: column; align-items: center;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-  }
-  .qr-title {
-    margin: 0 0 calc(10px * var(--scale));
-    font-size: calc(1.1rem * var(--scale));
-    font-weight: 700; color: #e2e8f0; letter-spacing: 0.02em;
-    text-align: center;
-  }
-  .qr-img-btn {
-    background: white; padding: calc(10px * var(--scale)); border-radius: 10px;
-    border: none; cursor: pointer; line-height: 0;
-    width: 100%;
-  }
-  .qr-img-btn img { width: 100%; height: auto; display: block; }
-  .qr-event {
-    margin: calc(10px * var(--scale)) 0 0;
-    font-size: calc(0.9rem * var(--scale));
-    color: #94a3b8; text-align: center;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;
-  }
-
-  /* Full-screen QR overlay so customers across the room can scan. */
-  .qr-overlay {
-    position: fixed; inset: 0; z-index: 60;
-    background: rgba(2, 6, 23, 0.92); backdrop-filter: blur(6px);
-    display: flex; align-items: center; justify-content: center;
-    border: none; color: inherit; font: inherit; cursor: pointer; padding: 24px;
-  }
-  .qr-overlay-inner {
-    background: white; padding: 28px; border-radius: 16px;
-    display: flex; flex-direction: column; align-items: center;
-    max-width: min(90vw, 90vh); max-height: 90vh;
-  }
-  .qr-overlay-inner img {
-    width: min(70vmin, 720px); height: auto; display: block;
-  }
-  .qr-overlay-title {
-    margin: 0 0 16px; font-size: 1.6rem; font-weight: 700; color: #0f172a;
-  }
-  .qr-overlay-event {
-    margin: 14px 0 4px; font-size: 1.1rem; color: #334155; font-weight: 600;
-  }
-  .qr-overlay-close {
-    margin-top: 6px; display: inline-flex; gap: 6px; align-items: center;
-    color: #64748b; font-size: 0.9rem;
-  }
-
-  /* ───────────────────────── Page indicator ────────────────────────── */
-  .page-bar {
-    margin-top: 14px;
-    display: flex; align-items: center; gap: 16px;
-  }
-  .page-bar-fill {
-    flex: 1; height: 4px; border-radius: 999px; background: rgba(148, 163, 184, 0.18);
-    position: relative; overflow: hidden;
-  }
-  .page-bar-fill::after {
-    content: ''; position: absolute; inset: 0;
-    background: linear-gradient(90deg, rgb(var(--brand-500)), rgb(var(--brand-300)));
-    transform-origin: left center;
-    animation-name: shrinkBar;
-    animation-timing-function: linear;
-    animation-iteration-count: 1;
-    animation-fill-mode: forwards;
-  }
-  @keyframes shrinkBar {
-    from { transform: scaleX(0); }
-    to   { transform: scaleX(1); }
-  }
-  .page-dots { display: flex; gap: 6px; }
-  .dot {
-    width: 8px; height: 8px; border-radius: 50%; background: rgba(148, 163, 184, 0.3);
-  }
-  .dot.active { background: rgb(var(--brand-400)); }
-
-  /* Audio-enable / loading overlay */
-  .overlay {
-    position: fixed; inset: 0; z-index: 50;
-    background: rgba(2, 6, 23, 0.85); backdrop-filter: blur(6px);
-    display: flex; align-items: center; justify-content: center;
-    border: none; color: inherit; font: inherit; cursor: pointer; padding: 24px; text-align: center;
-  }
-  .overlay-card {
-    max-width: 480px;
-    background: #1e293b; border-radius: 16px; padding: 28px 32px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-  }
-  .overlay-card h1 { margin: 0 0 8px; font-size: 1.6rem; color: white; }
-  .overlay-card p  { margin: 0; color: #cbd5e1; line-height: 1.4; }
-  .enable-pill {
-    display: inline-block; margin-top: 18px;
-    background: rgb(var(--brand-500)); color: white;
-    padding: 10px 22px; border-radius: 999px; font-weight: 600;
-  }
-
-  @media (max-width: 900px) {
-    /* ───── Tablet / phone landscape ───── */
-    .board {
-      /* Override the TV-tuned scale so text/spacing don't get tiny when an
-         admin loads the board on their iPad after running it at 1.0 on a TV. */
-      --scale: 1.0;
-      --customer-fs: 1.25rem;
-      --item-fs: 1.05rem;
-      --time-fs: 1.5rem;
-      --meta-fs: 0.85rem;
-      --badge-fs: 0.75rem;
-      --jobno-fs: 0.75rem;
-      --stat-fs: 1.6rem;
-      --row-h: 88px;
-      --thumb-w: 88px;
-      padding: 10px 14px 20px;
-    }
-    .topbar {
-      grid-template-columns: auto 1fr auto;
-      grid-template-areas: "left mid right";
-      gap: 10px;
-    }
-    .topbar-left   { grid-area: left; }
-    .topbar-mid    { grid-area: mid; gap: 18px; }
-    .topbar-right  { grid-area: right; gap: 6px; }
-    .scale-group   { display: none; }
-    .clock         { display: none; }
-    .row {
-      grid-template-columns: var(--thumb-w) minmax(140px, 1.3fr) minmax(0, 2fr) auto auto;
-      gap: 10px;
-    }
-    /* On tablets the side QR is still useful but should be slimmer. */
-    .qr-panel { width: 200px; padding: 10px; }
-    .qr-title { font-size: 0.95rem; margin-bottom: 8px; }
-    .qr-event { font-size: 0.78rem; margin-top: 8px; }
-  }
-
-  @media (max-width: 540px) {
-    /* ───── Phone portrait ───── */
-    .board {
-      --customer-fs: 1.05rem;
-      --item-fs: 0.95rem;
-      --time-fs: 1.35rem;
-      --meta-fs: 0.78rem;
-      --badge-fs: 0.7rem;
-      --jobno-fs: 0.72rem;
-      --stat-fs: 1.35rem;
-      --row-h: auto;
-      --thumb-w: 56px;
-      padding: 8px 10px 16px;
-    }
-    .topbar {
-      grid-template-columns: 1fr auto;
-      grid-template-areas:
-        "left  right"
-        "mid   mid";
-      gap: 8px 10px;
-    }
-    .topbar-mid   { justify-content: space-around; gap: 0; }
-    .stat-lbl     { font-size: 0.62rem; }
-    .topbar-right { gap: 4px; flex-wrap: nowrap; }
-    .topbar-right select.ctl { display: none; }   /* event picker collapses; multi-event sites rarely run board from a phone */
-    .ctl { height: 34px; min-width: 34px; padding: 0 8px; }
-    .brand { font-size: 0.95rem; }
-    .sub   { font-size: 0.72rem; }
-
-    .row {
-      display: grid;
-      grid-template-columns: var(--thumb-w) minmax(0, 1fr) auto;
-      grid-template-areas:
-        "thumb who   time"
-        "thumb what  status";
-      align-items: start;
-      gap: 6px 10px;
-      padding: 10px;
-      min-height: 0;
-    }
-    .thumb       { grid-area: thumb; width: var(--thumb-w); height: var(--thumb-w); align-self: center; }
-    .who         { grid-area: who; }
-    .what        { grid-area: what; }
-    .time        { grid-area: time; flex-direction: row; align-items: baseline; gap: 8px; justify-content: flex-end; line-height: 1; align-self: start; }
-    .time-lbl    { margin-top: 0; }
-    .status-col  { grid-area: status; justify-content: flex-end; align-self: end; }
-    .badge       { padding: 4px 10px; }
-    .customer    { line-height: 1.15; }
-    .item        { -webkit-line-clamp: 3; }
-    .meta-line   { margin-top: 4px; gap: 4px; }
-
-    .page-bar    { margin-top: 10px; }
-    .empty       { padding: 40px 16px; }
-    .empty-big   { font-size: 1.5rem; }
-    .overlay-card { padding: 20px 22px; }
-    .overlay-card h1 { font-size: 1.25rem; }
-
-    /* On phones, fold the QR panel below the rows so each fits the screen. */
-    .board-body { flex-direction: column; gap: 10px; }
-    .qr-panel   { width: 100%; max-width: 320px; align-self: center; padding: 10px; }
-  }
+  .float button:hover { background: rgba(255, 255, 255, 0.25); }
+  .loading { min-height: 100dvh; display: grid; place-items: center; color: #64748b; background: #fbf7ef; }
+  @media (max-width: 900px) { .hide-sm { display: none; } }
 </style>

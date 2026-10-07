@@ -1,0 +1,467 @@
+import { waitUntil } from 'cloudflare:workers';
+import { bindings } from '../env.js';
+
+/**
+ * Repair Café International location directory.
+ *
+ * repaircafe.org publishes every Repair Café on its world map through a small
+ * open API (no key needed). We mirror it here instead of calling it from the
+ * browser for three reasons:
+ *
+ *  1. The API sends no CORS headers, so a browser cannot read it directly.
+ *  2. One upstream call every 24 hours is polite. Thousands of visitors each
+ *     making their own call is not.
+ *  3. We drop the contact email address before we pass the data on. The API
+ *     includes it, but our map does not need it, and republishing several
+ *     thousand volunteers' email addresses would only feed address scrapers.
+ *
+ * API documentation (version 1.1, May 2024):
+ * https://www.repaircafe.org/en/api/
+ */
+
+const SOURCE_URL = 'https://www.repaircafe.org/wp-json/v1/map';
+
+/** How long a cached copy is treated as fresh. */
+const TTL_MS = 24 * 60 * 60 * 1000;
+
+/** Give up on a slow upstream rather than holding a visitor's request open. */
+const FETCH_TIMEOUT_MS = 20_000;
+
+/** Tells repaircafe.org who is calling, so they can get in touch if we misbehave. */
+const USER_AGENT =
+  'CircularityRepairCafeHub/1.0 (+https://github.com/Zesty0wl/circularity-repair-cafe-hub)';
+
+/** One cafe as repaircafe.org returns it. */
+interface UpstreamCafe {
+  email?: string | null;
+  link?: string | null;
+  address?: string | null;
+  name?: string | null;
+  /** "latitude,longitude" as a single string. Empty when the cafe is not geocoded. */
+  coordinate?: string | null;
+  external_link?: string | null;
+  last_updated?: string | null;
+}
+
+/** One cafe as we publish it. No email address, and the coordinates parsed out. */
+export interface NetworkCafe {
+  name: string;
+  lat: number;
+  lng: number;
+  address: string | null;
+  /** Page on repaircafe.org, e.g. "repair-cafe-hattem". */
+  slug: string | null;
+  /** The cafe's own website, when it has one. */
+  website: string | null;
+}
+
+export interface NetworkSnapshot {
+  /** Cafes that have coordinates, so they can be drawn on the map. */
+  cafes: NetworkCafe[];
+  /** Everything the directory lists, including cafes with no coordinates yet. */
+  totalListed: number;
+  /** When we last fetched from repaircafe.org. */
+  fetchedAt: string;
+  source: string;
+}
+
+/**
+ * Bump this whenever the shape of a stored cafe changes, or whenever we start
+ * cleaning the upstream data differently.
+ *
+ * What we keep on disk is the tidied-up result, not the raw reply, so a change
+ * to the tidying would otherwise not show up until the day-old copy expired.
+ * A copy saved under an older number is thrown away and fetched again.
+ *
+ * 2: web addresses written without "https://" are repaired rather than passed
+ *    through, and HTML escapes in names are decoded.
+ */
+const CACHE_VERSION = 2;
+
+/**
+ * Turn HTML escapes back into real characters.
+ *
+ * Some names in the directory arrive escaped, so "Fix &amp; Mend" would show up
+ * on our map with the "&amp;" spelled out. We render names as text, never as
+ * markup, so decoding them here is safe.
+ */
+function decodeEntities(value: string): string {
+  return value
+    .replace(/&(#\d+|#[xX][0-9a-fA-F]+|[a-zA-Z]+);/g, (match, entity: string) => {
+      if (entity.startsWith('#x') || entity.startsWith('#X')) {
+        const code = Number.parseInt(entity.slice(2), 16);
+        return Number.isFinite(code) ? String.fromCodePoint(code) : match;
+      }
+      if (entity.startsWith('#')) {
+        const code = Number.parseInt(entity.slice(1), 10);
+        return Number.isFinite(code) ? String.fromCodePoint(code) : match;
+      }
+      const named: Record<string, string> = {
+        amp: '&',
+        lt: '<',
+        gt: '>',
+        quot: '"',
+        apos: "'",
+        nbsp: ' ',
+        eacute: 'é',
+        egrave: 'è',
+        agrave: 'à',
+        ccedil: 'ç',
+        uuml: 'ü',
+        ouml: 'ö',
+        auml: 'ä',
+        szlig: 'ß',
+      };
+      return named[entity] ?? match;
+    })
+    .trim();
+}
+
+/**
+ * Make a cafe's own web address safe to link to.
+ *
+ * Many entries in the directory are written without "https://" in front, and a
+ * browser reads a bare "www.example.org" as a page on our own site, so the link
+ * came out as https://our-site/www.example.org. A few have a mistyped scheme
+ * ("httsp://"), and a few are not addresses at all but notes such as
+ * "WhatsApp: ...". Anything we cannot make sense of is dropped rather than
+ * shown as a broken link.
+ */
+export function normaliseWebsite(value: string | null | undefined): string | null {
+  const raw = (value ?? '').trim();
+  if (!raw) return null;
+
+  // Keep http and https as they are. A site that is only served over plain
+  // http would break if we forced it to https.
+  const hasGoodScheme = /^https?:\/\//i.test(raw);
+  // Drop any other scheme and treat what follows as a bare address, which
+  // turns "httsp://example.org" back into something that works.
+  const bare = hasGoodScheme ? raw : raw.replace(/^[a-z][a-z0-9+.-]*:\/\//i, '');
+
+  // Notes rather than addresses. A real one has no spaces and has a dot in it.
+  if (/\s/.test(bare) || !bare.includes('.')) return null;
+
+  const candidate = hasGoodScheme ? bare : `https://${bare}`;
+  try {
+    const url = new URL(candidate);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
+    // A hostname with no dot cannot be a public site.
+    if (!url.hostname.includes('.')) return null;
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
+/** "52.658025,4.745521" to a pair of numbers. Null if it is missing or unusable. */
+function parseCoordinate(value: string | null | undefined): { lat: number; lng: number } | null {
+  if (!value) return null;
+  const [rawLat, rawLng] = value.split(',');
+  const lat = Number(rawLat);
+  const lng = Number(rawLng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  // A few rows carry 0,0, which is in the Atlantic rather than anywhere real.
+  if (lat === 0 && lng === 0) return null;
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+  // Five decimal places is roughly one metre. Anything more is noise that only
+  // makes the response bigger.
+  return { lat: Number(lat.toFixed(5)), lng: Number(lng.toFixed(5)) };
+}
+
+/** The last path segment of a repaircafe.org cafe link. */
+export function slugFromLink(link: string | null | undefined): string | null {
+  if (!link) return null;
+  const match = /\/cafe\/([^/?#]+)/.exec(link);
+  return match ? decodeURIComponent(match[1]!) : null;
+}
+
+function toNetworkCafe(row: UpstreamCafe): NetworkCafe | null {
+  const point = parseCoordinate(row.coordinate);
+  if (!point) return null;
+  const name = decodeEntities(row.name ?? '');
+  if (!name) return null;
+  const address = decodeEntities(row.address ?? '');
+  const website = normaliseWebsite(row.external_link);
+  return {
+    name,
+    lat: point.lat,
+    lng: point.lng,
+    address: address || null,
+    slug: slugFromLink(row.link),
+    website,
+  };
+}
+
+async function fetchUpstream(): Promise<NetworkSnapshot> {
+  const res = await fetch(SOURCE_URL, {
+    headers: { Accept: 'application/json', 'User-Agent': USER_AGENT },
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  });
+  if (!res.ok) throw new Error(`repaircafe.org responded ${res.status}`);
+  const body = (await res.json()) as unknown;
+  if (!Array.isArray(body)) throw new Error('repaircafe.org did not return a list');
+
+  const cafes: NetworkCafe[] = [];
+  for (const row of body as UpstreamCafe[]) {
+    const cafe = toNetworkCafe(row);
+    if (cafe) cafes.push(cafe);
+  }
+  // Alphabetical, so the list beside the map reads sensibly and the payload
+  // gzips a little better.
+  cafes.sort((a, b) => a.name.localeCompare(b.name));
+
+  return {
+    cafes,
+    totalListed: body.length,
+    fetchedAt: new Date().toISOString(),
+    source: SOURCE_URL,
+  };
+}
+
+// The Docker edition keeps the tidied copy in /data/config and in memory. Here
+// it is an object in the R2 bucket, kept as the exact JSON text we send, so the
+// map can be served without taking it apart and putting it back together. At
+// over five thousand cafes that would cost more CPU than a Worker should spend
+// on one request.
+const CACHE_KEY = 'cache/repair-cafe-network.json';
+
+let memoryText: string | null = null;
+let memoryFetchedAt = 0;
+let memoryParsed: NetworkSnapshot | null = null;
+/** Guards against several requests all triggering a refresh at once. */
+let inFlight: Promise<string | null> | null = null;
+
+function isFreshAt(fetchedAt: number): boolean {
+  const age = Date.now() - fetchedAt;
+  return Number.isFinite(age) && age >= 0 && age < TTL_MS;
+}
+
+async function readStored(): Promise<{ text: string; fetchedAt: number } | null> {
+  try {
+    const object = await bindings().UPLOADS.get(CACHE_KEY);
+    if (!object) return null;
+    if (Number(object.customMetadata?.version) !== CACHE_VERSION) return null;
+    const fetchedAt = Number(object.customMetadata?.fetchedAt);
+    return { text: await object.text(), fetchedAt: Number.isFinite(fetchedAt) ? fetchedAt : 0 };
+  } catch {
+    return null;
+  }
+}
+
+/** Fetch from repaircafe.org now and keep the result. Never throws. */
+export function refreshNetwork(): Promise<string | null> {
+  if (inFlight) return inFlight;
+  inFlight = fetchUpstream()
+    .then(async (snapshot) => {
+      const text = JSON.stringify(snapshot);
+      memoryText = text;
+      memoryFetchedAt = Date.now();
+      memoryParsed = snapshot;
+      await bindings().UPLOADS.put(CACHE_KEY, text, {
+        httpMetadata: { contentType: 'application/json' },
+        customMetadata: { version: String(CACHE_VERSION), fetchedAt: String(memoryFetchedAt) },
+      });
+      return text;
+    })
+    .catch(() => null)
+    .finally(() => {
+      inFlight = null;
+    });
+  return inFlight;
+}
+
+/**
+ * The directory as JSON text, exactly as /api/public/repair-cafe-network sends
+ * it (without `ours`). A stale copy is returned straight away and refreshed in
+ * the background, so a visitor never waits on repaircafe.org. Only the very
+ * first call with nothing stored has to wait. Null if we have never managed to
+ * fetch it.
+ */
+export async function getNetworkJson(): Promise<string | null> {
+  if (!memoryText) {
+    const stored = await readStored();
+    if (stored) {
+      memoryText = stored.text;
+      memoryFetchedAt = stored.fetchedAt;
+      memoryParsed = null;
+    }
+  }
+  if (memoryText && isFreshAt(memoryFetchedAt)) return memoryText;
+  if (memoryText) {
+    try {
+      waitUntil(refreshNetwork());
+    } catch {
+      void refreshNetwork();
+    }
+    return memoryText;
+  }
+  return refreshNetwork();
+}
+
+/** The current directory, taken apart. Only the admin search needs this. */
+export async function getNetwork(): Promise<NetworkSnapshot | null> {
+  const text = await getNetworkJson();
+  if (!text) return null;
+  if (!memoryParsed || memoryText !== text) memoryParsed = JSON.parse(text) as NetworkSnapshot;
+  return memoryParsed;
+}
+
+/**
+ * Find one cafe in the JSON text by its slug, without parsing the rest.
+ *
+ * Every cafe is written as {"name":...,"slug":"...",...} with no objects inside
+ * it, so the cafe is the text between the "{" before its slug and the "}"
+ * after. JSON.stringify escapes nothing in a slug except quotes and
+ * backslashes, so searching for the escaped slug is exact.
+ */
+export function findCafeInJson(text: string, slug: string | null | undefined): NetworkCafe | null {
+  const wanted = (slug ?? '').trim().toLowerCase();
+  if (!wanted) return null;
+  const lower = text.toLowerCase();
+  const needle = `"slug":${JSON.stringify(wanted)}`;
+  let at = lower.indexOf(needle);
+  while (at >= 0) {
+    const start = text.lastIndexOf('{"name":', at);
+    const end = text.indexOf('}', at);
+    if (start >= 0 && end > at) {
+      try {
+        const cafe = JSON.parse(text.slice(start, end + 1)) as NetworkCafe;
+        if (cafe.slug?.toLowerCase() === wanted) return cafe;
+      } catch {
+        // Not a cafe after all. Keep looking.
+      }
+    }
+    at = lower.indexOf(needle, at + needle.length);
+  }
+  return null;
+}
+
+/** resolveSlugs(), reading the JSON text rather than a parsed snapshot. */
+export function resolveSlugsInJson(
+  text: string,
+  slugs: readonly string[],
+  near?: { lat: number; lng: number } | null,
+): NearbyCafe[] {
+  const out: NearbyCafe[] = [];
+  for (const slug of slugs) {
+    const cafe = findCafeInJson(text, slug);
+    if (!cafe) continue;
+    out.push({ ...cafe, distanceKm: near ? Math.round(distanceKm(near, cafe) * 10) / 10 : null });
+  }
+  return out;
+}
+
+/**
+ * Find this cafe's own entry in the directory, so the map can mark it.
+ * Matches on the repaircafe.org slug the admin saved in Settings.
+ */
+export function findOurs(snapshot: NetworkSnapshot, slug: string | null | undefined): NetworkCafe | null {
+  if (!slug) return null;
+  const wanted = slug.trim().toLowerCase();
+  if (!wanted) return null;
+  return snapshot.cafes.find((c) => c.slug?.toLowerCase() === wanted) ?? null;
+}
+
+/** A cafe with how far away it is, when we know where "here" is. */
+export interface NearbyCafe extends NetworkCafe {
+  /** Straight-line distance in kilometres, or null when we have no anchor. */
+  distanceKm: number | null;
+}
+
+/** Mean radius of the Earth in kilometres. */
+const EARTH_RADIUS_KM = 6371;
+
+/**
+ * Straight line distance between two points, in kilometres.
+ *
+ * As the crow flies, not as the car drives, which is all a "cafes near you"
+ * list needs. Roads would take a routing service and a lot more care.
+ */
+export function distanceKm(
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number },
+): number {
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h =
+    Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
+  return 2 * EARTH_RADIUS_KM * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+/** Fold accents and case away, so "Café" and "cafe" match each other. */
+function foldForSearch(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
+export interface SearchOptions {
+  /** Words to look for in the name or address. Empty returns the nearest.  */
+  query?: string;
+  /** Where "near" is measured from. Without it, results are alphabetical. */
+  near?: { lat: number; lng: number } | null;
+  /** Our own slug, so we never offer a cafe itself as its own neighbour. */
+  excludeSlug?: string | null;
+  limit?: number;
+}
+
+/**
+ * Look through the directory for cafes to point people at.
+ *
+ * With a search term, matches on the name or the address. Without one, gives
+ * the closest cafes, which is what an admin wants the moment the page opens.
+ * Either way the answer is sorted by distance when we know where the cafe is,
+ * because "how far is it?" is the question being asked.
+ *
+ * Only cafes with a repaircafe.org page are offered. The slug is what we save,
+ * and a cafe with no page has nothing stable to save.
+ */
+export function searchNetwork(snapshot: NetworkSnapshot, options: SearchOptions = {}): NearbyCafe[] {
+  const limit = Math.max(1, Math.min(100, options.limit ?? 25));
+  const near = options.near ?? null;
+  const exclude = (options.excludeSlug ?? '').trim().toLowerCase();
+  const terms = foldForSearch((options.query ?? '').trim())
+    .split(/\s+/)
+    .filter(Boolean);
+
+  const matches: NearbyCafe[] = [];
+  for (const cafe of snapshot.cafes) {
+    if (!cafe.slug) continue;
+    if (exclude && cafe.slug.toLowerCase() === exclude) continue;
+    if (terms.length > 0) {
+      const haystack = foldForSearch(`${cafe.name} ${cafe.address ?? ''}`);
+      if (!terms.every((t) => haystack.includes(t))) continue;
+    }
+    matches.push({ ...cafe, distanceKm: near ? Math.round(distanceKm(near, cafe) * 10) / 10 : null });
+  }
+
+  matches.sort((a, b) => {
+    if (a.distanceKm !== null && b.distanceKm !== null) return a.distanceKm - b.distanceKm;
+    return a.name.localeCompare(b.name);
+  });
+  return matches.slice(0, limit);
+}
+
+/**
+ * The cafes behind a saved list of slugs, in the order they were saved.
+ * Anything that has since left the directory is quietly dropped, so a stale
+ * slug shows nothing rather than an empty pin.
+ */
+export function resolveSlugs(
+  snapshot: NetworkSnapshot,
+  slugs: readonly string[],
+  near?: { lat: number; lng: number } | null,
+): NearbyCafe[] {
+  const bySlug = new Map(snapshot.cafes.filter((c) => c.slug).map((c) => [c.slug!.toLowerCase(), c]));
+  const out: NearbyCafe[] = [];
+  for (const slug of slugs) {
+    const cafe = bySlug.get(slug.trim().toLowerCase());
+    if (!cafe) continue;
+    out.push({ ...cafe, distanceKm: near ? Math.round(distanceKm(near, cafe) * 10) / 10 : null });
+  }
+  return out;
+}

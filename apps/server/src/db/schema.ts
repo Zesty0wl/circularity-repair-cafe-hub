@@ -63,6 +63,12 @@ export const cafes = pgTable('cafes', {
    * work without it, only with the watermark.
    */
   cartoApiKey: text('carto_api_key'),
+  /**
+   * The secret part of the waiting-room display link (/display/<token>). The
+   * display shows the queue without anyone signing in on a public screen, so
+   * only somebody given the link can open it. An admin can replace it.
+   */
+  displayToken: text('display_token'),
   repaircafeSlug: text('repaircafe_slug'),
   /**
    * Nearby Repair Cafes this cafe knows and wants to point people at, held as

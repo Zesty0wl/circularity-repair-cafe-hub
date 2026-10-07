@@ -10,6 +10,14 @@ import { fileURLToPath } from 'node:url';
 export const BACKUP_FORMAT_VERSION = 1;
 
 /**
+ * The newest backup format this server can restore. Format 2 is what the
+ * Cloudflare edition writes (apps/cloudflare): one JSON file of rows per table
+ * instead of a pg_dump. Reading it means a cafe that tries Cloudflare can come
+ * back to Docker with everything it has.
+ */
+export const BACKUP_FORMAT_READABLE = 2;
+
+/**
  * Read the human-facing app version from the root package.json. Cached at
  * module load so we don't hit the filesystem on every backup.
  *

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { prepareImage } from '$lib/imagePrep';
   import { onMount } from 'svelte';
   import { api } from '$lib/api';
   import ShareProfile from '$lib/components/ShareProfile.svelte';
@@ -79,8 +80,10 @@
     uploading = true;
     error = '';
     try {
+      // Shrunk in the browser first: see $lib/imagePrep.ts.
+      const prepared = await prepareImage(file, { maxLongestEdge: 600, quality: 0.85 });
       const fd = new FormData();
-      fd.append('file', file);
+      fd.append('file', prepared, 'avatar.jpg');
       const r = await api<{ url: string }>('/api/repairer/me/avatar', { method: 'POST', formData: fd });
       me.avatarUrl = r.url;
       me = me; // trigger reactivity

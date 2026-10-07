@@ -2,6 +2,55 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
+## Unreleased
+
+These are on `main` and are not in a release yet.
+
+### Added
+
+- **The Cloudflare edition.** The whole hub, every feature, running on a free
+  Cloudflare account with no machine of your own. See
+  [docs/cloudflare/README.md](./docs/cloudflare/README.md). It is new. Repair
+  Café Woodville moved to it in October 2026. It needs no cron trigger: its
+  hourly jobs run in the background after a visit.
+- **Moving between editions.** A new Cloudflare hub can take over from a Docker
+  hub using the backup Docker already makes. Accounts, passwords, sessions,
+  repairs, photos and QR codes all come across. See
+  [docs/cloudflare/MIGRATION.md](./docs/cloudflare/MIGRATION.md).
+
+### Changed
+
+- **The README and the docs** now cover both editions: which one to choose,
+  how to set up and update each, and how to move from one to the other.
+- **One menu for everyone who signs in.** Admins and repairers now share the
+  same frame, with a sidebar on a laptop and tabs along the bottom on a phone,
+  and the page you are on is highlighted. Admins keep their menu on the
+  repairer pages, so "My profile" and "Check in a visitor" no longer strand
+  them. Signing in takes you back to the page you were trying to open, a
+  session that runs out sends you to sign in rather than leaving a blank page,
+  and a repairer who opens an admin link gets a short note instead of being
+  bounced to the sign-in page.
+- **The repair queue** shows what you are working on first, then the waiting
+  list oldest first, with each item's place, how long it has waited (amber
+  after half an hour, red after an hour), and a filter for the things you fix.
+  Finishing a repair is three big buttons: fixed, could not fix, or coming
+  back with a part. A repair waiting for a part can now be picked up again,
+  and your history links to each repair.
+- **The admin dashboard** is built around the session: the queue at a glance,
+  typical wait and repair times, anything waiting too long, who is working on
+  what, the next sessions, and repairs waiting for a part.
+- **The live board** has a waiting-room view for a screen people can see: big
+  type, the queue in order with an estimated wait, what is ready to collect,
+  the check-in QR code, and no visitors' names or photos. A private link
+  (dashboard, "Show on a screen") opens it on a TV with nobody signed in. The
+  admin view keeps the detail and links to every repair.
+- A Docker hub can restore a backup made by the Cloudflare edition, so a cafe
+  that tries Cloudflare can come back with everything. Passwords set on
+  Cloudflare keep working, and are moved back to bcrypt at the next sign-in.
+- Logos, banners, favicons and profile photos are now shrunk in the browser
+  before they upload. Logos and favicons keep a see-through background.
+- The admin area shows the right way to update for the edition it runs on.
+
 ## 1.10.0 (4 September 2026)
 
 ### Added

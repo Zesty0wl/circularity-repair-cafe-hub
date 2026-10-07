@@ -3,7 +3,7 @@
   import { get } from 'svelte/store';
   import { api } from '$lib/api';
   import { auth } from '$lib/stores/auth';
-  import { loadCafe } from '$lib/stores/cafe';
+  import { loadCafe, cafe as publicCafe } from '$lib/stores/cafe';
   import { FONT_OPTIONS } from '@circularity/shared';
   import { Trash2, Plus, Download, Upload, AlertTriangle } from 'lucide-svelte';
   import ImageDropzone from '$lib/components/ImageDropzone.svelte';
@@ -11,6 +11,9 @@
   import type { ManagedPhoto } from '$lib/gallery';
   import { MAX_LOCAL_CAFES, formatDistance, repairCafeOrgUrl, type LocalCafe } from '$lib/localCafes';
   import TelemetryChoice from '$lib/components/TelemetryChoice.svelte';
+  import BackupImport from '$lib/components/BackupImport.svelte';
+  import { downloadBackup as buildBackupInBrowser, saveBlob, type TransferProgress } from '$lib/backup/transfer';
+  import { prepareImage } from '$lib/imagePrep';
 
   let cafe: any = null;
   let busy = false;
@@ -20,7 +23,15 @@
   $: isSuperAdmin = $auth?.user.role === 'super_admin';
 
   // ─── Backup & restore state ───
-  let backupInfo: { appVersion: string; backupFormatVersion: number; confirmPhrase: string } | null = null;
+  let backupInfo: {
+    appVersion: string;
+    backupFormatVersion: number;
+    confirmPhrase: string;
+    /** 'cloudflare' when the backup is built in this browser. Docker hubs leave it out. */
+    edition?: 'docker' | 'cloudflare';
+  } | null = null;
+  let backupProgress: TransferProgress | null = null;
+  $: inBrowserBackups = backupInfo?.edition === 'cloudflare';
   let backupBusy = false;
   let backupDownloadError = '';
   let restoreFile: FileList | null = null;
@@ -345,8 +356,16 @@
 
   async function uploadAsset(kind: 'logo' | 'banner' | 'favicon' | 'og', files: FileList | null) {
     if (!files || !files[0]) return;
+    // Shrunk in the browser first, to the size the server keeps. Logos and
+    // favicons keep their see-through background.
+    const longest = kind === 'favicon' ? 256 : kind === 'og' ? 1200 : 1600;
+    const prepared = await prepareImage(files[0], {
+      maxLongestEdge: longest,
+      quality: 0.85,
+      keepTransparency: kind === 'logo' || kind === 'favicon',
+    });
     const fd = new FormData();
-    fd.append('image', files[0]);
+    fd.append('image', prepared, files[0].name);
     await api(`/api/admin/uploads/branding?kind=${kind}`, { method: 'POST', formData: fd });
     await loadCafe();
     await load();
@@ -429,6 +448,23 @@
   async function downloadBackup() {
     backupBusy = true;
     backupDownloadError = '';
+    // A Cloudflare hub cannot build the zip itself, so this browser does,
+    // fetching the data and the photos a piece at a time.
+    if (inBrowserBackups) {
+      try {
+        const { blob, filename } = await buildBackupInBrowser(
+          { id: cafe?.id ?? null, name: cafe?.name ?? '' },
+          (p) => (backupProgress = p),
+        );
+        saveBlob(blob, filename);
+      } catch (err: any) {
+        backupDownloadError = err?.message ?? 'Backup failed';
+      } finally {
+        backupBusy = false;
+        backupProgress = null;
+      }
+      return;
+    }
     try {
       const state = get(auth);
       const res = await fetch('/api/admin/backup/download', {
@@ -1284,6 +1320,7 @@
       <div class="card p-6 space-y-3">
         <h2 class="text-lg font-semibold flex items-center gap-2"><Download class="w-4 h-4" /> Download a backup</h2>
         <p class="text-sm text-slate-600">Creates a zip containing the entire database (all tables including audit log) plus every uploaded photo and branding asset. Keep this somewhere safe. Anyone with the file can restore your cafe's data.</p>
+        <p class="text-sm text-slate-600">The same file moves your hub to another machine, or between the Docker and Cloudflare editions. See <a class="text-brand-700 hover:underline" href="https://github.com/Zesty0wl/circularity-repair-cafe-hub/blob/main/docs/cloudflare/MIGRATION.md" target="_blank" rel="noopener">moving a hub</a>.</p>
         {#if backupInfo}
           <p class="text-xs text-slate-500">App version <span class="font-mono">{backupInfo.appVersion}</span> · backup format v{backupInfo.backupFormatVersion}</p>
         {/if}
@@ -1294,9 +1331,30 @@
           <Download class="w-4 h-4" />
           {backupBusy ? 'Preparing backup…' : 'Download backup zip'}
         </button>
-        <p class="text-xs text-slate-500">The download starts as soon as the database dump is ready. Big cafes with lots of photos may take a minute.</p>
+        {#if inBrowserBackups}
+          {#if backupProgress}
+            <p class="text-sm text-slate-700">{backupProgress.message} ({backupProgress.done} of {backupProgress.total})</p>
+          {/if}
+          <p class="text-xs text-slate-500">This browser builds the backup, so keep this page open until the download starts. Big cafes with lots of photos may take a few minutes.</p>
+        {:else}
+          <p class="text-xs text-slate-500">The download starts as soon as the database dump is ready. Big cafes with lots of photos may take a minute.</p>
+        {/if}
       </div>
 
+      {#if inBrowserBackups}
+        <div class="card p-6 space-y-3 ring-rose-200">
+          <h2 class="text-lg font-semibold text-rose-800 flex items-center gap-2"><AlertTriangle class="w-4 h-4" /> Restore from a backup</h2>
+          <p class="text-sm text-slate-600">Restore a backup from this hub, or from a Docker hub you are moving away from.</p>
+          <BackupImport
+            mode="admin"
+            confirmPhrase={backupInfo?.confirmPhrase ?? 'WIPE AND RESTORE'}
+            on:done={() => {
+              auth.set(null);
+              setTimeout(() => (window.location.href = '/login'), 6000);
+            }}
+          />
+        </div>
+      {:else}
       <div class="card p-6 space-y-3 ring-rose-200">
         <h2 class="text-lg font-semibold text-rose-800 flex items-center gap-2"><AlertTriangle class="w-4 h-4" /> Restore from a backup</h2>
         <div class="rounded-lg bg-rose-50 ring-1 ring-rose-200 p-3 text-sm text-rose-900">
@@ -1322,6 +1380,7 @@
           {restoreBusy ? 'Restoring…' : 'Wipe and restore'}
         </button>
       </div>
+      {/if}
     </div>
   {/if}
 
@@ -1333,6 +1392,32 @@
       <p>Released under the MIT licence.</p>
     </div>
 
+    {#if $publicCafe?.edition === 'cloudflare'}
+    <div class="card p-6 mt-4 max-w-2xl text-sm space-y-3">
+      <h2 class="font-semibold text-base">Updating</h2>
+      <p class="text-slate-700">
+        This hub runs on Cloudflare, so there is no machine to log in to. How you update depends
+        on how the hub was set up.
+      </p>
+      <p class="text-slate-700"><strong>If you set it up from the command line:</strong> in the project folder, run</p>
+      <pre class="bg-slate-900 text-slate-100 rounded-lg p-3 overflow-x-auto text-xs leading-relaxed"><code>git pull
+pnpm install
+pnpm cf:deploy</code></pre>
+      <p class="text-slate-700">
+        <strong>If your hub updates itself from GitHub</strong> (Workers Builds): open your copy of the
+        project on GitHub and press <strong>Sync fork</strong>. Cloudflare builds and publishes the new
+        version by itself.
+      </p>
+      <p class="text-slate-700">
+        The site stays up while it updates. Database changes are applied by themselves on the
+        first visit after the update.
+      </p>
+      <p class="text-slate-600">
+        The full guide is in
+        <a class="text-brand-700 hover:underline" href="https://github.com/Zesty0wl/circularity-repair-cafe-hub/blob/main/docs/cloudflare/README.md" target="_blank" rel="noopener">docs/cloudflare/README.md</a>.
+      </p>
+    </div>
+    {:else}
     <div class="card p-6 mt-4 max-w-2xl text-sm space-y-3">
       <h2 class="font-semibold text-base">Updating</h2>
       <p class="text-slate-700">
@@ -1365,5 +1450,6 @@ docker compose up -d</code></pre>
         <code class="bg-slate-100 px-1 rounded">HUB_VERSION=1.7.0</code>.
       </p>
     </div>
+    {/if}
   {/if}
 {/if}

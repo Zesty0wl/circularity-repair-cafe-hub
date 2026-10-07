@@ -1,8 +1,8 @@
 # Moving a hub between Docker and Cloudflare
 
-This is the plan for the cafes already running the Docker edition, so they can
-move to the Cloudflare edition without losing anything, and move back if they
-want to.
+This guide is for cafes already running the Docker edition. It moves them to
+the Cloudflare edition without losing anything, and back again if they want.
+Repair Café Woodville moved this way in October 2026.
 
 ## The short version
 
@@ -12,7 +12,8 @@ want to.
    **Download backup zip**.
 3. On the new hub's first page, choose **Move from an existing hub** and pick
    that zip.
-4. Check the new hub. Then point your domain at it.
+4. Check the new hub. Then point your domain at it, and switch the Docker
+   hub off.
 
 Nobody has to reset a password, re-upload a photo or print new QR posters.
 
@@ -115,24 +116,53 @@ The hub tells you if its saved web address is still the old hub's. If you will
 use a different address from now on, change it under **Settings, Cafe
 profile**, because the QR codes for new sessions use it.
 
-### 5. Switch the domain
+### 5. Connect your address
 
-When you are happy, point your domain at the Cloudflare hub:
+When you are happy, point your address at the Cloudflare hub. Your address
+already has a DNS record that sends visitors to the Docker hub, and Cloudflare
+will not replace it on its own, so you remove it first.
 
-1. Stop the Docker hub's tunnel, or remove the DNS record that points at it.
-2. Run `pnpm cf:deploy -- --domain your.domain` once.
+1. In the Cloudflare dashboard, open your domain, then **DNS, Records**. Find
+   the record with your hub's address. Write down its type and content (or
+   take a screenshot), so you can put it back. A hub behind a tunnel has a
+   CNAME record ending in `cfargotunnel.com`.
+2. Delete that record. The site is unreachable from now until step 3
+   finishes, which is usually under a minute.
+3. Run `pnpm cf:deploy -- --domain your.domain`. Cloudflare creates the new
+   record and the certificate.
+4. Open your address. The front page should load. Signed-in admins can check
+   **Settings, About**, which now says "Cloudflare edition".
 
 People who were signed in to the old hub at that address stay signed in. QR
 posters keep working, because the check-in links are on the same address.
 
-Keep the Docker hub, switched off, for a few weeks until you are sure.
+**To go back,** delete the custom domain from the Worker (dashboard, Workers,
+your hub, Settings, Domains), and add the old DNS record again.
+
+### 6. Switch off the Docker hub
+
+Stop the Docker hub, but keep it and its data for a few weeks until you are
+sure:
+
+```bash
+docker update --restart=no circularity-repair-cafe-hub
+docker stop circularity-repair-cafe-hub
+```
+
+The first line stops it coming back by itself when the machine restarts. Both
+hubs have the same identity, so if both kept running and both shared their
+numbers with the project, your cafe would be counted twice. If you use the
+tunnel only for the hub, switch that off too (`sudo systemctl disable --now cloudflared`).
+
+To start the Docker hub again: `docker update --restart=unless-stopped
+circularity-repair-cafe-hub && docker start circularity-repair-cafe-hub`.
 
 ## Cloudflare back to Docker
 
 Take a backup on the Cloudflare hub (**Settings, Backup & restore, Download
 backup zip**), and restore it on the Docker hub the usual way (**Settings,
-Backup & restore, Wipe and restore**). This needs the Docker edition from this
-branch or later, which can read format 2:
+Backup & restore, Wipe and restore**). This needs a Docker hub newer than
+version 1.10.0, because older ones cannot read format 2. The newer code:
 
 - `apps/server/src/services/backup.ts` loads the portable rows inside one
   transaction, so a restore that fails leaves the hub as it was.
@@ -169,7 +199,7 @@ on as the same cafe rather than appearing as a new one.
 
 ## How it was tested
 
-- **Unit and integration tests** (`pnpm cf:test`, 44 tests in the real Workers
+- **Unit and integration tests** (`pnpm cf:test`, 47 tests in the real Workers
   runtime). One imports a hand-written pg_dump with every column type and an
   older schema, checks the passwords and a carried-over sign-in, then takes a
   format 2 backup and restores it over the top and compares every table.
@@ -183,6 +213,12 @@ on as the same cafe rather than appearing as a new one.
   figure matched again, the photos were served, and a password that had been
   turned into PBKDF2 on Cloudflare signed in on Docker and was turned back
   into bcrypt.
+
+- **A real cafe.** Repair Café Woodville moved from Docker (version 1.10.0)
+  to a new Cloudflare account in October 2026: 10 accounts, 12 sessions, 44
+  repairs, 708 audit log lines and 81 photos. Every count matched, and the
+  public pages and photos on the two hubs were identical before the address
+  was switched.
 
 ## What could still go wrong
 

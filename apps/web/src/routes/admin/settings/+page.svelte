@@ -1320,7 +1320,7 @@
       <div class="card p-6 space-y-3">
         <h2 class="text-lg font-semibold flex items-center gap-2"><Download class="w-4 h-4" /> Download a backup</h2>
         <p class="text-sm text-slate-600">Creates a zip containing the entire database (all tables including audit log) plus every uploaded photo and branding asset. Keep this somewhere safe. Anyone with the file can restore your cafe's data.</p>
-        <p class="text-sm text-slate-600">The same file moves your hub to another machine, or between the Docker and Cloudflare editions. See <a class="text-brand-700 hover:underline" href="https://github.com/Zesty0wl/circularity-repair-cafe-hub/blob/experimental-cloudflare/docs/cloudflare/MIGRATION.md" target="_blank" rel="noopener">moving a hub</a>.</p>
+        <p class="text-sm text-slate-600">The same file moves your hub to another machine, or between the Docker and Cloudflare editions. See <a class="text-brand-700 hover:underline" href="https://github.com/Zesty0wl/circularity-repair-cafe-hub/blob/main/docs/cloudflare/MIGRATION.md" target="_blank" rel="noopener">moving a hub</a>.</p>
         {#if backupInfo}
           <p class="text-xs text-slate-500">App version <span class="font-mono">{backupInfo.appVersion}</span> · backup format v{backupInfo.backupFormatVersion}</p>
         {/if}
@@ -1414,7 +1414,7 @@ pnpm cf:deploy</code></pre>
       </p>
       <p class="text-slate-600">
         The full guide is in
-        <a class="text-brand-700 hover:underline" href="https://github.com/Zesty0wl/circularity-repair-cafe-hub/blob/experimental-cloudflare/docs/cloudflare/README.md" target="_blank" rel="noopener">docs/cloudflare/README.md</a>.
+        <a class="text-brand-700 hover:underline" href="https://github.com/Zesty0wl/circularity-repair-cafe-hub/blob/main/docs/cloudflare/README.md" target="_blank" rel="noopener">docs/cloudflare/README.md</a>.
       </p>
     </div>
     {:else}

@@ -1,7 +1,6 @@
 # Running the hub on Cloudflare: the plan
 
-Status: experimental, and built. This work lives on the `experimental-cloudflare`
-branch. How to set it up is in [README.md](./README.md).
+Status: built, and in use. How to set it up is in [README.md](./README.md).
 
 ## Why
 
@@ -170,7 +169,7 @@ going out over the network and back.
    in, add a venue and a session, open it, check in an item with a photo,
    accept it, finish it, read the reports, export a backup and import it.
 3. **Both builds** of the web app, and `svelte-check`.
-4. **A live site** at `https://experimental-repair-cafe.bzwrd.co.uk`, checked in
+4. **A live test site** on a Cloudflare account, checked in
    a real browser: public pages, setup, admin, the board, check-in by phone.
 5. **A real migration**: a backup taken from a running Docker hub, imported
    into the Cloudflare one, and compared.

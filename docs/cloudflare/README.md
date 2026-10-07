@@ -1,12 +1,11 @@
 # The Cloudflare edition
 
-Status: **experimental**. It lives on the `experimental-cloudflare` branch.
-
 The Cloudflare edition is the same hub, with every feature, running on a free
 Cloudflare account instead of a machine of your own. There is no server to
 look after, nothing to patch, and no disk to fill up.
 
-A test site runs at <https://experimental-repair-cafe.bzwrd.co.uk>.
+It is new. [Repair Café Woodville](https://repaircafe.circularity.org) moved
+to it from Docker in October 2026, and runs on it now.
 
 - How it works, and why it is built this way: [PLAN.md](./PLAN.md)
 - Moving an existing Docker hub across, and back: [MIGRATION.md](./MIGRATION.md)
@@ -31,7 +30,7 @@ Open a terminal and run these one at a time.
 **1. Get the code and the tools.**
 
 ```bash
-git clone --branch experimental-cloudflare https://github.com/Zesty0wl/circularity-repair-cafe-hub.git
+git clone https://github.com/Zesty0wl/circularity-repair-cafe-hub.git
 cd circularity-repair-cafe-hub
 npm install -g pnpm
 pnpm install
@@ -59,9 +58,40 @@ the DNS record and the HTTPS certificate for you. To try the hub before you
 choose a domain, leave `--domain` out and use the `workers.dev` address it
 prints.
 
+If the address already has a DNS record, for example because it points at
+your Docker hub today, Cloudflare will not replace it for you. Leave
+`--domain` out for now, move your data across first (see
+[MIGRATION.md](./MIGRATION.md)), and then connect the address as that guide
+explains.
+
 **4. Open your web address.** The setup wizard opens, the same as on the
 Docker edition. Either set up a new cafe, or choose **Move from an existing
 hub** and pick a backup from your current hub. See [MIGRATION.md](./MIGRATION.md).
+
+### Publishing without signing in through the browser
+
+On a machine with no browser, or from an automated job, use an API token
+instead of `wrangler login`. Create one in the Cloudflare dashboard under
+**My Profile, API Tokens**, starting from the "Edit Cloudflare Workers"
+template, and give it D1 and R2 edit rights as well. If you use `--domain`,
+it also needs DNS edit rights for that domain. Then:
+
+```bash
+export CLOUDFLARE_API_TOKEN=your-token
+export CLOUDFLARE_ACCOUNT_ID=your-account-id
+pnpm cf:deploy
+```
+
+Set `CLOUDFLARE_ACCOUNT_ID` whenever your sign-in can see more than one
+Cloudflare account, so the hub goes to the right one.
+
+### Photo storage must be switched on once
+
+Photos live in Cloudflare R2. A new account has to switch R2 on once, in the
+dashboard under **R2 Object Storage**, before the first publish. It is free
+for the amount a cafe uses, but Cloudflare may ask for card details. If you
+skip this, publishing stops with "Please enable R2 through the Cloudflare
+Dashboard".
 
 ## Settings
 
@@ -115,6 +145,19 @@ pnpm --filter @circularity/cloudflare exec wrangler d1 time-travel restore repai
 
 Photos are not part of Time Travel, so keep taking backups too.
 
+## Jobs that run every hour
+
+The hub has a few small jobs: sending its numbers to the project (only if you
+agreed), checking for a new version, and refreshing the list of Repair Cafés
+for the map. They run in the background after someone visits the site, at
+most once an hour, so the visitor never waits.
+
+This means the hub needs no cron trigger. The free plan allows only five per
+account, and other projects on the same account may have used them. If you
+have one to spare and want the jobs to run on the hour even when nobody
+visits, add `"triggers": { "crons": ["17 * * * *"] }` to
+`apps/cloudflare/wrangler.jsonc`.
+
 ## What the free plan gives you
 
 | Limit                     | Free plan                       | A busy cafe uses about        |
@@ -153,6 +196,10 @@ together.
 - **The domain does not work.** It must be on the same Cloudflare account,
   with its nameservers pointing at Cloudflare. It can take a few minutes for a
   new certificate.
+- **"Please enable R2".** Switch on R2 in the dashboard once (see above), wait
+  a minute, and publish again.
+- **"A DNS record already exists".** Something else uses that address. See
+  "Connect your address" in [MIGRATION.md](./MIGRATION.md).
 - **A page shows old information.** Public pages are kept for one minute for
   visitors who are not signed in. Signed-in staff always see the latest.
 - **See what the hub is doing.** `pnpm --filter @circularity/cloudflare exec wrangler tail`

@@ -2,16 +2,17 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
-## Unreleased: experimental Cloudflare edition
+## Unreleased
 
-These are on the `experimental-cloudflare` branch and are not in a release yet.
+These are on `main` and are not in a release yet.
 
 ### Added
 
 - **The Cloudflare edition.** The whole hub, every feature, running on a free
   Cloudflare account with no machine of your own. See
-  [docs/cloudflare/README.md](./docs/cloudflare/README.md). It is new and still
-  experimental.
+  [docs/cloudflare/README.md](./docs/cloudflare/README.md). It is new. Repair
+  Café Woodville moved to it in October 2026. It needs no cron trigger: its
+  hourly jobs run in the background after a visit.
 - **Moving between editions.** A new Cloudflare hub can take over from a Docker
   hub using the backup Docker already makes. Accounts, passwords, sessions,
   repairs, photos and QR codes all come across. See
@@ -19,6 +20,8 @@ These are on the `experimental-cloudflare` branch and are not in a release yet.
 
 ### Changed
 
+- **The README and the docs** now cover both editions: which one to choose,
+  how to set up and update each, and how to move from one to the other.
 - **One menu for everyone who signs in.** Admins and repairers now share the
   same frame, with a sidebar on a laptop and tabs along the bottom on a phone,
   and the page you are on is highlighted. Admins keep their menu on the

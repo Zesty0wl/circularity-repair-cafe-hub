@@ -1,18 +1,24 @@
 # Circularity Repair Cafe Hub
 
-> Free, open-source software for grass-roots **repair cafes** — built and maintained
-> as part of the [Circularity](https://circularity.org) community of repair groups,
-> tool libraries and reuse hubs across the UK.
+> Free, open-source software for grass-roots **repair cafes**. It is built and
+> maintained as part of the [Circularity](https://circularity.org) community of
+> repair groups, tool libraries and reuse hubs across the UK.
 
-A self-hosted platform that gives a repair cafe everything it needs to run an
-event: a public site, customer self-check-in via QR code, a live job-queue board
-for repairers, an admin area with reports, and a single Docker container that
-includes its own database. Originally built for
+A platform that gives a repair cafe everything it needs to run an event: a
+public site, check-in by QR code, a live repair queue for volunteers, a screen
+for the waiting area, and an admin area with reports. Originally built for
 [Circularity Repair Cafe](https://www.circularity.org/repair-cafe) and shared
 with anyone who wants to run one of their own.
 
-If you run a repair cafe — or want to start one — fork it, deploy it, change it
-to suit your community. PRs welcome.
+You can run it in two ways, with the same features in both:
+
+- **On a free Cloudflare account**, with no server of your own. This is the
+  easiest. See the [Cloudflare edition](#the-cloudflare-edition).
+- **In one Docker container** on a small server or a Raspberry Pi, which
+  includes its own database. See [Install with Docker](#install-with-docker).
+
+If you run a repair cafe, or want to start one, fork it, deploy it, and change
+it to suit your community. PRs welcome.
 
 ## Why?
 
@@ -20,8 +26,8 @@ Most repair cafes run on a clipboard, a spreadsheet and a WhatsApp group. That
 works, but it doesn't scale, it loses the data that proves your impact, and it
 puts a lot of admin on the volunteers. This project is the tool we wished
 existed: simple enough to set up in an afternoon, capable enough to track
-hundreds of repairs, and yours to host on a £2.50/month VPS or a Pi in the
-corner.
+hundreds of repairs, and yours to host on a free Cloudflare account, a
+£2.50/month VPS or a Pi in the corner.
 
 ## Features
 
@@ -108,8 +114,10 @@ corner.
   What gets sent and why is set out in [`docs/proposal-telemetry.md`](./docs/proposal-telemetry.md).
 - **Privacy by design** — bcrypt passwords, JWT + httpOnly refresh cookies,
   rate-limited login, CSP headers, configurable PII retention with one-click purge.
-- **Single container** — Node 22 + Fastify + PostgreSQL 16, supervised by
-  s6-overlay; one `/data` volume for the database, uploads and QR codes.
+- **Two ways to host it.** On Cloudflare (Workers, a D1 database and R2 photo
+  storage, all on the free plan), or in a single Docker container (Node 22,
+  Fastify and PostgreSQL 16, with one `/data` volume for the database and
+  photos). A backup from either one restores into the other.
 
 ## Stack
 
@@ -117,7 +125,8 @@ corner.
 | -------- | ----------------------------------------------------------------- |
 | Backend  | Node 22, Fastify 4, Drizzle ORM, PostgreSQL 16, sharp, qrcode     |
 | Frontend | SvelteKit (SSR via adapter-node), Tailwind CSS, Iconify, Chart.js |
-| Infra    | Docker (multi-stage), s6-overlay, exposed on host port **5026**; Cloudflare Tunnel for public access |
+| Docker edition | Docker (multi-stage), s6-overlay, exposed on host port **5026**; Cloudflare Tunnel for public access |
+| Cloudflare edition | Cloudflare Workers, D1 (SQLite), R2, Drizzle ORM, SvelteKit via adapter-cloudflare. See [apps/cloudflare](./apps/cloudflare) |
 | Images   | Built for amd64 and arm64 by GitHub Actions, published to [GHCR](https://github.com/Zesty0wl/circularity-repair-cafe-hub/pkgs/container/circularity-repair-cafe-hub) |
 
 ## Try it first
@@ -149,25 +158,70 @@ Please do not type real names, emails or phone numbers into it.
 
 ## Install
 
-> **New, and experimental: no server at all.** The
-> [Cloudflare edition](./docs/cloudflare/README.md) runs the whole hub on a
-> free Cloudflare account, with nothing to install on a machine of your own.
-> It lives on the `experimental-cloudflare` branch, and a Docker hub can
-> [move across to it](./docs/cloudflare/MIGRATION.md) and back.
+There are three ways to run this. Pick the one that matches you.
 
-There are two ways to run this. Pick the one that matches you.
+|                 | **Cloudflare edition**                     | **Docker: guided install**                     | **Docker: just the container**             |
+| --------------- | ------------------------------------------ | ---------------------------------------------- | ------------------------------------------ |
+| Where it runs   | Your free Cloudflare account               | Your own Linux machine or Raspberry Pi         | Your own machine                           |
+| What you look after | Nothing. No server, no disk, no patches | The machine, its updates and its disk          | The machine and your own reverse proxy     |
+| What you need   | A Cloudflare account and a laptop with Node.js, for setup and updates | A domain on Cloudflare, and a machine with 2 GB of memory | A reverse proxy you already know how to run |
+| How long        | About ten minutes                          | About five minutes, mostly waiting             | About one minute                           |
+| Good for        | Most repair cafes                          | Cafes that want the data on their own machine  | People who already run servers             |
 
-|                  | **Guided install**                                  | **Just the container**                          |
-| ---------------- | --------------------------------------------------- | ----------------------------------------------- |
-| What you get     | A working public website, with HTTPS                | A container listening on `127.0.0.1:5026`        |
-| Who handles TLS  | Cloudflare, nothing to set up or renew              | You do, with your own reverse proxy              |
-| What you need    | A domain whose nameservers point at Cloudflare      | A reverse proxy you already know how to run      |
-| How long         | About five minutes, mostly waiting                  | About one minute                                 |
-| Good for         | Most repair cafes                                   | People who already run servers                   |
+All three have every feature. A backup from one restores into the others, so
+you can change your mind later. See
+[moving between Docker and Cloudflare](./docs/cloudflare/MIGRATION.md).
 
-Both use the same ready-made image, so nothing is compiled on your machine.
-That is why 2 GB of memory is enough. Building the front end needs about 4 GB,
-and you no longer have to do it.
+## The Cloudflare edition
+
+The whole hub runs on Cloudflare's free plan: the website and API on Workers,
+the database on D1, and photos on R2. There is nothing to install on a machine
+of your own, and nothing to keep running. Your laptop is only needed to set it
+up and to update it.
+
+**Before you start you need:**
+
+- A free Cloudflare account, with **R2 Object Storage** switched on once in
+  the dashboard. It is free for what a cafe uses, but Cloudflare may ask for
+  card details.
+- A domain whose nameservers point at Cloudflare. You can skip this while you
+  try it: every hub also gets a free `workers.dev` address.
+- [Node.js](https://nodejs.org) 22 or newer and [Git](https://git-scm.com) on
+  your laptop (Windows, Mac or Linux).
+
+**Then run these, one at a time:**
+
+```bash
+git clone https://github.com/Zesty0wl/circularity-repair-cafe-hub.git
+cd circularity-repair-cafe-hub
+npm install -g pnpm
+pnpm install
+pnpm --filter @circularity/cloudflare exec wrangler login
+pnpm cf:deploy -- --domain repair.example.org
+```
+
+The `wrangler login` step opens your browser so you can allow access. The last
+step creates the database and photo storage, builds the site and publishes it
+at your address, with an HTTPS certificate. It takes two or three minutes.
+Then open your address, and the setup wizard starts.
+
+**To update it later**, from the same folder:
+
+```bash
+git pull
+pnpm install
+pnpm cf:deploy
+```
+
+The full guide covers settings, backups, the free plan's limits and what to do
+when something goes wrong:
+**[docs/cloudflare/README.md](./docs/cloudflare/README.md)**.
+
+## Install with Docker
+
+The two Docker options use the same ready-made image, so nothing is compiled
+on your machine. That is why 2 GB of memory is enough. Building the front end
+needs about 4 GB, and you no longer have to do it.
 
 ## Guided install
 
@@ -353,6 +407,8 @@ admin account and filling in your cafe's details.
 
 ### Checking it is healthy
 
+On Docker:
+
 ```bash
 ./doctor.sh
 ```
@@ -362,7 +418,15 @@ tunnel, your web address and whether a newer version is out, then says in plain
 English what is fine and what is not. It only reads things, so it is always safe
 to run. If you are asking for help, run it and send us everything it prints.
 
+On Cloudflare, `pnpm --filter @circularity/cloudflare exec wrangler tail`
+shows each request as it happens, with any errors.
+
 ### Updating
+
+On the Cloudflare edition, run `git pull`, `pnpm install` and `pnpm cf:deploy`
+from the folder you set it up in. The site stays up while it updates.
+
+On Docker:
 
 ```bash
 cd ~/circularity-repair-cafe-hub
@@ -392,8 +456,13 @@ implying you are up to date.
 
 ### Backup and restore
 
-Everything worth keeping is in the named volume
-`circularity-repair-cafe-hub-data`.
+The easiest way works on both editions. Sign in as a super admin, go to
+**Settings, Backup & restore**, and choose **Download backup zip**. The zip
+holds every table and every photo, and restores into either edition from the
+same page.
+
+On Docker you can also back up from the command line. Everything worth keeping
+is in the named volume `circularity-repair-cafe-hub-data`.
 
 ```bash
 # Back up the database
@@ -424,9 +493,13 @@ live in this repo, so they always match the version you are running.
 
 ## Environment variables
 
+These are for the Docker edition, in your `.env` file. The Cloudflare edition
+uses the same names as Worker variables. See
+[its settings](./docs/cloudflare/README.md#settings).
+
 | Variable        | Required | Default                                                           |
 | --------------- | -------- | ----------------------------------------------------------------- |
-| `SECRET_KEY`    | **yes**  | —                                                                 |
+| `SECRET_KEY`    | **yes**  | None. Make one with `openssl rand -hex 32`                        |
 | `TZ`            | no       | `Europe/London`. Set this to where your cafe is, or every time shown on the site will be out. The installer fills it in from the machine |
 | `HUB_VERSION`   | no       | `latest`. The published image tag to run, for example `1.6.0`     |
 | `HUB_PORT`      | no       | `5026`. The port on the host. Change it if 5026 is already used   |
@@ -434,14 +507,15 @@ live in this repo, so they always match the version you are running.
 | `DATABASE_URL`  | no       | `postgresql://circularity:circularity@127.0.0.1:5432/circularity` |
 | `PORT`          | no       | `3000` (mapped to host `5026` by the included compose file)       |
 | `UPLOADS_DIR`   | no       | `/data/uploads`                                                   |
-| `TRUST_PROXY`   | no       | `false` — set `true` when running behind a reverse proxy          |
+| `TRUST_PROXY`   | no       | `false`. Set `true` when running behind a reverse proxy           |
 
 ## Repository layout
 
 ```
 apps/
-  server/    Fastify backend, Drizzle migrations, REST API
-  web/       SvelteKit app (server-rendered via adapter-node)
+  server/      Fastify backend, Drizzle migrations, REST API (Docker edition)
+  cloudflare/  The same API on Cloudflare Workers, D1 and R2 (Cloudflare edition)
+  web/         SvelteKit app, built with adapter-node or adapter-cloudflare
 packages/
   shared/    Shared Zod schemas / TypeScript types
 docker/      cont-init scripts and s6-rc service definitions
@@ -455,15 +529,21 @@ docker-compose.build.yml  Add-on file for building from source instead
 
 ## Development
 
-The codebase is a pnpm workspace, but the production build runs entirely inside
-the Docker image — you don't need a Node toolchain on the host to deploy. To
-hack on the code locally:
+The codebase is a pnpm workspace. The Docker image is built entirely inside
+Docker, so a Docker host needs no Node toolchain. To work on the code locally:
 
 ```bash
 pnpm install
-pnpm dev:server   # backend at :3000
+pnpm dev:server   # Docker edition's backend at :3000
 pnpm dev:web      # SvelteKit dev server
+pnpm cf:dev       # the Cloudflare edition at :8787, with a local database
+pnpm cf:test      # the Cloudflare edition's tests, in the real Workers runtime
 ```
+
+Both editions serve the same web app and the same API. A change to one API
+route usually needs the same change in `apps/server` and `apps/cloudflare`.
+[docs/cloudflare/PLAN.md](./docs/cloudflare/PLAN.md) explains how the
+Cloudflare edition is put together.
 
 ## Contributing
 

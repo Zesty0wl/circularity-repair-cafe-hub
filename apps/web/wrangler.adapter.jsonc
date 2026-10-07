@@ -1,0 +1,13 @@
+// Read only by @sveltejs/adapter-cloudflare when the web app is built with
+// HUB_TARGET=cloudflare. It tells the adapter where to write the SvelteKit
+// Worker and the static files. Nothing is deployed from this file: the real
+// Worker is configured in apps/cloudflare/wrangler.jsonc, which wraps this one.
+{
+  "name": "repair-cafe-hub-web",
+  "main": ".svelte-kit/cloudflare/_worker.js",
+  "compatibility_date": "2026-08-15",
+  "assets": {
+    "directory": ".svelte-kit/cloudflare",
+    "binding": "ASSETS"
+  }
+}

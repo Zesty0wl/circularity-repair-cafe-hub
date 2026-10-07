@@ -1,0 +1,58 @@
+// =============================================================================
+//  The Cloudflare edition of the Circularity Repair Cafe Hub
+//  ---------------------------------------------------------------------------
+//  One Worker serves the whole site: the pages, the API, the photos and the
+//  daily jobs. See docs/cloudflare/README.md for how to set one up.
+//
+//  The names below are what this project uses for its own test site. If you
+//  are setting up your own cafe, the setup script fills these in for you.
+// =============================================================================
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "repair-cafe-hub",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-08-15",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // The web app's static files: scripts, styles, fonts and images. Requests
+  // for these are answered by Cloudflare directly, without running the Worker,
+  // so they cost no CPU time at all.
+  "assets": {
+    "directory": "../web/.svelte-kit/cloudflare",
+    "binding": "ASSETS"
+  },
+
+  // Your cafe's own web address. Cloudflare creates the DNS record and the
+  // HTTPS certificate for it. The domain must already be on your account.
+  "routes": [{ "pattern": "experimental-repair-cafe.bzwrd.co.uk", "custom_domain": true }],
+  "workers_dev": true,
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "repair-cafe-hub",
+      "database_id": "00000000-0000-0000-0000-000000000000"
+    }
+  ],
+  "r2_buckets": [{ "binding": "UPLOADS", "bucket_name": "repair-cafe-hub-uploads" }],
+
+  // Once an hour: send telemetry if it is due and agreed, and refresh the
+  // cached copies of the Repair Cafe directory and the latest version number.
+  "triggers": { "crons": ["17 * * * *"] },
+
+  "vars": {
+    // Where your cafe is. Session dates, "today" and reports use it.
+    "TZ": "Europe/London",
+    "DEMO_MODE": "false",
+    "TELEMETRY_DISABLED": "false",
+    "UPDATE_CHECK_DISABLED": "false"
+  },
+
+  // Bundle .wasm (the picture renderer) and .ttf (its fonts) as modules.
+  "rules": [
+    { "type": "CompiledWasm", "globs": ["**/*.wasm"], "fallthrough": true },
+    { "type": "Data", "globs": ["**/*.ttf"], "fallthrough": true }
+  ],
+
+  "observability": { "enabled": true }
+}

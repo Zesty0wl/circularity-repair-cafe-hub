@@ -1,0 +1,33 @@
+{
+  "name": "@circularity/cloudflare",
+  "version": "1.10.0",
+  "private": true,
+  "type": "module",
+  "description": "The Cloudflare edition of the hub: the API on Workers, D1 and R2, wrapped round the SvelteKit app.",
+  "scripts": {
+    "build:web": "pnpm --filter @circularity/shared build && HUB_TARGET=cloudflare pnpm --filter @circularity/web build",
+    "build": "pnpm build:web && wrangler deploy --dry-run --outdir dist",
+    "dev": "wrangler dev",
+    "deploy": "pnpm build:web && wrangler deploy",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@circularity/shared": "workspace:*",
+    "@resvg/resvg-wasm": "2.6.2",
+    "bcryptjs": "^3.0.2",
+    "drizzle-orm": "^0.45.3",
+    "hono": "^4.13.0",
+    "qrcode-generator": "^2.0.4",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.22.0",
+    "@cloudflare/workers-types": "^5.20260930.1",
+    "fflate": "^0.8.2",
+    "typescript": "^5.6.3",
+    "vite": "^7.3.6",
+    "vitest": "^4.1.0",
+    "wrangler": "^4.44.0"
+  }
+}

@@ -15,10 +15,19 @@ import { env } from '$env/dynamic/private';
 // in-process (a fast loopback request) during server rendering.
 const INTERNAL_ORIGIN = env.INTERNAL_API_ORIGIN || 'http://127.0.0.1:3000';
 
+/**
+ * On Cloudflare the API runs in the same Worker as these pages. The Worker
+ * entry (apps/cloudflare/src/worker.ts) hands it to us as `HUB_API`, so a call
+ * to /api during server rendering is a function call, not a network request.
+ */
+type HubApi = (request: Request) => Promise<Response>;
+
 export const handleFetch: HandleFetch = async ({ request, fetch, event }) => {
   const url = new URL(request.url);
   const sameOrigin = url.host === event.url.host;
   if (sameOrigin && (url.pathname.startsWith('/api/') || url.pathname.startsWith('/uploads/'))) {
+    const hubApi = (event.platform as { env?: { HUB_API?: HubApi } } | undefined)?.env?.HUB_API;
+    if (hubApi) return hubApi(request);
     const internal = new URL(INTERNAL_ORIGIN);
     url.protocol = internal.protocol;
     url.host = internal.host;

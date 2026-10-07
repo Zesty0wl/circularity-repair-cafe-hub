@@ -1,0 +1,21 @@
+// Used only by the tests (vitest.config.ts). The same bindings as
+// wrangler.jsonc, with local storage and no web build, so the API can be
+// tested without building the web app first.
+{
+  "name": "repair-cafe-hub-test",
+  "main": "test/entry.ts",
+  "compatibility_date": "2026-08-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [{ "binding": "DB", "database_name": "test", "database_id": "00000000-0000-0000-0000-000000000000" }],
+  "r2_buckets": [{ "binding": "UPLOADS", "bucket_name": "test-uploads" }],
+  "vars": {
+    "TZ": "Europe/London",
+    "DEMO_MODE": "false",
+    "TELEMETRY_DISABLED": "true",
+    "UPDATE_CHECK_DISABLED": "true"
+  },
+  "rules": [
+    { "type": "CompiledWasm", "globs": ["**/*.wasm"], "fallthrough": true },
+    { "type": "Data", "globs": ["**/*.ttf"], "fallthrough": true }
+  ]
+}

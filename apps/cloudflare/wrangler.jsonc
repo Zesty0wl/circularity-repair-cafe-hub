@@ -35,9 +35,11 @@
   "d1_databases": [{ "binding": "DB", "database_name": "repair-cafe-hub" }],
   "r2_buckets": [{ "binding": "UPLOADS", "bucket_name": "repair-cafe-hub-uploads" }],
 
-  // Once an hour: send telemetry if it is due and agreed, and refresh the
-  // cached copies of the Repair Cafe directory and the latest version number.
-  "triggers": { "crons": ["17 * * * *"] },
+  // The hourly jobs (telemetry if agreed, the update check, refreshing the
+  // Repair Cafe directory) run after ordinary visits, so no cron trigger is
+  // needed. The free plan allows only five per account. If you have one to
+  // spare, add  "triggers": { "crons": ["17 * * * *"] }  here as well.
+  // See src/housekeeping.ts.
 
   "vars": {
     // Where your cafe is. Session dates, "today" and reports use it.

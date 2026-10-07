@@ -46,7 +46,7 @@ Cloudflare's free plan, as of October 2026:
 | D1 (database)                  | 5 GB, 5M rows read and 100k written a day | Plenty                              |
 | D1 query                       | At most 100 bound values          | Big inserts must be split up              |
 | R2 (files)                     | 10 GB, 1M writes and 10M reads a month | Thousands of photos                  |
-| Cron triggers                  | 5                                 | We need 1                                 |
+| Cron triggers                  | 5 per account                     | We use none (see below)                   |
 | Outbound requests              | 50 per request                    | Fine                                      |
 
 **CPU time.** We measured this on the target account. A request that uses
@@ -79,7 +79,7 @@ One Cloudflare Worker serves everything at the cafe's own address.
      │         (its calls to /api go straight to the       │
      │          API in the same process)                   │
      │                                                     │
-     │  cron, once an hour     ──►  scheduled jobs         │
+     │  after a visit, hourly  ──►  scheduled jobs         │
      └──────┬────────────────────────────┬─────────────────┘
             │                            │
        ┌────▼────┐                  ┌────▼────┐
@@ -104,8 +104,8 @@ One Cloudflare Worker serves everything at the cafe's own address.
 | `SECRET_KEY` in `.env`         | A Worker secret if you set one. If you do not, the hub makes one on first run and keeps it in the database, so there is one fewer step |
 | `@fastify/rate-limit`          | A small D1 table of recent failed logins                                     |
 | `helmet`                       | The same headers, set by the Worker                                          |
-| `setInterval` telemetry        | A cron trigger, once an hour, that sends only when a send is due             |
-| Disk caches (directory, update check) | R2 objects, refreshed by the cron trigger                              |
+| `setInterval` telemetry        | Hourly jobs that run after a visit, and send only when a send is due. The free plan allows only five cron triggers per account, and an account may have used them already (`src/housekeeping.ts`) |
+| Disk caches (directory, update check) | R2 objects, refreshed by the same hourly jobs                          |
 | Memory cache (iFixit)          | Cloudflare's cache, plus memory while the Worker is warm                     |
 | `pg_dump` backups              | The browser builds the zip: it asks for the data as JSON and fetches each file. The Worker never holds a whole backup in memory |
 | `TZ` environment variable      | A `TZ` setting on the Worker, used wherever "today" matters                  |
@@ -139,7 +139,7 @@ apps/
                  and for Cloudflare when HUB_TARGET=cloudflare
   cloudflare/    new
     src/
-      worker.ts         the Worker entry: routing, headers, page cache, cron
+      worker.ts         the Worker entry: routing, headers, page cache, hourly jobs
       app.ts            every API route, registered as in apps/server
       routes/           the routes, one file per area, as in apps/server
       services/         ports of apps/server/src/services

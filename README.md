@@ -149,6 +149,12 @@ Please do not type real names, emails or phone numbers into it.
 
 ## Install
 
+> **New, and experimental: no server at all.** The
+> [Cloudflare edition](./docs/cloudflare/README.md) runs the whole hub on a
+> free Cloudflare account, with nothing to install on a machine of your own.
+> It lives on the `experimental-cloudflare` branch, and a Docker hub can
+> [move across to it](./docs/cloudflare/MIGRATION.md) and back.
+
 There are two ways to run this. Pick the one that matches you.
 
 |                  | **Guided install**                                  | **Just the container**                          |

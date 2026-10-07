@@ -17,9 +17,7 @@
     "@resvg/resvg-wasm": "2.6.2",
     "bcryptjs": "^3.0.2",
     "drizzle-orm": "^0.45.3",
-    "hono": "^4.13.0",
-    "qrcode-generator": "^2.0.4",
-    "zod": "^3.23.8"
+    "qrcode-generator": "^2.0.4"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.22.0",

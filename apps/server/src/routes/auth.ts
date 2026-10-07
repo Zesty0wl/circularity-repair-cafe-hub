@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { loginSchema, passwordSchema } from '@circularity/shared';
 import { db } from '../db/index.js';
 import { passwordResetTokens, users } from '../db/schema.js';
-import { hashPassword, verifyPassword } from '../utils/password.js';
+import { hashPassword, needsRehash, verifyPassword } from '../utils/password.js';
 import { eq } from 'drizzle-orm';
 import { rotateRefreshToken } from '../plugins/auth.js';
 import { audit } from '../utils/audit.js';
@@ -45,7 +45,13 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
         reply.code(401).send({ error: 'Invalid credentials', code: 'auth/invalid' });
         return;
       }
-      await db.update(users).set({ lastLoginAt: new Date() }).where(eq(users.id, user.id));
+      // A password brought back from the Cloudflare edition is a PBKDF2 hash.
+      // It has just been checked, so store it as bcrypt like every other.
+      const upgraded = needsRehash(user.passwordHash) ? await hashPassword(password) : null;
+      await db
+        .update(users)
+        .set({ lastLoginAt: new Date(), ...(upgraded ? { passwordHash: upgraded } : {}) })
+        .where(eq(users.id, user.id));
 
       const tokens = await app.issueTokens({
         id: user.id,

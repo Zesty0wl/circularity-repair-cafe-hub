@@ -1,11 +1,13 @@
 import nodeAdapter from '@sveltejs/adapter-node';
-import cloudflareAdapter from '@sveltejs/adapter-cloudflare';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 // The same app is built for two homes. The Docker image uses adapter-node, and
 // the Cloudflare edition (apps/cloudflare) uses adapter-cloudflare. Set
 // HUB_TARGET=cloudflare to build for Cloudflare. Anything else builds for Node.
 const target = process.env.HUB_TARGET === 'cloudflare' ? 'cloudflare' : 'node';
+// Loaded only when needed, so a Docker build never loads Wrangler.
+const cloudflareAdapter =
+  target === 'cloudflare' ? (await import('@sveltejs/adapter-cloudflare')).default : null;
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
@@ -21,7 +23,7 @@ const config = {
     // .svelte-kit/cloudflare. apps/cloudflare/src/worker.ts wraps that Worker
     // with the API, the security headers and the scheduled jobs.
     adapter:
-      target === 'cloudflare'
+      cloudflareAdapter
         ? cloudflareAdapter({ config: 'wrangler.adapter.jsonc' })
         : nodeAdapter({
             out: 'build',

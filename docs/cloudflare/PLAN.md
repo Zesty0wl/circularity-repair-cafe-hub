@@ -1,6 +1,7 @@
 # Running the hub on Cloudflare: the plan
 
-Status: experimental. This work lives on the `experimental-cloudflare` branch.
+Status: experimental, and built. This work lives on the `experimental-cloudflare`
+branch. How to set it up is in [README.md](./README.md).
 
 ## Why
 
@@ -72,11 +73,11 @@ One Cloudflare Worker serves everything at the cafe's own address.
      │  Worker  (apps/cloudflare/src/worker.ts)            │
      │                                                     │
      │  /api/*, /uploads/*, /og/*, /icons/*, robots.txt,   │
-     │  sitemap.xml, manifest  ──►  Hono API               │
+     │  sitemap.xml, manifest  ──►  the API (src/app.ts)   │
      │                                                     │
      │  every other page       ──►  SvelteKit SSR          │
      │         (its calls to /api go straight to the       │
-     │          Hono API in the same process)              │
+     │          API in the same process)                   │
      │                                                     │
      │  cron, once an hour     ──►  scheduled jobs         │
      └──────┬────────────────────────────┬─────────────────┘
@@ -90,7 +91,7 @@ One Cloudflare Worker serves everything at the cafe's own address.
 
 | Today                          | On Cloudflare                                                                 |
 | ------------------------------ | ----------------------------------------------------------------------------- |
-| Fastify routes                 | The same routes in [Hono](https://hono.dev), with the same paths and the same JSON, so the web app does not change |
+| Fastify routes                 | The same routes, with the same paths and the same JSON, on a small router with Fastify's shape (`lib/router.ts`), so the route code barely changes and the web app not at all |
 | PostgreSQL                     | D1, which is SQLite. Drizzle has a SQLite mode, so most queries carry over   |
 | `pg` raw SQL                   | Rewritten for SQLite. `FILTER (WHERE ...)` works in SQLite. `::int`, `INTERVAL`, `to_char` and `EXTRACT` do not |
 | Postgres types                 | `uuid` → text, `jsonb` → JSON text, `text[]` → JSON text, `timestamptz` → whole milliseconds, `numeric` → real, enums → text |
@@ -126,9 +127,8 @@ One Cloudflare Worker serves everything at the cafe's own address.
   they are faster on a hall's wifi. Backups are built in the browser, so the
   tab must stay open while one downloads.
 - **Whoever sets it up:** no machine, no Docker, no tunnel. A Cloudflare
-  account, a domain on Cloudflare, and one command (or one button).
-- **Updates:** run the deploy command again, or press "Sync fork" on GitHub if
-  you used the button. Database changes apply themselves.
+  account, a domain on Cloudflare, and one command.
+- **Updates:** run the deploy command again. Database changes apply themselves.
 
 ## Where the code goes
 
@@ -139,19 +139,22 @@ apps/
                  and for Cloudflare when HUB_TARGET=cloudflare
   cloudflare/    new
     src/
-      worker.ts         the Worker entry: routing, headers, cron
-      api/              the Hono routes, one file per area, as in apps/server
-      db/schema.ts      the Drizzle SQLite schema
-      db/migrations/    numbered SQL files
+      worker.ts         the Worker entry: routing, headers, page cache, cron
+      app.ts            every API route, registered as in apps/server
+      routes/           the routes, one file per area, as in apps/server
       services/         ports of apps/server/src/services
-    test/               integration tests that run in a real Worker runtime
+      lib/              the router, crypto, pictures, dates, caching
+      db/schema.ts      the Drizzle SQLite schema
+      db/migrations/    numbered SQL migrations
+    test/               tests that run in the real Workers runtime
     wrangler.jsonc
 packages/
   shared/        unchanged
 ```
 
-Pure logic with no Node or Postgres in it (the CO2 reference data, recurring
-event rules) is imported from `apps/server` rather than copied.
+Pure logic with no Node or Postgres in it (the CO2 reference data and matching,
+recurring event rules, the default page wording) is imported from `apps/server`
+rather than copied. The backup format lives in `packages/shared`.
 
 The web app learns one new thing: during server rendering on Cloudflare, its
 calls to `/api` are handed straight to the API in the same Worker, instead of

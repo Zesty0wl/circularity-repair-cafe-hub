@@ -22,15 +22,9 @@ importers:
       drizzle-orm:
         specifier: ^0.45.3
         version: 0.45.3(@cloudflare/workers-types@5.20260930.1)(@types/pg@8.20.0)(pg@8.21.0)
-      hono:
-        specifier: ^4.13.0
-        version: 4.13.11
       qrcode-generator:
         specifier: ^2.0.4
         version: 2.0.4
-      zod:
-        specifier: ^3.23.8
-        version: 3.25.76
     devDependencies:
       '@cloudflare/vitest-pool-workers':
         specifier: ^0.22.0
@@ -2767,10 +2761,6 @@ packages:
   helmet@7.2.0:
     resolution: {integrity: sha1-iy3MQltKRsiPaVNIG0BFPL5msWc=, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/helmet/-/helmet-7.2.0.tgz}
     engines: {node: '>=16.0.0'}
-
-  hono@4.13.11:
-    resolution: {integrity: sha512-/SMX/RQNJn7oNmFwH6DtwDqcrzZU2otm1FD6OJe2cWF6cfy/F8hq0XVBv7xW3FTJshRQwuBnXHDq2kNsdZnshg==, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/hono/-/hono-4.13.11.tgz}
-    engines: {node: '>=16.9.0'}
 
   http-errors@2.0.0:
     resolution: {integrity: sha1-t3dKFIbvc892Z6ya4IWMASxXudM=, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/http-errors/-/http-errors-2.0.0.tgz}
@@ -5759,8 +5749,6 @@ snapshots:
       function-bind: 1.1.2
 
   helmet@7.2.0: {}
-
-  hono@4.13.11: {}
 
   http-errors@2.0.0:
     dependencies:

@@ -32,8 +32,6 @@
   } | null = null;
   let backupProgress: TransferProgress | null = null;
   $: inBrowserBackups = backupInfo?.edition === 'cloudflare';
-  // This hub's own web address, for the update command on the About tab.
-  const hubHost = typeof window !== 'undefined' ? window.location.host : 'your.domain';
   let backupBusy = false;
   let backupDownloadError = '';
   let restoreFile: FileList | null = null;
@@ -1322,6 +1320,7 @@
       <div class="card p-6 space-y-3">
         <h2 class="text-lg font-semibold flex items-center gap-2"><Download class="w-4 h-4" /> Download a backup</h2>
         <p class="text-sm text-slate-600">Creates a zip containing the entire database (all tables including audit log) plus every uploaded photo and branding asset. Keep this somewhere safe. Anyone with the file can restore your cafe's data.</p>
+        <p class="text-sm text-slate-600">The same file moves your hub to another machine, or between the Docker and Cloudflare editions. See <a class="text-brand-700 hover:underline" href="https://github.com/Zesty0wl/circularity-repair-cafe-hub/blob/experimental-cloudflare/docs/cloudflare/MIGRATION.md" target="_blank" rel="noopener">moving a hub</a>.</p>
         {#if backupInfo}
           <p class="text-xs text-slate-500">App version <span class="font-mono">{backupInfo.appVersion}</span> · backup format v{backupInfo.backupFormatVersion}</p>
         {/if}
@@ -1400,15 +1399,15 @@
         This hub runs on Cloudflare, so there is no machine to log in to. How you update depends
         on how the hub was set up.
       </p>
-      <p class="text-slate-700">
-        <strong>If you used the Deploy to Cloudflare button:</strong> open your copy of the project on
-        GitHub and press <strong>Sync fork</strong>. Cloudflare builds and publishes the new version by
-        itself, usually within five minutes.
-      </p>
       <p class="text-slate-700"><strong>If you set it up from the command line:</strong> in the project folder, run</p>
       <pre class="bg-slate-900 text-slate-100 rounded-lg p-3 overflow-x-auto text-xs leading-relaxed"><code>git pull
 pnpm install
-pnpm --filter @circularity/cloudflare run deploy -- --domain {hubHost}</code></pre>
+pnpm cf:deploy</code></pre>
+      <p class="text-slate-700">
+        <strong>If your hub updates itself from GitHub</strong> (Workers Builds): open your copy of the
+        project on GitHub and press <strong>Sync fork</strong>. Cloudflare builds and publishes the new
+        version by itself.
+      </p>
       <p class="text-slate-700">
         The site stays up while it updates. Database changes are applied by themselves on the
         first visit after the update.

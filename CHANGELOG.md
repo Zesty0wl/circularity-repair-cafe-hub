@@ -2,6 +2,30 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
+## Unreleased: experimental Cloudflare edition
+
+These are on the `experimental-cloudflare` branch and are not in a release yet.
+
+### Added
+
+- **The Cloudflare edition.** The whole hub, every feature, running on a free
+  Cloudflare account with no machine of your own. See
+  [docs/cloudflare/README.md](./docs/cloudflare/README.md). It is new and still
+  experimental.
+- **Moving between editions.** A new Cloudflare hub can take over from a Docker
+  hub using the backup Docker already makes. Accounts, passwords, sessions,
+  repairs, photos and QR codes all come across. See
+  [docs/cloudflare/MIGRATION.md](./docs/cloudflare/MIGRATION.md).
+
+### Changed
+
+- A Docker hub can restore a backup made by the Cloudflare edition, so a cafe
+  that tries Cloudflare can come back with everything. Passwords set on
+  Cloudflare keep working, and are moved back to bcrypt at the next sign-in.
+- Logos, banners, favicons and profile photos are now shrunk in the browser
+  before they upload. Logos and favicons keep a see-through background.
+- The admin area shows the right way to update for the edition it runs on.
+
 ## 1.10.0 (4 September 2026)
 
 ### Added

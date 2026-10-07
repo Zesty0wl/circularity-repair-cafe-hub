@@ -1,0 +1,30 @@
+# Checks every pull request and every change to main: the tests run inside the
+# real Workers runtime, then the whole site is built the way `pnpm cf:deploy`
+# builds it, without publishing anything.
+name: Check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Tests
+        run: pnpm cf:test
+      - name: Types
+        run: pnpm --filter @circularity/cloudflare typecheck
+      - name: Build, without publishing
+        run: pnpm --filter @circularity/cloudflare build

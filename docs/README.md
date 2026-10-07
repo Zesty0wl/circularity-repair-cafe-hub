@@ -1,41 +1,42 @@
 # Documentation
 
 User-facing documentation for the Circularity Repair Cafe Hub. Start at the
-top and work down — each guide builds on the one before it.
+top and work down: each guide builds on the one before it.
 
 ## For people running a repair cafe
 
-1. **[Getting started](./01-getting-started.md)** — finish the setup wizard
+1. **[Getting started](./01-getting-started.md)**: finish the setup wizard
    and learn your way around the admin area.
-2. **[Branding & home page](./02-branding-home-page.md)** — make the public
+2. **[Branding & home page](./02-branding-home-page.md)**: make the public
    site look like *your* cafe, not the demo one.
-3. **[Skills & repairers](./03-skills-and-repairers.md)** — set up your
+3. **[Skills & repairers](./03-skills-and-repairers.md)**: set up your
    repair categories and invite your volunteers.
-4. **[Venues & events](./04-venues-and-events.md)** — add the places you
+4. **[Venues & events](./04-venues-and-events.md)**: add the places you
    meet and schedule your sessions (one-off or recurring).
-5. **[Running an event day](./05-running-an-event.md)** — print the QR poster,
+5. **[Running an event day](./05-running-an-event.md)**: print the QR poster,
    activate the event, watch the live shop-floor board.
-6. **[Reports, history & GDPR](./06-reports-and-gdpr.md)** — repair history,
+6. **[Reports, history & GDPR](./06-reports-and-gdpr.md)**: repair history,
    CSV export, statistics dashboard, PII purge.
-7. **[Settings reference](./07-settings-reference.md)** — every setting in
+7. **[Settings reference](./07-settings-reference.md)**: every setting in
    the admin area, what it does and where to find it.
-8. **[Linux Repair Cafe](./08-linux-repair-cafe.md)** — help people move an
+8. **[Linux Repair Cafe](./08-linux-repair-cafe.md)**: help people move an
    ageing computer to Linux instead of binning it, and keep a record of it.
    Optional, and off until you turn it on.
 
 ## For volunteers (repairers)
 
-- **[Repairer guide](./repairer-guide.md)** — short guide for the people
+- **[Repairer guide](./repairer-guide.md)**: short guide for the people
   doing the actual repairs on the day.
 
 ## For developers / hosts
 
-- See the main [README](../README.md) for installation, reverse-proxy setup,
-  backups, and environment variables.
-- [The Cloudflare edition](./cloudflare/README.md): running the hub on a free
-  Cloudflare account, with no server.
-- [Moving between Docker and Cloudflare](./cloudflare/MIGRATION.md), in either
-  direction.
+- [Install the hub, step by step](./install.md), from nothing to a live site.
+- [Running your hub](./running-your-hub.md): settings, updating, limits and
+  problems.
+- [Backups and moving a hub](./backups-and-moving.md), including moving from
+  the old Docker edition.
+- [How the hub works](./how-it-works.md), for people changing the code.
+- [The public demo](./demo.md), for the people who run it.
 
 ## Reporting bugs / suggesting features
 

@@ -42,7 +42,7 @@ export const ICON_SIZES = [192, 512] as const;
  * Short hash of every input the icons are built from. Any change to the logo
  * or the brand colour changes this, and therefore changes the icon filenames.
  *
- * The Docker edition takes the first characters of a SHA-256. Web Crypto only
+ * The old Docker edition takes the first characters of a SHA-256. Web Crypto only
  * hashes asynchronously, and this is called while building the cafe profile,
  * so here it is two rounds of FNV-1a instead. It only has to change when the
  * inputs change; nobody relies on its exact value.

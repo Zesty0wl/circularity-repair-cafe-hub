@@ -1,8 +1,8 @@
 // =============================================================================
 //  Bindings and settings
 //  ---------------------------------------------------------------------------
-//  The Docker edition reads its settings from environment variables, checked
-//  by zod in apps/server/src/env.ts. A Worker gets them as "bindings" instead:
+//  The old Docker edition reads its settings from environment variables, checked
+//  by zod. A Worker gets them as "bindings" instead:
 //  the database, the file bucket, and plain text variables set in
 //  wrangler.jsonc or in the Cloudflare dashboard.
 //
@@ -24,6 +24,8 @@ export interface Bindings {
   /** Where "today" is, for session dates and reports. Defaults to Europe/London. */
   TZ?: string;
   DEMO_MODE?: string;
+  /** On the public demo only: lets demo/seed.py wipe and refill it. A secret. */
+  DEMO_RESET_KEY?: string;
   TELEMETRY_DISABLED?: string;
   TELEMETRY_ENDPOINT?: string;
   UPDATE_CHECK_DISABLED?: string;
@@ -48,7 +50,7 @@ function positiveInt(value: string | undefined, fallback: number): number {
 }
 
 /**
- * The same settings object as apps/server/src/env.ts, read from the Worker's
+ * The same settings object as the old Docker edition's, read from the Worker's
  * variables. A getter rather than a constant, because variables can change
  * between deploys without the code changing.
  */

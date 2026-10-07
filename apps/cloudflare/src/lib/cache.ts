@@ -1,7 +1,7 @@
 // =============================================================================
 //  Remembering answers from other sites
 //  ---------------------------------------------------------------------------
-//  The Docker edition keeps answers from iFixit in memory, and its one process
+//  The old Docker edition keeps answers from iFixit in memory, and its one process
 //  runs for weeks. A Worker instance may only last minutes, so memory alone
 //  would mean asking iFixit again and again. This keeps them in Cloudflare's
 //  cache as well, which lasts as long as we ask and is shared by every Worker

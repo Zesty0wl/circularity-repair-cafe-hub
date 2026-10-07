@@ -61,7 +61,7 @@ export interface SeoVenue {
 /**
  * The looks a repairer's sharing card can be drawn in. The first one is the
  * default when a shared link does not name a style. The server draws the
- * cards (apps/server/src/services/shareCard.ts) and the web app offers the
+ * cards (apps/cloudflare/src/services/shareCard.ts) and the web app offers the
  * choice in the profile share menu.
  */
 export const SHARE_CARD_STYLES = ['classic', 'bold', 'photo'] as const;
@@ -440,7 +440,7 @@ export function buildSeo(opts: BuildSeoOptions): PageSeo {
 
   // ── The picture shown when a link is shared ─────────────────────────────
   // Each section gets its own card, drawn by the server in the cafe's colours
-  // (see apps/server/src/services/ogImage.ts). Otherwise every link pasted into
+  // (see apps/cloudflare/src/services/ogImage.ts). Otherwise every link pasted into
   // a chat looks identical, whether it is an event, a repair guide or the
   // contact page. Pages with a real photograph of their own, such as a
   // volunteer's portrait or a repair guide's opening shot, override this below.

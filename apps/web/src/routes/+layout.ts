@@ -2,9 +2,9 @@ import { redirect } from '@sveltejs/kit';
 import type { CafeInfo } from '$lib/stores/cafe';
 import type { LayoutLoad } from './$types';
 
-// Public pages are server-rendered (adapter-node). Operational areas opt out of
-// SSR via their own +layout.ts (export const ssr = false) — they have no SEO
-// value and rely on client-only auth state.
+// Public pages are drawn on the server. The staff areas opt out with their own
+// +layout.ts (export const ssr = false), because they have no value to search
+// engines and depend on the sign-in state in the browser.
 export const prerender = false;
 export const trailingSlash = 'never';
 

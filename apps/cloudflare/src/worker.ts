@@ -12,7 +12,7 @@
 //    while it is being drawn, its calls to /api come straight back into the
 //    API through HUB_API, without leaving the Worker
 //
-//  The jobs the Docker edition ran on a timer run at most once an hour, after
+//  The jobs the old Docker edition ran on a timer run at most once an hour, after
 //  a request has been answered (see housekeeping.ts), and also from scheduled()
 //  if the account has a cron trigger to spare.
 // =============================================================================
@@ -30,7 +30,7 @@ interface Env {
 const svelte = sveltekit as ExportedHandler<Env>;
 
 /**
- * The headers @fastify/helmet sets in the Docker edition, minus the content
+ * The headers @fastify/helmet sets in the old Docker edition, minus the content
  * security policy, which SvelteKit sets for each page (svelte.config.js).
  */
 const SECURITY_HEADERS: Record<string, string> = {

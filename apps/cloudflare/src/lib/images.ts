@@ -1,7 +1,7 @@
 // =============================================================================
 //  Checking pictures without sharp
 //  ---------------------------------------------------------------------------
-//  The Docker edition runs every upload through sharp, which proves it is a
+//  The old Docker edition runs every upload through sharp, which proves it is a
 //  real picture, turns it the right way up, shrinks it and saves it as a JPEG
 //  with no camera metadata.
 //
@@ -90,6 +90,11 @@ export function imageSize(bytes: Uint8Array, kind: ImageKind): ImageSize | null 
     let offset = 2;
     while (offset + 9 < bytes.length) {
       if (bytes[offset] !== 0xff) return null;
+      // Any number of 0xFF "fill" bytes may come before a marker.
+      if (bytes[offset + 1] === 0xff) {
+        offset += 1;
+        continue;
+      }
       const marker = bytes[offset + 1]!;
       if (marker === 0xd8 || (marker >= 0xd0 && marker <= 0xd7) || marker === 0x01) {
         offset += 2;
@@ -159,6 +164,11 @@ export function stripJpegMetadata(bytes: Uint8Array): Uint8Array {
   let offset = 2;
   while (offset + 4 <= bytes.length) {
     if (bytes[offset] !== 0xff) break;
+    // Fill bytes before a marker carry nothing, so they are left out.
+    if (bytes[offset + 1] === 0xff) {
+      offset += 1;
+      continue;
+    }
     const marker = bytes[offset + 1]!;
     // Start of scan: the picture data runs from here to the end.
     if (marker === 0xda) break;

@@ -6,22 +6,37 @@ Notable changes to the Repair Café Hub. Newest first.
 
 These are on `main` and are not in a release yet.
 
-### Added
+### The hub now runs on Cloudflare only
 
-- **The Cloudflare edition.** The whole hub, every feature, running on a free
-  Cloudflare account with no machine of your own. See
-  [docs/cloudflare/README.md](./docs/cloudflare/README.md). It is new. Repair
-  Café Woodville moved to it in October 2026. It needs no cron trigger: its
-  hourly jobs run in the background after a visit.
-- **Moving between editions.** A new Cloudflare hub can take over from a Docker
-  hub using the backup Docker already makes. Accounts, passwords, sessions,
-  repairs, photos and QR codes all come across. See
-  [docs/cloudflare/MIGRATION.md](./docs/cloudflare/MIGRATION.md).
+The hub runs on a free Cloudflare account: the website and API on Workers,
+the database on D1 and photos on R2. There is no server to rent or look after.
+The Docker edition has been removed. Its last images stay on GHCR, and its code
+is in the git history. Repair Café Woodville moved across in October 2026.
+
+- **A step-by-step install guide**, [docs/install.md](./docs/install.md),
+  written for someone with no technical background. It starts from nothing:
+  a Cloudflare account, a domain, photo storage, installing Git, Node.js and
+  pnpm on Windows, Mac or Linux, publishing, and the setup wizard. It has a
+  table of common problems and a list of the words it uses.
+- **New guides:** [running your hub](./docs/running-your-hub.md) (settings,
+  updating, limits, logs), [backups and moving a
+  hub](./docs/backups-and-moving.md) and [how it works](./docs/how-it-works.md).
+- **Moving from an old Docker hub** still works, from the backup a Docker hub
+  already makes. Accounts, passwords, sessions, repairs, photos and QR codes
+  all come across. See
+  [docs/backups-and-moving.md](./docs/backups-and-moving.md#moving-from-the-old-docker-edition).
+- **Settings such as the time zone are set in the Cloudflare dashboard**, not
+  in a file in the project. They survive updates, and `git pull` never trips
+  over them.
+- **No cron trigger needed.** The hourly jobs run in the background after a
+  visit. Cloudflare's free plan allows only five cron triggers per account.
+- **The public demo moved to Cloudflare.** It is reset every hour by GitHub
+  Actions running `demo/seed.py`, using a secret key that only the seeder has.
+  See [docs/demo.md](./docs/demo.md).
+- **Checks on every pull request:** the tests, the type check and a full build.
 
 ### Changed
 
-- **The README and the docs** now cover both editions: which one to choose,
-  how to set up and update each, and how to move from one to the other.
 - **One menu for everyone who signs in.** Admins and repairers now share the
   same frame, with a sidebar on a laptop and tabs along the bottom on a phone,
   and the page you are on is highlighted. Admins keep their menu on the
@@ -44,12 +59,20 @@ These are on `main` and are not in a release yet.
   the check-in QR code, and no visitors' names or photos. A private link
   (dashboard, "Show on a screen") opens it on a TV with nobody signed in. The
   admin view keeps the detail and links to every repair.
-- A Docker hub can restore a backup made by the Cloudflare edition, so a cafe
-  that tries Cloudflare can come back with everything. Passwords set on
-  Cloudflare keep working, and are moved back to bcrypt at the next sign-in.
 - Logos, banners, favicons and profile photos are now shrunk in the browser
   before they upload. Logos and favicons keep a see-through background.
-- The admin area shows the right way to update for the edition it runs on.
+
+### Fixed
+
+- Some valid JPEG photos were refused with "Could not process image". Their
+  files have extra padding bytes before a section, which the photo checker
+  did not expect.
+- After a restore, another copy of the hub could keep saying the hub was set
+  up. It now checks again within 30 seconds.
+- `pnpm cf:deploy -- --domain ...`, as the old docs said, did not pass the
+  domain on. The right form is `pnpm cf:deploy --domain ...`.
+- Building the site no longer uses a shell setting that fails in the Windows
+  Command Prompt.
 
 ## 1.10.0 (4 September 2026)
 

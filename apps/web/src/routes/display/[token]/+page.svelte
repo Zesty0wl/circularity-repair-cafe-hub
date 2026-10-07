@@ -2,7 +2,7 @@
   // The waiting-room screen. Open /display/<token> on the computer or TV in
   // the waiting area and leave it. Nobody signs in on it: the link itself is
   // the key, and an admin can replace it from the dashboard. It shows nothing
-  // personal. See apps/server/src/routes/display.ts.
+  // personal. See apps/cloudflare/src/routes/display.ts.
   //
   // Leave it alone and it looks after itself: it updates every ten seconds,
   // keeps the screen awake, hides the mouse pointer, and keeps showing the

@@ -4,7 +4,7 @@ import { bindings } from '../env.js';
 import * as schema from './schema.js';
 
 /**
- * The database, shaped like apps/server/src/db/index.ts so ported code can
+ * The database, shaped like the old Docker edition's db/index.ts so ported code can
  * keep writing `db.select()...`.
  *
  * Bindings are read through `cloudflare:workers`, which makes them available
@@ -17,7 +17,7 @@ export type DB = typeof db;
 
 /**
  * Run raw SQL and get the rows back, the same shape as `pool.query()` and
- * `db.execute()` gave in the Docker edition: `{ rows }`.
+ * `db.execute()` gave in the old Docker edition: `{ rows }`.
  *
  * Remember that raw SQL skips the column helpers in schema.ts. Booleans come
  * back as 0 or 1 and times as milliseconds, so convert where it matters.

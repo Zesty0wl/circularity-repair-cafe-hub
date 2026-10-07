@@ -1,7 +1,7 @@
 // =============================================================================
 //  Tokens, passwords and login tokens, on the Web Crypto API
 //  ---------------------------------------------------------------------------
-//  The Docker edition uses node:crypto, bcrypt and @fastify/jwt. None of those
+//  The old Docker edition uses node:crypto, bcrypt and @fastify/jwt. None of those
 //  run on a Worker, and bcrypt would be too slow if they did: the free plan
 //  allows about 10 ms of CPU per request, and one bcrypt check at cost 12 takes
 //  around 300 ms.
@@ -55,7 +55,7 @@ export function randomToken(bytes = 32): string {
 }
 
 export function checkInToken(): string {
-  // 12 bytes -> 16 url-safe characters, the same as the Docker edition.
+  // 12 bytes -> 16 url-safe characters, the same as the old Docker edition.
   return randomToken(12);
 }
 

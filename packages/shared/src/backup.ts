@@ -3,7 +3,7 @@
 //  ---------------------------------------------------------------------------
 //  A backup is a zip. There are two layouts:
 //
-//  Format 1, made by the Docker edition:
+//  Format 1, made by the old Docker edition:
 //    manifest.json
 //    postgres/dump.sql      a plain pg_dump, with the rows as COPY blocks
 //    uploads/...            every uploaded file

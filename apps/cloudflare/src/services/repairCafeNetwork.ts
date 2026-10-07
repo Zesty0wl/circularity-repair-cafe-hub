@@ -218,7 +218,7 @@ async function fetchUpstream(): Promise<NetworkSnapshot> {
   };
 }
 
-// The Docker edition keeps the tidied copy in /data/config and in memory. Here
+// The old Docker edition keeps the tidied copy in /data/config and in memory. Here
 // it is an object in the R2 bucket, kept as the exact JSON text we send, so the
 // map can be served without taking it apart and putting it back together. At
 // over five thousand cafes that would cost more CPU than a Worker should spend

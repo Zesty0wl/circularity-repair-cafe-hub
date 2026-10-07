@@ -1,8 +1,8 @@
 {
   "_readme": [
-    "Photographs for the public demo site only. Nothing here ships in the container",
-    "or is used by a real cafe. demo/seed.py downloads them while seeding, so the",
-    "repository and the image both stay small.",
+    "Photographs for the public demo site only. Nothing here is published to a",
+    "real cafe. demo/seed.py downloads them while seeding, so the repository",
+    "stays small.",
     "",
     "Every picture is CC0, Public Domain Mark, or CC BY 2.0, found through",
     "Openverse. CC BY requires the photographer to be named wherever the picture",

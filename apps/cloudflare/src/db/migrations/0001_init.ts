@@ -1,7 +1,7 @@
 // The first migration, as plain SQL in a string. It is a .ts file because a
 // Worker cannot read .sql files at run time. See ../migrate.ts for how the
 // migrations run.
-export default `-- The whole schema of the Docker edition at version 1.10.0, written for SQLite.
+export default `-- The whole schema of the old Docker edition at version 1.10.0, written for SQLite.
 -- See src/db/schema.ts for how each Postgres type is stored here.
 --
 -- Times are whole milliseconds since 1970. This expression is "now" in that

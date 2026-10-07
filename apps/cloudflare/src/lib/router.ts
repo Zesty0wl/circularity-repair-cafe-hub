@@ -1,7 +1,7 @@
 // =============================================================================
 //  A small router with Fastify's shape
 //  ---------------------------------------------------------------------------
-//  The Docker edition's API is 134 Fastify routes. Fastify does not run on
+//  The old Docker edition's API is 134 Fastify routes. Fastify does not run on
 //  Workers, but its way of writing a route is simple: a handler gets a
 //  `request` and a `reply`, sends with `reply.code(400).send({...})` or returns
 //  a value, and `preHandler` hooks run first to check who is signed in.

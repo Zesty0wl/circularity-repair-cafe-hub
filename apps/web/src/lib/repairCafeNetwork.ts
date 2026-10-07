@@ -5,7 +5,7 @@ import Supercluster from 'supercluster';
  *
  * The data comes from repaircafe.org. Our server mirrors it and caches it for
  * a day, so this is a same-origin request. See
- * apps/server/src/services/repairCafeNetwork.ts.
+ * apps/cloudflare/src/services/repairCafeNetwork.ts.
  */
 
 export interface NetworkCafe {

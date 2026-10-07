@@ -15,7 +15,24 @@
 //  and a normal cafe behaves exactly as before.
 // =============================================================================
 import type { HubReply, HubRequest } from '../lib/router.js';
-import { env } from '../env.js';
+import { bindings, env } from '../env.js';
+import { hashToken } from '../utils/tokens.js';
+
+const DEMO_KEY_HEADER = 'x-demo-key';
+
+/**
+ * Does this request carry the demo's reset key? Only demo/seed.py has it. It
+ * may upload the demo's photographs and set its passwords, which nobody else
+ * may do, and it may wipe the demo (routes/demo.ts). Both values are hashed
+ * before they are compared, so the comparison takes the same time whether or
+ * not the guess is close.
+ */
+export async function hasDemoKey(request: HubRequest): Promise<boolean> {
+  const expected = bindings().DEMO_RESET_KEY;
+  const given = request.headers[DEMO_KEY_HEADER];
+  if (!expected || expected.length < 16 || typeof given !== 'string' || !given) return false;
+  return (await hashToken(given)) === (await hashToken(expected));
+}
 
 /** Routes nobody may call on a demo site, whatever they are signed in as. */
 const BLOCKED: Array<{ method: string; pattern: RegExp; why: string }> = [
@@ -67,12 +84,13 @@ function hasPasswordField(body: unknown): boolean {
 }
 
 /**
- * Runs before every API route. The Docker edition registers two Fastify
- * hooks only when DEMO_MODE is on. A Worker's settings are read per request,
- * so this one is always there and checks the setting first.
+ * Runs before every API route. A Worker's settings are read per request, so
+ * this is always there and checks the setting first.
  */
 export async function demoModeHook(request: HubRequest, reply: HubReply): Promise<void> {
   if (!env.DEMO_MODE) return;
+  // The seeder builds the demo through the same API, photographs included.
+  if (await hasDemoKey(request)) return;
 
   // ── 1. No uploads, from anyone ────────────────────────────────────────────
   // Seven routes accept a file today. Checking the content type here catches

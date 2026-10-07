@@ -13,7 +13,7 @@
 //    1. the background and the main text
 //    2. the portrait, cropped to fill its box and with its corners rounded
 //    3. the footer band and its text, on top
-//  The Docker edition puts these together with sharp. Here all three go into
+//  The old Docker edition puts these together with sharp. Here all three go into
 //  one SVG, with the portrait embedded as an <image>, and resvg draws it.
 //  Cards are kept in R2 under a hash of everything they are made from, the
 //  same way the section cards in ogImage.ts are.

@@ -8,18 +8,15 @@ import { env } from '$env/dynamic/private';
 // allows. That page now draws a flat Leaflet map, which needs none of those, so
 // the exception has gone.
 
-// During SSR, load functions call relative URLs like /api/public/cafe. By
-// default SvelteKit resolves those against the public origin, which would send
-// the request all the way back out through the reverse proxy. Rewrite
-// same-origin /api and /uploads calls to the local Fastify port so they stay
-// in-process (a fast loopback request) during server rendering.
-const INTERNAL_ORIGIN = env.INTERNAL_API_ORIGIN || 'http://127.0.0.1:3000';
+// During server rendering, load functions call relative URLs such as
+// /api/public/cafe. The API runs in the same Worker as these pages. The Worker
+// entry (apps/cloudflare/src/worker.ts) hands it to us as `HUB_API`, so a call
+// to /api is a function call, not a network request.
+//
+// Under `vite dev` there is no Worker, so those calls go to the hub running
+// under `pnpm cf:dev` instead.
+const DEV_API_ORIGIN = env.API_ORIGIN || 'http://127.0.0.1:8787';
 
-/**
- * On Cloudflare the API runs in the same Worker as these pages. The Worker
- * entry (apps/cloudflare/src/worker.ts) hands it to us as `HUB_API`, so a call
- * to /api during server rendering is a function call, not a network request.
- */
 type HubApi = (request: Request) => Promise<Response>;
 
 export const handleFetch: HandleFetch = async ({ request, fetch, event }) => {
@@ -28,7 +25,7 @@ export const handleFetch: HandleFetch = async ({ request, fetch, event }) => {
   if (sameOrigin && (url.pathname.startsWith('/api/') || url.pathname.startsWith('/uploads/'))) {
     const hubApi = (event.platform as { env?: { HUB_API?: HubApi } } | undefined)?.env?.HUB_API;
     if (hubApi) return hubApi(request);
-    const internal = new URL(INTERNAL_ORIGIN);
+    const internal = new URL(DEV_API_ORIGIN);
     url.protocol = internal.protocol;
     url.host = internal.host;
     return fetch(new Request(url, request));

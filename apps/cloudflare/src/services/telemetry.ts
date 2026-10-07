@@ -363,7 +363,7 @@ export async function forgetUs(): Promise<{ ok: boolean; error?: string }> {
 }
 
 /**
- * Send if it is due. The Docker edition wakes itself with setInterval; here
+ * Send if it is due. The old Docker edition wakes itself with setInterval; here
  * the hourly cron trigger calls this (see scheduled.ts). Whether a send is
  * actually due is decided from the stored timestamp in sendTelemetry(), so
  * running it every hour sends at most once a day.

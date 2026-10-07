@@ -22,7 +22,6 @@
   },
   "devDependencies": {
     "@sveltejs/adapter-cloudflare": "^7.2.9",
-    "@sveltejs/adapter-node": "^5.2.9",
     "@sveltejs/kit": "^2.7.4",
     "@sveltejs/vite-plugin-svelte": "^4.0.0",
     "@types/leaflet": "^1.9.21",

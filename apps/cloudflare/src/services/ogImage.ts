@@ -30,7 +30,7 @@ export const DEFAULT_COLOUR = '#1B6B5A';
 
 /**
  * The one font the renderer has. It is bundled with the Worker (see
- * lib/render.ts), the same font the Docker image installs.
+ * lib/render.ts), the same font the old Docker image installs.
  */
 export const FONT = 'DejaVu Sans';
 

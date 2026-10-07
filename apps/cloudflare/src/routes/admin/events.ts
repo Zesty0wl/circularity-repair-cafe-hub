@@ -523,7 +523,7 @@ async function generateInstancesForTemplate(templateId: string, createdBy: strin
   const dates = generateInstances(tpl.recurrenceRule as any, from, to);
 
   // Skip dates that already have a session from this template. One query for
-  // all of them, rather than one per date as in the Docker edition: D1 is a
+  // all of them, rather than one per date as in the old Docker edition: D1 is a
   // network hop away, so round trips add up.
   const existing = new Set(
     (

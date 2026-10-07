@@ -1,7 +1,7 @@
 // =============================================================================
 //  Migrations and first-run seeding
 //  ---------------------------------------------------------------------------
-//  The Docker edition brings its database up to date every time it starts.
+//  The old Docker edition brings its database up to date every time it starts.
 //  A Worker does not "start" in the same way, so this runs on the first
 //  request each Worker instance handles, and is remembered for the rest of
 //  that instance's life. That costs one small query per instance.
@@ -14,9 +14,9 @@
 //  when the seed data changes, because a Worker instance starts far more often
 //  than a Docker container restarts and D1 counts every write.
 // =============================================================================
-import { CO2_FACTORS } from '../../../server/src/db/co2Factors.js';
-import { matchCo2FactorKey } from '../../../server/src/db/co2Match.js';
-import { DEFAULT_CATEGORIES, DEFAULT_HOME_PAGE, DEFAULT_LINUX_PAGE } from '../../../server/src/db/defaults.js';
+import { CO2_FACTORS } from './co2Factors.js';
+import { matchCo2FactorKey } from './co2Match.js';
+import { DEFAULT_CATEGORIES, DEFAULT_HOME_PAGE, DEFAULT_LINUX_PAGE } from './defaults.js';
 import { bindings } from '../env.js';
 import { APP_VERSION } from '../version.js';
 import m0001 from './migrations/0001_init.js';
@@ -180,7 +180,7 @@ const CO2_BACKFILL_ACTION = 'co2.backfilled';
 
 /**
  * Give old repairs the kind of thing they were. The same one-off pass as
- * apps/server/src/db/migrate.ts, for repairs imported from a Docker hub that
+ * the old Docker edition's db/migrate.ts, for repairs imported from a Docker hub that
  * was older than the CO2 feature. See that file for the reasoning.
  */
 async function backfillCo2Types(db: D1Database): Promise<void> {

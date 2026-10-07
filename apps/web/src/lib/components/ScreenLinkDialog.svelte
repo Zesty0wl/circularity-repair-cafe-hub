@@ -1,7 +1,7 @@
 <script lang="ts">
   // The private link for a screen in the waiting area. Opening it shows the
   // queue to the room without anyone signing in on that screen. See
-  // apps/server/src/routes/display.ts for what the screen is shown.
+  // apps/cloudflare/src/routes/display.ts for what the screen is shown.
   import { createEventDispatcher, onMount } from 'svelte';
   import { api } from '$lib/api';
   import { Check, Copy, ExternalLink, MonitorPlay, RefreshCw, X } from 'lucide-svelte';

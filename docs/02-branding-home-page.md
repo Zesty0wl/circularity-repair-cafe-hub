@@ -14,22 +14,23 @@ In the **Cafe profile** tab:
 | Short description| Under the hero on the home page                                      |
 | Contact email    | Footer + contact section                                             |
 | Phone            | Contact section                                                      |
-| Public URL       | QR codes — must match your reverse-proxy hostname                    |
+| Public URL       | QR codes. Must be the address people use to reach your hub          |
 | Primary colour   | Buttons and accents across the public + admin site                   |
 | Facebook / X / Instagram URLs | Footer + contact section                                |
 
 The **Public URL** matters: it's encoded into the QR code on every event
-poster, so customers scanning the poster end up at the right place. If you're
-behind nginx + Cloudflare, this should be your public hostname (e.g.
-`https://repaircafe.example.org`), not `127.0.0.1`.
+poster, so customers scanning the poster end up at the right place. It should
+be the address people use to reach your hub, such as
+`https://repaircafe.example.org`. If you start on a `workers.dev` address and
+add your own domain later, change it here.
 
 ### Logo and banner
 
 Underneath the same tab:
 
-- **Logo** — square works best. Shown in the header and as a badge in the
+- **Logo**: square works best. Shown in the header and as a badge in the
   hero. Allowed formats: JPEG, PNG, WebP.
-- **Banner** — wide image (~1600×600). Used as the home-page hero background
+- **Banner**: wide image (~1600×600). Used as the home-page hero background
   with a coloured overlay so text stays readable on top.
 
 Both are auto-resized server-side to keep page-load times sensible (longest
@@ -40,15 +41,15 @@ edge 1600px, ~85% quality).
 The **Home page** tab lets you edit four sections of body content. Leave any
 section blank to hide it from the public site:
 
-- **Intro / About** — the "What & Who" paragraph at the top of the page.
-- **How it works** — numbered steps (e.g. *Bring it along → Check it in →
+- **Intro / About**: the "What & Who" paragraph at the top of the page.
+- **How it works**: numbered steps (e.g. *Bring it along → Check it in →
   Repair together → Take it home*). Add as many as you like.
-- **What to bring** — customer guidance. Bullet points work well — start
+- **What to bring**: customer guidance. Bullet points work well: start
   each line with `• ` (bullet + space).
-- **FAQs** — question and answer pairs, displayed as an accordion at the
+- **FAQs**: question and answer pairs, displayed as an accordion at the
   bottom of the home page.
 
-The default content covers the basics — start by editing it rather than
+The default content covers the basics. Start by editing it rather than
 deleting it.
 
 ## Photo gallery
@@ -69,14 +70,14 @@ as JPEG, so feel free to upload straight from a phone or DSLR.
 The **SEO & analytics** tab controls how your site appears in Google results
 and social-media previews:
 
-- **Page title** — what shows in the browser tab and in search results.
-  Leave blank to auto-generate from `Cafe name — Tagline`. ~60 characters
+- **Page title**: what shows in the browser tab and in search results.
+  Leave blank to auto-generate from `Cafe name: Tagline`. ~60 characters
   works best.
-- **Meta description** — the snippet under the page title in search results.
+- **Meta description**: the snippet under the page title in search results.
   Leave blank to use your short description. ~150 characters works best.
-- **Favicon** — the small icon shown in browser tabs. Square, 32–256px.
+- **Favicon**: the small icon shown in browser tabs. Square, 32–256px.
   PNG, JPEG, WebP, or SVG.
-- **Social share image (Open Graph)** — what appears when someone shares
+- **Social share image (Open Graph)**: what appears when someone shares
   your URL on Facebook, LinkedIn, Slack, X, WhatsApp, etc. Aim for ~1200×630.
   Falls back to your banner if blank.
 
@@ -87,18 +88,18 @@ don't run JavaScript) see them properly.
 
 If you'd like privacy-friendly, cookie-free analytics, the **SEO & analytics**
 tab also has a section for [Plausible](https://plausible.io). Both fields are
-optional — leave blank to disable analytics entirely.
+optional. Leave them blank to switch analytics off.
 
-- **Site domain** — the domain you registered in your Plausible dashboard
+- **Site domain**: the domain you registered in your Plausible dashboard
   (e.g. `repaircafe.example.org`).
-- **Script URL** — `https://plausible.io/js/script.js` for managed Plausible,
+- **Script URL**: `https://plausible.io/js/script.js` for managed Plausible,
   or your self-hosted script URL.
 
 When both fields are set, the `<script defer …>` tag is automatically added
 to every page (server-side and client-side). No cookies, no consent banner
 required, GDPR-friendly.
 
-We don't ship a Google Analytics integration — but because the script tag
+We don't ship a Google Analytics integration. But because the script tag
 goes through the same allow-listed CSP, you can paste any `https://…/script.js`
 URL that works for you.
 
@@ -107,7 +108,7 @@ URL that works for you.
 - The **Cafe profile** save button only saves the profile fields. The
   **Home page**, **Gallery** and **SEO & analytics** tabs each have their
   own save buttons. Switching tabs without saving will lose your changes.
-- Image uploads happen *immediately* when you choose a file — there's no
+- Image uploads happen *immediately* when you choose a file. There's no
   separate "Upload" button. The preview updates in place.
 - The **Public URL** is also used for canonical links and Open Graph URLs,
   so make sure it's right before sharing posts on social media.

@@ -1,43 +1,22 @@
-import nodeAdapter from '@sveltejs/adapter-node';
+import adapter from '@sveltejs/adapter-cloudflare';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
-
-// The same app is built for two homes. The Docker image uses adapter-node, and
-// the Cloudflare edition (apps/cloudflare) uses adapter-cloudflare. Set
-// HUB_TARGET=cloudflare to build for Cloudflare. Anything else builds for Node.
-const target = process.env.HUB_TARGET === 'cloudflare' ? 'cloudflare' : 'node';
-// Loaded only when needed, so a Docker build never loads Wrangler.
-const cloudflareAdapter =
-  target === 'cloudflare' ? (await import('@sveltejs/adapter-cloudflare')).default : null;
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
   preprocess: vitePreprocess(),
   kit: {
-    // adapter-node builds a self-contained Node server (build/handler.js +
-    // build/client). The Fastify server imports handler.js at runtime and
-    // delegates all non-/api requests to it, so the public pages are now
-    // genuinely server-rendered (real HTML + JSON-LD) instead of an empty SPA
-    // shell. See apps/server/src/index.ts (serveSveltePage / notFoundHandler).
-    //
     // adapter-cloudflare writes the Worker and the static files to
     // .svelte-kit/cloudflare. apps/cloudflare/src/worker.ts wraps that Worker
-    // with the API, the security headers and the scheduled jobs.
-    adapter:
-      cloudflareAdapter
-        ? cloudflareAdapter({ config: 'wrangler.adapter.jsonc' })
-        : nodeAdapter({
-            out: 'build',
-            precompress: false,
-          }),
+    // with the API, the security headers and the hourly jobs. Public pages are
+    // drawn on the server, so they arrive as real HTML with their JSON-LD.
+    adapter: adapter({ config: 'wrangler.adapter.jsonc' }),
     prerender: { entries: [] },
     alias: {
       $lib: 'src/lib',
     },
-    // With adapter-node, SvelteKit sends the policy as a Content-Security-Policy
-    // response header on every rendered page. Hash mode auto-includes the
-    // SHA-256 of the inline bootstrap script (which changes each build), so we
-    // don't need 'unsafe-inline'. The Fastify server disables helmet's CSP so
-    // this is the single source of truth.
+    // SvelteKit sends the policy as a Content-Security-Policy header on every
+    // rendered page. Hash mode includes the SHA-256 of the inline bootstrap
+    // script (which changes each build), so we don't need 'unsafe-inline'.
     csp: {
       mode: 'hash',
       directives: {

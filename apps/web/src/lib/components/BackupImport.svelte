@@ -1,9 +1,10 @@
 <script lang="ts">
-  // Import a backup into a Cloudflare hub, in the browser.
+  // Import a backup into the hub, in the browser.
   //
   // Used in two places: the setup wizard on a brand new hub ("Move from an
   // existing hub"), and Settings, Backup & restore, where a super admin can
-  // restore over what is there. Both read a backup zip from either edition and
+  // restore over what is there. Both read a backup zip (from this hub or an old
+  // Docker hub) and
   // send it to the hub in small pieces. See $lib/backup/transfer.ts.
   import { createEventDispatcher } from 'svelte';
   import { AlertTriangle, CheckCircle2, Upload } from 'lucide-svelte';
@@ -44,9 +45,9 @@
   }
 
   $: source = opened
-    ? opened.tables.has('cafes') && opened.manifest.edition === 'cloudflare'
-      ? 'a Cloudflare hub'
-      : 'a Docker hub'
+    ? opened.manifest.edition === 'cloudflare'
+      ? 'a hub'
+      : 'an old Docker hub'
     : '';
   $: oldAddress = (opened?.tables.get('cafes')?.[0]?.public_url as string | undefined) ?? '';
   $: newAddress = typeof window !== 'undefined' ? window.location.origin : '';
@@ -97,8 +98,8 @@
       <label class="label" for="backup-file">Backup file (.zip)</label>
       <input id="backup-file" class="input" type="file" accept=".zip,application/zip" bind:files disabled={running} />
       <p class="mt-1 text-xs text-slate-500">
-        On the old hub, go to Settings, Backup &amp; restore, and choose Download backup zip. Both
-        Docker and Cloudflare hubs make a file this page can read.
+        On the old hub, go to Settings, Backup &amp; restore, and choose Download backup zip.
+        This page can also read a backup from an old Docker hub.
       </p>
     </div>
 

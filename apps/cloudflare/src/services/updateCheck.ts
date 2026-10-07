@@ -50,7 +50,7 @@ interface Cached {
   checkedAt: number;
 }
 
-// The Docker edition keeps the answer in /data/config/update-check.json. A
+// The old Docker edition keeps the answer in /data/config/update-check.json. A
 // Worker has no disk, so it lives in the hub_meta table instead, and in memory
 // while this Worker instance lasts.
 const CACHE_KEY = 'update_check';

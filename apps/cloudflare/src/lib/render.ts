@@ -2,15 +2,15 @@
 //  Drawing SVG as PNG, without sharp
 //  ---------------------------------------------------------------------------
 //  The sharing pictures and the home screen icons are drawn as SVG and turned
-//  into PNG. The Docker edition does that with sharp. Here it is resvg, the
+//  into PNG. The old Docker edition does that with sharp. Here it is resvg, the
 //  same kind of renderer compiled to WebAssembly so it runs inside the Worker.
 //
 //  Drawing a picture takes far more CPU than a normal request, so nothing calls
 //  this on every request: each picture is drawn once and kept in R2, the same
-//  way the Docker edition keeps them on disk.
+//  way the old Docker edition keeps them on disk.
 //
 //  A Worker has no system fonts, so the font the pictures are drawn in is
-//  bundled: DejaVu Sans, the same font the Docker image installs, cut down to
+//  bundled: DejaVu Sans, the same font the old Docker image installs, cut down to
 //  Latin letters to keep the Worker small. See assets/fonts.
 // =============================================================================
 import { initWasm, Resvg } from '@resvg/resvg-wasm';

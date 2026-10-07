@@ -1,7 +1,7 @@
 // =============================================================================
 //  Backups: download and restore
 //  ---------------------------------------------------------------------------
-//  The Docker edition streams a zip from the server: a pg_dump plus the
+//  The old Docker edition streams a zip from the server: a pg_dump plus the
 //  uploads folder. A Worker cannot do that. It has a few milliseconds of CPU
 //  per request and cannot hold a large zip in memory.
 //
@@ -22,7 +22,8 @@
 //      PUT  /api/backup/import/file?path=             one file
 //      POST /api/backup/import/finish                 tidy up and fill in defaults
 //
-//  The zip layout and the row format are described in docs/cloudflare/MIGRATION.md.
+//  The zip layout and the row format are described in packages/shared/src/backup.ts
+//  and docs/backups-and-moving.md.
 // =============================================================================
 import { eq } from 'drizzle-orm';
 import type { App, HubReply, HubRequest } from '../../lib/router.js';
@@ -90,7 +91,7 @@ async function requireImportSession(request: HubRequest, reply: HubReply): Promi
 }
 
 /** Empty every table a backup fills, and the bucket apart from caches. */
-async function wipeEverything(): Promise<void> {
+export async function wipeEverything(): Promise<void> {
   const d1 = bindings().DB;
   await d1.batch([...TABLES].reverse().map((t) => d1.prepare(`DELETE FROM "${t.name}"`)));
   // Sign-in attempts belong to the old data too.

@@ -1,7 +1,7 @@
 // =============================================================================
 //  The hourly jobs
 //  ---------------------------------------------------------------------------
-//  The Docker edition runs a timer inside the Node process. A Worker has no
+//  The old Docker edition runs a timer inside the Node process. A Worker has no
 //  process to keep a timer in, so Cloudflare calls this once an hour instead
 //  (the cron trigger in wrangler.jsonc). Each job decides for itself whether
 //  it is due, from timestamps it keeps in the database, so running it more

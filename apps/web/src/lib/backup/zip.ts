@@ -1,7 +1,7 @@
 // =============================================================================
 //  Reading and writing zip files in the browser
 //  ---------------------------------------------------------------------------
-//  The Cloudflare edition builds and reads backups in the browser, because a
+//  The hub builds and reads backups in the browser, because a
 //  Worker has too little CPU time and memory to do it. Browsers can already
 //  compress and decompress (CompressionStream), so all that is needed here is
 //  the zip layout around it.
@@ -11,8 +11,8 @@
 //  only the file being read is.
 //
 //  This handles what the hub's own backups contain: stored or deflated files,
-//  up to 4 GB in all. It reads the larger "zip64" layout too, which the Docker
-//  edition's zip library switches to for very big backups.
+//  up to 4 GB in all. It reads the larger "zip64" layout too, which old Docker
+//  hubs switched to for very big backups.
 // =============================================================================
 
 export interface ZipEntry {

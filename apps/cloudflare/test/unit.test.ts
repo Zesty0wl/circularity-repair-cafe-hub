@@ -1,4 +1,4 @@
-// The new pieces the Docker edition has no equivalent for, tested on their own.
+// The new pieces the old Docker edition has no equivalent for, tested on their own.
 import { describe, expect, it } from 'vitest';
 import bcrypt from 'bcryptjs';
 import { hashPassword, hashToken, signJwt, verifyJwt, verifyPassword } from '../src/lib/crypto.js';
@@ -206,5 +206,19 @@ describe('backups', () => {
       "CREATE TABLE a (x TEXT DEFAULT '{}')",
       'CREATE INDEX i ON a(x)',
     ]);
+  });
+});
+
+describe('JPEG fill bytes', () => {
+  it('reads a JPEG with 0xFF fill bytes before a marker, as some cameras and sites write', () => {
+    const plain = bytes(TINY_JPEG);
+    // FF D8, then two extra FF bytes before the next marker.
+    const filled = new Uint8Array(plain.length + 2);
+    filled.set(plain.subarray(0, 2), 0);
+    filled.set([0xff, 0xff], 2);
+    filled.set(plain.subarray(2), 4);
+    expect(sniffImage(filled)).toBe('jpeg');
+    expect(imageSize(filled, 'jpeg')).toEqual(imageSize(plain, 'jpeg'));
+    expect(imageSize(stripJpegMetadata(filled), 'jpeg')).toEqual(imageSize(plain, 'jpeg'));
   });
 });

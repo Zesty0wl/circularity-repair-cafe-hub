@@ -1,11 +1,9 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
-// Where `vite dev` sends API calls. The Docker edition's server listens on
-// port 3000. To work against the Cloudflare edition instead, run `pnpm cf:dev`
-// and start this with API_ORIGIN=http://localhost:8787 (and the same value in
-// INTERNAL_API_ORIGIN, for pages drawn on the server).
-const api = process.env.API_ORIGIN || 'http://localhost:3000';
+// Where `vite dev` sends API calls: the hub running locally under
+// `pnpm cf:dev`, which listens on port 8787. Set API_ORIGIN to use another.
+const api = process.env.API_ORIGIN || 'http://localhost:8787';
 
 export default defineConfig({
   plugins: [sveltekit()],

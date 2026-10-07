@@ -1,7 +1,7 @@
 // =============================================================================
 //  Portable rows: the data in a backup
 //  ---------------------------------------------------------------------------
-//  A backup has to move between the two editions. The Docker edition keeps
+//  A backup has to move between the two editions. The old Docker edition keeps
 //  Postgres types (real booleans, timestamps, arrays) and the Cloudflare
 //  edition keeps SQLite ones (0 and 1, milliseconds, JSON text). So a backup
 //  holds neither. It holds "portable rows": one JSON object per row, keyed by

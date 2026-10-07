@@ -2,7 +2,7 @@ import rootPackage from '../../../package.json';
 
 /**
  * Bumped whenever the backup layout or restore rules change in a way that an
- * older hub cannot safely read. The Docker edition writes format 1 (a pg_dump
+ * older hub cannot safely read. The old Docker edition writes format 1 (a pg_dump
  * and the uploads folder). The Cloudflare edition writes format 2 (one JSON
  * file per table and the uploads folder), and reads both.
  */

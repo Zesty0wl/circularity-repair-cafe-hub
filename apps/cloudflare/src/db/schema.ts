@@ -1,7 +1,7 @@
 // =============================================================================
 //  The database schema, for D1 (SQLite)
 //  ---------------------------------------------------------------------------
-//  This is apps/server/src/db/schema.ts moved from Postgres to SQLite. Every
+//  This is the old Docker edition's schema, moved from Postgres to SQLite. Every
 //  table, column name and property name is the same, so code ported from the
 //  Docker edition reads the same rows in the same shape.
 //

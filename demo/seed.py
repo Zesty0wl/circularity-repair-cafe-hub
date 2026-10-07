@@ -2,25 +2,30 @@
 """
 Fill an empty hub with a believable repair cafe, for the public demo site.
 
-Run against a hub that has just been started with an empty database. It drives
-the same HTTP API the browser uses, rather than writing to PostgreSQL directly,
-for two reasons: it keeps working when the database schema changes underneath
-it, and it fails loudly when a release breaks something. That second one makes
-the demo a daily check on our own releases.
+It drives the same HTTP API the browser uses, rather than writing to the
+database directly, for two reasons: it keeps working when the database changes
+underneath it, and it fails loudly when a release breaks something. That second
+one makes the demo an hourly check on our own code.
 
-Uploads must still be allowed while this runs, so seed with DEMO_MODE off and
-turn it on afterwards. demo/reset.sh does exactly that.
+On the public demo it runs every hour from GitHub Actions
+(.github/workflows/demo-reset.yml), with --reset. That asks the demo whether
+anybody has changed anything, and only then wipes it and fills it again. The
+demo refuses uploads and password changes from visitors. The seeder is allowed
+them because it sends the demo's secret reset key, read from the environment:
 
-Usage:
-    python3 demo/seed.py --base-url http://127.0.0.1:5026
+    DEMO_RESET_KEY=... python3 demo/seed.py --base-url https://demo.example.org --reset
 
-Only the Python standard library is used, so it runs on a bare Debian host with
-nothing installed.
+Against a brand new hub that is not in demo mode, no key is needed:
+
+    python3 demo/seed.py --base-url http://localhost:8787
+
+Only the Python standard library is used, so it runs anywhere Python 3.9 does.
 """
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import random
 import sys
 import time
@@ -30,6 +35,13 @@ from datetime import date, timedelta
 from pathlib import Path
 
 UA = {"User-Agent": "circularity-repair-cafe-hub-demo-seed/1.0"}
+
+# The demo's reset key, if there is one. Sent with every request to the hub, so
+# the demo lets the seeder do what it refuses visitors. Never sent anywhere else,
+# such as the sites the photographs come from. Read from the environment, so it
+# never appears in a command line or a log.
+DEMO_KEY = os.environ.get("DEMO_RESET_KEY", "").strip()
+HUB_HEADERS = dict(UA, **({"X-Demo-Key": DEMO_KEY} if DEMO_KEY else {}))
 
 # The cafe is invented. "Tinkerton" is not a real place and TK is not a real UK
 # postcode area, so none of this can be mistaken for, or collide with, a repair
@@ -101,7 +113,7 @@ class Api:
 
     def call(self, method: str, path: str, body=None, expect=(200, 201)):
         data = json.dumps(body).encode() if body is not None else None
-        headers = dict(UA)
+        headers = dict(HUB_HEADERS)
         if data:
             headers["Content-Type"] = "application/json"
         if self.token:
@@ -139,22 +151,28 @@ class Api:
             blob,
             f"\r\n--{boundary}--\r\n".encode(),
         ])
-        headers = dict(UA)
+        headers = dict(HUB_HEADERS)
         headers["Content-Type"] = f"multipart/form-data; boundary={boundary}"
         if self.token:
             headers["Authorization"] = f"Bearer {self.token}"
-        req = urllib.request.Request(self.base + path, data=body, headers=headers, method="POST")
-        try:
-            with urllib.request.urlopen(req, timeout=60) as r:
-                raw = r.read()
-                return json.loads(raw) if raw else None
-        except urllib.error.HTTPError as e:
-            detail = e.read().decode(errors="replace")[:200]
-            print(f"      upload rejected: HTTP {e.code} {detail}")
-            return None
-        except Exception as e:
-            print(f"      upload failed: {e}")
-            return None
+        # Two tries: an upload now and then fails for a moment on a busy network.
+        for attempt in (1, 2):
+            req = urllib.request.Request(self.base + path, data=body, headers=headers, method="POST")
+            try:
+                with urllib.request.urlopen(req, timeout=60) as r:
+                    raw = r.read()
+                    return json.loads(raw) if raw else None
+            except urllib.error.HTTPError as e:
+                detail = e.read().decode(errors="replace")[:200]
+                problem = f"rejected: HTTP {e.code} {detail}"
+                if e.code in (401, 403, 413, 415):
+                    break
+            except Exception as e:
+                problem = f"failed: {e}"
+            if attempt == 1:
+                time.sleep(2)
+        print(f"      upload {problem}")
+        return None
 
 
 # ── drawn avatars ─────────────────────────────────────────────────────────────
@@ -224,7 +242,7 @@ def wait_for(api: Api, seconds: int = 180) -> None:
     step("Waiting for the hub to answer")
     for _ in range(seconds // 3):
         try:
-            req = urllib.request.Request(api.base + "/api/health", headers=UA)
+            req = urllib.request.Request(api.base + "/api/health", headers=HUB_HEADERS)
             with urllib.request.urlopen(req, timeout=5) as r:
                 if r.status == 200:
                     ok("It is up")
@@ -235,17 +253,63 @@ def wait_for(api: Api, seconds: int = 180) -> None:
     raise SystemExit("The hub never answered. Is it running?")
 
 
+# How long to leave a busy demo alone. Somebody clicked something in the last
+# ten minutes: wiping the site out from under them is rude, and it will still be
+# here to clean up in an hour. But a demo that is busy all day must still be
+# cleaned, so after three hours it is wiped anyway.
+BUSY_SECONDS = 10 * 60
+MAX_WAIT_SECONDS = 3 * 60 * 60
+
+
+def reset_if_needed(api: Api, force: bool) -> bool:
+    """Wipe the demo if it needs it. Returns False when there is nothing to do."""
+    if not DEMO_KEY:
+        raise SystemExit("--reset needs the demo's key in the DEMO_RESET_KEY environment variable.")
+    step("Working out whether a rebuild is needed")
+    status = api.get("/api/demo/status", expect=())
+    if status is None:
+        raise SystemExit("The demo did not answer /api/demo/status. Check the key, and that DEMO_MODE is on.")
+    if force:
+        ok("Rebuilding because you asked for it")
+    elif not status["rebuild"]:
+        ok("Nothing has changed and nobody has been in. Leaving it as it is.")
+        return False
+    else:
+        idle = status.get("secondsSinceActivity")
+        age = status.get("secondsSinceSeed")
+        if (status["reason"] == "somebody has changed something" and idle is not None
+                and idle < BUSY_SECONDS and age is not None and age < MAX_WAIT_SECONDS):
+            ok(f"Somebody was using it {idle}s ago. Leaving them alone until next time.")
+            return False
+        ok(f"Rebuilding because {status['reason']}")
+
+    step("Wiping the demo")
+    api.post("/api/demo/reset")
+    # Other copies of the hub may remember for a few seconds that it was set up.
+    for _ in range(30):
+        if not (api.get("/api/setup/status") or {}).get("setupCompleted"):
+            ok("It is empty")
+            return True
+        time.sleep(3)
+    raise SystemExit("The demo still says it is set up, 90 seconds after the wipe.")
+
+
 # ── the seed itself ───────────────────────────────────────────────────────────
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--base-url", default="http://127.0.0.1:5026")
+    ap.add_argument("--base-url", default="http://localhost:8787")
     ap.add_argument("--public-url", default="https://repaircafe.hyperspanner.net")
     ap.add_argument("--images", default=str(Path(__file__).parent / "images.json"))
+    ap.add_argument("--reset", action="store_true",
+                    help="on the public demo: wipe it first, if anybody has changed anything")
+    ap.add_argument("--force", action="store_true", help="with --reset: wipe it even if nothing changed")
     args = ap.parse_args()
 
     random.seed(20260728)  # same demo every time, so a broken seed is obvious
     api = Api(args.base_url)
     wait_for(api)
+    if args.reset and not reset_if_needed(api, args.force):
+        return 0
 
     # ── 1. the cafe itself ────────────────────────────────────────────────────
     step("Creating the cafe and the admin account")
@@ -253,7 +317,7 @@ def main() -> int:
     if status and status.get("setupCompleted"):
         raise SystemExit(
             "This hub is already set up. Seeding expects an empty database.\n"
-            "Run demo/reset.sh, which wipes it first."
+            "On the demo, run this with --reset, which wipes it first."
         )
     api.post("/api/setup/complete", {
         "admin": {"displayName": "Demo Admin", "email": ADMIN_EMAIL, "password": ADMIN_PASSWORD},
@@ -472,8 +536,8 @@ def main() -> int:
         ok(f"Today: {waiting} waiting, {in_progress} being worked on, {done} finished")
 
     # ── 7. photographs ───────────────────────────────────────────────────────
-    # Downloaded at seeding time rather than committed, so the repository and
-    # the container image stay small. Every one is CC0, public domain or CC BY,
+    # Downloaded at seeding time rather than committed, so the repository
+    # stays small. Every one is CC0, public domain or CC BY,
     # and the credit goes into the caption because CC BY asks for it.
     step("Adding photographs")
     manifest = json.loads(Path(args.images).read_text())
@@ -515,8 +579,13 @@ def main() -> int:
     if added == 0:
         raise SystemExit(
             "No photographs could be added. If uploads are refused, the hub is\n"
-            "already in demo mode: seed first, then turn DEMO_MODE on."
+            "in demo mode: set DEMO_RESET_KEY to the demo's key."
         )
+
+    if DEMO_KEY:
+        # Remember what the demo looks like now, so the next run can tell
+        # whether anybody has changed it.
+        api.post("/api/demo/seeded")
 
     # ── done ─────────────────────────────────────────────────────────────────
     print(f"""

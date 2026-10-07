@@ -1,12 +1,12 @@
 // =============================================================================
-//  Backups in the browser, for the Cloudflare edition
+//  Backups in the browser
 //  ---------------------------------------------------------------------------
-//  A Cloudflare hub cannot build or unpack a backup zip itself (see
+//  The hub cannot build or unpack a backup zip itself (see
 //  apps/cloudflare/src/routes/admin/backup.ts), so this page does it, talking
 //  to the hub in small pieces:
 //
 //    downloadBackup()   asks for each table and each file, and builds a zip
-//    importBackup()     reads a zip from either edition, and sends it back in
+//    importBackup()     reads a zip, from this hub or an old Docker hub, and sends it back in
 //                       batches of rows and one file at a time
 //
 //  The zip layouts are described in packages/shared/src/backup.ts.
@@ -165,7 +165,7 @@ export interface OpenedBackup {
   file: Blob;
 }
 
-/** Read a backup zip from either edition and check it makes sense. */
+/** Read a backup zip, from this hub or an old Docker hub, and check it makes sense. */
 export async function openBackup(file: Blob): Promise<OpenedBackup> {
   const entries = await readZipDirectory(file);
   const byName = new Map(entries.map((e) => [e.name, e]));
@@ -179,10 +179,10 @@ export async function openBackup(file: Blob): Promise<OpenedBackup> {
   const tables = new Map<string, PortableRow[]>();
   const dump = byName.get('postgres/dump.sql');
   if (dump) {
-    // Format 1, from the Docker edition.
+    // Format 1, from an old Docker hub.
     for (const [name, rows] of pgDumpToPortable(await readZipText(file, dump))) tables.set(name, rows);
   } else {
-    // Format 2, from the Cloudflare edition.
+    // Format 2, from this edition.
     for (const entry of entries) {
       const match = /^data\/([a-z_]+)\.json$/.exec(entry.name);
       if (!match) continue;

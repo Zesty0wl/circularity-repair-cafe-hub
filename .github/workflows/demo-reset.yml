@@ -1,0 +1,45 @@
+# Keeps the public demo site clean. Every hour it asks the demo whether anybody
+# has changed anything, and if so wipes it and fills it again with the invented
+# Tinkerton Repair Café (demo/seed.py). It also rebuilds it when the date
+# changes, because the seed opens a session "today".
+#
+# It needs, in this repository's settings:
+#   Secrets and variables, Actions, Secrets:    DEMO_RESET_KEY  the demo's key
+#   Secrets and variables, Actions, Variables:  DEMO_URL        e.g. https://repaircafe.hyperspanner.net
+# Without them it does nothing, so forks are not affected. See docs/demo.md.
+name: Reset the demo
+
+on:
+  schedule:
+    - cron: "7 * * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Rebuild even if nothing has changed
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: demo-reset
+  cancel-in-progress: false
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reset and seed
+        env:
+          DEMO_RESET_KEY: ${{ secrets.DEMO_RESET_KEY }}
+          DEMO_URL: ${{ vars.DEMO_URL }}
+          FORCE: ${{ inputs.force && '--force' || '' }}
+        run: |
+          if [ -z "$DEMO_RESET_KEY" ] || [ -z "$DEMO_URL" ]; then
+            echo "DEMO_RESET_KEY or DEMO_URL is not set, so there is no demo to reset."
+            exit 0
+          fi
+          python3 demo/seed.py --base-url "$DEMO_URL" --public-url "$DEMO_URL" --reset $FORCE

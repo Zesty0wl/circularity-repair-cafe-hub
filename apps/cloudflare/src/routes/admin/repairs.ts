@@ -28,7 +28,7 @@ export async function adminRepairsRoutes(app: App): Promise<void> {
     if (q.status) conditions.push(eq(repairJobs.status, q.status as any));
     if (q.categoryId) conditions.push(eq(repairJobs.itemCategoryId, q.categoryId));
     if (q.repairerId) conditions.push(eq(repairJobs.repairerId, q.repairerId));
-    // Dates are the cafe's own days, as Postgres read them in the Docker edition.
+    // Dates are the cafe's own days, as Postgres read them in the old Docker edition.
     if (q.from && /^\d{4}-\d{2}-\d{2}$/.test(q.from)) {
       conditions.push(sql`${repairJobs.createdAt} >= ${localMidnightMs(q.from)}`);
     }

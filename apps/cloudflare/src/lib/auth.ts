@@ -1,7 +1,7 @@
 // =============================================================================
 //  Signing in: access tokens, refresh cookies and role checks
 //  ---------------------------------------------------------------------------
-//  A port of apps/server/src/plugins/auth.ts. The rules are the same:
+//  Ported from the old Docker edition. The rules are the same:
 //    - a 15 minute access token, sent as "Authorization: Bearer ..."
 //    - a long-lived refresh token in an httpOnly cookie called circ_refresh
 //    - the refresh token rotates at most once a day, so two tabs refreshing at

@@ -1,7 +1,7 @@
 // =============================================================================
 //  Uploaded pictures, kept in R2
 //  ---------------------------------------------------------------------------
-//  A port of apps/server/src/services/imageUpload.ts. Files used to live under
+//  Ported from the old Docker edition. Files used to live under
 //  /data/uploads. They now live in the R2 bucket bound as UPLOADS, under the
 //  same paths, and are served at the same /uploads/... addresses. So a stored
 //  path like "repairs/<id>/x.jpg" means the same thing in both editions, which
@@ -13,7 +13,7 @@ import { EXTENSION_FOR, MIME_FOR, imageSize, sniffImage, stripJpegMetadata, type
 const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 export interface SavedImage {
-  /** Key in the bucket, kept for parity with the Docker edition's disk path. */
+  /** Key in the bucket, kept for parity with the old Docker edition's disk path. */
   filePath: string;
   /** Path under uploads/. */
   relativePath: string;
@@ -118,7 +118,7 @@ export async function readUpload(storedPath: string | null | undefined): Promise
 }
 
 /**
- * GET /uploads/* — the same addresses the Docker edition served from disk.
+ * GET /uploads/* — the same addresses the old Docker edition served from disk.
  */
 export async function serveUpload(request: Request, key: string): Promise<Response> {
   const safe = uploadKey(key);

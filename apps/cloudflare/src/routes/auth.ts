@@ -12,7 +12,7 @@ import { env } from '../env.js';
 
 const REFRESH_COOKIE = 'circ_refresh';
 
-// Login rate limit: the same numbers as the Docker edition's
+// Login rate limit: the same numbers as the old Docker edition's
 // @fastify/rate-limit setting, 10 tries per address and email in 10 minutes.
 // Fastify kept the count in memory. A Worker has no lasting memory, so failed
 // tries are written to a small table instead, and only failures count.

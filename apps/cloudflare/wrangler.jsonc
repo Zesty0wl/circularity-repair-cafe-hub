@@ -1,11 +1,11 @@
 // =============================================================================
-//  The Cloudflare edition of the Circularity Repair Cafe Hub
+//  The Circularity Repair Cafe Hub on Cloudflare
 //  ---------------------------------------------------------------------------
 //  One Worker serves the whole site: the pages, the API, the photos and the
-//  daily jobs. See docs/cloudflare/README.md for how to set one up.
+//  hourly jobs. See docs/install.md for how to set one up.
 //
-//  The names below are what this project uses for its own test site. If you
-//  are setting up your own cafe, the setup script fills these in for you.
+//  Nothing in this file is about one particular cafe, so it works as it is
+//  and you do not need to edit it.
 // =============================================================================
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",
@@ -23,8 +23,8 @@
   },
 
   // The cafe's own web address is not set here, so this file works for any
-  // cafe. Pass it when deploying instead:
-  //   pnpm deploy -- --domain repair.example.org
+  // cafe. Pass it the first time you publish instead:
+  //   pnpm cf:deploy -- --domain repair.example.org
   // Cloudflare then creates the DNS record and the HTTPS certificate. The
   // domain must already be on your Cloudflare account. Until then the hub is
   // also reachable at <name>.<your-subdomain>.workers.dev.
@@ -41,13 +41,13 @@
   // spare, add  "triggers": { "crons": ["17 * * * *"] }  here as well.
   // See src/housekeeping.ts.
 
-  "vars": {
-    // Where your cafe is. Session dates, "today" and reports use it.
-    "TZ": "Europe/London",
-    "DEMO_MODE": "false",
-    "TELEMETRY_DISABLED": "false",
-    "UPDATE_CHECK_DISABLED": "false"
-  },
+  // Settings such as TZ (where your cafe is) are not written here. Set them in
+  // the Cloudflare dashboard: Workers & Pages, repair-cafe-hub, Settings,
+  // Variables and Secrets. Every setting has a sensible default, and
+  // "keep_vars" stops a publish from wiping what you set there. Keeping them
+  // out of this file also means `git pull` never trips over your changes.
+  // The settings are listed in docs/running-your-hub.md.
+  "keep_vars": true,
 
   // Bundle .wasm (the picture renderer) and .ttf (its fonts) as modules.
   "rules": [
@@ -55,5 +55,23 @@
     { "type": "Data", "globs": ["**/*.ttf"], "fallthrough": true }
   ],
 
-  "observability": { "enabled": true }
+  "observability": { "enabled": true },
+
+  // The project's public demo site, published with  pnpm demo:deploy.  It has
+  // its own Worker, database and bucket, so it never touches a real cafe. It
+  // also needs a secret, DEMO_RESET_KEY, which lets demo/seed.py wipe and refill
+  // it every hour. See docs/demo.md. A cafe can ignore this section.
+  "env": {
+    "demo": {
+      "name": "repair-cafe-demo",
+      "d1_databases": [{ "binding": "DB", "database_name": "repair-cafe-demo" }],
+      "r2_buckets": [{ "binding": "UPLOADS", "bucket_name": "repair-cafe-demo-uploads" }],
+      "vars": {
+        "TZ": "Europe/London",
+        "DEMO_MODE": "true",
+        "TELEMETRY_DISABLED": "true",
+        "UPDATE_CHECK_DISABLED": "false"
+      }
+    }
+  }
 }

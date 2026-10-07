@@ -2,7 +2,7 @@
   "name": "circularity-hub",
   "version": "1.10.0",
   "private": true,
-  "description": "Circularity Repair Cafe Hub - self-hosted repair cafe management",
+  "description": "Circularity Repair Cafe Hub: repair cafe management on a free Cloudflare account",
   "license": "MIT",
   "homepage": "https://circularity.org/repair-cafe",
   "repository": {
@@ -14,15 +14,12 @@
   },
   "packageManager": "pnpm@11.3.0+sha512.2c403d6594527287672b1f7056343a1f7c3634036a67ffabfcc2b3d7595d843768f8787148d1b57cf7956c90606bbd192857c363af19e96d2d0ec9ec5741d215",
   "scripts": {
-    "build:shared": "pnpm --filter @circularity/shared build",
-    "build:web": "pnpm --filter @circularity/web build",
-    "build:server": "pnpm --filter @circularity/server build",
-    "build": "pnpm build:shared && pnpm build:web && pnpm build:server",
-    "dev:server": "pnpm --filter @circularity/server dev",
+    "build": "pnpm --filter @circularity/cloudflare run build:web",
     "dev:web": "pnpm --filter @circularity/web dev",
     "cf:dev": "pnpm --filter @circularity/cloudflare run build:web && pnpm --filter @circularity/cloudflare exec wrangler dev",
     "cf:deploy": "pnpm --filter @circularity/cloudflare run deploy",
-    "cf:test": "pnpm --filter @circularity/shared build && pnpm --filter @circularity/cloudflare test"
+    "demo:deploy": "pnpm --filter @circularity/cloudflare run deploy:demo",
+    "cf:test": "pnpm --filter @circularity/shared build && pnpm --filter @circularity/web exec svelte-kit sync && pnpm --filter @circularity/cloudflare test"
   },
   "engines": {
     "node": ">=22"

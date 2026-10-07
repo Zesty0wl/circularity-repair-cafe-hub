@@ -2,7 +2,7 @@
  * Repair guides, as our server hands them to us.
  *
  * The guides come from iFixit. Our server proxies and caches them, so this is
- * a same-origin request. See apps/server/src/services/ifixit.ts.
+ * a same-origin request. See apps/cloudflare/src/services/ifixit.ts.
  */
 
 export interface GuideSummary {

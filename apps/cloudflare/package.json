@@ -3,12 +3,13 @@
   "version": "1.10.0",
   "private": true,
   "type": "module",
-  "description": "The Cloudflare edition of the hub: the API on Workers, D1 and R2, wrapped round the SvelteKit app.",
+  "description": "The hub: the API on Cloudflare Workers, D1 and R2, wrapped round the SvelteKit app.",
   "scripts": {
-    "build:web": "pnpm --filter @circularity/shared build && HUB_TARGET=cloudflare pnpm --filter @circularity/web build",
+    "build:web": "pnpm --filter @circularity/shared build && pnpm --filter @circularity/web build",
     "build": "pnpm build:web && wrangler deploy --dry-run --outdir dist",
     "dev": "wrangler dev",
     "deploy": "pnpm build:web && wrangler deploy",
+    "deploy:demo": "pnpm build:web && wrangler deploy --env demo",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run"
   },

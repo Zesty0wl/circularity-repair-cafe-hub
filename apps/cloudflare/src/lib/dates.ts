@@ -1,7 +1,7 @@
 // =============================================================================
 //  Dates in the cafe's own time zone
 //  ---------------------------------------------------------------------------
-//  In the Docker edition Postgres runs in the cafe's time zone (the TZ
+//  In the old Docker edition Postgres runs in the cafe's time zone (the TZ
 //  setting), so CURRENT_DATE and NOW() there mean the cafe's today. SQLite on
 //  D1 only knows UTC. So "today" is worked out here, in the TZ setting, and
 //  passed into the query as a value.

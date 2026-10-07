@@ -1,4 +1,4 @@
-// A small pg_dump in exactly the shape the Docker edition's backup writes
+// A small pg_dump in exactly the shape the old Docker edition's backup writes
 // (pg_dump 16, --format=plain, rows as COPY blocks). It is an older hub, from
 // before the Linux and CARTO features, so it also checks that missing tables
 // and columns are filled in with defaults.

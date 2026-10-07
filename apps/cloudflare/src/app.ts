@@ -1,8 +1,8 @@
 // =============================================================================
 //  The API
 //  ---------------------------------------------------------------------------
-//  Every route of the Docker edition's Fastify server, registered in the same
-//  groups and order as apps/server/src/index.ts, plus the Cloudflare-only
+//  Every route of the API, registered in the same groups and order as the old
+//  old Docker edition's server, plus the Cloudflare-only
 //  routes for files and for importing a backup.
 // =============================================================================
 import { ensureDatabase } from './db/migrate.js';
@@ -19,6 +19,7 @@ import { repairerRoutes } from './routes/repairer.js';
 import { eventGalleryRoutes } from './routes/eventGallery.js';
 import { adminRoutes } from './routes/admin/index.js';
 import { displayRoutes } from './routes/display.js';
+import { demoRoutes } from './routes/demo.js';
 import { importRoutes, setupImportRoutes } from './routes/admin/backup.js';
 import { fileRoutes } from './routes/files.js';
 
@@ -41,6 +42,7 @@ const registered = (async () => {
   await app.register(repairerRoutes);
   await app.register(eventGalleryRoutes);
   await app.register(displayRoutes);
+  await app.register(demoRoutes);
   await app.register(adminRoutes);
   await app.register(importRoutes);
   await app.register(fileRoutes);
@@ -60,8 +62,8 @@ export function isApiPath(pathname: string): boolean {
 }
 
 /**
- * Answer an API request. Unknown /api paths get a JSON 404, the same as the
- * Docker edition, rather than falling through to the web app.
+ * Answer an API request. Unknown /api paths get a JSON 404, rather than
+ * falling through to the web app.
  */
 export async function handleApi(request: Request): Promise<Response> {
   await registered;

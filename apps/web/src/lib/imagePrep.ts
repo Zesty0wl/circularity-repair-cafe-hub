@@ -1,9 +1,8 @@
 // =============================================================================
 //  Shrinking a picture in the browser before it is uploaded
 //  ---------------------------------------------------------------------------
-//  The Docker edition shrinks every upload on the server with sharp. The
-//  Cloudflare edition cannot, so the browser does it first, and it does no
-//  harm on Docker either: a smaller file uploads faster on a hall's wifi.
+//  A Worker cannot resize pictures, so the browser does it before uploading.
+//  It helps anyway: a smaller file uploads faster on a hall's wifi.
 //
 //  The picture is drawn through an <img>, so the browser turns it the right
 //  way up first. Drawing it again also drops the camera's hidden details, such

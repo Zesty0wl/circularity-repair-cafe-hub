@@ -1,7 +1,7 @@
 // =============================================================================
 //  Check-in QR codes
 //  ---------------------------------------------------------------------------
-//  A port of apps/server/src/services/qrcode.ts. The QR code is the same: the
+//  Ported from the old Docker edition. The QR code is the same: the
 //  session's check-in link, error correction level M, four modules of white
 //  margin, about 500 pixels across. It is kept in R2 at the same address the
 //  Docker edition used, /uploads/qr/<event id>.png.

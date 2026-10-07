@@ -1,7 +1,7 @@
 // =============================================================================
 //  /uploads, robots.txt and sitemap.xml
 //  ---------------------------------------------------------------------------
-//  The Docker edition serves these straight from Fastify: uploads from disk
+//  The old Docker edition serves these straight from Fastify: uploads from disk
 //  with @fastify/static, and robots.txt and sitemap.xml from live data. Here
 //  uploads come from the R2 bucket, at the same addresses.
 // =============================================================================

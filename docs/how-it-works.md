@@ -127,3 +127,50 @@ with the demo cafe, run `python3 demo/seed.py` while it is running.
 
 Every pull request runs the tests, the type check and a full build
 (`.github/workflows/ci.yml`).
+
+## Releasing a new version
+
+Every cafe's hub is its own Worker, on its own Cloudflare account, so the
+project cannot update them. A change reaches a cafe in three stages:
+
+1. **Merged to `main`.** Nothing happens to any hub yet. But `main` is what a
+   cafe gets when it runs `git pull`, so only merge finished, tested work.
+   Work in progress belongs on a branch.
+2. **Released.** Pushing a version tag (such as `v1.12.0`) is what tells the
+   hubs. Each hub checks the repository's tags once a day
+   (`apps/cloudflare/src/services/updateCheck.ts`) and shows "Version 1.12.0
+   is out" in its admin area.
+3. **Published by the cafe.** Someone at the cafe runs `git pull`,
+   `pnpm install` and `pnpm cf:deploy`. Database migrations run by themselves
+   on the first request afterwards, so they must work on any older database,
+   and must never need anyone to do anything by hand.
+
+Because cafes update when they choose, a hub may be several versions behind.
+Keep the API and database changes backwards compatible across a few releases,
+and keep backups readable by newer versions (`BACKUP_FORMAT_VERSION` in
+`apps/cloudflare/src/version.ts`).
+
+**To make a release:**
+
+1. Make sure `main` has everything you want in it, and its checks pass.
+2. On a branch, set the new version in all four `package.json` files (the
+   root, `apps/web`, `apps/cloudflare` and `packages/shared`). Use
+   `1.12.0` for new features, and `1.11.1` for fixes only.
+3. In `CHANGELOG.md`, rename "Unreleased" to the version and today's date,
+   for example `## 1.12.0 (14 November 2026)`.
+4. Open a pull request, let the checks pass, and merge it.
+5. Tag the merge and publish a GitHub release with the changelog section as
+   its notes:
+
+   ```
+   git checkout main && git pull
+   git tag -a v1.12.0 -m "1.12.0"
+   git push origin v1.12.0
+   gh release create v1.12.0 --title "1.12.0" --notes "..."
+   ```
+
+6. Publish the hubs the project runs itself: `pnpm demo:deploy` for the demo,
+   and `pnpm cf:deploy` for any cafe you look after, each signed in to the
+   right Cloudflare account.
+
+Within a day, every other hub's admin area shows the new version.

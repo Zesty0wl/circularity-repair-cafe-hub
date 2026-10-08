@@ -51,7 +51,7 @@ pnpm install
 pnpm cf:deploy
 ```
 
-- `git pull` downloads the new version of the code.
+- `git pull` downloads the newest released version of the code.
 - `pnpm install` downloads any libraries it needs.
 - `pnpm cf:deploy` builds it and publishes it to Cloudflare.
 

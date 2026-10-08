@@ -16,7 +16,7 @@
   import { api } from '$lib/api';
   import { auth } from '$lib/stores/auth';
   import CameraCapture from '$lib/components/CameraCapture.svelte';
-  import { clockTime, firstName, formatMinutes, minutesBetween, statusLabel } from '$lib/staff/queue';
+  import { clockTime, firstName, minutesBetween, statusLabel, formatDuration } from '$lib/staff/queue';
   import { ArrowLeft, Camera as CameraIcon, CheckCircle2, ChevronDown, Package, User, XCircle } from 'lucide-svelte';
 
   $: id = $page.params.id;
@@ -214,7 +214,7 @@
           </div>
           <div>
             <dt class="text-slate-500">Checked in</dt>
-            <dd class="text-slate-900">{clockTime(detail.job.createdAt)} · waited {formatMinutes(minutesBetween(detail.job.createdAt, detail.job.acceptedAt ? new Date(detail.job.acceptedAt).getTime() : Date.now())).toLowerCase()}</dd>
+            <dd class="text-slate-900">{clockTime(detail.job.createdAt)} · waited {formatDuration(minutesBetween(detail.job.createdAt, detail.job.acceptedAt ? new Date(detail.job.acceptedAt).getTime() : Date.now()))}</dd>
           </div>
           {#if detail.repairer && (status === 'in_progress' || isFinished)}
             <div>

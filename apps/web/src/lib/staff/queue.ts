@@ -38,6 +38,19 @@ export function formatMinutes(minutes: number): string {
   return m ? `${h} hr ${m} min` : `${h} hr`;
 }
 
+/**
+ * A length of time inside a sentence, such as "People wait about 20 min".
+ * Unlike formatMinutes() it never says "just now", which reads oddly there.
+ */
+export function formatDuration(minutes: number): string {
+  return minutes < 1 ? 'under a minute' : formatMinutes(minutes);
+}
+
+/** How long ago something happened: "just now", or "20 min ago". */
+export function formatAgo(minutes: number): string {
+  return minutes < 1 ? 'just now' : `${formatMinutes(minutes)} ago`;
+}
+
 /** How worried to be about a wait: fine, getting long, or too long. */
 export function waitTone(minutes: number): 'ok' | 'long' | 'very-long' {
   if (minutes >= 60) return 'very-long';

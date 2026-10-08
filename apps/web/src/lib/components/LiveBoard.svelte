@@ -111,7 +111,7 @@
       <div class="brand-text">
         <p class="cafe">{data?.cafeName ?? ''}</p>
         {#if running}
-          <p class="session">{running.name}{#if running.startTime && running.endTime} · {sessionTimes(running.startTime, running.endTime)}{/if}</p>
+          <p class="session">{running.name}{#if running.startTime && running.endTime}{` · ${sessionTimes(running.startTime, running.endTime)}`}{/if}</p>
         {/if}
       </div>
     </div>

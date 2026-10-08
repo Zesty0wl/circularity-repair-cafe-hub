@@ -12,15 +12,7 @@
   import { goto } from '$app/navigation';
   import { api } from '$lib/api';
   import { auth } from '$lib/stores/auth';
-  import {
-    WAIT_TONE_CLASS,
-    firstName,
-    formatMinutes,
-    minutesBetween,
-    sessionTimes,
-    statusLabel,
-    waitTone,
-  } from '$lib/staff/queue';
+  import { WAIT_TONE_CLASS, firstName, minutesBetween, sessionTimes, statusLabel, waitTone, formatAgo, formatDuration } from '$lib/staff/queue';
   import { Camera, CheckCircle2, ChevronRight, Clock, RefreshCw, UserPlus, Wrench, X } from 'lucide-svelte';
 
   interface Job {
@@ -244,7 +236,7 @@
             <span class="h-11 w-11 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center shrink-0"><Wrench size={20} /></span>
             <div class="min-w-0 flex-1">
               <p class="font-semibold text-slate-900 truncate">{j.itemDescription}</p>
-              <p class="text-sm text-slate-600 truncate">{j.jobNumber}{#if j.customerName} · {firstName(j.customerName)}{/if} · started {formatMinutes(minutesBetween(j.acceptedAt ?? j.createdAt, now)).toLowerCase()} ago</p>
+              <p class="text-sm text-slate-600 truncate">{j.jobNumber}{#if j.customerName} · {firstName(j.customerName)}{/if} · started {formatAgo(minutesBetween(j.acceptedAt ?? j.createdAt, now))}</p>
             </div>
             <span class="text-sm font-semibold text-brand-700 flex items-center gap-1 shrink-0">Carry on <ChevronRight size={16} /></span>
           </a>
@@ -311,8 +303,8 @@
               <div class="mt-3 flex flex-wrap items-center justify-between gap-2">
                 <p class="text-sm flex items-center gap-1.5 {tab === 'waiting' ? WAIT_TONE_CLASS[waitTone(waited)] : 'text-slate-500'}">
                   <Clock size={14} />
-                  {#if tab === 'waiting'}Waiting {formatMinutes(waited).toLowerCase()}
-                  {:else if tab === 'in_progress'}{j.repairerId === myId ? 'With you' : `With ${firstName(j.repairerName) || 'someone'}`} · {formatMinutes(minutesBetween(j.acceptedAt ?? j.createdAt, now)).toLowerCase()}
+                  {#if tab === 'waiting'}Waiting {formatDuration(waited)}
+                  {:else if tab === 'in_progress'}{j.repairerId === myId ? 'With you' : `With ${firstName(j.repairerName) || 'someone'}`} · {formatDuration(minutesBetween(j.acceptedAt ?? j.createdAt, now))}
                   {:else if j.repairerName}{firstName(j.repairerName)}
                   {:else}Checked in at {new Date(j.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}{/if}
                 </p>

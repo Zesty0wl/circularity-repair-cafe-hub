@@ -13,6 +13,8 @@ to install on a machine of your own, and nothing to keep running. You set it up
 once from your laptop, in about an hour, by following
 **[the step-by-step install guide](./docs/install.md)**.
 
+![The admin dashboard during a session: the queue at a glance, how long people wait, who is working on what, and the sessions coming up](./docs/images/screenshots/dashboard.jpg)
+
 ## Why?
 
 Most repair cafes run on a clipboard, a spreadsheet and a WhatsApp group. That
@@ -42,6 +44,40 @@ and rebuilt whenever someone changes it. You cannot break it in a way that
 lasts. Uploading photos and changing passwords are switched off, because the
 password is published here. Please do not type real names, emails or phone
 numbers into it.
+
+## A look around
+
+These pictures come from the demo cafe, part way through a session.
+
+**The screen for the waiting area.** Put it on a TV so visitors can see the
+queue, how long they may wait and what is ready to collect. It opens from a
+private link with nobody signed in, and never shows visitors' names.
+
+![The waiting-room screen on a TV, with the items being repaired, the waiting list with an estimated wait, items ready to collect and a QR code to check in](./docs/images/screenshots/waiting-room-screen.jpg)
+
+**On a phone.** Visitors check in by scanning the QR code on a poster.
+Volunteers see the queue, oldest first, and take the next item.
+
+<table>
+  <tr>
+    <td width="50%"><img src="./docs/images/screenshots/check-in-phone.jpg" alt="Checking in an item on a phone: choosing what type of item it is"></td>
+    <td width="50%"><img src="./docs/images/screenshots/repair-queue-phone.jpg" alt="The repair queue on a volunteer's phone, with each item's place and how long it has waited"></td>
+  </tr>
+  <tr>
+    <td align="center">A visitor checking in</td>
+    <td align="center">A volunteer's repair queue</td>
+  </tr>
+</table>
+
+**Your cafe's website** shows your next session, what you repair and who you
+are, in your own colours.
+
+![The public home page of the demo cafe, showing the next session](./docs/images/screenshots/home-page.jpg)
+
+**Statistics** show what your cafe has achieved: repairs, success rate,
+volunteers and CO2 saved, with every session listed.
+
+![The statistics page, with totals, a calendar of activity and a table of sessions](./docs/images/screenshots/statistics.jpg)
 
 ## Features
 

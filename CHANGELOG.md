@@ -2,6 +2,22 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
+## Unreleased
+
+### Changed
+
+- The README has screenshots of the demo cafe: the dashboard, the
+  waiting-room screen, checking in and the repair queue on a phone, the
+  website and the statistics.
+
+### Fixed
+
+- Times inside sentences read properly when they are under a minute. The
+  dashboard said "People wait about just now to be seen", and the repair
+  queue said "started just now ago".
+- The waiting-room screen's heading lost the space before the dot between the
+  session's name and its times.
+
 ## 1.11.0 (7 October 2026)
 
 ### The hub now runs on Cloudflare only

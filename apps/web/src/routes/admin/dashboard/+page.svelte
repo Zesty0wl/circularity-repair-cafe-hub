@@ -17,15 +17,7 @@
   import TelemetryChoice from '$lib/components/TelemetryChoice.svelte';
   import ScreenLinkDialog from '$lib/components/ScreenLinkDialog.svelte';
   import { activityLink, describeActivity } from '$lib/staff/activity';
-  import {
-    WAIT_TONE_CLASS,
-    averageRepairMinutes,
-    firstName,
-    formatMinutes,
-    minutesBetween,
-    sessionTimes,
-    waitTone,
-  } from '$lib/staff/queue';
+  import { WAIT_TONE_CLASS, averageRepairMinutes, firstName, formatMinutes, minutesBetween, sessionTimes, waitTone, formatDuration } from '$lib/staff/queue';
   import {
     AlertTriangle,
     CalendarPlus,
@@ -235,8 +227,8 @@
           </dl>
           {#if typicalWait !== null || typicalRepair !== null}
             <p class="mt-3 text-sm text-slate-600">
-              {#if typicalWait !== null}People wait about <strong>{formatMinutes(typicalWait).toLowerCase()}</strong> to be seen.{/if}
-              {#if typicalRepair !== null} A repair takes about <strong>{formatMinutes(typicalRepair).toLowerCase()}</strong>.{/if}
+              {#if typicalWait !== null}People wait about <strong>{formatDuration(typicalWait)}</strong> to be seen.{/if}
+              {#if typicalRepair !== null} A repair takes about <strong>{formatDuration(typicalRepair)}</strong>.{/if}
             </p>
           {/if}
 
@@ -264,7 +256,7 @@
                 <li>{waiting.length} waiting and nobody repairing. Is everyone on a break?</li>
               {/if}
               {#each overdue as j}
-                <li><a class="underline underline-offset-2" href={`/admin/repairs/${j.id}`}>{j.itemDescription}</a> ({j.jobNumber}) has waited {formatMinutes(minutesBetween(j.createdAt, now)).toLowerCase()}.</li>
+                <li><a class="underline underline-offset-2" href={`/admin/repairs/${j.id}`}>{j.itemDescription}</a> ({j.jobNumber}) has waited {formatDuration(minutesBetween(j.createdAt, now))}.</li>
               {/each}
             </ul>
           </section>

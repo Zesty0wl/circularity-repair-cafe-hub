@@ -352,7 +352,14 @@ Do these once, a few days before your first session:
   restore**, **Download backup zip**. Keep the file somewhere other than your
   computer, such as a shared drive. See
   [Backups and moving a hub](./backups-and-moving.md).
-- **Keep the folder** from Step 7. You need it to update the hub.
+- **Give a second person access** to your Cloudflare account, so the hub is
+  never stuck with one person who has moved on. In the Cloudflare dashboard,
+  choose **Manage Account**, **Members**, then **Invite**, and give them the
+  **Super Administrator** role. See
+  [If nobody can get into the Cloudflare account](./running-your-hub.md#if-nobody-can-get-into-the-cloudflare-account).
+- **Keep the folder** from Step 7 if you can. It makes updating quicker, but
+  you do not need it: you can
+  [update from any computer](./running-your-hub.md#updating-from-a-different-computer).
 - **Update now and then.** The admin area tells you when a new version is out.
   The steps are in [Running your hub](./running-your-hub.md#updating).
 

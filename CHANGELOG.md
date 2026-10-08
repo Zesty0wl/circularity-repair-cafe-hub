@@ -6,6 +6,8 @@ Notable changes to the Repair Café Hub. Newest first.
 
 ### Changed
 
+- The README explains how updates reach a cafe, and how to update.
+  `docs/how-it-works.md` explains how to make a release.
 - The README has screenshots of the demo cafe: the dashboard, the
   waiting-room screen, checking in and the repair queue on a phone, the
   website and the statistics.

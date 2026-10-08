@@ -23,6 +23,13 @@ Rules:
 When you edit existing text, keep the meaning, simplify the wording, and remove
 any em dashes.
 
+## Releases
+
+Cafes install whatever is on `main` when they update, and each hub runs on its
+own Cloudflare account. So only merge finished, tested work to `main`, keep
+database migrations safe to run on any older hub, and follow "Releasing a new
+version" in `docs/how-it-works.md` when making a release.
+
 ## Visual design
 
 - Never put a coloured stripe or "flash" along one edge of a card, row,

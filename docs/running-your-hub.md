@@ -51,7 +51,7 @@ pnpm install
 pnpm cf:deploy
 ```
 
-- `git pull` downloads the new version of the code.
+- `git pull` downloads the newest released version of the code.
 - `pnpm install` downloads any libraries it needs.
 - `pnpm cf:deploy` builds it and publishes it to Cloudflare.
 
@@ -70,10 +70,109 @@ folder, so it is not affected.
 
 ### Updating from a different computer
 
-The folder is just a copy of the code. If you lose it, or want to update from
-another computer, follow Steps 5 to 9 of the [install guide](./install.md)
-on that computer, then run `pnpm cf:deploy`. Use the same Cloudflare account.
-Do not add `--domain` again.
+You do not need the computer the hub was set up on. Nothing about your hub is
+kept on it: your records, photos, settings and web address are all on
+Cloudflare. The folder on that computer is only a copy of the code, and any
+computer can download a fresh one.
+
+So if that computer is broken, lost, or belongs to a volunteer who has moved
+on, you can update from any Windows, Mac or Linux computer. A borrowed one is
+fine.
+
+**What you need**
+
+- A computer you can install programs on.
+- Access to your cafe's Cloudflare account: the email and password, or your
+  own login as a member of that account. If you do not have this, see
+  [If nobody can get into the Cloudflare account](#if-nobody-can-get-into-the-cloudflare-account)
+  below first.
+
+**Steps.** These match the [install guide](./install.md), which has more
+detail on each.
+
+1. **Install the tools,** if this computer does not have them yet: Git and
+   Node.js 22 or newer (install guide, Step 5), then pnpm (Step 6). Open a new
+   terminal afterwards.
+2. **Download the hub:**
+
+   ```
+   git clone https://github.com/Zesty0wl/circularity-repair-cafe-hub.git
+   cd circularity-repair-cafe-hub
+   pnpm install
+   ```
+
+3. **Sign in to your cafe's Cloudflare account:**
+
+   ```
+   pnpm --filter @circularity/cloudflare exec wrangler login
+   ```
+
+   Your browser opens. Sign in **to the cafe's account**, then click
+   **Allow**. To check you are in the right one:
+
+   ```
+   pnpm --filter @circularity/cloudflare exec wrangler whoami
+   ```
+
+   If it lists more than one account, see
+   [Publishing without a browser](#publishing-without-a-browser) for how to
+   choose with `CLOUDFLARE_ACCOUNT_ID`.
+4. **Publish:**
+
+   ```
+   pnpm cf:deploy
+   ```
+
+   Do **not** add `--domain`. Your hub keeps its address. It also finds its
+   existing database and photo storage by name, and keeps the settings you
+   set in the dashboard, so nothing is lost or duplicated. We have tested
+   this: publishing from a brand new copy updates the same hub, with all its
+   data.
+5. **Check it.** Open your site and sign in. **Settings**, **About** shows the
+   version you are now running.
+6. **On a borrowed computer, tidy up** afterwards. Sign out of Cloudflare, so
+   the next person to use the computer cannot change your website, then
+   delete the folder:
+
+   ```
+   pnpm --filter @circularity/cloudflare exec wrangler logout
+   cd ..
+   ```
+
+   Then delete the `circularity-repair-cafe-hub` folder as you would any
+   other folder.
+
+Next time, if you use the same computer again, just run the three commands
+under [Updating](#updating) inside the folder.
+
+**If `pnpm cf:deploy` says it is creating a new database or bucket,** stop it
+with Ctrl and C. It means you are signed in to a different Cloudflare
+account from the one your hub is on. Run `wrangler whoami` (step 3) and sign
+in to the right account.
+
+### If nobody can get into the Cloudflare account
+
+Your hub keeps running, and your volunteers can carry on using it. You just
+cannot update it, or change its address, until someone has access again.
+
+- **Someone else is a member of the account.** They can sign in with their own
+  login, and invite you (see below).
+- **You know the email address it was set up with,** but not the password.
+  Use **Forgot password** on Cloudflare's login page. The reset link goes to
+  that email address.
+- **Nobody can sign in at all.** Contact Cloudflare's support. They will ask
+  you to prove the account is yours, so it helps to have the domain's
+  registration details to hand.
+
+The best protection is to make sure two people can always get in.
+
+**To invite someone to the account:** the person who can sign in opens the
+Cloudflare dashboard, then **Manage Account**, then **Members**, and chooses
+**Invite**. Enter the other person's email address and give them the
+**Super Administrator** role. They get an email, create their own Cloudflare
+login, and from then on sign in as themselves. Nobody has to share a
+password, and you can remove a member later, for example when a volunteer
+moves on.
 
 ## Backups
 

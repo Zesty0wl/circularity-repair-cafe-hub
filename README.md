@@ -137,6 +137,40 @@ pnpm cf:deploy --domain repair.example.org
 
 Then open your address, and the setup wizard starts.
 
+## Updating
+
+Your hub does not update itself. It runs the version you published, until you
+publish a newer one. That way nothing changes on a session day without you
+choosing it.
+
+**How you find out.** Once a day your hub asks GitHub whether a newer version
+has been released. If there is one, the admin area shows a line saying so,
+with a link to what changed. The check sends nothing about your cafe. To
+switch it off, see [Settings](./docs/running-your-hub.md#settings).
+
+**How you update.** On the computer you set the hub up from, open a terminal
+in the hub's folder and run:
+
+```
+git pull
+pnpm install
+pnpm cf:deploy
+```
+
+It takes a few minutes. Your site stays up the whole time, your data and
+settings are kept, and any database changes apply by themselves. Do it a day
+or two before a session, so you have time to check everything.
+
+**No longer have that computer?** You do not need it. Everything about your
+hub is kept on Cloudflare, so you can update from any computer, even a
+borrowed one, as long as you can sign in to your cafe's Cloudflare account.
+The steps are in
+[updating from a different computer](./docs/running-your-hub.md#updating-from-a-different-computer).
+Make sure at least two people can sign in to that account: see
+[if nobody can get into the Cloudflare account](./docs/running-your-hub.md#if-nobody-can-get-into-the-cloudflare-account).
+
+**What changed** in each version is in the [changelog](./CHANGELOG.md).
+
 ## Documentation
 
 **Setting up and running the hub**
@@ -155,7 +189,8 @@ Then open your address, and the setup wizard starts.
 
 **For developers**
 
-- [How the hub works](./docs/how-it-works.md)
+- [How the hub works](./docs/how-it-works.md), including
+  [releasing a new version](./docs/how-it-works.md#releasing-a-new-version)
 - [The public demo](./docs/demo.md)
 - [Changes in each version](./CHANGELOG.md)
 

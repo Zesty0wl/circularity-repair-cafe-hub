@@ -71,6 +71,11 @@ account with a test site, but should not share one with a real cafe.
    - under **Secrets**, add `DEMO_RESET_KEY` with the same key
    - under **Variables**, add `DEMO_URL` with the demo's address, such as
      `https://repaircafe.hyperspanner.net`
+   - optional: to count the demo's visitors with Quick Web Analytics, also
+     add the variables `DEMO_QWA_SITE` (the site name in QWA, such as
+     `repaircafe.hyperspanner.net`) and `DEMO_QWA_SRC` (the script address,
+     such as `https://analytics.example.org/t.js`). The demo is wiped every
+     hour, so the seeder turns QWA on again each time it fills it.
 
 4. **Seed it for the first time.** On the **Actions** tab, open **Reset the
    demo**, choose **Run workflow**, and tick **Rebuild even if nothing has

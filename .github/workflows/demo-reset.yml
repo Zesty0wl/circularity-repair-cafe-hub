@@ -6,6 +6,9 @@
 # It needs, in this repository's settings:
 #   Secrets and variables, Actions, Secrets:    DEMO_RESET_KEY  the demo's key
 #   Secrets and variables, Actions, Variables:  DEMO_URL        e.g. https://repaircafe.hyperspanner.net
+# and, to count visitors with Quick Web Analytics (optional):
+#   Secrets and variables, Actions, Variables:  DEMO_QWA_SITE   e.g. repaircafe.hyperspanner.net
+#                                               DEMO_QWA_SRC    e.g. https://analytics.example.org/t.js
 # Without them it does nothing, so forks are not affected. See docs/demo.md.
 name: Reset the demo
 
@@ -36,6 +39,8 @@ jobs:
         env:
           DEMO_RESET_KEY: ${{ secrets.DEMO_RESET_KEY }}
           DEMO_URL: ${{ vars.DEMO_URL }}
+          DEMO_QWA_SITE: ${{ vars.DEMO_QWA_SITE }}
+          DEMO_QWA_SRC: ${{ vars.DEMO_QWA_SRC }}
           FORCE: ${{ inputs.force && '--force' || '' }}
         run: |
           if [ -z "$DEMO_RESET_KEY" ] || [ -z "$DEMO_URL" ]; then

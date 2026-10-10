@@ -84,20 +84,24 @@ and social-media previews:
 These tags are rendered **server-side**, so social crawlers (which usually
 don't run JavaScript) see them properly.
 
-## Optional: Plausible analytics
+## Optional: analytics
 
-If you'd like privacy-friendly, cookie-free analytics, the **SEO & analytics**
-tab also has a section for [Plausible](https://plausible.io). Both fields are
-optional. Leave them blank to switch analytics off.
+If you want privacy-friendly, cookie-free analytics, the **SEO & analytics**
+tab has an **Analytics** section. Choose one service:
 
-- **Site domain**: the domain you registered in your Plausible dashboard
-  (e.g. `repaircafe.example.org`).
-- **Script URL**: `https://plausible.io/js/script.js` for managed Plausible,
-  or your self-hosted script URL.
+- **None**: no analytics at all. This is the default.
+- **Plausible** ([plausible.io](https://plausible.io)): fill in the site
+  domain you registered in Plausible and the script URL
+  (`https://plausible.io/js/script.js`, or your own server's address).
+- **Quick Web Analytics (QWA)**: fill in the site domain and the script URL
+  from the tag in your QWA dashboard. QWA can also count events, such as an
+  item checked in or a click on your donate link. They are all ticked at
+  first. Untick any you do not want.
 
-When both fields are set, the `<script defer …>` tag is automatically added
-to every page (server-side and client-side). No cookies, no consent banner
-required, GDPR-friendly.
+The hub adds the right `<script>` tag to every page for you. Neither service
+sets cookies, so you do not need a consent banner. See the
+[settings reference](./07-settings-reference.md#analytics-optional) for the
+full list of events.
 
 We don't ship a Google Analytics integration. But because the script tag
 goes through the same allow-listed CSP, you can paste any `https://…/script.js`

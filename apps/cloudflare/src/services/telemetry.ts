@@ -27,6 +27,7 @@ import { cafes } from '../db/schema.js';
 import { eq, sql } from 'drizzle-orm';
 import { env } from '../env.js';
 import { APP_VERSION } from '../version.js';
+import { activeAnalytics } from '@circularity/shared';
 
 /** What a cafe agreed to. */
 export type TelemetryLevel = 'none' | 'standard' | 'community';
@@ -221,7 +222,7 @@ export async function buildPayload(level: 'standard' | 'community'): Promise<Tel
       localCafesChosen: (cafe.localCafeSlugs ?? []).length,
       showsStats: homePage.showStats === true,
       showsEventStats: homePage.showEventStats !== false,
-      usesPlausible: Boolean(cafe.plausibleDomain && cafe.plausibleSrc),
+      usesPlausible: activeAnalytics(cafe) === 'plausible',
       hasLogo: Boolean(cafe.logoUrl),
       hasOwnColour: Boolean(cafe.primaryColor),
       listedOnRepairCafeOrg: Boolean(cafe.repaircafeSlug),

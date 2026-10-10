@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { track } from '$lib/analytics';
   import { cafe } from '$lib/stores/cafe';
   import SiteHeader from '$lib/components/SiteHeader.svelte';
   import SiteFooter from '$lib/components/SiteFooter.svelte';
@@ -110,7 +111,7 @@
   {/if}
 
   {#if $cafe?.contactEmail}
-    <a href="mailto:{$cafe.contactEmail}" class="card-link p-6">
+    <a href="mailto:{$cafe.contactEmail}" class="card-link p-6" on:click={() => track('contact', { place: 'contact page' })}>
       <p class="kicker">Email us</p>
       <p class="mt-2 inline-flex items-center gap-2 text-xl font-semibold text-brand-700">
         <Mail size={20} /> {$cafe.contactEmail}
@@ -138,6 +139,7 @@
           href={w3wLink(venue.what3words)}
           target="_blank"
           rel="noopener"
+          on:click={() => track('directions', { kind: 'what3words' })}
           class="inline-flex items-center gap-2 rounded-lg bg-slate-50 ring-1 ring-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
         >
           <Locate size={16} class="text-rose-600 shrink-0" />
@@ -154,6 +156,7 @@
           href={directionsUrl(venue)}
           target="_blank"
           rel="noopener"
+          on:click={() => track('directions', { kind: 'directions' })}
           class="btn-primary !py-2"
         >
           <Navigation size={18} /> Get directions
@@ -161,7 +164,7 @@
         <!-- A map link that cannot be embedded becomes a button here, so all
              the venue actions stay on one row. -->
         {#if venue.mapUrl && !isEmbeddableMap(venue.mapUrl)}
-          <a href={venue.mapUrl} target="_blank" rel="noopener" class="btn-secondary !py-2">
+          <a href={venue.mapUrl} target="_blank" rel="noopener" class="btn-secondary !py-2" on:click={() => track('directions', { kind: 'map' })}>
             <MapPin size={16} /> View on map
           </a>
         {/if}
@@ -235,7 +238,7 @@
       <p class="mt-2 text-slate-700 leading-relaxed">
         Repairs are free. Donations pay for the tools, the room and the tea, and they keep the sessions running.
       </p>
-      <a href={$cafe.donateUrl} target="_blank" rel="noopener" class="btn-secondary !py-2 mt-5">
+      <a href={$cafe.donateUrl} target="_blank" rel="noopener" class="btn-secondary !py-2 mt-5" on:click={() => track('donate', { place: 'contact page' })}>
         <Heart size={18} /> Make a donation
       </a>
     </div>

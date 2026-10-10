@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { track } from '$lib/analytics';
   import { page } from '$app/stores';
   import { onMount } from 'svelte';
   import { browser } from '$app/environment';
@@ -180,6 +181,8 @@
     if (!faultDescription.trim()) return (error = 'Please tell us what is wrong');
     busy = true;
     error = '';
+    // Someone who already checked in an item today has a token saved.
+    const returning = Boolean(customerToken);
     try {
       const payload: Record<string, unknown> = {
         itemDescription: itemDescription.trim(),
@@ -216,6 +219,8 @@
         savedAt: Date.now(),
       };
       step = 4;
+      // Only the kind of item, never what the visitor typed about it.
+      track('checkin', { category: selectedCategoryName ?? 'Not chosen', returning: returning ? 'yes' : 'no' });
     } catch (err: any) {
       error = err?.message || 'Could not check in';
     } finally {
@@ -503,6 +508,7 @@
                   href={info.cafe.donateUrl}
                   target="_blank"
                   rel="noopener"
+                  on:click={() => track('donate', { place: 'check-in' })}
                   class="btn-primary mt-4 w-full justify-center !bg-rose-600 hover:!bg-rose-700"
                 >
                   <Heart size={16} /> Make a donation

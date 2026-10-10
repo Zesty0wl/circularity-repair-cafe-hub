@@ -21,15 +21,16 @@ const config = {
       mode: 'hash',
       directives: {
         'default-src': ['self'],
-        // Plausible and similar self-hostable analytics ship as a single small
-        // JS file from a third-party host. Allowing https: for script-src is
+        // Plausible, Quick Web Analytics and similar self-hostable analytics
+        // ship as a single small JS file from a third-party host. Allowing
+        // https: for script-src is
         // a deliberate trade-off so admins can plug in their analytics URL via
         // the Settings page without redeploying. Inline scripts are still
         // restricted to SvelteKit's hashed bootstrap (no 'unsafe-inline').
         'script-src': ['self', 'https:'],
         'style-src': ['self', 'unsafe-inline'],
         'img-src': ['self', 'data:', 'blob:', 'https:'],
-        // api.iconify.design for icon JSON; https: for plausible's POSTs.
+        // api.iconify.design for icon JSON; https: for the analytics POSTs.
         'connect-src': ['self', 'https://api.iconify.design', 'https:'],
         'font-src': ['self', 'data:'],
         // The progressive web app: its own service worker, and its own

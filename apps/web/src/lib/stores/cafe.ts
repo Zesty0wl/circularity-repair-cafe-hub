@@ -1,5 +1,6 @@
 import { writable, derived } from 'svelte/store';
 import { api } from '../api';
+import type { AnalyticsProvider, QwaEventKey } from '@circularity/shared';
 
 export interface HomePageContent {
   intro?: { heading?: string; body?: string };
@@ -69,8 +70,18 @@ export interface CafeInfo {
   seoTitle: string | null;
   seoDescription: string | null;
   ogImageUrl: string | null;
+  /**
+   * The analytics service that is running. The fields of any other service
+   * come back empty, so only one script ever loads.
+   */
+  analyticsProvider?: AnalyticsProvider;
   plausibleDomain: string | null;
   plausibleSrc: string | null;
+  /** Quick Web Analytics: the site name and the address of its script. */
+  qwaSite?: string | null;
+  qwaSrc?: string | null;
+  /** The QWA events this cafe counts. */
+  qwaEvents?: QwaEventKey[];
   /**
    * The cafe's key for CARTO's free map tiles, or null while there is none.
    * Without it the maps still draw, but every tile carries an "API key

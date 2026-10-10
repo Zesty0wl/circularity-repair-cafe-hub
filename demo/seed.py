@@ -303,6 +303,13 @@ def main() -> int:
     ap.add_argument("--reset", action="store_true",
                     help="on the public demo: wipe it first, if anybody has changed anything")
     ap.add_argument("--force", action="store_true", help="with --reset: wipe it even if nothing changed")
+    # Optional. Counts the demo's visitors with Quick Web Analytics. The
+    # workflow passes these from the repository's Actions variables, so a fork
+    # with nothing set gets no analytics.
+    ap.add_argument("--qwa-site", default=os.environ.get("DEMO_QWA_SITE", "").strip(),
+                    help="the site name registered in QWA, e.g. repaircafe.hyperspanner.net")
+    ap.add_argument("--qwa-src", default=os.environ.get("DEMO_QWA_SRC", "").strip(),
+                    help="the QWA script address, e.g. https://analytics.example.org/t.js")
     args = ap.parse_args()
 
     random.seed(20260728)  # same demo every time, so a broken seed is obvious
@@ -350,6 +357,16 @@ def main() -> int:
     if not api.token:
         raise SystemExit(f"Could not sign in after setup. Response was: {token}")
     ok("Signed in")
+
+    if args.qwa_site and args.qwa_src:
+        step("Turning on Quick Web Analytics")
+        # No event list, so every event is counted, as for a new cafe.
+        api.patch("/api/admin/settings/seo", {
+            "analyticsProvider": "qwa",
+            "qwaSite": args.qwa_site,
+            "qwaSrc": args.qwa_src,
+        })
+        ok(f"Counting visits to {args.qwa_site}")
 
     # ── 2. people ─────────────────────────────────────────────────────────────
     step("Adding repairers")

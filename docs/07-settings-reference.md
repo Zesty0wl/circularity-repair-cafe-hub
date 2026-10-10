@@ -178,19 +178,61 @@ analytics service collects pageviews.
 
 Both are uploaded immediately when you choose a file (no separate save).
 
-### Plausible analytics (optional)
+### Analytics (optional)
 
-Privacy-friendly, cookie-free, GDPR-compliant analytics. Both fields
-must be filled to enable.
+Count your visitors with a privacy-friendly service. Choose one:
+
+- **None**: no analytics tag is added to any page.
+- **Plausible**: [plausible.io](https://plausible.io), or your own copy.
+- **Quick Web Analytics (QWA)**: a cookie-free tracker that can also count
+  events.
+
+Only one service runs at a time. If you switch, the other service's settings
+are kept, so you can switch back without typing them again. Neither service
+sets cookies, so you do not need a cookie banner. A hub set up before this
+choice existed keeps using Plausible if both Plausible fields are filled in.
+
+#### Plausible
+
+Both fields must be filled in.
 
 | Field        | Notes                                                                  |
 | ------------ | ---------------------------------------------------------------------- |
 | Site domain  | The domain you registered in Plausible (e.g. `repaircafe.example.org`).|
-| Script URL   | `https://plausible.io/js/script.js` for managed Plausible. Self-hosted? Use your own URL. |
+| Script URL   | `https://plausible.io/js/script.js` for managed Plausible. Self-hosted? Use your own URL. The per-site `/js/pa-XXXX.js` address also works. |
 
-If both are blank, **no analytics tag is rendered at all**. There's no
-Google Analytics integration, but you can paste any compatible
-`https://…/script.js` URL — it's allow-listed in the CSP.
+#### Quick Web Analytics
+
+Both fields must be filled in. Copy them from the tag in your QWA dashboard,
+which looks like
+`<script defer src="https://analytics.example.org/t.js" data-site="repaircafe.example.org"></script>`.
+
+| Field        | Notes                                                                  |
+| ------------ | ---------------------------------------------------------------------- |
+| Site domain  | The `data-site` value: the site name you added in QWA. If you paste a whole address, the hub keeps only the domain. |
+| Script URL   | The `src` value. It must start with `https://` and usually ends in `/t.js`. |
+
+**Events to count.** As well as page views, QWA can count these actions.
+They are all ticked when you turn QWA on. Untick any you do not want.
+
+| Event               | Name in QWA             | Counted when                                          |
+| ------------------- | ----------------------- | ----------------------------------------------------- |
+| Item checked in     | `Item Check-in`         | A visitor finishes checking in an item. Records the kind of item and whether it is their second item or more. |
+| Donate link         | `Donate`                | Someone opens your donation page. Records where the link was. |
+| Add to calendar     | `Add to Calendar`       | Someone saves a session to their calendar.            |
+| Directions and maps | `Get Directions`        | Someone opens directions, a map or a what3words link. |
+| Contact email       | `Contact Email`         | Someone clicks your contact email address.            |
+| App installed       | `Install App`           | Someone adds your site to their home screen.          |
+| Links to other sites| `Outbound Link: Click`  | Someone follows a link to another website.            |
+| File downloads      | `File Download`         | Someone downloads a file, such as a PDF.              |
+
+No names, contact details or anything a visitor types are sent. Some pages
+have a secret code in their address (a visitor's tracking page, the check-in
+page, the waiting-room screen and password reset links). The hub replaces
+that code with `_` before QWA counts the page view.
+
+The content security policy already allows any `https://` script and
+connection, so you do not need to change anything else.
 
 **Save SEO & analytics** commits this tab.
 

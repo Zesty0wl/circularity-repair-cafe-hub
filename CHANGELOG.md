@@ -4,6 +4,25 @@ Notable changes to the Repair Café Hub. Newest first.
 
 ## Unreleased
 
+### Added
+
+- **Quick Web Analytics (QWA).** Under Settings, SEO & analytics, you can now
+  choose None, Plausible or Quick Web Analytics. Only one runs at a time.
+  Plausible works exactly as before, and a hub that already uses it stays on
+  it. QWA is a cookie-free tracker. Give it the site domain and the script
+  URL from your QWA dashboard.
+- **QWA events.** As well as page views, QWA can count what visitors do: an
+  item checked in (with the kind of item), the donate link, adding a session
+  to a calendar, directions and maps, the contact email, installing the app,
+  links to other sites and file downloads. They are all ticked when you turn
+  QWA on, and you can turn any of them off. No names or contact details are
+  sent.
+- With QWA, the secret part of private links (a visitor's tracking page, the
+  check-in page, the waiting-room screen and password reset links) is hidden
+  before a page view is counted.
+- The demo seeder can turn on QWA for the demo site. Set `DEMO_QWA_SITE` and
+  `DEMO_QWA_SRC` as Actions variables. See `docs/demo.md`.
+
 ### Changed
 
 - The README explains how updates reach a cafe, and how to update.

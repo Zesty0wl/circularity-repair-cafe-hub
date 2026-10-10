@@ -7,6 +7,7 @@
   import '@fontsource-variable/mulish/index.css';
   import '@fontsource-variable/hanken-grotesk/index.css';
   import { onMount } from 'svelte';
+  import { afterNavigate } from '$app/navigation';
   import { browser, dev } from '$app/environment';
   import { page } from '$app/stores';
   import { cafe, setupCompleted } from '$lib/stores/cafe';
@@ -14,6 +15,7 @@
   import { restoreSession } from '$lib/api';
   import InstallPrompt from '$lib/components/InstallPrompt.svelte';
   import { serializeJsonLd, shortAppName, type PageSeo } from '@circularity/shared';
+  import { track, trackPageview } from '$lib/analytics';
   import type { LayoutData } from './$types';
   import DemoBanner from '$lib/components/DemoBanner.svelte';
 
@@ -55,6 +57,24 @@
 
     // Some Plausible scripts wait to be told to start. See startPlausible.
     if (plausibleEnabled) startPlausible();
+
+    // Someone added the site to their home screen.
+    const onInstalled = () => track('install');
+    window.addEventListener('appinstalled', onInstalled);
+    return () => window.removeEventListener('appinstalled', onInstalled);
+  });
+
+  // QWA page views. The QWA tag carries data-manual, so the script does not
+  // count pages itself: we do it here, after every move to a new page, which
+  // lets us hide the secret part of addresses such as a tracking link first.
+  // A jump to a heading on the same page is not a new page view.
+  let lastCounted = '';
+  afterNavigate(() => {
+    if (!qwaEnabled) return;
+    const here = $page.url.pathname + $page.url.search;
+    if (here === lastCounted) return;
+    lastCounted = here;
+    trackPageview($page.url);
   });
 
   // ── SEO/meta — centralised here so every route emits exactly one of each ──
@@ -84,7 +104,14 @@
   // Plausible only loads when both fields are configured. Domain matches the
   // site name registered in Plausible; src is the script URL (e.g.
   // https://plausible.io/js/script.js or a self-hosted instance).
+  // The server only sends the fields of the service that is running (see
+  // activeAnalytics), so at most one of these is ever true.
   $: plausibleEnabled = Boolean(c?.plausibleDomain && c?.plausibleSrc);
+  // Quick Web Analytics: a cookie-free tracker. It counts links to other sites
+  // and file downloads by itself, unless the cafe turned those off.
+  $: qwaEnabled = c?.analyticsProvider === 'qwa' && Boolean(c?.qwaSite && c?.qwaSrc);
+  $: qwaOutbound = c?.qwaEvents?.includes('outbound') ?? false;
+  $: qwaDownloads = c?.qwaEvents?.includes('downloads') ?? false;
 
   /**
    * Start Plausible when it needs starting.
@@ -163,6 +190,15 @@
   {#if jsonLdScript}{@html jsonLdScript}{/if}
   {#if plausibleEnabled}
     <script defer data-domain={c?.plausibleDomain} src={c?.plausibleSrc}></script>
+  {:else if qwaEnabled}
+    <script
+      defer
+      src={c?.qwaSrc}
+      data-site={c?.qwaSite}
+      data-manual=""
+      data-no-outbound={qwaOutbound ? undefined : ''}
+      data-no-downloads={qwaDownloads ? undefined : ''}
+    ></script>
   {/if}
 </svelte:head>
 

@@ -20,6 +20,7 @@ import { findCafeInJson, getNetworkJson, resolveSlugsInJson } from '../services/
 import { getGuide, recentGuides, searchGuides } from '../services/ifixit.js';
 import { co2Settings, listFactors } from '../services/co2.js';
 import { linuxStats, linuxStatsForEvent } from '../services/linux.js';
+import { activeAnalytics, enabledQwaEvents } from '@circularity/shared';
 
 /** How many photos the site's main gallery will ever return. */
 const MAIN_GALLERY_LIMIT = 60;
@@ -29,6 +30,7 @@ export async function publicRoutes(app: App): Promise<void> {
     const [cafe] = await db.select().from(cafes).limit(1);
     if (!cafe) return null;
     const gallery = await mainGallery();
+    const analytics = activeAnalytics(cafe);
     return {
       name: cafe.name,
       tagline: cafe.tagline,
@@ -58,8 +60,14 @@ export async function publicRoutes(app: App): Promise<void> {
       seoTitle: cafe.seoTitle,
       seoDescription: cafe.seoDescription,
       ogImageUrl: cafe.ogImageUrl,
-      plausibleDomain: cafe.plausibleDomain,
-      plausibleSrc: cafe.plausibleSrc,
+      // Only the service that is running is sent, so a page can never load
+      // both scripts. See activeAnalytics.
+      analyticsProvider: analytics,
+      plausibleDomain: analytics === 'plausible' ? cafe.plausibleDomain : null,
+      plausibleSrc: analytics === 'plausible' ? cafe.plausibleSrc : null,
+      qwaSite: analytics === 'qwa' ? cafe.qwaSite : null,
+      qwaSrc: analytics === 'qwa' ? cafe.qwaSrc : null,
+      qwaEvents: analytics === 'qwa' ? enabledQwaEvents(cafe.qwaEvents) : [],
       // The cafe's key for CARTO's free map tiles. The visitor's browser
       // fetches the tiles, so the key has to reach it, and it is in every
       // tile address anyway. Null until an admin pastes one under Settings.

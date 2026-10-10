@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { track } from '$lib/analytics';
   import SiteHeader from '$lib/components/SiteHeader.svelte';
   import SiteFooter from '$lib/components/SiteFooter.svelte';
   import AddToCalendar from '$lib/components/AddToCalendar.svelte';
@@ -173,7 +174,7 @@
 
         {#if !isPast}
           <div class="flex flex-col sm:flex-row gap-2 pt-2">
-            <a href={mapsUrl(event.venue)} target="_blank" rel="noopener" class="btn-secondary flex-1">
+            <a href={mapsUrl(event.venue)} target="_blank" rel="noopener" class="btn-secondary flex-1" on:click={() => track('directions', { kind: 'directions' })}>
               <MapPin size={16} /> Get directions <ArrowUpRight size={14} />
             </a>
             <AddToCalendar {event} variant="button" class="flex-1" />

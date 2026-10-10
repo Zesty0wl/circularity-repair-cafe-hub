@@ -132,6 +132,12 @@ export const cafes = sqliteTable('cafes', {
   ogImageUrl: text('og_image_url'),
   plausibleDomain: text('plausible_domain'),
   plausibleSrc: text('plausible_src'),
+  /** 'none', 'plausible' or 'qwa'. Null on older hubs: see activeAnalytics. */
+  analyticsProvider: text('analytics_provider'),
+  qwaSite: text('qwa_site'),
+  qwaSrc: text('qwa_src'),
+  /** The QWA events to count. Null means every one. */
+  qwaEvents: json('qwa_events'),
   cartoApiKey: text('carto_api_key'),
   /** The secret part of the waiting-room display link. See routes/display.ts. */
   displayToken: text('display_token'),

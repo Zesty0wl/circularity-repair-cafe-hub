@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { track } from '$lib/analytics';
   import { page } from '$app/stores';
   import { onMount, onDestroy } from 'svelte';
   import { browser } from '$app/environment';
@@ -163,6 +164,7 @@
           href={data.cafe.donateUrl}
           target="_blank"
           rel="noopener"
+          on:click={() => track('donate', { place: 'tracking page' })}
           class="mt-3 flex items-center gap-3 rounded-2xl bg-rose-50 ring-1 ring-rose-200 p-4 text-rose-900 hover:bg-rose-100 transition-colors"
         >
           <Heart size={20} class="fill-rose-500 text-rose-500 shrink-0" />

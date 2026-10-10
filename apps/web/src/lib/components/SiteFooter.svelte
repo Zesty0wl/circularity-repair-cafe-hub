@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { track } from '$lib/analytics';
   import { cafe } from '$lib/stores/cafe';
   import { Mail, MapPin, Heart } from 'lucide-svelte';
 
@@ -23,6 +24,7 @@
             href={$cafe.donateUrl}
             target="_blank"
             rel="noopener"
+            on:click={() => track('donate', { place: 'footer' })}
             class="mt-5 inline-flex items-center gap-2 rounded-xl bg-white/10 ring-1 ring-white/20 px-4 py-2 text-sm font-semibold transition-colors hover:bg-white/20"
           >
             <Heart size={16} /> Support us
@@ -47,7 +49,7 @@
         <ul class="mt-4 space-y-2 text-white/80">
           {#if $cafe?.contactEmail}
             <li>
-              <a class="inline-flex items-start gap-2 hover:text-white" href="mailto:{$cafe.contactEmail}">
+              <a class="inline-flex items-start gap-2 hover:text-white" href="mailto:{$cafe.contactEmail}" on:click={() => track('contact', { place: 'footer' })}>
                 <Mail size={16} class="shrink-0 mt-0.5" /> <span class="break-all">{$cafe.contactEmail}</span>
               </a>
             </li>

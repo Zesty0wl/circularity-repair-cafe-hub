@@ -107,8 +107,9 @@ volunteers and CO2 saved, with every session listed.
   computer to Linux instead of throwing it away, and record each install.
   See [docs/08-linux-repair-cafe.md](./docs/08-linux-repair-cafe.md).
 - **Search engines and social media:** public pages carry structured data and
-  sharing pictures in your colours, with a sitemap. Optional
-  [Plausible](https://plausible.io) analytics.
+  sharing pictures in your colours, with a sitemap. Optional cookie-free
+  analytics with [Plausible](https://plausible.io) or Quick Web Analytics,
+  which can also count events such as items checked in.
 - **Optional, honest numbers.** Your hub can send the project a daily count of
   repairs and sessions, but only if you agree, and you see the exact message
   first. It never contains a name, a note or any free text. See

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { track } from '$lib/analytics';
   import { CalendarPlus } from 'lucide-svelte';
   import { downloadICS, type CalEvent } from '$lib/calendar';
 
@@ -15,6 +16,7 @@
 
   function add() {
     downloadICS(event);
+    track('calendar');
   }
 </script>
 

@@ -1,7 +1,7 @@
 import type { App } from '../../lib/router.js';
 import { db } from '../../db/index.js';
 import { cafeGallery, cafes } from '../../db/schema.js';
-import { cafeSettingsSchema } from '@circularity/shared';
+import { ANALYTICS_PROVIDERS, activeAnalytics, cafeSettingsSchema, cleanQwaEvents, cleanSiteDomain } from '@circularity/shared';
 import { asc, eq } from 'drizzle-orm';
 import { audit } from '../../utils/audit.js';
 import { saveValidatedImage, deleteImage } from '../../services/imageUpload.js';
@@ -162,29 +162,58 @@ export async function adminSettingsRoutes(app: App): Promise<void> {
   });
 
   // ────────────────── SEO + analytics settings ──────────────────────
-  // All fields are optional. Plausible is only loaded by the SPA when
-  // both `plausibleDomain` and `plausibleSrc` are present.
+  // All fields are optional. Which analytics script loads, if any, is decided
+  // by activeAnalytics (packages/shared/src/analytics.ts): only the chosen
+  // service, and only once its fields are filled in. The other service's
+  // fields are kept, so an admin can switch back without typing them again.
   app.patch('/api/admin/settings/seo', async (request, reply) => {
     const me = request.auth!;
-    const body = request.body as {
+    const body = (request.body ?? {}) as {
       seoTitle?: string | null;
       seoDescription?: string | null;
       ogImageUrl?: string | null;
       faviconUrl?: string | null;
+      analyticsProvider?: string | null;
       plausibleDomain?: string | null;
       plausibleSrc?: string | null;
+      qwaSite?: string | null;
+      qwaSrc?: string | null;
+      qwaEvents?: unknown;
     };
     const [cafe] = await db.select().from(cafes).limit(1);
     if (!cafe) {
       reply.code(404).send({ error: 'Cafe not initialized', code: 'cafe/missing' });
       return;
     }
+    if ('analyticsProvider' in body && body.analyticsProvider != null
+      && !(ANALYTICS_PROVIDERS as readonly string[]).includes(body.analyticsProvider)) {
+      reply.code(400).send({ error: 'Choose None, Plausible or Quick Web Analytics.', code: 'validation/failed' });
+      return;
+    }
+    for (const k of ['plausibleSrc', 'qwaSrc'] as const) {
+      const value = (body[k] ?? '').toString().trim();
+      if (value && !/^https:\/\/[^\s"'<>]+$/i.test(value)) {
+        reply.code(400).send({ error: 'The script URL must start with https://', code: 'validation/failed' });
+        return;
+      }
+    }
     const update: any = { updatedAt: new Date() };
-    for (const k of ['seoTitle', 'seoDescription', 'ogImageUrl', 'faviconUrl', 'plausibleDomain', 'plausibleSrc']) {
+    for (const k of ['seoTitle', 'seoDescription', 'ogImageUrl', 'faviconUrl', 'plausibleDomain', 'plausibleSrc', 'qwaSrc']) {
       if (k in body) update[k] = ((body as any)[k] ?? '').toString().trim() || null;
     }
+    if ('analyticsProvider' in body) update.analyticsProvider = body.analyticsProvider || null;
+    if ('qwaSite' in body) update.qwaSite = cleanSiteDomain(body.qwaSite);
+    if ('qwaEvents' in body) update.qwaEvents = cleanQwaEvents(body.qwaEvents);
     const [updated] = await db.update(cafes).set(update).where(eq(cafes.id, cafe.id)).returning();
-    await audit({ request, actorId: me.sub, actorType: me.role, action: 'cafe.seo_updated', entityType: 'cafe', entityId: cafe.id });
+    await audit({
+      request,
+      actorId: me.sub,
+      actorType: me.role,
+      action: 'cafe.seo_updated',
+      entityType: 'cafe',
+      entityId: cafe.id,
+      metadata: { analytics: activeAnalytics(updated) },
+    });
     return updated;
   });
 

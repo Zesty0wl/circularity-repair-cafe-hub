@@ -3,7 +3,7 @@
   import { api } from '$lib/api';
   import { auth } from '$lib/stores/auth';
   import { loadCafe, cafe as publicCafe } from '$lib/stores/cafe';
-  import { FONT_OPTIONS } from '@circularity/shared';
+  import { DEFAULT_QWA_EVENTS, FONT_OPTIONS, QWA_EVENTS, activeAnalytics, type AnalyticsProvider } from '@circularity/shared';
   import { Trash2, Plus, Download, Upload, AlertTriangle } from 'lucide-svelte';
   import ImageDropzone from '$lib/components/ImageDropzone.svelte';
   import GalleryManager from '$lib/components/GalleryManager.svelte';
@@ -265,6 +265,10 @@
     // before this setting existed still get the session summaries.
     showEventStats = hp.showEventStats !== false;
 
+    // Older hubs have no service saved. Show what they actually run.
+    analyticsProvider = (cafe?.analyticsProvider as AnalyticsProvider | null) ?? activeAnalytics(cafe);
+    qwaEvents = Array.isArray(cafe?.qwaEvents) ? [...cafe.qwaEvents] : [...DEFAULT_QWA_EVENTS];
+
     linuxEnabled = cafe?.linuxEnabled === true;
     const lp = cafe?.linuxPage ?? {};
     linuxNavLabel = lp.navLabel ?? '';
@@ -362,20 +366,44 @@
     await load();
   }
 
+  // ── Analytics ─────────────────────────────────────────────────────
+  // One service at a time. The other service's fields stay saved, so
+  // switching back does not mean typing them in again.
+  let analyticsProvider: AnalyticsProvider = 'none';
+  // Every QWA event starts ticked. An admin turns off the ones they do not want.
+  let qwaEvents: string[] = [...DEFAULT_QWA_EVENTS];
+  let seoSaved = false;
+  let seoError = '';
+
+  function chooseAnalytics(next: AnalyticsProvider) {
+    analyticsProvider = next;
+    // Most cafes register the address of this site, so offer it.
+    if (next === 'qwa' && cafe && !cafe.qwaSite) cafe.qwaSite = window.location.hostname;
+  }
+
   async function saveSeo() {
     busy = true;
+    seoSaved = false;
+    seoError = '';
     try {
       await api('/api/admin/settings/seo', {
         method: 'PATCH',
         json: {
           seoTitle: cafe.seoTitle ?? null,
           seoDescription: cafe.seoDescription ?? null,
+          analyticsProvider,
           plausibleDomain: cafe.plausibleDomain ?? null,
           plausibleSrc: cafe.plausibleSrc ?? null,
+          qwaSite: cafe.qwaSite ?? null,
+          qwaSrc: cafe.qwaSrc ?? null,
+          qwaEvents,
         },
       });
+      seoSaved = true;
       await loadCafe();
       await load();
+    } catch (err) {
+      seoError = (err as Error).message || 'Your changes could not be saved. Please try again.';
     } finally { busy = false; }
   }
 
@@ -1197,25 +1225,91 @@
       </section>
 
       <section class="space-y-3 pt-2 border-t">
-        <h2 class="text-lg font-semibold">Plausible analytics <span class="text-xs text-slate-400 font-normal">(optional)</span></h2>
-        <p class="text-xs text-slate-500 -mt-1">Privacy-friendly, cookie-free. Leave blank to disable.</p>
-        <div>
-          <label class="label" for="pd">Site domain</label>
-          <input id="pd" class="input" bind:value={cafe.plausibleDomain} placeholder="repaircafe.example.org" />
-          <p class="text-xs text-slate-500 mt-1">The domain you registered in Plausible.</p>
+        <h2 class="text-lg font-semibold">Analytics <span class="text-xs text-slate-400 font-normal">(optional)</span></h2>
+        <p class="text-xs text-slate-500 -mt-1">
+          Count your visitors with a privacy-friendly service. Both choices set no cookies, so you do not need a
+          cookie banner. Only one service can run at a time.
+        </p>
+        <div class="grid sm:grid-cols-3 gap-2" role="radiogroup" aria-label="Analytics service">
+          {#each [['none', 'None', 'No analytics.'], ['plausible', 'Plausible', 'plausible.io, or your own copy.'], ['qwa', 'Quick Web Analytics', 'Cookie-free, with events.']] as [key, label, hint]}
+            <label
+              class="flex items-start gap-2 rounded-xl border p-3 cursor-pointer {analyticsProvider === key ? 'border-brand-500 bg-brand-50' : 'border-slate-200 hover:bg-slate-50'}"
+            >
+              <input
+                type="radio"
+                name="analytics"
+                class="mt-1 h-4 w-4 border-slate-300 text-brand-600 focus:ring-brand-500"
+                value={key}
+                checked={analyticsProvider === key}
+                on:change={() => chooseAnalytics(key as AnalyticsProvider)}
+              />
+              <span class="text-sm text-slate-700">
+                <span class="font-semibold">{label}</span>
+                <span class="block text-xs text-slate-500">{hint}</span>
+              </span>
+            </label>
+          {/each}
         </div>
-        <div>
-          <label class="label" for="ps">Script URL</label>
-          <input id="ps" class="input" bind:value={cafe.plausibleSrc} placeholder="https://plausible.io/js/script.js" />
-          <p class="text-xs text-slate-500 mt-1">
-            Use <code>https://plausible.io/js/script.js</code> for managed Plausible, or the same path on
-            your own server. Plausible also offers a per-site script whose address looks like
-            <code>/js/pa-XXXX.js</code>. Either works here.
-          </p>
-        </div>
+
+        {#if analyticsProvider === 'plausible'}
+          <div>
+            <label class="label" for="pd">Site domain</label>
+            <input id="pd" class="input" bind:value={cafe.plausibleDomain} placeholder="repaircafe.example.org" />
+            <p class="text-xs text-slate-500 mt-1">The domain you registered in Plausible.</p>
+          </div>
+          <div>
+            <label class="label" for="ps">Script URL</label>
+            <input id="ps" class="input" bind:value={cafe.plausibleSrc} placeholder="https://plausible.io/js/script.js" />
+            <p class="text-xs text-slate-500 mt-1">
+              Use <code>https://plausible.io/js/script.js</code> for managed Plausible, or the same path on
+              your own server. Plausible also offers a per-site script whose address looks like
+              <code>/js/pa-XXXX.js</code>. Either works here.
+            </p>
+          </div>
+        {/if}
+
+        {#if analyticsProvider === 'qwa'}
+          <div>
+            <label class="label" for="qd">Site domain</label>
+            <input id="qd" class="input" bind:value={cafe.qwaSite} placeholder="repaircafe.example.org" />
+            <p class="text-xs text-slate-500 mt-1">
+              The site name you added in your QWA dashboard. It is the <code>data-site</code> value in the
+              tag QWA gives you.
+            </p>
+          </div>
+          <div>
+            <label class="label" for="qs">Script URL</label>
+            <input id="qs" class="input" bind:value={cafe.qwaSrc} placeholder="https://analytics.example.org/t.js" />
+            <p class="text-xs text-slate-500 mt-1">
+              The <code>src</code> address in the tag QWA gives you. It ends in <code>/t.js</code>.
+            </p>
+          </div>
+          <fieldset class="space-y-2">
+            <legend class="label">Events to count</legend>
+            <p class="text-xs text-slate-500 -mt-1">
+              As well as page views, QWA can count these actions. No names or contact details are sent.
+            </p>
+            {#each QWA_EVENTS as event}
+              <label class="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  class="mt-1 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                  value={event.key}
+                  bind:group={qwaEvents}
+                />
+                <span class="text-sm text-slate-700">
+                  {event.label}
+                  <span class="block text-xs text-slate-500">{event.help} Shows in QWA as "{event.name}".</span>
+                </span>
+              </label>
+            {/each}
+          </fieldset>
+        {/if}
       </section>
 
-      <div class="flex justify-end pt-2 border-t">
+      <div class="flex items-center justify-end gap-3 pt-2 border-t">
+        {#if seoSaved}<span class="text-sm text-brand-700">Saved.</span>{/if}
+        {#if seoError}<span class="text-sm text-red-700">{seoError}</span>{/if}
         <button class="btn-primary" on:click={saveSeo} disabled={busy}>Save SEO &amp; analytics</button>
       </div>
     </div>

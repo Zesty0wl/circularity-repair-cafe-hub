@@ -1,5 +1,32 @@
-import type { HandleFetch } from '@sveltejs/kit';
+import type { Handle, HandleFetch } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
+
+/**
+ * Which language to show. A setting of 'en' or 'fr' forces one; 'auto' (the
+ * default) follows the browser's Accept-Language, with English as the fallback.
+ */
+function pickLocale(acceptLanguage: string | null, setting: string): 'en' | 'fr' {
+  if (setting === 'en' || setting === 'fr') return setting;
+  const header = (acceptLanguage ?? '').toLowerCase();
+  const first = header.split(',')[0]?.trim() ?? '';
+  if (first.startsWith('fr')) return 'fr';
+  if (first.startsWith('en')) return 'en';
+  // The first tag is something else: use French if it comes before English.
+  const fr = header.indexOf('fr');
+  const en = header.indexOf('en');
+  return fr !== -1 && (en === -1 || fr < en) ? 'fr' : 'en';
+}
+
+// Resolve the language for every request and put it on <html lang>, which is
+// what tells screen readers and search engines what the page is in. The value
+// is also handed to the app (see routes/+layout.server.ts).
+export const handle: Handle = async ({ event, resolve }) => {
+  const locale = pickLocale(event.request.headers.get('accept-language'), (env.LANGUAGE ?? 'auto').toLowerCase());
+  event.locals.locale = locale;
+  return resolve(event, {
+    transformPageChunk: ({ html }) => html.replace('<html lang="en"', `<html lang="${locale}"`),
+  });
+};
 
 // The whole site runs under the strict Content Security Policy set in
 // svelte.config.js, with no exceptions. There used to be one, for the 3D globe

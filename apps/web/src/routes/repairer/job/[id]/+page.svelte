@@ -49,6 +49,10 @@
   let cameraStage: 'during_repair' | 'completed' = 'during_repair';
   let confirmTakeOver = false;
   let confirmRelease = false;
+  /** The visitor's verdict at the exit, if they gave one. */
+  let satisfaction: '' | 'satisfied' | 'not_satisfied' = '';
+  let satisfactionComment = '';
+  let savingFeedback = false;
 
   $: myId = $auth?.user.id ?? null;
   $: status = detail?.job.status as string | undefined;
@@ -63,6 +67,8 @@
       if (detail.job.partsUsed) partsUsed = detail.job.partsUsed;
       if (detail.job.environmentalSavingKg) savings = detail.job.environmentalSavingKg;
       co2FactorId = detail.job.co2FactorId ?? null;
+      satisfaction = detail.job.satisfaction ?? '';
+      if (detail.job.satisfactionComment) satisfactionComment = detail.job.satisfactionComment;
     } catch (err: any) {
       loadError = err?.status === 404 ? 'We could not find this repair. It may have been removed.' : err?.message ?? 'Could not load this repair';
     }
@@ -145,6 +151,23 @@
       error = err?.message ?? 'Could not put this back in the queue';
     } finally {
       busy = false;
+    }
+  }
+
+  /** The visitor's verdict, recorded at the exit. */
+  async function saveFeedback(value: 'satisfied' | 'not_satisfied' | '') {
+    savingFeedback = true;
+    error = '';
+    try {
+      await api(`/api/repairer/jobs/${id}/feedback`, {
+        method: 'PATCH',
+        json: { satisfaction: value || null, satisfactionComment: satisfactionComment.trim() || null },
+      });
+      await load();
+    } catch (err: any) {
+      error = err?.message ?? 'Could not save the answer';
+    } finally {
+      savingFeedback = false;
     }
   }
 
@@ -371,6 +394,27 @@
           {#if detail.job.outcomeNotes}<p class="text-sm text-slate-700 whitespace-pre-line">{detail.job.outcomeNotes}</p>{/if}
           {#if detail.job.partsUsed}<p class="text-sm"><span class="text-slate-500">Parts:</span> {detail.job.partsUsed}</p>{/if}
           {#if detail.job.co2SavingKg && Number(detail.job.co2SavingKg) > 0}<p class="text-sm"><span class="text-slate-500">Carbon saved:</span> {Number(detail.job.co2SavingKg)} kg</p>{/if}
+          <div class="pt-3 mt-1 border-t border-slate-100">
+            <p class="text-sm font-medium text-slate-700">At the exit, was the visitor satisfied?</p>
+            <div class="mt-2 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                class="rounded-xl px-4 py-2 text-sm font-semibold ring-1 transition {satisfaction === 'satisfied' ? 'ring-2 ring-emerald-500 bg-emerald-50 text-emerald-900' : 'ring-slate-200 bg-white hover:bg-slate-50 text-slate-700'}"
+                disabled={savingFeedback}
+                on:click={() => saveFeedback('satisfied')}
+              >Satisfied</button>
+              <button
+                type="button"
+                class="rounded-xl px-4 py-2 text-sm font-semibold ring-1 transition {satisfaction === 'not_satisfied' ? 'ring-2 ring-rose-500 bg-rose-50 text-rose-900' : 'ring-slate-200 bg-white hover:bg-slate-50 text-slate-700'}"
+                disabled={savingFeedback}
+                on:click={() => saveFeedback('not_satisfied')}
+              >Not satisfied</button>
+              {#if satisfaction}
+                <button type="button" class="text-sm text-slate-500 underline underline-offset-2" disabled={savingFeedback} on:click={() => saveFeedback('')}>Clear</button>
+              {/if}
+            </div>
+            <input class="input mt-3" maxlength="500" placeholder="Comment (optional)" bind:value={satisfactionComment} on:change={() => satisfaction && saveFeedback(satisfaction)} />
+          </div>
         </section>
       {/if}
       {#if error && !isMine}<p class="text-sm text-rose-700">{error}</p>{/if}

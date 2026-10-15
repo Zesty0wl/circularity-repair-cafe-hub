@@ -10,6 +10,7 @@
   import Icon from '@iconify/svelte';
   import { categoryIcon } from '$lib/categoryIcon';
   import { loadPreRegistration } from '$lib/preRegistration';
+  import { t, tNow } from '$lib/i18n';
 
   $: token = $page.params.token;
 
@@ -190,7 +191,7 @@
       }
       if (info.event.status === 'active') await findPreRegistered(info.event.id);
     } catch (err: any) {
-      loadError = err?.message || 'Could not load this event';
+      loadError = err?.message || tNow('Could not load this event');
     }
     // The kinds of thing we can work out a carbon saving for. If this fails the
     // picker simply does not appear, and check-in carries on as before.
@@ -223,8 +224,8 @@
   function next() {
     error = '';
     if (step === 2) {
-      if (!customerName.trim()) return (error = 'Please enter your first name');
-      if (!gdpr) return (error = 'Please confirm we can store your details');
+      if (!customerName.trim()) return (error = tNow('Please enter your first name'));
+      if (!gdpr) return (error = tNow('Please confirm we can store your details'));
       step = 3;
       return;
     }
@@ -262,8 +263,8 @@
   }
 
   async function submitJob() {
-    if (!itemDescription.trim()) return (error = 'Please describe your item');
-    if (!faultDescription.trim()) return (error = 'Please tell us what is wrong');
+    if (!itemDescription.trim()) return (error = tNow('Please describe your item'));
+    if (!faultDescription.trim()) return (error = tNow('Please tell us what is wrong'));
     busy = true;
     error = '';
     // Someone who already checked in an item today has a token saved.
@@ -309,7 +310,7 @@
       // Only the kind of item, never what the visitor typed about it.
       track('checkin', { category: selectedCategoryName ?? 'Not chosen', returning: returning ? 'yes' : 'no' });
     } catch (err: any) {
-      error = err?.message || 'Could not check in';
+      error = err?.message || tNow('Could not check in');
     } finally {
       busy = false;
     }
@@ -330,7 +331,7 @@
       });
       uploadedThumb = res.url;
     } catch (err: any) {
-      error = err?.message || 'Could not upload photo';
+      error = err?.message || tNow('Could not upload photo');
     } finally {
       uploadingPhoto = false;
     }
@@ -385,10 +386,10 @@
   function eventStatusMessage(): string | null {
     if (!info) return null;
     if (info.event.status === 'scheduled') {
-      return `This event hasn't started yet. Doors open at ${info.event.startTime.slice(0,5)}.`;
+      return tNow("This event hasn't started yet. Doors open at {time}.", { time: info.event.startTime.slice(0, 5) });
     }
-    if (info.event.status === 'completed') return 'This event has now finished. See our events page for upcoming dates.';
-    if (info.event.status === 'cancelled') return "Unfortunately today's event has been cancelled. See our events page for future dates.";
+    if (info.event.status === 'completed') return tNow('This event has now finished. See our events page for upcoming dates.');
+    if (info.event.status === 'cancelled') return tNow("Unfortunately today's event has been cancelled. See our events page for future dates.");
     return null;
   }
 </script>
@@ -397,17 +398,17 @@
   <div class="max-w-md mx-auto px-4 py-8">
     {#if loadError}
       <div class="card p-6 text-center">
-        <h1 class="text-2xl font-semibold">Sorry</h1>
+        <h1 class="text-2xl font-semibold">{$t('Sorry')}</h1>
         <p class="mt-3 text-slate-700">{loadError}</p>
-        <a class="btn-primary mt-6" href="/events">See our events</a>
+        <a class="btn-primary mt-6" href="/events">{$t('See our events')}</a>
       </div>
     {:else if !info}
-      <div class="card p-6 text-center text-slate-500">Loading…</div>
+      <div class="card p-6 text-center text-slate-500">{$t('Loading…')}</div>
     {:else if eventStatusMessage()}
       <div class="card p-6 text-center">
         <h1 class="text-2xl font-semibold">{info.cafe.name}</h1>
         <p class="mt-3 text-slate-700">{eventStatusMessage()}</p>
-        <a class="btn-primary mt-6" href="/events">See our events</a>
+        <a class="btn-primary mt-6" href="/events">{$t('See our events')}</a>
       </div>
     {:else}
       {#if step < 4 && !(step === 1 && (arrivedJobs || preItems.length))}
@@ -469,11 +470,11 @@
             <span class="h-14 w-14 mx-auto rounded-2xl bg-brand-600 text-white flex items-center justify-center"><Wrench size={24} /></span>
           {/if}
           {#if returning && savedCustomer}
-            <h1 class="text-3xl font-bold mt-5">Welcome back, {savedCustomer.customerName}!</h1>
-            <p class="mt-3 text-slate-700 text-lg">Got another item to repair?</p>
+            <h1 class="text-3xl font-bold mt-5">{$t('Welcome back, {name}!', { name: savedCustomer.customerName })}</h1>
+            <p class="mt-3 text-slate-700 text-lg">{$t('Got another item to repair?')}</p>
             <p class="mt-1 text-sm text-slate-500">{info.event.name} · {info.venue.name}</p>
             <button class="btn-primary btn-lg mt-8 w-full" on:click={next}>
-              <Plus size={20} /> Add another item
+              <Plus size={20} /> {$t('Add another item')}
             </button>
             <a
               href={buildTrackingUrl(savedCustomer.customerToken)}
@@ -481,55 +482,55 @@
               rel="noopener"
               class="btn-secondary mt-3 w-full"
             >
-              See my existing items <ExternalLink size={16} />
+              {$t('See my existing items')} <ExternalLink size={16} />
             </a>
             <button class="block mx-auto mt-6 text-sm text-slate-500 underline" on:click={startFresh}>
-              Not {savedCustomer.customerName}? Start fresh
+              {$t('Not {name}? Start fresh', { name: savedCustomer.customerName })}
             </button>
           {:else}
-            <h1 class="text-3xl font-bold mt-5">Welcome to {info.cafe.name}!</h1>
-            <p class="mt-3 text-slate-700 text-lg">Let's get your repair started.</p>
+            <h1 class="text-3xl font-bold mt-5">{$t('Welcome to {name}!', { name: info.cafe.name })}</h1>
+            <p class="mt-3 text-slate-700 text-lg">{$t("Let's get your repair started.")}</p>
             <p class="mt-1 text-sm text-slate-500">{info.event.name} · {info.venue.name}</p>
-            <button class="btn-primary btn-lg mt-8 w-full" on:click={next}>Check in my item <ArrowRight size={20} /></button>
+            <button class="btn-primary btn-lg mt-8 w-full" on:click={next}>{$t('Check in my item')} <ArrowRight size={20} /></button>
           {/if}
         </div>
       {:else if step === 2}
         <div class="card p-8">
-          <h1 class="text-2xl font-bold">First, a little about you</h1>
+          <h1 class="text-2xl font-bold">{$t('First, a little about you')}</h1>
           <div class="mt-6 space-y-5">
             <div>
-              <label class="label text-base" for="cn">Your first name</label>
+              <label class="label text-base" for="cn">{$t('Your first name')}</label>
               <input id="cn" class="input text-lg py-4" maxlength="50" bind:value={customerName} autocomplete="given-name" />
             </div>
             {#if info.cafe.enableContactField}
               <div>
-                <label class="label text-base" for="cc">Phone or email <span class="font-normal text-slate-500">(only if you want us to contact you)</span></label>
+                <label class="label text-base" for="cc">{$t('Phone or email')} <span class="font-normal text-slate-500">{$t('(only if you want us to contact you)')}</span></label>
                 <input id="cc" class="input text-lg py-4" maxlength="100" bind:value={customerContact} />
               </div>
             {/if}
             <label class="flex items-start gap-3 cursor-pointer">
               <input type="checkbox" class="h-6 w-6 rounded border-slate-300 text-brand-600 mt-0.5" bind:checked={gdpr} />
-              <span class="text-base">I'm happy for my details to be stored for this repair session.</span>
+              <span class="text-base">{$t("I'm happy for my details to be stored for this repair session.")}</span>
             </label>
-            <p class="text-sm text-slate-500">We only keep your name and contact if you provide it. We don't share it with anyone.</p>
+            <p class="text-sm text-slate-500">{$t("We only keep your name and contact if you provide it. We don't share it with anyone.")}</p>
           </div>
           {#if error}<p class="mt-4 text-sm text-rose-600">{error}</p>{/if}
           <div class="mt-8 flex justify-between">
-            <button class="btn-ghost" on:click={prev}><ArrowLeft size={18} /> Back</button>
-            <button class="btn-primary btn-lg" on:click={next}>Next <ArrowRight size={18} /></button>
+            <button class="btn-ghost" on:click={prev}><ArrowLeft size={18} /> {$t('Back')}</button>
+            <button class="btn-primary btn-lg" on:click={next}>{$t('Next')} <ArrowRight size={18} /></button>
           </div>
         </div>
       {:else if step === 3}
         <div class="card p-8">
           <h1 class="text-2xl font-bold">
-            {returning ? 'Tell us about your next item' : 'Now, tell us about the item'}
+            {returning ? $t('Tell us about your next item') : $t('Now, tell us about the item')}
           </h1>
           {#if returning && savedCustomer}
-            <p class="mt-2 text-sm text-slate-500">Adding to {savedCustomer.customerName}'s list of repairs today.</p>
+            <p class="mt-2 text-sm text-slate-500">{$t("Adding to {name}'s list of repairs today.", { name: savedCustomer.customerName })}</p>
           {/if}
           <div class="mt-6 space-y-5">
             <div>
-              <p class="label text-base">What type of item is it?</p>
+              <p class="label text-base">{$t('What type of item is it?')}</p>
               <div class="grid grid-cols-2 gap-3 mt-1">
                 {#each info.categories as cat}
                   <button
@@ -552,9 +553,9 @@
                  because somebody may not find their item. -->
             {#if itemCategoryId && itemTypes.length > 0}
               <div>
-                <p class="label text-base">Which of these is closest?</p>
+                <p class="label text-base">{$t('Which of these is closest?')}</p>
                 <p class="text-sm text-slate-500 -mt-1 mb-2">
-                  This helps us work out the carbon it saves. Skip it if none fit.
+                  {$t('This helps us work out the carbon it saves. Skip it if none fit.')}
                 </p>
                 <div class="flex flex-wrap gap-2">
                   {#each itemTypes as type (type.id)}
@@ -571,22 +572,22 @@
             {/if}
 
             <div>
-              <label class="label text-base" for="id">Item description</label>
-              <input id="id" class="input text-lg py-4" maxlength="200" placeholder="e.g. Bosch cordless drill, blue" bind:value={itemDescription} />
+              <label class="label text-base" for="id">{$t('Item description')}</label>
+              <input id="id" class="input text-lg py-4" maxlength="200" placeholder={$t('e.g. Bosch cordless drill, blue')} bind:value={itemDescription} />
             </div>
             <div>
-              <label class="label text-base" for="ib">Brand (optional)</label>
+              <label class="label text-base" for="ib">{$t('Brand (optional)')}</label>
               <input id="ib" class="input text-lg py-4" maxlength="100" bind:value={itemBrand} />
             </div>
             {#if info.cafe.weighItemsEnabled}
               <div>
-                <label class="label text-base" for="wt">Weight in kg (optional)</label>
-                <input id="wt" type="text" inputmode="decimal" class="input text-lg py-4" placeholder="For example 1.5" bind:value={weightKg} />
+                <label class="label text-base" for="wt">{$t('Weight in kg (optional)')}</label>
+                <input id="wt" type="text" inputmode="decimal" class="input text-lg py-4" placeholder={$t('e.g. 1.5')} bind:value={weightKg} />
               </div>
             {/if}
             {#if info.cafe.askFirstVisitEnabled}
               <fieldset>
-                <legend class="label text-base">Is this your first visit to us? (optional)</legend>
+                <legend class="label text-base">{$t('Is this your first visit to us? (optional)')}</legend>
                 <div class="flex gap-2">
                   {#each [[true, 'Yes'], [false, 'No']] as [value, text]}
                     <button
@@ -596,44 +597,44 @@
                         : 'ring-slate-200 bg-white text-slate-700 hover:bg-slate-50'}"
                       aria-pressed={isFirstVisit === value}
                       on:click={() => (isFirstVisit = isFirstVisit === value ? null : (value as boolean))}
-                    >{text}</button>
+                    >{$t(String(text))}</button>
                   {/each}
                 </div>
               </fieldset>
             {/if}
             <div>
-              <label class="label text-base" for="fd">What's wrong with it?</label>
-              <textarea id="fd" class="input text-lg py-4" rows="3" maxlength="500" placeholder="e.g. Won't turn on, battery seems dead" bind:value={faultDescription}></textarea>
+              <label class="label text-base" for="fd">{$t("What's wrong with it?")}</label>
+              <textarea id="fd" class="input text-lg py-4" rows="3" maxlength="500" placeholder={$t("e.g. Won't turn on, battery seems dead")} bind:value={faultDescription}></textarea>
             </div>
           </div>
           {#if error}<p class="mt-4 text-sm text-rose-600">{error}</p>{/if}
           <div class="mt-8 flex justify-between">
-            <button class="btn-ghost" on:click={prev}><ArrowLeft size={18} /> Back</button>
+            <button class="btn-ghost" on:click={prev}><ArrowLeft size={18} /> {$t('Back')}</button>
             <button class="btn-primary btn-lg" on:click={submitJob} disabled={busy}>
-              {busy ? 'Saving…' : 'Continue'} <ArrowRight size={18} />
+              {busy ? $t('Saving…') : $t('Continue')} <ArrowRight size={18} />
             </button>
           </div>
         </div>
       {:else if step === 4}
         {#if !createdJob}
-          <div class="card p-6 text-center text-slate-500">Working on it…</div>
+          <div class="card p-6 text-center text-slate-500">{$t('Working on it…')}</div>
         {:else}
           <div class="card p-8 text-center">
             <span class="h-16 w-16 mx-auto rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center"><CheckCircle2 size={32} /></span>
-            <h1 class="text-3xl font-bold mt-5">Got it, we're on it!</h1>
-            <p class="mt-3 text-slate-700 text-lg">Your repair has been sent to our team.</p>
-            <p class="mt-4 text-sm uppercase tracking-wide text-slate-500">Your job number</p>
+            <h1 class="text-3xl font-bold mt-5">{$t("Got it, we're on it!")}</h1>
+            <p class="mt-3 text-slate-700 text-lg">{$t('Your repair has been sent to our team.')}</p>
+            <p class="mt-4 text-sm uppercase tracking-wide text-slate-500">{$t('Your job number')}</p>
             <p class="text-5xl font-extrabold text-brand-700 mt-1 tracking-wide">{createdJob.jobNumber}</p>
-            <p class="mt-5 text-slate-700">A repairer will come and find you shortly.</p>
-            <p class="mt-1 text-slate-700">Please have a seat and hold on to your item.</p>
+            <p class="mt-5 text-slate-700">{$t('A repairer will come and find you shortly.')}</p>
+            <p class="mt-1 text-slate-700">{$t('Please have a seat and hold on to your item.')}</p>
 
             {#if trackingUrl}
               <div class="mt-8 rounded-2xl bg-brand-50 ring-1 ring-brand-200 p-5 text-left">
                 <h2 class="text-base font-semibold text-brand-900 flex items-center gap-2">
-                  <Sparkles size={18} /> Track your repair, live
+                  <Sparkles size={18} /> {$t('Track your repair, live')}
                 </h2>
                 <p class="mt-1 text-sm text-brand-900/80">
-                  Save this link. It shows the status of every item you check in today.
+                  {$t('Save this link. It shows the status of every item you check in today.')}
                 </p>
                 <a
                   href={trackingUrl}
@@ -641,7 +642,7 @@
                   rel="noopener"
                   class="btn-primary mt-4 w-full justify-center"
                 >
-                  <ExternalLink size={18} /> Open my tracker
+                  <ExternalLink size={18} /> {$t('Open my tracker')}
                 </a>
                 <div class="mt-3 flex items-stretch gap-2">
                   <input
@@ -652,20 +653,20 @@
                     on:focus={(e) => (e.currentTarget as HTMLInputElement).select()}
                   />
                   <button type="button" class="btn-secondary !px-3" on:click={copyTrackingUrl}>
-                    <Copy size={16} /> <span class="sr-only">Copy link</span>
+                    <Copy size={16} /> <span class="sr-only">{$t('Copy link')}</span>
                   </button>
                 </div>
-                {#if copiedLink}<p class="mt-2 text-xs text-emerald-700">Link copied!</p>{/if}
+                {#if copiedLink}<p class="mt-2 text-xs text-emerald-700">{$t('Link copied!')}</p>{/if}
               </div>
             {/if}
 
             {#if info.cafe.donateUrl}
               <div class="mt-4 rounded-2xl bg-rose-50 ring-1 ring-rose-200 p-5 text-left">
                 <h2 class="text-base font-semibold text-rose-900 flex items-center gap-2">
-                  <Heart size={18} class="fill-rose-500 text-rose-500" /> Love what we do?
+                  <Heart size={18} class="fill-rose-500 text-rose-500" /> {$t('Love what we do?')}
                 </h2>
                 <p class="mt-1 text-sm text-rose-900/80">
-                  Our repairs are free, but parts, tools and venue hire aren't. If you can spare a few pounds, every donation keeps us running.
+                  {$t("Our repairs are free, but parts, tools and venue hire aren't. If you can spare a few pounds, every donation keeps us running.")}
                 </p>
                 <a
                   href={info.cafe.donateUrl}
@@ -674,28 +675,28 @@
                   on:click={() => track('donate', { place: 'check-in' })}
                   class="btn-primary mt-4 w-full justify-center !bg-rose-600 hover:!bg-rose-700"
                 >
-                  <Heart size={16} /> Make a donation
+                  <Heart size={16} /> {$t('Make a donation')}
                 </a>
               </div>
             {/if}
 
             <div class="mt-6 text-left">
-              <h2 class="text-lg font-semibold flex items-center gap-2"><Sparkles size={18} /> Want to add a photo?</h2>
-              <p class="mt-1 text-sm text-slate-600">A photo helps our repairers see what they'll be working on while you wait.</p>
+              <h2 class="text-lg font-semibold flex items-center gap-2"><Sparkles size={18} /> {$t('Want to add a photo?')}</h2>
+              <p class="mt-1 text-sm text-slate-600">{$t("A photo helps our repairers see what they'll be working on while you wait.")}</p>
               {#if uploadedThumb}
-                <div class="mt-3 text-sm text-emerald-700 flex items-center gap-1"><CheckCircle2 size={16} /> Photo uploaded, thanks!</div>
-                <img src={uploadedThumb} alt="Uploaded" class="mt-2 w-32 h-32 rounded-xl object-cover ring-1 ring-slate-200" />
+                <div class="mt-3 text-sm text-emerald-700 flex items-center gap-1"><CheckCircle2 size={16} /> {$t('Photo uploaded, thanks!')}</div>
+                <img src={uploadedThumb} alt={$t('Uploaded')} class="mt-2 w-32 h-32 rounded-xl object-cover ring-1 ring-slate-200" />
               {:else}
                 <div class="mt-3"><CameraCapture on:capture={onCapture} maxLongestEdge={1200} quality={0.8} /></div>
               {/if}
-              {#if uploadingPhoto}<p class="text-sm text-slate-500 mt-2">Uploading…</p>{/if}
+              {#if uploadingPhoto}<p class="text-sm text-slate-500 mt-2">{$t('Uploading…')}</p>{/if}
             </div>
 
             <button type="button" class="btn-secondary mt-8 w-full justify-center" on:click={addAnotherItem}>
-              <Plus size={18} /> I have another item to register
+              <Plus size={18} /> {$t('I have another item to register')}
             </button>
 
-            <p class="mt-8 text-sm text-slate-500">Thank you for choosing to repair rather than replace.</p>
+            <p class="mt-8 text-sm text-slate-500">{$t('Thank you for choosing to repair rather than replace.')}</p>
           </div>
         {/if}
       {/if}

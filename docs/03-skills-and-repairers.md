@@ -46,6 +46,9 @@ From the **Skills** page in the admin sidebar you can:
   order set here is the order people see everywhere.
 - **Delete** with the bin icon. **This will fail if any existing job uses
   the category** — hide it instead in that case.
+- **Mark as electrical.** This label only shows when PAT testing is on
+  (Settings, Check-in & preferences). Items in an electrical category need a
+  PAT test before they can be marked as fixed. Tap the label to change it.
 
 ### Tips
 

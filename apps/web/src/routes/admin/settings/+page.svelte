@@ -326,8 +326,12 @@
           allowSkipPhoto: cafe.allowSkipPhoto,
           enableContactField: cafe.enableContactField,
           dataRetentionDays: cafe.dataRetentionDays,
+          patTestingEnabled: cafe.patTestingEnabled === true,
+          preRegistrationEnabled: cafe.preRegistrationEnabled === true,
         },
       });
+      // The menu and the public pages read these from the cafe profile.
+      await loadCafe();
       await load();
     } finally { busy = false; }
   }
@@ -1185,6 +1189,41 @@
         <input id="rd" class="input w-32" type="number" min="30" max="3650" bind:value={cafe.dataRetentionDays} />
         <p class="text-xs text-slate-500 mt-1">Customer PII (name, contact) is purged this many days after the event.</p>
       </div>
+
+      <section class="pt-4 border-t border-slate-200 space-y-2">
+        <h2 class="text-lg font-semibold">PAT testing</h2>
+        <label class="flex items-start gap-3">
+          <input type="checkbox" class="mt-1" bind:checked={cafe.patTestingEnabled} />
+          <span>Ask repairers for a PAT test on electrical items</span>
+        </label>
+        <p class="text-sm text-slate-600">
+          When this is on, electrical items have a "PAT test" label in the repair queue. Before a repairer can mark an
+          electrical item as fixed, they must record the result: passed, failed or not needed. The hub saves the result,
+          the time and the name of the repairer. An item that failed cannot be marked as fixed.
+        </p>
+        <p class="text-sm text-slate-600">
+          To choose which kinds of item are electrical, go to <a class="underline" href="/admin/skills">Skills</a>.
+          A repairer can also change this for a single item.
+        </p>
+      </section>
+
+      <section class="pt-4 border-t border-slate-200 space-y-2">
+        <h2 class="text-lg font-semibold">Pre-registration</h2>
+        <label class="flex items-start gap-3">
+          <input type="checkbox" class="mt-1" bind:checked={cafe.preRegistrationEnabled} />
+          <span>Let visitors pre-register their items before a session</span>
+        </label>
+        <p class="text-sm text-slate-600">
+          When this is on, each upcoming published session has a "Pre-register your item" button on its page. Repairers
+          see the items under "Pre-registered items". They can take an item and make notes before the day, for example
+          to find a manual or a diagram.
+        </p>
+        <p class="text-sm text-slate-600">
+          The repair does not start until the item is checked in on the day. The visitor can check in by scanning the
+          QR code, or a volunteer can do it on the "Check in a visitor" page. The repair time starts at check-in.
+        </p>
+      </section>
+
       <div class="flex justify-end"><button class="btn-primary" on:click={savePrefs} disabled={busy}>Save preferences</button></div>
     </div>
   {/if}

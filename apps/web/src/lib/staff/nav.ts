@@ -16,6 +16,7 @@ import type { ComponentType } from 'svelte';
 import {
   BarChart3,
   Calendar,
+  CalendarClock,
   Camera,
   ClipboardList,
   History,
@@ -54,12 +55,18 @@ export function homeFor(user: AuthUser | null | undefined): string {
   return isAdminRole(user) ? '/admin/dashboard' : '/repairer';
 }
 
-export function navFor(user: AuthUser | null | undefined, options: { linuxEnabled: boolean }): NavGroup[] {
+export function navFor(
+  user: AuthUser | null | undefined,
+  options: { linuxEnabled: boolean; preRegistrationEnabled?: boolean },
+): NavGroup[] {
   const session: NavGroup = {
     title: 'Today’s session',
     items: [
       { href: '/repairer', label: 'Repair queue', icon: ClipboardList, also: ['/repairer/job'] },
       { href: '/repairer/checkin', label: 'Check in a visitor', icon: UserPlus },
+      ...(options.preRegistrationEnabled
+        ? [{ href: '/repairer/pre-registered', label: 'Pre-registered items', icon: CalendarClock }]
+        : []),
       { href: '/repairer/photos', label: 'Session photos', icon: Camera },
     ],
   };

@@ -22,11 +22,13 @@ import { APP_VERSION } from '../version.js';
 import m0001 from './migrations/0001_init.js';
 import m0002 from './migrations/0002_display_token.js';
 import m0003 from './migrations/0003_qwa_analytics.js';
+import m0004 from './migrations/0004_pat_and_preregistration.js';
 
 const MIGRATIONS: Array<{ id: string; sql: string }> = [
   { id: '0001_init', sql: m0001 },
   { id: '0002_display_token', sql: m0002 },
   { id: '0003_qwa_analytics', sql: m0003 },
+  { id: '0004_pat_and_preregistration', sql: m0004 },
 ];
 
 /** Split a migration into statements. Our SQL never puts ";" inside a string. */
@@ -126,8 +128,8 @@ export async function seed(db: D1Database, options: { force?: boolean } = {}): P
     DEFAULT_CATEGORIES.forEach((cat, order) => {
       statements.push(
         db
-          .prepare('INSERT INTO skill_categories (id, name, icon, colour, sort_order) VALUES (?, ?, ?, ?, ?)')
-          .bind(crypto.randomUUID(), cat.name, cat.icon, cat.colour, order),
+          .prepare('INSERT INTO skill_categories (id, name, icon, colour, sort_order, is_electrical) VALUES (?, ?, ?, ?, ?, ?)')
+          .bind(crypto.randomUUID(), cat.name, cat.icon, cat.colour, order, cat.isElectrical ? 1 : 0),
       );
     });
   }

@@ -154,8 +154,65 @@ Three controls that change the customer check-in flow.
 | Allow customers to skip "before" photo | Adds a Skip button on step 4 of check-in. Useful at busy events or for items that look unremarkable. |
 | Show optional contact field       | Whether step 2 of check-in includes a phone/email field. Off by default — many cafes don't need it. |
 | Data retention period (days)      | How long after the event date customer name/contact is kept. Default 365. Used by the GDPR purge. |
+| PAT testing                       | Off by default. When it is on, electrical items need a PAT test before they can be marked as fixed. See below. |
+| Pre-registration                  | Off by default. When it is on, visitors can tell you about an item before a session. See below. |
 
 **Save preferences** commits this tab.
+
+### PAT testing
+
+A PAT test (portable appliance test) is a safety check on an electrical item.
+When you turn on **Ask repairers for a PAT test on electrical items**:
+
+- Electrical items have a **PAT test needed** label in the repair queue and on
+  the repair's page.
+- Before a repairer can mark an electrical item as **Fixed**, they must choose a
+  result: **Passed**, **Failed** or **Not needed** (for example, a toy that only
+  uses batteries). They can add a short note.
+- The hub saves the result, the time and the name of the repairer who recorded
+  it. Admins see this on the repair's page, and the CSV export gets three extra
+  columns: `patResult`, `patTestedAt` and `patTestedBy`.
+- An item that **failed** its PAT test cannot be marked as fixed. The repairer
+  can mark it as **Could not fix**, or test it again after more work.
+- A PAT result is not needed for **Could not fix** or **Coming back**, but the
+  repairer can still record one.
+
+Which items are electrical? Each skill category has an **Electrical** label on
+the **Skills** page. New hubs start with **Electronics** and **Small
+appliances** marked as electrical. A repairer can also change it for a single
+item, with the **This is an electrical item** tick box on the repair's page.
+
+When PAT testing is off, nothing about it appears anywhere, and repairs work
+exactly as before.
+
+### Pre-registration
+
+When you turn on **Let visitors pre-register their items before a session**:
+
+- Each upcoming, published session has a **Pre-register your item** button on
+  its page. The visitor gives their first name, an optional phone or email (if
+  the contact field is on), the item and what is wrong with it. They get a
+  tracking link, and they can cancel an item there.
+- Repairers see the items under **Pre-registered items** in the menu. A
+  repairer can **take** an item and write notes before the day, for example a
+  link to the manual or a list of parts to bring. Only the repairer who took it
+  (or an admin) can write the notes. The visitor does not see them.
+- A pre-registered item is **not a repair yet**. It is not in the queue, the
+  statistics or the live board. It becomes a repair, with a job number, when it
+  is **checked in on the day**. The repair time starts then.
+- The visitor can check in by scanning the QR code with the same phone they
+  used to pre-register. Or a volunteer can find them under **Pre-registered for
+  today** on the **Check in a visitor** page.
+- If a repairer took the item, it goes straight to them as **Being repaired**.
+  If nobody took it, it joins the queue like any other item.
+- Pre-registration closes when the session starts. If a session has a limit on
+  items, the same limit applies to pre-registrations.
+- A session with pre-registered items cannot be deleted. Cancel it instead, so
+  the visitors see that it is called off on their tracking page.
+- Admins can cancel a pre-registered item, for example a duplicate.
+
+When pre-registration is off, the button and the menu item disappear, and
+check-in works exactly as before.
 
 ## Tab: SEO & analytics
 

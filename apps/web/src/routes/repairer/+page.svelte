@@ -12,8 +12,10 @@
   import { goto } from '$app/navigation';
   import { api } from '$lib/api';
   import { auth } from '$lib/stores/auth';
+  import { cafe } from '$lib/stores/cafe';
+  import PatBadge from '$lib/components/PatBadge.svelte';
   import { WAIT_TONE_CLASS, firstName, minutesBetween, sessionTimes, statusLabel, waitTone, formatAgo, formatDuration } from '$lib/staff/queue';
-  import { Camera, CheckCircle2, ChevronRight, Clock, RefreshCw, UserPlus, Wrench, X } from 'lucide-svelte';
+  import { CalendarClock, Camera, CheckCircle2, ChevronRight, Clock, RefreshCw, UserPlus, Wrench, X } from 'lucide-svelte';
 
   interface Job {
     id: string;
@@ -31,6 +33,9 @@
     categoryId: string | null;
     category: string | null;
     categoryColour: string | null;
+    /** An electrical item, while the cafe does PAT tests. */
+    needsPat?: boolean;
+    patResult?: string | null;
   }
   interface ActiveData {
     event: { id: string; name: string; venueName: string; startTime: string; endTime: string } | null;
@@ -187,6 +192,9 @@
       </div>
     {/if}
     <div class="mt-6 grid sm:grid-cols-2 gap-3">
+      {#if $cafe?.preRegistrationEnabled}
+        <a href="/repairer/pre-registered" class="btn-primary sm:col-span-2"><CalendarClock size={18} /> Look at pre-registered items</a>
+      {/if}
       <a href="/repairer/photos" class="btn-secondary"><Camera size={18} /> Add photos of a session</a>
       <a href="/repairer/history" class="btn-secondary"><Wrench size={18} /> My repairs</a>
     </div>
@@ -237,6 +245,7 @@
             <div class="min-w-0 flex-1">
               <p class="font-semibold text-slate-900 truncate">{j.itemDescription}</p>
               <p class="text-sm text-slate-600 truncate">{j.jobNumber}{#if j.customerName} · {firstName(j.customerName)}{/if} · started {formatAgo(minutesBetween(j.acceptedAt ?? j.createdAt, now))}</p>
+              {#if j.needsPat || j.patResult}<p class="mt-1"><PatBadge needed={j.needsPat} result={j.patResult} /></p>{/if}
             </div>
             <span class="text-sm font-semibold text-brand-700 flex items-center gap-1 shrink-0">Carry on <ChevronRight size={16} /></span>
           </a>
@@ -298,6 +307,7 @@
                 {#if j.category}<span class="rounded px-1.5 py-0.5 font-medium" style="background-color: {j.categoryColour}22; color: {j.categoryColour}">{j.category}</span>{/if}
                 {#if j.itemBrand}<span>{j.itemBrand}</span>{/if}
                 {#if j.customerName}<span>· {firstName(j.customerName)}</span>{/if}
+                <PatBadge needed={j.needsPat} result={j.patResult} />
               </p>
               <p class="mt-2 text-sm text-slate-700 line-clamp-2">{j.faultDescription}</p>
               <div class="mt-3 flex flex-wrap items-center justify-between gap-2">

@@ -146,6 +146,45 @@ export const assistedCheckInSchema = z
 
 export type AssistedCheckInPayload = z.infer<typeof assistedCheckInSchema>;
 
+// Pre-registration asks for exactly what check-in asks for, so it uses the same
+// rules: a name and consent, or the token from an item already registered.
+export const preRegistrationSchema = checkInSubmitSchema;
+
+export type PreRegistrationPayload = CheckInSubmitPayload;
+
+// ─────────────────────────────── PAT testing ───────────────────────────────
+// A PAT test (portable appliance test) is a safety check on an electrical item.
+// A cafe can switch PAT testing on. A repairer then records a result for every
+// electrical item before it is marked as fixed.
+
+export const PAT_RESULTS = [
+  { value: 'pass', label: 'Passed' },
+  { value: 'fail', label: 'Failed' },
+  { value: 'not_needed', label: 'Not needed' },
+] as const;
+
+export type PatResult = (typeof PAT_RESULTS)[number]['value'];
+
+export const patRecordSchema = z.object({
+  result: z.enum(['pass', 'fail', 'not_needed']),
+  notes: z.string().max(500).optional().nullable(),
+});
+
+/**
+ * Whether an item needs a PAT test. A repairer's choice for this one item
+ * wins. Otherwise the item's category decides. Never while the cafe has PAT
+ * testing switched off.
+ */
+export function needsPatTest(
+  enabled: boolean | null | undefined,
+  itemIsElectrical: boolean | null | undefined,
+  categoryIsElectrical: boolean | null | undefined,
+): boolean {
+  if (!enabled) return false;
+  if (itemIsElectrical === true || itemIsElectrical === false) return itemIsElectrical;
+  return categoryIsElectrical === true;
+}
+
 export const recurrenceRuleSchema = z.object({
   frequency: z.enum(['weekly', 'biweekly', 'monthly']),
   interval: z.number().int().positive().default(1).optional(),
@@ -206,6 +245,8 @@ export const skillCategorySchema = z.object({
   colour: z.string().regex(/^#[0-9a-fA-F]{6}$/).default('#1B6B5A'),
   sortOrder: z.number().int().default(0),
   isActive: z.boolean().default(true),
+  /** Items in this category need a PAT test, when the cafe does them. */
+  isElectrical: z.boolean().optional(),
 });
 
 export const userCreateSchema = z.object({

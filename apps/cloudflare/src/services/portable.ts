@@ -57,6 +57,7 @@ const BACKUP_TABLES: SQLiteTable[] = [
   schema.repairImages,
   schema.eventImages,
   schema.linuxInstalls,
+  schema.preRegistrations,
   schema.cafeGallery,
   schema.refreshTokens,
   schema.passwordResetTokens,

@@ -21,6 +21,7 @@ import { getGuide, recentGuides, searchGuides } from '../services/ifixit.js';
 import { co2Settings, listFactors } from '../services/co2.js';
 import { linuxStats, linuxStatsForEvent } from '../services/linux.js';
 import { activeAnalytics, enabledQwaEvents } from '@circularity/shared';
+import { closedReason } from '../services/preRegistration.js';
 
 /** How many photos the site's main gallery will ever return. */
 const MAIN_GALLERY_LIMIT = 60;
@@ -50,6 +51,11 @@ export async function publicRoutes(app: App): Promise<void> {
       // a page nobody will read on every request.
       linuxEnabled: cafe.linuxEnabled,
       linuxPage: cafe.linuxEnabled ? cafe.linuxPage : null,
+      // Whether visitors can pre-register an item for a session, and whether
+      // repairers are asked for a PAT test on electrical items. Both are off
+      // unless an admin turns them on.
+      preRegistrationEnabled: cafe.preRegistrationEnabled,
+      patTestingEnabled: cafe.patTestingEnabled,
       primaryColor: cafe.primaryColor,
       accentColor: cafe.accentColor,
       headingFont: cafe.headingFont,
@@ -406,6 +412,7 @@ export async function publicRoutes(app: App): Promise<void> {
         startTime: events.startTime,
         endTime: events.endTime,
         status: events.status,
+        isPublished: events.isPublished,
         supportsLinux: events.supportsLinux,
         venueName: venues.name,
         venueAddress: venues.address,
@@ -430,7 +437,15 @@ export async function publicRoutes(app: App): Promise<void> {
     const [gallery, stats, cafeRow] = await Promise.all([
       hasHappened ? eventGallery(row.id) : Promise.resolve([]),
       hasHappened ? eventStats(row.id) : Promise.resolve(null),
-      db.select({ homePage: cafes.homePage, linuxEnabled: cafes.linuxEnabled }).from(cafes).limit(1),
+      db
+        .select({
+          homePage: cafes.homePage,
+          linuxEnabled: cafes.linuxEnabled,
+          preRegistrationEnabled: cafes.preRegistrationEnabled,
+          enableContactField: cafes.enableContactField,
+        })
+        .from(cafes)
+        .limit(1),
     ]);
     // Linux help happens at an ordinary session, so what a session achieved
     // includes the computers kept in use as well as the items mended.
@@ -455,6 +470,11 @@ export async function publicRoutes(app: App): Promise<void> {
       gallery,
       stats: showEventStats ? stats : null,
       linuxStats: showEventStats ? linuxSummary : null,
+      // Null while the cafe has pre-registration switched off, so the page
+      // shows nothing about it. Otherwise whether this session still takes it.
+      preRegistration: cafeRow[0]?.preRegistrationEnabled
+        ? { open: closedReason(row) === null, askContact: cafeRow[0]?.enableContactField !== false }
+        : null,
     };
   });
 

@@ -50,7 +50,8 @@ async function fingerprint(): Promise<string> {
          (SELECT COUNT(*) || ':' || COALESCE(MAX(created_at), 0) FROM venues) AS v,
          (SELECT COUNT(*) || ':' || COALESCE(MAX(created_at), 0) FROM cafe_gallery) AS g,
          (SELECT COUNT(*) || ':' || COALESCE(MAX(created_at), 0) FROM event_images) AS i,
-         (SELECT COUNT(*) FROM skill_categories) AS s`,
+         (SELECT COUNT(*) || ':' || COALESCE(SUM(is_electrical), 0) FROM skill_categories) AS s,
+         (SELECT COUNT(*) || ':' || COALESCE(MAX(updated_at), 0) FROM pre_registrations) AS p`,
     )
     .first<Record<string, string | number>>();
   return Object.values(row ?? {}).join('|');

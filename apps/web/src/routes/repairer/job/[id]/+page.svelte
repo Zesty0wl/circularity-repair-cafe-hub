@@ -8,6 +8,10 @@
   //   yours                  Finish: pick how it went, add notes, save
   //   finished               What happened
   //
+  // While the cafe does PAT tests, an electrical item also has a PAT section.
+  // "Fixed" stays greyed out until a result is chosen, and a failed item
+  // cannot be marked as fixed. The server checks the same rules.
+  //
   // Finishing used to be a drop-down and a pop-up to confirm. It is now three
   // big buttons, which is easier with greasy fingers and shows every choice.
   import { page } from '$app/stores';
@@ -16,8 +20,10 @@
   import { api } from '$lib/api';
   import { auth } from '$lib/stores/auth';
   import CameraCapture from '$lib/components/CameraCapture.svelte';
+  import PatBadge from '$lib/components/PatBadge.svelte';
   import { clockTime, firstName, minutesBetween, statusLabel, formatDuration } from '$lib/staff/queue';
-  import { ArrowLeft, Camera as CameraIcon, CheckCircle2, ChevronDown, Package, User, XCircle } from 'lucide-svelte';
+  import { PAT_RESULTS, type PatResult } from '@circularity/shared';
+  import { ArrowLeft, Camera as CameraIcon, CheckCircle2, ChevronDown, NotebookPen, Package, User, XCircle, Zap } from 'lucide-svelte';
 
   $: id = $page.params.id;
 
@@ -28,6 +34,18 @@
     venue: any;
     repairer: any;
     images: Array<{ id: string; filePath: string; stage: string; caption: string | null; createdAt: string }>;
+    /** Null while the cafe does not do PAT tests. */
+    pat: {
+      needed: boolean;
+      itemIsElectrical: boolean | null;
+      categoryIsElectrical: boolean;
+      result: PatResult | null;
+      testedAt: string | null;
+      testedByName: string | null;
+      notes: string | null;
+    } | null;
+    /** Set when the visitor pre-registered the item before the session. */
+    preRegistration: { researchNotes: string | null; repairerName: string | null; createdAt: string } | null;
   }
 
   type Outcome = 'completed' | 'cannot_repair' | 'awaiting_return';
@@ -49,11 +67,20 @@
   let cameraStage: 'during_repair' | 'completed' = 'during_repair';
   let confirmTakeOver = false;
   let confirmRelease = false;
+  /** The PAT result chosen on this page, saved with the repair. */
+  let patChoice: PatResult | null = null;
+  let patNotes = '';
+  let changingPat = false;
 
   $: myId = $auth?.user.id ?? null;
   $: status = detail?.job.status as string | undefined;
   $: isMine = !!detail && detail.job.repairerId === myId && status === 'in_progress';
   $: isFinished = status === 'completed' || status === 'cannot_repair' || status === 'returned';
+  $: pat = detail?.pat ?? null;
+  $: patNeeded = pat?.needed === true;
+  // The result that will count: one chosen now, or one recorded earlier.
+  $: patEffective = patChoice ?? (changingPat ? null : pat?.result ?? null);
+  $: patBlocksFix = outcome === 'completed' && patNeeded && (!patEffective || patEffective === 'fail');
 
   async function load() {
     try {
@@ -125,6 +152,7 @@
           partsUsed: partsUsed.trim() || null,
           environmentalSavingKg: savings === '' || savings === null ? null : Number(savings),
           co2FactorId,
+          pat: patNeeded && patChoice ? { result: patChoice, notes: patNotes.trim() || null } : undefined,
         },
       });
       goto(`/repairer?done=${encodeURIComponent(detail?.job.jobNumber ?? '')}&outcome=${outcome}`);
@@ -132,6 +160,17 @@
       error = err?.message ?? 'Could not save this repair';
     } finally {
       busy = false;
+    }
+  }
+
+  // Say whether this one item is electrical, whatever its category says.
+  async function setElectrical(value: boolean) {
+    error = '';
+    try {
+      await api(`/api/repairer/jobs/${id}/electrical`, { method: 'PATCH', json: { isElectrical: value } });
+      await load();
+    } catch (err: any) {
+      error = err?.message ?? 'Could not save that change';
     }
   }
 
@@ -202,7 +241,10 @@
               {#if detail.job.itemBrand}{detail.category?.name ? ' · ' : ''}{detail.job.itemBrand}{/if}
             </p>
           </div>
-          <span class="badge badge-{detail.job.status} shrink-0">{statusLabel(detail.job.status)}</span>
+          <div class="flex flex-col items-end gap-1 shrink-0">
+            <span class="badge badge-{detail.job.status}">{statusLabel(detail.job.status)}</span>
+            {#if pat}<PatBadge needed={pat.needed} result={pat.result} />{/if}
+          </div>
         </div>
         <dl class="mt-4 grid sm:grid-cols-2 gap-3 text-sm">
           <div class="flex gap-2 items-start">
@@ -229,6 +271,14 @@
         <h2 class="font-semibold">What is wrong</h2>
         <p class="mt-2 text-slate-700 whitespace-pre-line">{detail.job.faultDescription}</p>
       </section>
+
+      {#if detail.preRegistration?.researchNotes}
+        <section class="card p-5">
+          <h2 class="font-semibold flex items-center gap-2"><NotebookPen size={18} class="text-slate-500" /> Notes from before the session</h2>
+          <p class="mt-1 text-xs text-slate-500">The visitor pre-registered this item.{detail.preRegistration.repairerName ? ` ${detail.preRegistration.repairerName} looked into it.` : ''}</p>
+          <p class="mt-2 text-slate-700 whitespace-pre-line">{detail.preRegistration.researchNotes}</p>
+        </section>
+      {/if}
 
       <section class="card p-5">
         <div class="flex justify-between items-center gap-2">
@@ -308,6 +358,61 @@
               </button>
             {/each}
           </div>
+
+          {#if pat}
+            <div class="rounded-xl ring-1 {patNeeded ? 'ring-amber-200 bg-amber-50/60' : 'ring-slate-200'} p-4 space-y-3">
+              <label class="flex items-start gap-3 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  class="h-5 w-5 rounded border-slate-300 text-brand-600 mt-0.5"
+                  checked={patNeeded}
+                  on:change={(e) => setElectrical(e.currentTarget.checked)}
+                />
+                <span>
+                  <span class="font-medium text-slate-900">This is an electrical item</span>
+                  <span class="block text-xs text-slate-500">
+                    {#if pat.itemIsElectrical === null}Set from its category.{:else}Changed for this item.{/if}
+                    Electrical items need a PAT test.
+                  </span>
+                </span>
+              </label>
+
+              {#if patNeeded}
+                {#if pat.result && !changingPat}
+                  <div class="text-sm">
+                    <p class="flex items-center gap-2 flex-wrap"><PatBadge result={pat.result} /> <span class="text-slate-600">{#if pat.testedByName}by {pat.testedByName}{/if}{#if pat.testedAt} at {clockTime(pat.testedAt)}{/if}</span></p>
+                    {#if pat.notes}<p class="mt-1 text-slate-700 whitespace-pre-line">{pat.notes}</p>{/if}
+                    <button type="button" class="mt-2 text-sm text-slate-600 underline underline-offset-2" on:click={() => { changingPat = true; patChoice = null; }}>Test it again</button>
+                  </div>
+                {:else}
+                  <div>
+                    <p class="text-sm font-medium text-slate-900 flex items-center gap-1.5"><Zap size={16} class="text-amber-700" /> PAT test result</p>
+                    <div class="mt-2 grid grid-cols-3 gap-2" role="radiogroup" aria-label="PAT test result">
+                      {#each PAT_RESULTS as r}
+                        <button
+                          type="button"
+                          role="radio"
+                          aria-checked={patChoice === r.value}
+                          class="rounded-lg px-2 py-2 text-sm font-medium ring-1 transition {patChoice === r.value
+                            ? r.value === 'pass'
+                              ? 'ring-2 ring-emerald-500 bg-emerald-50 text-emerald-900'
+                              : r.value === 'fail'
+                                ? 'ring-2 ring-rose-500 bg-rose-50 text-rose-900'
+                                : 'ring-2 ring-slate-500 bg-slate-50 text-slate-900'
+                            : 'ring-slate-200 bg-white hover:bg-slate-50 text-slate-700'}"
+                          on:click={() => (patChoice = r.value)}
+                        >{r.label}</button>
+                      {/each}
+                    </div>
+                    <label class="label mt-3" for="patnotes">PAT notes <span class="font-normal text-slate-400">(optional)</span></label>
+                    <input id="patnotes" class="input" maxlength="500" placeholder="For example: battery only, or why it failed" bind:value={patNotes} />
+                    <p class="mt-1 text-xs text-slate-500">Your name and the time are saved with the result.</p>
+                  </div>
+                {/if}
+              {/if}
+            </div>
+          {/if}
+
           <div>
             <label class="label" for="notes">{outcome === 'awaiting_return' ? 'Which part do they need to bring?' : outcome === 'cannot_repair' ? 'Why could it not be fixed?' : 'Notes'} <span class="font-normal text-slate-400">(the visitor sees these)</span></label>
             <textarea id="notes" class="input" rows="3" bind:value={outcomeNotes}></textarea>
@@ -348,8 +453,14 @@
             </div>
           {/if}
 
+          {#if patBlocksFix}
+            <p class="text-sm text-amber-900 bg-amber-50 rounded-lg px-3 py-2">
+              {#if patEffective === 'fail'}This item failed its PAT test, so it cannot be marked as fixed. Choose "Could not fix", or test it again.
+              {:else}This is an electrical item. Choose the PAT test result before you mark it as fixed.{/if}
+            </p>
+          {/if}
           {#if error}<p class="text-sm text-rose-700">{error}</p>{/if}
-          <button class="btn-primary w-full" disabled={busy || !outcome} on:click={finish}>
+          <button class="btn-primary w-full" disabled={busy || !outcome || patBlocksFix} on:click={finish}>
             {busy ? 'Saving…' : outcome === 'awaiting_return' ? 'Save and pause' : outcome ? 'Save and finish' : 'Choose how it went'}
           </button>
 
@@ -371,6 +482,10 @@
           {#if detail.job.outcomeNotes}<p class="text-sm text-slate-700 whitespace-pre-line">{detail.job.outcomeNotes}</p>{/if}
           {#if detail.job.partsUsed}<p class="text-sm"><span class="text-slate-500">Parts:</span> {detail.job.partsUsed}</p>{/if}
           {#if detail.job.co2SavingKg && Number(detail.job.co2SavingKg) > 0}<p class="text-sm"><span class="text-slate-500">Carbon saved:</span> {Number(detail.job.co2SavingKg)} kg</p>{/if}
+          {#if pat?.result}
+            <p class="text-sm flex items-center gap-2 flex-wrap"><PatBadge result={pat.result} /> <span class="text-slate-600">{#if pat.testedByName}by {pat.testedByName}{/if}{#if pat.testedAt} at {clockTime(pat.testedAt)}{/if}</span></p>
+            {#if pat.notes}<p class="text-sm text-slate-700">{pat.notes}</p>{/if}
+          {/if}
         </section>
       {/if}
       {#if error && !isMine}<p class="text-sm text-rose-700">{error}</p>{/if}

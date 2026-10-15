@@ -1,6 +1,6 @@
 import type { App } from '../../lib/router.js';
 import { db, inList } from '../../db/index.js';
-import { cafes, eventTemplates, events, linuxInstalls, repairImages, repairJobs, repairerEvents, skillCategories, users, venues } from '../../db/schema.js';
+import { cafes, eventTemplates, events, linuxInstalls, preRegistrations, repairImages, repairJobs, repairerEvents, skillCategories, users, venues } from '../../db/schema.js';
 import { and, asc, desc, eq, sql } from 'drizzle-orm';
 import { eventTemplateSchema, oneOffEventSchema } from '@circularity/shared';
 import { addMonthsIso, generateInstances, todayIso } from '../../services/recurrence.js';
@@ -190,6 +190,23 @@ export async function adminEventsRoutes(app: App): Promise<void> {
           'against it, so it cannot be deleted. Cancel it instead, which keeps the record of ' +
           'what happened.',
         code: 'event/has_linux_installs',
+      });
+      return;
+    }
+
+    // Visitors who pre-registered an item would lose it without a word.
+    // Cancelling the session tells them, on their tracking page.
+    const [{ count: preCount }] = await db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(preRegistrations)
+      .where(and(eq(preRegistrations.eventId, id), eq(preRegistrations.status, 'open')));
+
+    if (preCount > 0) {
+      reply.code(409).send({
+        error:
+          `${preCount} item${preCount === 1 ? ' is' : 's are'} pre-registered for this session, ` +
+          'so it cannot be deleted. Cancel it instead, so the visitors can see it has been called off.',
+        code: 'event/has_pre_registrations',
       });
       return;
     }

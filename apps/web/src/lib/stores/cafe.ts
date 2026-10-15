@@ -59,6 +59,10 @@ export interface CafeInfo {
   linuxEnabled?: boolean;
   /** Only sent while the feature is on. Null otherwise. */
   linuxPage?: LinuxPageContent | null;
+  /** Visitors can tell us about an item before a session. Off unless an admin turns it on. */
+  preRegistrationEnabled?: boolean;
+  /** Repairers record a PAT test for electrical items. Off unless an admin turns it on. */
+  patTestingEnabled?: boolean;
   gallery: GalleryImage[];
   primaryColor: string | null;
   accentColor: string | null;

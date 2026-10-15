@@ -4,7 +4,9 @@
   import Icon from '@iconify/svelte';
   import { categoryIcon } from '$lib/categoryIcon';
   import CameraCapture from '$lib/components/CameraCapture.svelte';
-  import { UserPlus, CheckCircle2, Plus, ArrowLeft, CalendarOff, X } from 'lucide-svelte';
+  import { cafe } from '$lib/stores/cafe';
+  import { firstName } from '$lib/staff/queue';
+  import { UserPlus, CheckCircle2, Plus, ArrowLeft, CalendarClock, CalendarOff, Search, X } from 'lucide-svelte';
 
   interface SkillCategory { id: string; name: string; icon: string; colour: string }
 
@@ -31,6 +33,58 @@
   let busy = false;
   let error = '';
   let created: { jobNumber: string } | null = null;
+
+  // Items visitors pre-registered for this session that have not arrived yet.
+  // Only while the cafe has pre-registration switched on.
+  interface Expected {
+    id: string;
+    customerName: string | null;
+    itemDescription: string;
+    itemBrand: string | null;
+    repairerName: string | null;
+    category: string | null;
+    categoryColour: string | null;
+  }
+  let expected: Expected[] = [];
+  let expectedSearch = '';
+  let expectedBusy: string | null = null;
+  let expectedError = '';
+  /** Items checked in from the list on this visit to the page, by id. */
+  let arrived: Record<string, { jobNumber: string; withRepairer: boolean }> = {};
+
+  async function loadExpected() {
+    if (!$cafe?.preRegistrationEnabled) return;
+    try {
+      expected = (await api<{ items: Expected[] }>('/api/repairer/pre-registrations-today')).items;
+    } catch {
+      expected = [];
+    }
+  }
+
+  async function checkInExpected(item: Expected) {
+    expectedBusy = item.id;
+    expectedError = '';
+    try {
+      const res = await api<{ jobNumber: string; repairerId: string | null }>(`/api/repairer/pre-registrations/${item.id}/check-in`, { method: 'POST', json: {} });
+      arrived = { ...arrived, [item.id]: { jobNumber: res.jobNumber, withRepairer: Boolean(res.repairerId) } };
+    } catch (err: any) {
+      expectedError = err?.message ?? 'Could not check that item in';
+      await loadExpected();
+    } finally {
+      expectedBusy = null;
+    }
+  }
+
+  $: needle = expectedSearch.trim().toLowerCase();
+  $: expectedShown = needle
+    ? expected.filter((i) => `${i.customerName ?? ''} ${i.itemDescription} ${i.itemBrand ?? ''}`.toLowerCase().includes(needle))
+    : expected;
+  // The cafe profile may arrive after the page, so wait for both, then load once.
+  let expectedRequested = false;
+  $: if ($cafe?.preRegistrationEnabled && activeEvent && !expectedRequested) {
+    expectedRequested = true;
+    void loadExpected();
+  }
 
   // Consent is only meaningful once we're actually storing a name/contact.
   $: hasPii = customerName.trim().length > 0 || customerContact.trim().length > 0;
@@ -153,6 +207,46 @@
       </div>
     </div>
   {:else}
+    {#if expected.length}
+      <section class="card p-5 mt-4">
+        <h2 class="text-lg font-semibold flex items-center gap-2"><CalendarClock size={20} /> Pre-registered for today</h2>
+        <p class="mt-1 text-sm text-slate-600">These visitors told us about their item before the session. When one arrives, check their item in here. The repair time starts now.</p>
+        {#if expected.length > 5}
+          <label class="relative block mt-3">
+            <span class="sr-only">Search by name or item</span>
+            <Search size={16} class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input class="input pl-9" placeholder="Search by name or item" bind:value={expectedSearch} />
+          </label>
+        {/if}
+        {#if expectedError}<p class="mt-3 text-sm text-rose-700">{expectedError}</p>{/if}
+        <ul class="mt-3 divide-y divide-slate-100">
+          {#each expectedShown as item (item.id)}
+            <li class="py-3 flex flex-wrap items-center justify-between gap-3">
+              <div class="min-w-0">
+                <p class="font-medium text-slate-900">{item.customerName ?? 'No name given'}</p>
+                <p class="text-sm text-slate-600">
+                  {item.itemDescription}{item.itemBrand ? ` · ${item.itemBrand}` : ''}
+                  {#if item.repairerName}<span class="text-slate-500">{` · taken by ${firstName(item.repairerName)}`}</span>{/if}
+                </p>
+              </div>
+              {#if arrived[item.id]}
+                <p class="text-sm text-emerald-800 flex items-center gap-1.5">
+                  <CheckCircle2 size={16} />
+                  <span>Job <strong>{arrived[item.id].jobNumber}</strong>{arrived[item.id].withRepairer ? ', with its repairer' : ', in the queue'}</span>
+                </p>
+              {:else}
+                <button class="btn-primary btn-sm" disabled={expectedBusy === item.id} on:click={() => checkInExpected(item)}>
+                  {expectedBusy === item.id ? 'Checking in…' : 'Check in'}
+                </button>
+              {/if}
+            </li>
+          {:else}
+            <li class="py-3 text-sm text-slate-500">Nobody matches that search.</li>
+          {/each}
+        </ul>
+      </section>
+    {/if}
+
     <header class="mt-4">
       <h1 class="text-2xl font-bold flex items-center gap-2"><UserPlus size={22} /> Register a repair</h1>
       <p class="mt-1 text-slate-600">For a visitor who can't check in on their own device.</p>

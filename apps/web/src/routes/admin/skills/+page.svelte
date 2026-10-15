@@ -1,7 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { api } from '$lib/api';
-  import { Trash2, Plus, GripVertical } from 'lucide-svelte';
+  import { cafe } from '$lib/stores/cafe';
+  import { Trash2, Plus, GripVertical, Zap } from 'lucide-svelte';
 
   let categories: any[] = [];
   let newName = '';
@@ -33,6 +34,12 @@
     await load();
   }
 
+  // Items in an electrical category need a PAT test, while the cafe does them.
+  async function toggleElectrical(c: any) {
+    await api(`/api/admin/skill-categories/${c.id}`, { method: 'PATCH', json: { isElectrical: !c.isElectrical } });
+    await load();
+  }
+
   async function del(c: any) {
     if (!confirm(`Delete "${c.name}"? This will fail if any jobs use it.`)) return;
     try { await api(`/api/admin/skill-categories/${c.id}`, { method: 'DELETE' }); await load(); }
@@ -60,6 +67,12 @@
 </script>
 
 <h1 class="text-2xl font-bold">Skill categories</h1>
+{#if $cafe?.patTestingEnabled}
+  <p class="mt-2 text-sm text-slate-600 max-w-2xl">
+    Items in a category marked <strong>Electrical</strong> need a PAT test before they can be marked as fixed. Tap the
+    label to change it.
+  </p>
+{/if}
 
 <div class="card p-4 mt-4 flex flex-col sm:flex-row gap-3 sm:items-end max-w-2xl">
   <div class="flex-1"><label class="label" for="nm">Name</label><input id="nm" class="input" bind:value={newName} /></div>
@@ -79,6 +92,16 @@
         <p class="font-semibold">{c.name}</p>
         {#if c.description}<p class="text-xs text-slate-500">{c.description}</p>{/if}
       </div>
+      {#if $cafe?.patTestingEnabled}
+        <button
+          class="badge {c.isElectrical ? 'bg-amber-100 text-amber-900' : 'bg-slate-100 text-slate-700'}"
+          aria-pressed={c.isElectrical}
+          title={c.isElectrical ? 'Items need a PAT test. Tap to change.' : 'Items do not need a PAT test. Tap to change.'}
+          on:click={() => toggleElectrical(c)}
+        >
+          {#if c.isElectrical}<Zap size={12} /> Electrical{:else}Not electrical{/if}
+        </button>
+      {/if}
       <button class="badge {c.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'}" on:click={() => toggleActive(c)}>{c.isActive ? 'Active' : 'Hidden'}</button>
       <button class="p-2 rounded-lg text-rose-600 hover:bg-rose-50" aria-label={`Delete ${c.name}`} on:click={() => del(c)}><Trash2 size={16} /></button>
     </li>

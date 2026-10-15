@@ -7,9 +7,10 @@
 //  Postgres or Node, because the Cloudflare Worker imports this file too.
 // =============================================================================
 
-export const DEFAULT_CATEGORIES: Array<{ name: string; icon: string; colour: string }> = [
-  { name: 'Electronics', icon: 'cpu', colour: '#0ea5e9' },
-  { name: 'Small appliances', icon: 'plug', colour: '#f97316' },
+/** `isElectrical` marks the categories whose items need a PAT test, when a cafe does them. */
+export const DEFAULT_CATEGORIES: Array<{ name: string; icon: string; colour: string; isElectrical?: boolean }> = [
+  { name: 'Electronics', icon: 'cpu', colour: '#0ea5e9', isElectrical: true },
+  { name: 'Small appliances', icon: 'plug', colour: '#f97316', isElectrical: true },
   { name: 'Clothing & textiles', icon: 'shirt', colour: '#ec4899' },
   { name: 'Bicycles', icon: 'bike', colour: '#22c55e' },
   { name: 'Furniture & wood', icon: 'armchair', colour: '#a16207' },

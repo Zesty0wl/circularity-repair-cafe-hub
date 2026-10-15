@@ -168,6 +168,7 @@ export function renderRobots(origin: string): string {
     'Disallow: /api/',
     'Disallow: /checkin',
     'Disallow: /track',
+    'Disallow: /pre-register',
     'Disallow: /repairer',
     'Disallow: /login',
     'Disallow: /reset',

@@ -48,6 +48,8 @@ export async function adminRepairsRoutes(app: App): Promise<void> {
         jobNumber: repairJobs.jobNumber,
         customerName: repairJobs.customerName,
         itemDescription: repairJobs.itemDescription,
+        isFirstVisit: repairJobs.isFirstVisit,
+        weightKg: repairJobs.weightKg,
         status: repairJobs.status,
         createdAt: repairJobs.createdAt,
         completedAt: repairJobs.completedAt,
@@ -117,11 +119,14 @@ export async function adminRepairsRoutes(app: App): Promise<void> {
       return;
     }
     const update: any = { updatedAt: new Date() };
-    for (const k of ['status', 'repairerId', 'outcomeNotes', 'partsUsed', 'customerName', 'customerContact', 'itemDescription', 'faultDescription', 'itemCategoryId', 'itemBrand']) {
+    for (const k of ['status', 'repairerId', 'outcomeNotes', 'partsUsed', 'customerName', 'customerContact', 'itemDescription', 'faultDescription', 'itemCategoryId', 'itemBrand', 'isFirstVisit']) {
       if ((data as any)[k] !== undefined) update[k] = (data as any)[k];
     }
     if (data.environmentalSavingKg !== undefined) {
       update.environmentalSavingKg = data.environmentalSavingKg !== null ? String(data.environmentalSavingKg) : null;
+    }
+    if (data.weightKg !== undefined) {
+      update.weightKg = data.weightKg !== null ? String(data.weightKg) : null;
     }
     // Stamp completed_at only when the job actually *transitions* into a terminal
     // state (completed / cannot_repair). Re-saving an already-terminal job (e.g.
@@ -184,6 +189,8 @@ export async function adminRepairsRoutes(app: App): Promise<void> {
         itemDescription: repairJobs.itemDescription,
         category: skillCategories.name,
         brand: repairJobs.itemBrand,
+        weightKg: repairJobs.weightKg,
+        isFirstVisit: repairJobs.isFirstVisit,
         fault: repairJobs.faultDescription,
         status: repairJobs.status,
         repairer: users.displayName,
@@ -197,7 +204,7 @@ export async function adminRepairsRoutes(app: App): Promise<void> {
       .leftJoin(skillCategories, eq(skillCategories.id, repairJobs.itemCategoryId))
       .leftJoin(users, eq(users.id, repairJobs.repairerId))
       .orderBy(desc(repairJobs.createdAt));
-    const headers = ['jobNumber', 'eventDate', 'eventName', 'customerName', 'itemDescription', 'category', 'brand', 'fault', 'status', 'repairer', 'outcomeNotes', 'environmentalSavingKg', 'createdAt', 'completedAt'];
+    const headers = ['jobNumber', 'eventDate', 'eventName', 'customerName', 'itemDescription', 'category', 'brand', 'weightKg', 'isFirstVisit', 'fault', 'status', 'repairer', 'outcomeNotes', 'environmentalSavingKg', 'createdAt', 'completedAt'];
     const esc = (v: unknown) => {
       if (v === null || v === undefined) return '';
       const s = String(v);

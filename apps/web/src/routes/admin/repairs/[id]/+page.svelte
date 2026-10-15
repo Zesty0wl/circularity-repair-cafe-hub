@@ -36,6 +36,8 @@
     outcomeNotes: '',
     partsUsed: '',
     environmentalSavingKg: '' as string | number,
+    weightKg: '' as string | number,
+    isFirstVisit: false,
     status: 'waiting',
   };
 
@@ -56,6 +58,8 @@
       outcomeNotes: detail.job.outcomeNotes ?? '',
       partsUsed: detail.job.partsUsed ?? '',
       environmentalSavingKg: detail.job.environmentalSavingKg ?? '',
+      weightKg: detail.job.weightKg ?? '',
+      isFirstVisit: detail.job.isFirstVisit ?? false,
       status: detail.job.status,
     };
   }
@@ -78,6 +82,8 @@
           outcomeNotes: form.outcomeNotes || null,
           partsUsed: form.partsUsed || null,
           environmentalSavingKg: form.environmentalSavingKg === '' ? null : Number(form.environmentalSavingKg),
+          weightKg: form.weightKg === '' ? null : Number(form.weightKg),
+          isFirstVisit: form.isFirstVisit,
         },
       });
       await load();
@@ -198,6 +204,13 @@
     <div class="grid sm:grid-cols-2 gap-3">
       <div><label class="label" for="pa">Parts used</label><input id="pa" class="input" bind:value={form.partsUsed} /></div>
       <div><label class="label" for="es">Saving (kg)</label><input id="es" class="input" type="number" step="0.001" bind:value={form.environmentalSavingKg} /></div>
+    </div>
+    <div class="grid sm:grid-cols-2 gap-3">
+      <div><label class="label" for="wt">Weight (kg)</label><input id="wt" class="input" type="number" step="0.001" bind:value={form.weightKg} /></div>
+      <label class="flex items-center gap-3 cursor-pointer text-sm text-slate-700 sm:pt-6">
+        <input type="checkbox" class="h-5 w-5 rounded border-slate-300 text-brand-600" bind:checked={form.isFirstVisit} />
+        <span>First visit</span>
+      </label>
     </div>
     <div>
       <label class="label" for="st">Status</label>

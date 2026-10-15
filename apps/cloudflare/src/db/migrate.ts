@@ -22,11 +22,13 @@ import { APP_VERSION } from '../version.js';
 import m0001 from './migrations/0001_init.js';
 import m0002 from './migrations/0002_display_token.js';
 import m0003 from './migrations/0003_qwa_analytics.js';
+import m0004 from './migrations/0004_checkin_weight_first_visit.js';
 
 const MIGRATIONS: Array<{ id: string; sql: string }> = [
   { id: '0001_init', sql: m0001 },
   { id: '0002_display_token', sql: m0002 },
   { id: '0003_qwa_analytics', sql: m0003 },
+  { id: '0004_checkin_weight_first_visit', sql: m0004 },
 ];
 
 /** Split a migration into statements. Our SQL never puts ";" inside a string. */

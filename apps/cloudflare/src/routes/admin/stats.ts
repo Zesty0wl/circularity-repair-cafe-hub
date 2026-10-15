@@ -48,6 +48,8 @@ export async function adminStatsRoutes(app: App): Promise<void> {
         COUNT(rj.id) FILTER (WHERE rj.status = 'returned') AS returned,
         COUNT(DISTINCT rj.repairer_id) FILTER (WHERE rj.repairer_id IS NOT NULL) AS repairer_count,
         COALESCE(SUM(rj.co2_saving_kg) FILTER (WHERE rj.status = 'completed'), 0) AS savings_kg,
+        COUNT(rj.id) FILTER (WHERE rj.satisfaction = 'satisfied') AS satisfied,
+        COUNT(rj.id) FILTER (WHERE rj.satisfaction = 'not_satisfied') AS not_satisfied,
         COALESCE(AVG(${DURATION_MIN})
                  FILTER (WHERE rj.accepted_at IS NOT NULL AND rj.completed_at IS NOT NULL), 0) AS avg_duration_min
       FROM events e
@@ -59,6 +61,8 @@ export async function adminStatsRoutes(app: App): Promise<void> {
     const closed = completed + Number(r.cannot_repair ?? 0);
     const eventCount = Number(r.event_count ?? 0);
     const repairCount = Number(r.repair_count ?? 0);
+    const satisfied = Number(r.satisfied ?? 0);
+    const notSatisfied = Number(r.not_satisfied ?? 0);
     return {
       range,
       eventCount,
@@ -71,6 +75,10 @@ export async function adminStatsRoutes(app: App): Promise<void> {
       avgDurationMin: Math.round(Number(r.avg_duration_min ?? 0)),
       avgRepairsPerEvent: eventCount > 0 ? Math.round((repairCount / eventCount) * 10) / 10 : 0,
       environmentalSavingKg: Number(r.savings_kg ?? 0),
+      // How visitors answered at the exit. Null when nobody answered, so a
+      // cafe that does not ask never shows a meaningless figure.
+      satisfactionRate: satisfied + notSatisfied > 0 ? Math.round((satisfied / (satisfied + notSatisfied)) * 100) : null,
+      satisfactionCount: satisfied + notSatisfied,
     };
   });
 

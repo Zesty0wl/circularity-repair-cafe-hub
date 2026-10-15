@@ -2,7 +2,7 @@ import type { App } from '../lib/router.js';
 import { db } from '../db/index.js';
 import { cafes, events, repairImages, repairJobs, skillCategories, users, venues } from '../db/schema.js';
 import { and, asc, count, desc, eq, sql } from 'drizzle-orm';
-import { assistedCheckInSchema } from '@circularity/shared';
+import { assistedCheckInSchema, jobFeedbackSchema } from '@circularity/shared';
 import { saveValidatedImage } from '../services/imageUpload.js';
 import { withJobNumber } from '../services/jobNumber.js';
 import { randomToken } from '../utils/tokens.js';
@@ -430,6 +430,44 @@ export async function repairerRoutes(app: App): Promise<void> {
       action: `repair.${body.outcome}`,
       entityType: 'repair_job',
       entityId: id,
+    });
+    return updated;
+  });
+
+  // The visitor's own verdict, recorded at the exit. Optional: a cafe that does
+  // not ask simply never calls this. Sending `satisfaction: null` clears an
+  // answer given by mistake.
+  app.patch('/api/repairer/jobs/:id/feedback', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const me = request.auth!;
+    const parsed = jobFeedbackSchema.safeParse(request.body);
+    if (!parsed.success) {
+      reply.code(400).send({ error: 'Validation failed', code: 'validation/failed', details: parsed.error.flatten() });
+      return;
+    }
+    const [existing] = await db.select({ id: repairJobs.id }).from(repairJobs).where(eq(repairJobs.id, id)).limit(1);
+    if (!existing) {
+      reply.code(404).send({ error: 'Job not found', code: 'job/not_found' });
+      return;
+    }
+    const { satisfaction, satisfactionComment } = parsed.data;
+    const [updated] = await db
+      .update(repairJobs)
+      .set({
+        satisfaction,
+        satisfactionComment: satisfactionComment ?? null,
+        updatedAt: new Date(),
+      })
+      .where(eq(repairJobs.id, id))
+      .returning();
+    await audit({
+      request,
+      actorId: me.sub,
+      actorType: me.role,
+      action: 'repair.feedback',
+      entityType: 'repair_job',
+      entityId: id,
+      metadata: { satisfaction },
     });
     return updated;
   });

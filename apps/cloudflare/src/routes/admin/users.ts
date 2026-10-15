@@ -6,6 +6,7 @@ import { userCreateSchema, userUpdateSchema } from '@circularity/shared';
 import { hashPassword } from '../../utils/password.js';
 import { generateResetLinkForUser } from '../auth.js';
 import { audit } from '../../utils/audit.js';
+import { withoutPassword } from '../../utils/users.js';
 import { randomToken } from '../../utils/tokens.js';
 
 export async function adminUsersRoutes(app: App): Promise<void> {
@@ -38,7 +39,7 @@ export async function adminUsersRoutes(app: App): Promise<void> {
       reply.code(404).send({ error: 'User not found', code: 'user/not_found' });
       return;
     }
-    return user;
+    return withoutPassword(user);
   });
 
   app.post('/api/admin/users', async (request, reply) => {
@@ -82,7 +83,7 @@ export async function adminUsersRoutes(app: App): Promise<void> {
     }
     const resetToken = await generateResetLinkForUser(created.id);
     await audit({ request, actorId: me.sub, actorType: me.role, action: 'user.created', entityType: 'user', entityId: created.id });
-    return { user: created, resetToken };
+    return { user: withoutPassword(created), resetToken };
   });
 
   app.patch('/api/admin/users/:id', async (request, reply) => {
@@ -105,7 +106,7 @@ export async function adminUsersRoutes(app: App): Promise<void> {
     if (data.email !== undefined) update.email = data.email.toLowerCase();
     const [updated] = await db.update(users).set(update).where(eq(users.id, id)).returning();
     await audit({ request, actorId: me.sub, actorType: me.role, action: 'user.updated', entityType: 'user', entityId: id });
-    return updated;
+    return updated ? withoutPassword(updated) : updated;
   });
 
   app.post('/api/admin/users/:id/reset-link', async (request, reply) => {

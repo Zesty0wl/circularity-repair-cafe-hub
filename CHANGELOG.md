@@ -2,6 +2,20 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
+## 1.12.1 (15 October 2026)
+
+### Fixed
+
+- **A security fix. Please update.** A repair's page sent the whole account
+  record of the repairer working on it, including their password hash. Any
+  signed-in volunteer could see another volunteer's hash. The admin pages for
+  a single user did the same. They now send only what the page shows, such
+  as the name and photo, and never the hash. A password hash cannot be used
+  to sign in. But someone could try to guess a weak password from it, so
+  volunteers with a short or common password should change it.
+- The demo seeder's log now counts only the pre-registered items a repairer
+  actually took.
+
 ## 1.12.0 (15 October 2026)
 
 ### Added

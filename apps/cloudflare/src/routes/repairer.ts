@@ -8,6 +8,7 @@ import { saveValidatedImage } from '../services/imageUpload.js';
 import { withJobNumber } from '../services/jobNumber.js';
 import { randomToken } from '../utils/tokens.js';
 import { audit } from '../utils/audit.js';
+import { repairerSummary } from '../utils/users.js';
 import { env } from '../env.js';
 import { resolveSaving } from '../services/co2.js';
 
@@ -289,7 +290,7 @@ export async function repairerRoutes(app: App): Promise<void> {
         category: skillCategories,
         event: events,
         venue: venues,
-        repairer: users,
+        repairer: repairerSummary,
       })
       .from(repairJobs)
       .leftJoin(skillCategories, eq(skillCategories.id, repairJobs.itemCategoryId))

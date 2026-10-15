@@ -436,6 +436,7 @@ def main() -> int:
         Needs the repairers to be able to sign in, so it is called after that.
         """
         made: list[str] = []
+        taken = 0
         for item, fault, category, visitor, taker, notes in items:
             res = api.post(f"/api/public/events/{event_id}/pre-register", {
                 "customerName": visitor,
@@ -449,12 +450,13 @@ def main() -> int:
             made.append(res["id"])
             who = crew_by_email.get(taker or "")
             if who:
-                who.call("PATCH", f"/api/repairer/pre-registrations/{res['id']}/claim", {},
-                         expect=(200, 201, 400, 404, 409))
-                if notes:
+                claimed = who.call("PATCH", f"/api/repairer/pre-registrations/{res['id']}/claim", {},
+                                   expect=(200, 201, 400, 404, 409))
+                if claimed:
+                    taken += 1
+                if claimed and notes:
                     who.call("PATCH", f"/api/repairer/pre-registrations/{res['id']}/notes",
                              {"researchNotes": notes}, expect=(200, 201, 400, 404, 409))
-        taken = sum(1 for i in items if i[4])
         ok(f"{len(made)} items pre-registered, {taken} taken by a repairer")
         return made
 

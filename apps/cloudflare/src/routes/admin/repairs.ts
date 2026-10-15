@@ -7,6 +7,7 @@ import { alias } from 'drizzle-orm/sqlite-core';
 import { needsPatTest, repairUpdateSchema } from '@circularity/shared';
 import { cafeFeatures } from '../../services/preRegistration.js';
 import { audit } from '../../utils/audit.js';
+import { repairerSummary } from '../../utils/users.js';
 import { deleteImage } from '../../services/imageUpload.js';
 
 export async function adminRepairsRoutes(app: App): Promise<void> {
@@ -81,7 +82,7 @@ export async function adminRepairsRoutes(app: App): Promise<void> {
         job: repairJobs,
         category: skillCategories,
         event: events,
-        repairer: users,
+        repairer: repairerSummary,
       })
       .from(repairJobs)
       .leftJoin(skillCategories, eq(skillCategories.id, repairJobs.itemCategoryId))

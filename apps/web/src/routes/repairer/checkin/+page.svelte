@@ -17,6 +17,10 @@
   let itemCategoryId: string | null = null;
   let itemDescription = '';
   let itemBrand = '';
+  /** Item weight in kilograms, as typed. Empty means "not weighed". */
+  let weightKg = '';
+  /** Whether this is the customer's first visit. */
+  let isFirstVisit = false;
   let faultDescription = '';
   // Customer (all optional for a walk-in)
   let customerName = '';
@@ -64,6 +68,14 @@
     }
   });
 
+  /** The typed weight as a number, or null when it was left empty. */
+  function weightValue(): number | null {
+    const raw = String(weightKg).trim();
+    if (!raw) return null;
+    const n = Number(raw);
+    return Number.isFinite(n) && n >= 0 ? n : null;
+  }
+
   async function submit() {
     error = '';
     if (!itemDescription.trim()) return (error = 'Please describe the item');
@@ -78,6 +90,8 @@
         faultDescription: faultDescription.trim(),
         itemBrand: itemBrand.trim() || null,
         itemCategoryId,
+        weightKg: weightValue(),
+        isFirstVisit,
         customerName: customerName.trim() || null,
         customerContact: customerContact.trim() || null,
         gdprConsent: hasPii ? consent : false,
@@ -107,6 +121,8 @@
     itemCategoryId = null;
     itemDescription = '';
     itemBrand = '';
+    weightKg = '';
+    isFirstVisit = false;
     faultDescription = '';
     customerName = '';
     customerContact = '';
@@ -190,6 +206,16 @@
         <label class="label" for="brand">Brand <span class="font-normal text-slate-400">(optional)</span></label>
         <input id="brand" class="input" maxlength="100" bind:value={itemBrand} />
       </div>
+
+      <div>
+        <label class="label" for="weight">Weight in kg <span class="font-normal text-slate-400">(optional)</span></label>
+        <input id="weight" type="text" inputmode="decimal" class="input" placeholder="e.g. 1.5" bind:value={weightKg} />
+      </div>
+
+      <label class="flex items-center gap-3 cursor-pointer text-sm text-slate-700">
+        <input type="checkbox" class="h-5 w-5 rounded border-slate-300 text-brand-600" bind:checked={isFirstVisit} />
+        <span>This is the customer's first visit</span>
+      </label>
 
       <div>
         <label class="label" for="fault">What's wrong with it?</label>

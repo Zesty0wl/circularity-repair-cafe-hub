@@ -42,6 +42,10 @@
   let itemDescription = '';
   let faultDescription = '';
   let itemBrand = '';
+  /** Item weight in kilograms, as typed. Empty means "not weighed". */
+  let weightKg = '';
+  /** Whether the visitor says this is their first time at the cafe. */
+  let isFirstVisit = false;
   let itemCategoryId: string | null = null;
   /** Which kind of thing it is, so the CO2 saving can be looked up. */
   let co2FactorId: string | null = null;
@@ -176,6 +180,14 @@
     return `${window.location.origin}/track/${t}`;
   }
 
+  /** The typed weight as a number, or null when it was left empty. */
+  function weightValue(): number | null {
+    const raw = String(weightKg).trim();
+    if (!raw) return null;
+    const n = Number(raw);
+    return Number.isFinite(n) && n >= 0 ? n : null;
+  }
+
   async function submitJob() {
     if (!itemDescription.trim()) return (error = 'Please describe your item');
     if (!faultDescription.trim()) return (error = 'Please tell us what is wrong');
@@ -190,6 +202,8 @@
         itemBrand: itemBrand.trim() || null,
         itemCategoryId,
         co2FactorId,
+        weightKg: weightValue(),
+        isFirstVisit,
       };
       if (customerToken) {
         payload.customerToken = customerToken;
@@ -253,6 +267,8 @@
     itemDescription = '';
     faultDescription = '';
     itemBrand = '';
+    weightKg = '';
+    isFirstVisit = false;
     itemCategoryId = null;
     co2FactorId = null;
     createdJob = null;
@@ -269,6 +285,8 @@
     itemDescription = '';
     faultDescription = '';
     itemBrand = '';
+    weightKg = '';
+    isFirstVisit = false;
     itemCategoryId = null;
     co2FactorId = null;
     createdJob = null;
@@ -438,6 +456,14 @@
               <label class="label text-base" for="ib">Brand (optional)</label>
               <input id="ib" class="input text-lg py-4" maxlength="100" bind:value={itemBrand} />
             </div>
+            <div>
+              <label class="label text-base" for="wt">Weight in kg (optional)</label>
+              <input id="wt" type="text" inputmode="decimal" class="input text-lg py-4" placeholder="e.g. 1.5" bind:value={weightKg} />
+            </div>
+            <label class="flex items-center gap-3 text-base text-slate-700">
+              <input type="checkbox" class="h-5 w-5 rounded border-slate-300" bind:checked={isFirstVisit} />
+              <span>This is my first visit</span>
+            </label>
             <div>
               <label class="label text-base" for="fd">What's wrong with it?</label>
               <textarea id="fd" class="input text-lg py-4" rows="3" maxlength="500" placeholder="e.g. Won't turn on, battery seems dead" bind:value={faultDescription}></textarea>

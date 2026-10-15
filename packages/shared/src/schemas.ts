@@ -106,6 +106,11 @@ export const checkInSubmitSchema = z
     // because a visitor may not find their item in the list.
     co2FactorId: z.string().uuid().optional().nullable(),
     itemBrand: z.string().max(100).optional().nullable(),
+    // How heavy the item is, in kilograms. Optional; some cafes weigh what
+    // comes in so they can report the mass kept out of waste.
+    weightKg: z.number().nonnegative().max(1000).optional().nullable(),
+    // Whether this is the visitor's first time at the cafe. Optional.
+    isFirstVisit: z.boolean().optional().nullable(),
   })
   .refine(
     (v) => Boolean(v.customerToken) || (Boolean(v.customerName) && v.gdprConsent === true),
@@ -132,6 +137,10 @@ export const assistedCheckInSchema = z
     // because a visitor may not find their item in the list.
     co2FactorId: z.string().uuid().optional().nullable(),
     itemBrand: z.string().max(100).optional().nullable(),
+    // How heavy the item is, in kilograms. Optional.
+    weightKg: z.number().nonnegative().max(1000).optional().nullable(),
+    // Whether this is the visitor's first time at the cafe. Optional.
+    isFirstVisit: z.boolean().optional().nullable(),
   })
   .refine(
     (v) => {
@@ -237,6 +246,8 @@ export const repairUpdateSchema = z.object({
   faultDescription: z.string().max(500).optional(),
   itemCategoryId: z.string().uuid().optional().nullable(),
   itemBrand: z.string().max(100).optional().nullable(),
+  weightKg: z.number().nonnegative().max(1000).optional().nullable(),
+  isFirstVisit: z.boolean().optional().nullable(),
 });
 
 // ─────────────────────────── Linux Repair Cafe ───────────────────────────

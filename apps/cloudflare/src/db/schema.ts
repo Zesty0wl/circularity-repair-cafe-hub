@@ -336,9 +336,13 @@ export const repairJobs = sqliteTable(
     customerName: text('customer_name'),
     customerContact: text('customer_contact'),
     customerToken: text('customer_token'),
+    /** Whether this is the visitor's first time at the cafe. Optional. */
+    isFirstVisit: bool('is_first_visit'),
     itemDescription: text('item_description').notNull(),
     itemCategoryId: uuid('item_category_id').references(() => skillCategories.id),
     itemBrand: text('item_brand'),
+    /** How heavy the item is, in kilograms. Optional; used for waste reports. */
+    weightKg: numeric('weight_kg', 3),
     faultDescription: text('fault_description').notNull(),
     status: text('status', { enum: REPAIR_STATUSES }).notNull().default('waiting'),
     repairerId: uuid('repairer_id').references(() => users.id),

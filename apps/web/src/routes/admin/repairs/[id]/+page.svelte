@@ -36,6 +36,7 @@
     outcomeNotes: '',
     partsUsed: '',
     environmentalSavingKg: '' as string | number,
+    cardNumber: '' as string | number,
     status: 'waiting',
   };
 
@@ -56,6 +57,7 @@
       outcomeNotes: detail.job.outcomeNotes ?? '',
       partsUsed: detail.job.partsUsed ?? '',
       environmentalSavingKg: detail.job.environmentalSavingKg ?? '',
+      cardNumber: detail.job.cardNumber ?? '',
       status: detail.job.status,
     };
   }
@@ -78,6 +80,7 @@
           outcomeNotes: form.outcomeNotes || null,
           partsUsed: form.partsUsed || null,
           environmentalSavingKg: form.environmentalSavingKg === '' ? null : Number(form.environmentalSavingKg),
+          cardNumber: form.cardNumber === '' ? null : Number(form.cardNumber),
         },
       });
       await load();
@@ -181,6 +184,9 @@
     <div class="grid sm:grid-cols-2 gap-3">
       <div><label class="label" for="im">Item</label><input id="im" class="input" bind:value={form.itemDescription} /></div>
       <div><label class="label" for="br">Brand</label><input id="br" class="input" bind:value={form.itemBrand} /></div>
+    </div>
+    <div class="grid sm:grid-cols-2 gap-3">
+      <div><label class="label" for="cn2">Session number</label><input id="cn2" class="input" type="number" min="0" bind:value={form.cardNumber} /></div>
     </div>
     <div>
       <label class="label" for="cat">Category</label>

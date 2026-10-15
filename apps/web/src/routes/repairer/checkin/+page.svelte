@@ -30,7 +30,14 @@
 
   let busy = false;
   let error = '';
-  let created: { jobNumber: string } | null = null;
+  let created: { jobNumber: string; cardNumber: number | null } | null = null;
+
+  /** The session card numbers, 1..50. A cafe may use fewer. */
+  const CARD_NUMBERS = Array.from({ length: 50 }, (_, i) => i + 1);
+  /** The number on the card handed to this visitor, or null. */
+  let cardNumber: number | null = null;
+  /** Numbers already in use by an open job this session. */
+  let takenCards: number[] = [];
 
   // Consent is only meaningful once we're actually storing a name/contact.
   $: hasPii = customerName.trim().length > 0 || customerContact.trim().length > 0;
@@ -50,12 +57,20 @@
   onMount(async () => {
     try {
       const [active, cats] = await Promise.all([
-        api<{ event: { id: string; name: string; venueName?: string } | null }>('/api/repairer/active-event'),
+        api<{
+          event: { id: string; name: string; venueName?: string } | null;
+          jobs?: Array<{ cardNumber: number | null; status: string }>;
+        }>('/api/repairer/active-event'),
         api<SkillCategory[]>('/api/public/skill-categories', { autoRefresh: false }),
       ]);
       activeEvent = active.event
         ? { id: active.event.id, name: active.event.name, venueName: active.event.venueName }
         : null;
+      // A number is taken while its job is still open; the rest are free.
+      const open = ['waiting', 'in_progress', 'awaiting_return'];
+      takenCards = (active.jobs ?? [])
+        .filter((j) => open.includes(j.status) && j.cardNumber != null)
+        .map((j) => j.cardNumber as number);
       categories = cats;
     } catch (err: any) {
       loadError = err?.message || 'Could not load the check-in form';
@@ -78,6 +93,7 @@
         faultDescription: faultDescription.trim(),
         itemBrand: itemBrand.trim() || null,
         itemCategoryId,
+        cardNumber,
         customerName: customerName.trim() || null,
         customerContact: customerContact.trim() || null,
         gdprConsent: hasPii ? consent : false,
@@ -94,7 +110,8 @@
           photoWarning = 'The repair was registered, but the photo could not be uploaded.';
         }
       }
-      created = { jobNumber: res.jobNumber };
+      created = { jobNumber: res.jobNumber, cardNumber };
+      if (cardNumber != null) takenCards = [...takenCards, cardNumber];
     } catch (err: any) {
       error = err?.message || 'Could not register the repair';
     } finally {
@@ -107,6 +124,7 @@
     itemCategoryId = null;
     itemDescription = '';
     itemBrand = '';
+    cardNumber = null;
     faultDescription = '';
     customerName = '';
     customerContact = '';
@@ -142,7 +160,8 @@
       <h1 class="text-3xl font-bold mt-5">Repair registered</h1>
       <p class="mt-2 text-slate-700">It's now in the queue for this event.</p>
       <p class="mt-6 text-sm uppercase tracking-wide text-slate-500">Job number</p>
-      <p class="text-5xl font-extrabold text-brand-700 mt-1 tracking-wide">{created.jobNumber}</p>
+      <p class="text-5xl font-extrabold text-brand-700 mt-1 tracking-wide">{created.cardNumber ?? created.jobNumber}</p>
+      {#if created.cardNumber}<p class="text-sm text-slate-500 mt-1">Job {created.jobNumber}</p>{/if}
       <p class="mt-5 text-slate-600">Write this number on the item's tag and let the customer know it. That's how we'll match the item back to them.</p>
       {#if photoWarning}<p class="mt-4 text-sm text-amber-700">{photoWarning}</p>{/if}
       <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
@@ -180,6 +199,22 @@
           </div>
         </div>
       {/if}
+
+      <!-- Session number: the number on the card handed to the visitor. -->
+      <div>
+        <p class="label">Session number <span class="font-normal text-slate-400">(optional)</span></p>
+        <p class="text-sm text-slate-500 mb-2">Tap the number on the card you gave the visitor. Numbers already in use are greyed out.</p>
+        <div class="grid grid-cols-10 gap-1.5">
+          {#each CARD_NUMBERS as n}
+            <button
+              type="button"
+              class="rounded-lg py-1.5 text-sm font-semibold ring-1 transition {cardNumber === n ? 'ring-2 ring-brand-600 bg-brand-50 text-brand-800' : takenCards.includes(n) ? 'ring-slate-100 bg-slate-100 text-slate-300' : 'ring-slate-200 bg-white hover:bg-slate-50 text-slate-700'}"
+              disabled={takenCards.includes(n)}
+              on:click={() => (cardNumber = cardNumber === n ? null : n)}
+            >{n}</button>
+          {/each}
+        </div>
+      </div>
 
       <div>
         <label class="label" for="item">Item description</label>

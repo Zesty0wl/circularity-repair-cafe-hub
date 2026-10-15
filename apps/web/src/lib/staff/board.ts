@@ -16,6 +16,8 @@ export interface BoardJob {
   /** Only from the admin source, to link to the repair. */
   id?: string;
   jobNumber: string;
+  /** What to show on the board: the card number if the cafe uses cards, else the job number. */
+  callNumber: string;
   item: string;
   /** Only from the admin source. */
   customerName?: string | null;
@@ -68,6 +70,7 @@ export function fromAdminBoard(body: any, cafe: { name?: string | null; logoUrl?
     jobs: (body.jobs ?? []).map((j: any) => ({
       id: j.id,
       jobNumber: j.jobNumber,
+      callNumber: String(j.cardNumber ?? j.jobNumber),
       item: j.itemDescription,
       customerName: j.customerName,
       thumbnailUrl: j.thumbnailUrl,
@@ -90,6 +93,7 @@ export function fromDisplay(body: any): BoardData {
     sessions: body.sessions ?? [],
     jobs: (body.jobs ?? []).map((j: any) => ({
       jobNumber: j.jobNumber,
+      callNumber: String(j.cardNumber ?? j.jobNumber),
       item: j.item,
       category: j.category,
       categoryColour: j.categoryColour,

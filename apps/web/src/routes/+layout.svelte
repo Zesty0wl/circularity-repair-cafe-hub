@@ -95,7 +95,7 @@
   $: canonicalUrl = seo?.canonical || origin + $page.url.pathname;
   // Operational areas (admin/check-in/etc.) carry no SEO value and are already
   // blocked in robots.txt; emit noindex too as defence in depth.
-  $: operational = /^\/(admin|checkin|repairer|login|reset|setup|track)(\/|$)/.test($page.url.pathname);
+  $: operational = /^\/(admin|checkin|repairer|login|reset|setup|track|pre-register)(\/|$)/.test($page.url.pathname);
   // A demo site is full of made-up cafes, events and repairs, so none of it
   // should ever reach a search result. robots.txt already refuses the whole
   // site; this is the same thing said again on the page itself.

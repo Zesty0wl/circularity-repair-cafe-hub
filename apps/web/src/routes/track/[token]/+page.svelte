@@ -4,7 +4,7 @@
   import { onMount, onDestroy } from 'svelte';
   import { browser } from '$app/environment';
   import { api } from '$lib/api';
-  import { Wrench, RefreshCw, Clock, CheckCircle2, XCircle, PackageX, Hourglass, Heart } from 'lucide-svelte';
+  import { Wrench, RefreshCw, Clock, CheckCircle2, XCircle, PackageX, Hourglass, Heart, CalendarClock } from 'lucide-svelte';
   import Icon from '@iconify/svelte';
   import { categoryIcon } from '$lib/categoryIcon';
 
@@ -25,8 +25,20 @@
     acceptedAt: string | null;
     completedAt: string | null;
   }
+  /** An item told to us before the session that has not been checked in. */
+  interface TrackPreRegistration {
+    id: string;
+    status: 'open' | 'cancelled';
+    itemDescription: string;
+    itemBrand: string | null;
+    faultDescription: string;
+    category: { name: string; icon: string; colour: string } | null;
+    repairerFirstName: string | null;
+    createdAt: string;
+  }
   interface TrackData {
     customerName: string | null;
+    preRegistrations?: TrackPreRegistration[];
     event: { id: string; name: string; date: string; startTime: string; endTime: string; status: string };
     venue: { name: string; address: string | null };
     cafe: { name: string; logoUrl: string | null; donateUrl: string | null };
@@ -98,6 +110,31 @@
       case 'returned': return 'Returned to you';
     }
   }
+
+  // Calling off a pre-registered item, with a second tap to be sure.
+  let confirmCancel: string | null = null;
+  let cancelling = false;
+  let cancelError = '';
+
+  async function cancelPreRegistration(id: string): Promise<void> {
+    cancelling = true;
+    cancelError = '';
+    try {
+      await api(`/api/track/${token}/pre-registrations/${id}`, { method: 'DELETE', autoRefresh: false });
+      confirmCancel = null;
+      await load();
+    } catch (err: any) {
+      cancelError = err?.message || 'Could not cancel this item';
+    } finally {
+      cancelling = false;
+    }
+  }
+
+  function longDate(iso: string): string {
+    return new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+  }
+
+  $: openPre = (data?.preRegistrations ?? []).filter((p) => p.status === 'open');
 
   function timeAgo(iso: string | null): string {
     if (!iso) return '';
@@ -174,6 +211,55 @@
           </span>
           <span class="text-sm font-semibold text-rose-700 whitespace-nowrap">Donate →</span>
         </a>
+      {/if}
+
+      {#if data.event.status === 'cancelled'}
+        <div class="mt-3 card p-4 text-sm text-rose-900 bg-rose-50">
+          This session has been cancelled. Please see our events page for other dates.
+        </div>
+      {/if}
+
+      {#if data.preRegistrations?.length}
+        <!-- Items pre-registered for the session that have not arrived yet -->
+        <section class="mt-3 space-y-3">
+          {#if openPre.length && data.event.status !== 'cancelled'}
+            <div class="card p-4 text-sm text-slate-700">
+              <p class="font-semibold text-slate-900 flex items-center gap-2"><CalendarClock size={16} /> {longDate(data.event.date)}, {data.event.startTime.slice(0, 5)} to {data.event.endTime.slice(0, 5)}</p>
+              <p class="mt-1">Bring your {openPre.length === 1 ? 'item' : 'items'} to {data.venue.name}. When you arrive, scan the QR code at the door, or give your name at the welcome desk. The repair starts when your item is checked in.</p>
+            </div>
+          {/if}
+          {#if cancelError}<p class="text-sm text-rose-700 px-1">{cancelError}</p>{/if}
+          {#each data.preRegistrations as pre (pre.id)}
+            <div class="card p-5 {pre.status === 'cancelled' ? 'opacity-70' : ''}">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-xs text-slate-500">Pre-registered</span>
+                <span class="badge {pre.status === 'cancelled' ? 'badge-cancelled' : 'badge-scheduled'}">
+                  {pre.status === 'cancelled' ? 'Cancelled' : 'Not checked in yet'}
+                </span>
+              </div>
+              <p class="mt-1 font-semibold text-slate-900 break-words">
+                {pre.itemDescription}{#if pre.itemBrand} <span class="font-normal text-slate-500">· {pre.itemBrand}</span>{/if}
+              </p>
+              <p class="mt-1 text-sm text-slate-600 break-words">{pre.faultDescription}</p>
+              {#if pre.status === 'open'}
+                {#if pre.repairerFirstName}
+                  <p class="mt-3 text-sm text-slate-700">{pre.repairerFirstName}, one of our repairers, is looking into it before the day.</p>
+                {/if}
+                {#if data.event.status !== 'cancelled'}
+                  {#if confirmCancel === pre.id}
+                    <div class="mt-3 flex flex-wrap items-center gap-2">
+                      <span class="text-sm text-slate-700">Cancel this item?</span>
+                      <button class="btn-ghost btn-sm" on:click={() => (confirmCancel = null)}>Keep it</button>
+                      <button class="btn-secondary btn-sm" disabled={cancelling} on:click={() => cancelPreRegistration(pre.id)}>Yes, cancel it</button>
+                    </div>
+                  {:else}
+                    <button class="mt-3 text-sm text-slate-500 underline underline-offset-2" on:click={() => (confirmCancel = pre.id)}>I will not bring this item</button>
+                  {/if}
+                {/if}
+              {/if}
+            </div>
+          {/each}
+        </section>
       {/if}
 
       <!-- Job list -->

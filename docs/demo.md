@@ -25,7 +25,8 @@ python3 demo/seed.py --base-url "$DEMO_URL" --reset
    alone, but never for more than three hours.
 2. It wipes the demo back to a brand new hub (`POST /api/demo/reset`).
 3. It sets the hub up through the same API the browser uses: the cafe,
-   volunteers, sessions, repairs and photographs. Demo mode refuses uploads
+   volunteers, sessions, repairs, pre-registered items and photographs. It
+   turns on PAT testing and pre-registration, so visitors can see them. Demo mode refuses uploads
    and password changes from visitors, but lets the seeder do them because it
    carries the key.
 4. It tells the demo it has finished (`POST /api/demo/seeded`), so the next

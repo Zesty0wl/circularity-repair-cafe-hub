@@ -79,6 +79,14 @@ Then a success screen with their **job number**. They show the job number
 to the welcome desk and the desk hands them off to a repairer. The job
 appears in *waiting* on the live board immediately.
 
+**Visitors who pre-registered** (only if pre-registration is on). If they
+scan the QR code with the phone they used to pre-register, the first screen
+lists their items with a **Check in my items** button. If not, find their name
+under **Pre-registered for today** on the **Check in a visitor** page and press
+**Check in**. Either way, the item gets a job number, and the repair time
+starts now. An item a repairer took before the day goes straight to that
+repairer.
+
 ### What repairers do
 
 When a job appears on the board, a repairer signs into `/repairer` (if

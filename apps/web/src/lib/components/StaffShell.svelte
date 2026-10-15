@@ -27,7 +27,10 @@
 
   $: user = $auth?.user ?? null;
   $: admin = isAdminRole(user);
-  $: groups = navFor(user, { linuxEnabled: $cafe?.linuxEnabled === true });
+  $: groups = navFor(user, {
+    linuxEnabled: $cafe?.linuxEnabled === true,
+    preRegistrationEnabled: $cafe?.preRegistrationEnabled === true,
+  });
   $: tabs = tabsFor(user);
   $: pathname = $page.url.pathname;
   $: allowed = !requireAdmin || admin;

@@ -105,6 +105,12 @@ export const REPAIR_STATUSES = [
 ] as const;
 export const EVENT_STATUSES = ['scheduled', 'active', 'completed', 'cancelled'] as const;
 export const IMAGE_STAGES = ['check_in', 'during_repair', 'completed'] as const;
+export const PAT_RESULTS = ['pass', 'fail', 'not_needed'] as const;
+/**
+ * open: waiting for the session. checked_in: it arrived and is now a repair.
+ * cancelled: the visitor or an admin called it off.
+ */
+export const PRE_REGISTRATION_STATUSES = ['open', 'checked_in', 'cancelled'] as const;
 
 // ── Tables ───────────────────────────────────────────────────────────────────
 
@@ -158,6 +164,10 @@ export const cafes = sqliteTable('cafes', {
   setupCompleted: bool('setup_completed').notNull().default(false),
   allowSkipPhoto: bool('allow_skip_photo').notNull().default(true),
   enableContactField: bool('enable_contact_field').notNull().default(true),
+  /** Ask for a PAT test on electrical items. See routes/repairer.ts. */
+  patTestingEnabled: bool('pat_testing_enabled').notNull().default(false),
+  /** Let visitors tell us about an item before the session. */
+  preRegistrationEnabled: bool('pre_registration_enabled').notNull().default(false),
   dataRetentionDays: integer('data_retention_days').notNull().default(365),
   createdAt: timestamp('created_at').notNull().$defaultFn(() => new Date()),
   updatedAt: timestamp('updated_at').notNull().$defaultFn(() => new Date()),
@@ -224,6 +234,8 @@ export const skillCategories = sqliteTable('skill_categories', {
   colour: text('colour').notNull().default('#1B6B5A'),
   sortOrder: integer('sort_order').notNull().default(0),
   isActive: bool('is_active').notNull().default(true),
+  /** Items in this category need a PAT test, when the cafe does them. */
+  isElectrical: bool('is_electrical').notNull().default(false),
 });
 
 export const co2Factors = sqliteTable(
@@ -352,6 +364,13 @@ export const repairJobs = sqliteTable(
     co2SavingSource: text('co2_saving_source'),
     gdprConsent: bool('gdpr_consent').notNull().default(false),
     dataRetentionDate: date('data_retention_date'),
+    /** Null means "the same as its category". Set when a repairer changes it. */
+    isElectrical: bool('is_electrical'),
+    patResult: text('pat_result', { enum: PAT_RESULTS }),
+    patTestedAt: timestamp('pat_tested_at'),
+    /** Who recorded the PAT test. No foreign key, so the record outlives the account. */
+    patTestedBy: uuid('pat_tested_by'),
+    patNotes: text('pat_notes'),
     createdAt: timestamp('created_at').notNull().$defaultFn(() => new Date()),
     updatedAt: timestamp('updated_at').notNull().$defaultFn(() => new Date()),
   },
@@ -441,6 +460,48 @@ export const linuxInstalls = sqliteTable(
   ],
 );
 
+/**
+ * An item a visitor told us about before the session. It becomes a repair
+ * (repair_jobs) only when it is checked in on the day. Until then a repairer
+ * can take it and make notes, but no repair clock is running.
+ */
+export const preRegistrations = sqliteTable(
+  'pre_registrations',
+  {
+    id: uuid('id').primaryKey().$defaultFn(newId),
+    eventId: uuid('event_id')
+      .notNull()
+      .references(() => events.id, { onDelete: 'cascade' }),
+    customerName: text('customer_name'),
+    customerContact: text('customer_contact'),
+    /** The same token as the repairs it becomes, so one tracking link shows both. */
+    customerToken: text('customer_token').notNull(),
+    itemDescription: text('item_description').notNull(),
+    itemCategoryId: uuid('item_category_id').references(() => skillCategories.id),
+    co2FactorId: uuid('co2_factor_id').references(() => co2Factors.id, { onDelete: 'set null' }),
+    itemBrand: text('item_brand'),
+    faultDescription: text('fault_description').notNull(),
+    gdprConsent: bool('gdpr_consent').notNull().default(false),
+    dataRetentionDate: date('data_retention_date'),
+    status: text('status', { enum: PRE_REGISTRATION_STATUSES }).notNull().default('open'),
+    /** The repairer who took it to look into before the day. */
+    repairerId: uuid('repairer_id').references(() => users.id, { onDelete: 'set null' }),
+    claimedAt: timestamp('claimed_at'),
+    researchNotes: text('research_notes'),
+    /** The repair it became when it was checked in. */
+    repairJobId: uuid('repair_job_id').references(() => repairJobs.id, { onDelete: 'set null' }),
+    checkedInAt: timestamp('checked_in_at'),
+    createdAt: timestamp('created_at').notNull().$defaultFn(() => new Date()),
+    updatedAt: timestamp('updated_at').notNull().$defaultFn(() => new Date()),
+  },
+  (t) => [
+    index('idx_pre_registrations_event_id').on(t.eventId),
+    index('idx_pre_registrations_customer_token').on(t.customerToken),
+    index('idx_pre_registrations_repairer_id').on(t.repairerId),
+    index('idx_pre_registrations_status').on(t.status),
+  ],
+);
+
 export const auditLog = sqliteTable(
   'audit_log',
   {
@@ -493,6 +554,7 @@ export type RepairImage = typeof repairImages.$inferSelect;
 export type EventImage = typeof eventImages.$inferSelect;
 export type SkillCategory = typeof skillCategories.$inferSelect;
 export type LinuxInstall = typeof linuxInstalls.$inferSelect;
+export type PreRegistration = typeof preRegistrations.$inferSelect;
 
 /** Used by raw SQL to mean "now", in the milliseconds this schema stores. */
 export const NOW_MS = sql`CAST(ROUND((julianday('now') - 2440587.5) * 86400000) AS INTEGER)`;

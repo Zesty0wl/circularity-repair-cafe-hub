@@ -7,7 +7,7 @@
   import Icon from '@iconify/svelte';
   import { categoryIcon, categoryTint, categoryInk } from '$lib/categoryIcon';
   import type { GalleryPhoto } from '$lib/gallery';
-  import { ArrowLeft, Clock, MapPin, ArrowUpRight, CalendarX2, Camera, BarChart3, Laptop } from 'lucide-svelte';
+  import { ArrowLeft, Clock, MapPin, ArrowUpRight, CalendarX2, Camera, BarChart3, Laptop, ClipboardList } from 'lucide-svelte';
   import type { PageData } from './$types';
 
   interface Venue {
@@ -40,6 +40,8 @@
     stats?: EventStats | null;
     /** Computers seen at this session, when the cafe offers Linux help. */
     linuxStats?: { installedCount: number; advisedCount: number } | null;
+    /** Null while the cafe does not take pre-registrations. */
+    preRegistration?: { open: boolean; askContact: boolean } | null;
   }
 
   export let data: PageData;
@@ -170,6 +172,22 @@
 
         {#if event.description}
           <p class="text-slate-600 leading-relaxed whitespace-pre-line border-t border-slate-100 pt-5">{event.description}</p>
+        {/if}
+
+        {#if !isPast && event.preRegistration?.open}
+          <!-- Pre-registration: tell the repairers about an item before the
+               day, so they can prepare. Only while the cafe takes them and
+               the session has not started. -->
+          <div class="rounded-xl bg-brand-50 ring-1 ring-brand-200 p-4 sm:flex sm:items-center sm:justify-between gap-4">
+            <div class="flex items-start gap-3">
+              <ClipboardList size={20} class="shrink-0 mt-0.5 text-brand-700" />
+              <div>
+                <p class="font-semibold text-pine">Bringing something to fix?</p>
+                <p class="mt-0.5 text-sm text-slate-600">Pre-register your item. Our repairers can then prepare before the day.</p>
+              </div>
+            </div>
+            <a href={`/pre-register/${event.id}`} class="btn-primary mt-3 sm:mt-0 shrink-0 w-full sm:w-auto">Pre-register your item</a>
+          </div>
         {/if}
 
         {#if !isPast}

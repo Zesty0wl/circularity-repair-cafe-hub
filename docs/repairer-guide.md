@@ -101,6 +101,35 @@ Fill in:
 
 Click **Mark as complete**. Confirm. Done. Move to the next one.
 
+### PAT tests on electrical items
+
+Your cafe may ask for a PAT test (a safety check) on electrical items. If it
+does, electrical items have a **PAT test needed** label. Before you can mark one
+as **Fixed**, choose the result: **Passed**, **Failed** or **Not needed** (for
+example, an item that only uses batteries). Your name and the time are saved
+with the result.
+
+- If the label is wrong for an item, use the **This is an electrical item** tick
+  box on the repair's page.
+- An item that **failed** cannot be marked as fixed. Mark it as **Could not
+  fix**, or test it again after more work.
+
+## Pre-registered items
+
+Your cafe may let visitors pre-register their items before a session. If it
+does, you see **Pre-registered items** in the menu.
+
+1. Open the list. Items are grouped by session, soonest first.
+2. Press **Take this item** to look into it before the day.
+3. Write what you find out in **Your notes**: the model, a link to the manual
+   or a diagram, parts to bring. Press **Save notes**. The visitor does not see
+   your notes.
+4. On the day, the item is checked in when the visitor arrives. It then comes
+   straight to you in **You are working on**, and the repair time starts. Your
+   notes are on the repair's page.
+
+If you cannot do it after all, press **Give it back for someone else to take**.
+
 ## Etiquette
 
 - **Pick from Waiting before grabbing something else's In progress.**

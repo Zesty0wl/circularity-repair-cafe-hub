@@ -32,6 +32,14 @@ export function describeActivity(a: any): { who: string | null; rest: string } {
     case 'repair.admin_updated': return { who, rest: `updated ${item}` };
     case 'repair.deleted': return { who, rest: `deleted ${item}` };
     case 'repair.pii_purged': return { who: null, rest: `Personal details were removed from ${item}` };
+    case 'repair.pat_recorded': return { who, rest: `recorded a PAT test for ${item}` };
+    case 'repair.electrical_changed': return { who, rest: `changed whether ${item} needs a PAT test` };
+    case 'preregistration.created': return { who, rest: 'pre-registered an item' };
+    case 'preregistration.claimed': return { who, rest: 'took a pre-registered item to look into' };
+    case 'preregistration.taken_over': return { who, rest: 'took over a pre-registered item' };
+    case 'preregistration.released': return { who, rest: 'gave back a pre-registered item' };
+    case 'preregistration.checked_in': return { who, rest: `checked in a pre-registered item as repair #${a.metadata?.jobNumber ?? ''}` };
+    case 'preregistration.cancelled': return { who, rest: 'cancelled a pre-registered item' };
     case 'event.created': return { who, rest: `created the event ${ev}` };
     case 'event.updated': return { who, rest: `updated the event ${ev}` };
     case 'event.activated': return { who, rest: `started the event ${ev}` };

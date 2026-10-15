@@ -57,6 +57,7 @@ export const BACKUP_TABLE_ORDER = [
   'repair_images',
   'event_images',
   'linux_installs',
+  'pre_registrations',
   'cafe_gallery',
   'refresh_tokens',
   'password_reset_tokens',

@@ -89,6 +89,50 @@ ITEMS = [
     ("Record player", "Turntable runs slow", "hi_fi_integrated"),
 ]
 
+# Which of the hub's default categories each item belongs to. With PAT testing
+# on, the electrical ones need a PAT result before they can be marked as fixed.
+ITEM_CATEGORY = {
+    "Toaster": "Small appliances", "Table lamp": "Small appliances",
+    "Food mixer": "Small appliances", "Kettle": "Small appliances",
+    "Vacuum cleaner": "Small appliances", "Radio": "Electronics",
+    "Sewing machine": "Small appliances", "Laptop": "Electronics",
+    "Bicycle": "Bicycles", "Wooden chair": "Furniture & wood",
+    "Desk fan": "Small appliances", "Hairdryer": "Small appliances",
+    "Digital radio": "Electronics", "Blender": "Small appliances",
+    "Wall clock": "Other", "Iron": "Small appliances",
+    "Kettle lead": "Small appliances", "Cordless drill": "Tools",
+    "Woollen jumper": "Clothing & textiles", "Record player": "Electronics",
+}
+
+# Items visitors told the cafe about before a session. The fifth value is the
+# repairer who took the item, and the sixth is what they found out before the
+# day. Today's are added before the session opens, because pre-registration
+# closes when a session starts.
+PRE_REGISTERED_TODAY = [
+    ("Coffee machine", "Pump runs but no water comes through", "Small appliances", "Joan",
+     "ada@example.com",
+     "Probably a blocked brew unit or a stuck valve. I found the service manual and "
+     "saved the diagram. Bring descaler and the box of spare seals."),
+    ("Bedside lamp", "The switch on the cable does nothing", "Small appliances", "Ken",
+     REPAIRER_EMAIL,
+     "It is an inline switch. Bring a spare inline switch and a 3 amp fuse."),
+    ("Denim jacket", "The zip has come away at the bottom", "Clothing & textiles", "Mei",
+     None, None),
+]
+PRE_REGISTERED_NEXT = [
+    ("Stand mixer", "Speed control only works on the highest setting", "Small appliances", "Priya",
+     "ada@example.com",
+     "Sounds like the speed control board. I found a wiring diagram for this model. "
+     "Bring the soldering kit."),
+    ("Laptop", "Will not charge, and the light on the charger stays off", "Electronics", "Olu",
+     "dev@example.com",
+     "Test the charger first. If the charger is fine, the charging socket on the "
+     "board is the usual fault. I have a spare socket that may fit."),
+    ("Bicycle", "Back brake rubs and squeals", "Bicycles", "Greta", None, None),
+    ("Wooden stool", "Wobbles, and one rung is loose", "Furniture & wood", "Callum", None, None),
+    ("Electric heater", "The fan works but there is no heat", "Small appliances", "Rosa", None, None),
+]
+
 VISITORS = [
     "Sam", "Priya", "Joan", "Marcus", "Aoife", "Tom", "Nadia", "Ken",
     "Rosa", "Yusuf", "Beth", "Ivan", "Mei", "Olu", "Greta", "Callum",
@@ -368,6 +412,52 @@ def main() -> int:
         })
         ok(f"Counting visits to {args.qwa_site}")
 
+    step("Turning on PAT testing and pre-registration")
+    # Both are off on a new hub. The demo shows them on, so visitors can see them.
+    api.patch("/api/admin/settings/preferences", {
+        "patTestingEnabled": True,
+        "preRegistrationEnabled": True,
+    })
+    categories = api.get("/api/public/skill-categories") or []
+    category_id = {c["name"]: c["id"] for c in categories}
+    electrical = {c["name"] for c in categories if c.get("isElectrical")}
+    ok(f"Electrical categories: {', '.join(sorted(electrical)) or 'none'}")
+
+    def finish(who: Api, job_id: str, item: str, status: str, note: str, **extra) -> None:
+        """Log the outcome, with a PAT result when a fixed item is electrical."""
+        body = {"outcome": status, "outcomeNotes": note, **extra}
+        if status == "completed" and ITEM_CATEGORY.get(item) in electrical:
+            body["pat"] = {"result": "pass"}
+        who.call("PATCH", f"/api/repairer/jobs/{job_id}/complete", body, expect=(200, 201, 400))
+
+    def pre_register(event_id: str, items) -> list[str]:
+        """Pre-register items the way a visitor does, then let repairers take some.
+
+        Needs the repairers to be able to sign in, so it is called after that.
+        """
+        made: list[str] = []
+        for item, fault, category, visitor, taker, notes in items:
+            res = api.post(f"/api/public/events/{event_id}/pre-register", {
+                "customerName": visitor,
+                "gdprConsent": True,
+                "itemDescription": item,
+                "faultDescription": fault,
+                "itemCategoryId": category_id.get(category),
+            }, expect=(200, 201, 400, 404, 409))
+            if not res or not res.get("id"):
+                continue
+            made.append(res["id"])
+            who = crew_by_email.get(taker or "")
+            if who:
+                who.call("PATCH", f"/api/repairer/pre-registrations/{res['id']}/claim", {},
+                         expect=(200, 201, 400, 404, 409))
+                if notes:
+                    who.call("PATCH", f"/api/repairer/pre-registrations/{res['id']}/notes",
+                             {"researchNotes": notes}, expect=(200, 201, 400, 404, 409))
+        taken = sum(1 for i in items if i[4])
+        ok(f"{len(made)} items pre-registered, {taken} taken by a repairer")
+        return made
+
     # ── 2. people ─────────────────────────────────────────────────────────────
     step("Adding repairers")
     made = 0
@@ -437,6 +527,7 @@ def main() -> int:
     # uses, so the repairs end up spread across the team rather than all
     # belonging to the administrator.
     crew: list[Api] = []
+    crew_by_email: dict[str, Api] = {}
     for u in [r for r in rows if r["role"] == "repairer"]:
         link = api.post(f"/api/admin/users/{u['id']}/reset-link", expect=(200, 201, 400))
         if not link or not link.get("token"):
@@ -448,6 +539,7 @@ def main() -> int:
         session.token = (tok or {}).get("accessToken") or (tok or {}).get("token")
         if session.token:
             crew.append(session)
+            crew_by_email[u["email"]] = session
     ok(f"{len(crew)} repairers can sign in, including {REPAIRER_EMAIL}")
     if not crew:
         raise SystemExit("No repairer could sign in, so no repair could be finished.")
@@ -487,6 +579,7 @@ def main() -> int:
                 "itemDescription": item,
                 "faultDescription": fault,
                 "co2FactorId": by_key.get(factor_key),
+                "itemCategoryId": category_id.get(ITEM_CATEGORY.get(item, "")),
             }, expect=(200, 201, 400))
             total_jobs += 1
 
@@ -502,11 +595,8 @@ def main() -> int:
             who = random.choice(crew)
             who.call("PATCH", f"/api/repairer/jobs/{job['id']}/accept", expect=(200, 201, 400, 409))
             status, note = random.choice(OUTCOMES)
-            who.call("PATCH", f"/api/repairer/jobs/{job['id']}/complete", {
-                "outcome": status,
-                "outcomeNotes": note,
-                "partsUsed": random.choice(["", "", "Fuse", "Drive belt", "Mains lead", "Solder"]),
-            }, expect=(200, 201, 400))
+            finish(who, job["id"], job.get("itemDescription", ""), status, note,
+                   partsUsed=random.choice(["", "", "Fuse", "Drive belt", "Mains lead", "Solder"]))
             if status == "completed":
                 fixed += 1
 
@@ -523,6 +613,9 @@ def main() -> int:
     live = next((c for c in created if c["when"] == "today"), None)
     waiting = in_progress = done = 0
     if live:
+        # Pre-registration closes when a session starts, so today's
+        # pre-registered items go in first.
+        todays_pre = pre_register(live["id"], PRE_REGISTERED_TODAY)
         api.post(f"/api/admin/events/{live['id']}/activate", expect=(200, 201, 400, 409))
 
         for item, fault, factor_key in random.sample(ITEMS, 9):
@@ -532,6 +625,7 @@ def main() -> int:
                 "itemDescription": item,
                 "faultDescription": fault,
                 "co2FactorId": by_key.get(factor_key),
+                "itemCategoryId": category_id.get(ITEM_CATEGORY.get(item, "")),
             }, expect=(200, 201, 400))
 
         page = api.get(f"/api/admin/repairs?eventId={live['id']}&perPage=100") or {}
@@ -546,11 +640,22 @@ def main() -> int:
                 in_progress += 1                  # picked up, still being worked on
                 continue
             status, note = random.choice(OUTCOMES)
-            who.call("PATCH", f"/api/repairer/jobs/{job['id']}/complete", {
-                "outcome": status, "outcomeNotes": note,
-            }, expect=(200, 201, 400))
+            finish(who, job["id"], job.get("itemDescription", ""), status, note)
             done += 1
         ok(f"Today: {waiting} waiting, {in_progress} being worked on, {done} finished")
+
+        # The first pre-registered item has arrived. It goes straight to the
+        # repairer who took it, with their notes. The others are still on the
+        # "Pre-registered for today" list on the check-in page.
+        if todays_pre:
+            api.post(f"/api/repairer/pre-registrations/{todays_pre[0]}/check-in", {},
+                     expect=(200, 201, 400, 409))
+            ok(f"Today: 1 pre-registered item checked in, {len(todays_pre) - 1} still to arrive")
+
+    upcoming = next((c for c in created if c["when"] == "future"), None)
+    if upcoming:
+        step("Pre-registering items for the next session")
+        pre_register(upcoming["id"], PRE_REGISTERED_NEXT)
 
     # ── 7. photographs ───────────────────────────────────────────────────────
     # Downloaded at seeding time rather than committed, so the repository

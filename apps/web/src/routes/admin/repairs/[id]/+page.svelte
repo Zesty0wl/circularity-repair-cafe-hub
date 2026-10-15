@@ -4,6 +4,7 @@
   import { onMount } from 'svelte';
   import { api } from '$lib/api';
   import { auth } from '$lib/stores/auth';
+  import PatBadge from '$lib/components/PatBadge.svelte';
   import { ArrowLeft } from 'lucide-svelte';
 
   $: id = $page.params.id;
@@ -150,6 +151,34 @@
       </button>
     {/if}
   </div>
+
+  {#if detail.pat && (detail.pat.needed || detail.pat.result)}
+    <!-- The PAT test record, while the cafe does PAT tests. -->
+    <div class="card p-4 mt-4 max-w-2xl">
+      <h2 class="font-semibold">PAT test</h2>
+      <p class="mt-2 flex flex-wrap items-center gap-2 text-sm">
+        <PatBadge needed={detail.pat.needed} result={detail.pat.result} />
+        {#if detail.pat.result}
+          <span class="text-slate-600">
+            {#if detail.pat.testedByName}Recorded by {detail.pat.testedByName}{/if}{#if detail.pat.testedAt} on {new Date(detail.pat.testedAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}{/if}
+          </span>
+        {:else}
+          <span class="text-slate-600">No result recorded yet.</span>
+        {/if}
+      </p>
+      {#if detail.pat.notes}<p class="mt-2 text-sm text-slate-700 whitespace-pre-line">{detail.pat.notes}</p>{/if}
+    </div>
+  {/if}
+
+  {#if detail.preRegistration}
+    <div class="card p-4 mt-4 max-w-2xl">
+      <h2 class="font-semibold">Pre-registered</h2>
+      <p class="mt-1 text-sm text-slate-600">The visitor told us about this item on {new Date(detail.preRegistration.createdAt).toLocaleDateString('en-GB', { dateStyle: 'medium' })}, before the session.</p>
+      {#if detail.preRegistration.researchNotes}
+        <p class="mt-2 text-sm text-slate-700 whitespace-pre-line">{detail.preRegistration.researchNotes}</p>
+      {/if}
+    </div>
+  {/if}
 
   <div class="card p-4 mt-4 max-w-2xl">
     <label class="label" for="assign">Assign to repairer</label>

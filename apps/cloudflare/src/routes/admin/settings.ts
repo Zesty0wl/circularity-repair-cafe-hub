@@ -82,6 +82,8 @@ export async function adminSettingsRoutes(app: App): Promise<void> {
       allowSkipPhoto?: boolean;
       enableContactField?: boolean;
       dataRetentionDays?: number;
+      patTestingEnabled?: boolean;
+      preRegistrationEnabled?: boolean;
     };
     const [cafe] = await db.select().from(cafes).limit(1);
     if (!cafe) {
@@ -92,8 +94,18 @@ export async function adminSettingsRoutes(app: App): Promise<void> {
     if (typeof body.allowSkipPhoto === 'boolean') update.allowSkipPhoto = body.allowSkipPhoto;
     if (typeof body.enableContactField === 'boolean') update.enableContactField = body.enableContactField;
     if (typeof body.dataRetentionDays === 'number' && body.dataRetentionDays > 0) update.dataRetentionDays = body.dataRetentionDays;
+    if (typeof body.patTestingEnabled === 'boolean') update.patTestingEnabled = body.patTestingEnabled;
+    if (typeof body.preRegistrationEnabled === 'boolean') update.preRegistrationEnabled = body.preRegistrationEnabled;
     const [updated] = await db.update(cafes).set(update).where(eq(cafes.id, cafe.id)).returning();
-    await audit({ request, actorId: me.sub, actorType: me.role, action: 'cafe.preferences_updated', entityType: 'cafe', entityId: cafe.id });
+    await audit({
+      request,
+      actorId: me.sub,
+      actorType: me.role,
+      action: 'cafe.preferences_updated',
+      entityType: 'cafe',
+      entityId: cafe.id,
+      metadata: { patTesting: updated?.patTestingEnabled ?? null, preRegistration: updated?.preRegistrationEnabled ?? null },
+    });
     return updated;
   });
 

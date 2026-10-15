@@ -1,8 +1,9 @@
-import type { App } from '../lib/router.js';
+import type { App, HubReply, HubRequest } from '../lib/router.js';
 import { db } from '../db/index.js';
-import { cafes, events, repairImages, repairJobs, skillCategories, users, venues } from '../db/schema.js';
+import { cafes, events, preRegistrations, repairImages, repairJobs, skillCategories, users, venues } from '../db/schema.js';
 import { and, asc, count, desc, eq, sql } from 'drizzle-orm';
-import { assistedCheckInSchema } from '@circularity/shared';
+import { assistedCheckInSchema, needsPatTest, patRecordSchema, type PatResult } from '@circularity/shared';
+import { cafeFeatures } from '../services/preRegistration.js';
 import { saveValidatedImage } from '../services/imageUpload.js';
 import { withJobNumber } from '../services/jobNumber.js';
 import { randomToken } from '../utils/tokens.js';
@@ -148,7 +149,7 @@ export async function repairerRoutes(app: App): Promise<void> {
       return { event: null, jobs: [], counts: null, myJobs: [] };
     }
     const evt = rows[0].event;
-    const jobs = await db
+    const jobRows = await db
       .select({
         id: repairJobs.id,
         jobNumber: repairJobs.jobNumber,
@@ -166,12 +167,24 @@ export async function repairerRoutes(app: App): Promise<void> {
         category: skillCategories.name,
         categoryIcon: skillCategories.icon,
         categoryColour: skillCategories.colour,
+        itemIsElectrical: repairJobs.isElectrical,
+        categoryIsElectrical: skillCategories.isElectrical,
+        patResult: repairJobs.patResult,
       })
       .from(repairJobs)
       .leftJoin(skillCategories, eq(skillCategories.id, repairJobs.itemCategoryId))
       .leftJoin(users, eq(users.id, repairJobs.repairerId))
       .where(eq(repairJobs.eventId, evt.id))
       .orderBy(desc(repairJobs.createdAt));
+
+    // Electrical items are picked out in the queue while the cafe does PAT
+    // tests. With PAT testing off, nothing is picked out.
+    const { patTestingEnabled } = await cafeFeatures();
+    const jobs = jobRows.map(({ itemIsElectrical, categoryIsElectrical, patResult, ...job }) => ({
+      ...job,
+      needsPat: needsPatTest(patTestingEnabled, itemIsElectrical, categoryIsElectrical),
+      patResult: patTestingEnabled ? patResult : null,
+    }));
 
     const counts = {
       waiting: jobs.filter((j) => j.status === 'waiting').length,
@@ -294,7 +307,126 @@ export async function repairerRoutes(app: App): Promise<void> {
       .from(repairImages)
       .where(eq(repairImages.repairJobId, id))
       .orderBy(asc(repairImages.createdAt));
-    return { ...rows[0], images };
+    const job = rows[0].job;
+    const features = await cafeFeatures();
+
+    // The PAT test, while the cafe does them. Null otherwise, so the page
+    // shows nothing about it.
+    let pat = null;
+    if (features.patTestingEnabled) {
+      const [tester] = job.patTestedBy
+        ? await db.select({ displayName: users.displayName }).from(users).where(eq(users.id, job.patTestedBy)).limit(1)
+        : [];
+      pat = {
+        needed: needsPatTest(true, job.isElectrical, rows[0].category?.isElectrical),
+        itemIsElectrical: job.isElectrical,
+        categoryIsElectrical: rows[0].category?.isElectrical ?? false,
+        result: job.patResult,
+        testedAt: job.patTestedAt,
+        testedBy: job.patTestedBy,
+        testedByName: tester?.displayName ?? null,
+        notes: job.patNotes,
+      };
+    }
+
+    // What a repairer found out before the session, if it was pre-registered.
+    const [pre] = await db
+      .select({
+        researchNotes: preRegistrations.researchNotes,
+        createdAt: preRegistrations.createdAt,
+        claimedAt: preRegistrations.claimedAt,
+        repairerName: users.displayName,
+      })
+      .from(preRegistrations)
+      .leftJoin(users, eq(users.id, preRegistrations.repairerId))
+      .where(eq(preRegistrations.repairJobId, id))
+      .limit(1);
+
+    return { ...rows[0], images, pat, preRegistration: pre ?? null };
+  });
+
+  // ── PAT testing ────────────────────────────────────────────────────────
+  // Record the result of a PAT test: who did it and when come from the
+  // sign-in and the clock, never from the form. Only while the cafe does PAT
+  // tests, and only by the repairer working on the item or an admin.
+  async function patTarget(request: HubRequest, reply: HubReply) {
+    const { id } = request.params as { id: string };
+    const me = request.auth!;
+    const { patTestingEnabled } = await cafeFeatures();
+    if (!patTestingEnabled) {
+      reply.code(404).send({ error: 'PAT testing is switched off', code: 'pat/off' });
+      return null;
+    }
+    const [job] = await db.select().from(repairJobs).where(eq(repairJobs.id, id)).limit(1);
+    if (!job) {
+      reply.code(404).send({ error: 'Job not found', code: 'job/not_found' });
+      return null;
+    }
+    if (job.repairerId !== me.sub && me.role === 'repairer') {
+      reply.code(403).send({ error: 'Not your job', code: 'job/not_owner' });
+      return null;
+    }
+    return job;
+  }
+
+  app.patch('/api/repairer/jobs/:id/pat', async (request, reply) => {
+    const me = request.auth!;
+    const parsed = patRecordSchema.safeParse(request.body);
+    if (!parsed.success) {
+      reply.code(400).send({ error: 'Choose Passed, Failed or Not needed', code: 'validation/failed' });
+      return;
+    }
+    const job = await patTarget(request, reply);
+    if (!job) return;
+    const [updated] = await db
+      .update(repairJobs)
+      .set({
+        patResult: parsed.data.result,
+        patNotes: parsed.data.notes?.trim() || null,
+        patTestedAt: new Date(),
+        patTestedBy: me.sub,
+        updatedAt: new Date(),
+      })
+      .where(eq(repairJobs.id, job.id))
+      .returning();
+    await audit({
+      request,
+      actorId: me.sub,
+      actorType: me.role,
+      action: 'repair.pat_recorded',
+      entityType: 'repair_job',
+      entityId: job.id,
+      metadata: { result: parsed.data.result },
+    });
+    return updated;
+  });
+
+  // Say whether this one item is electrical, whatever its category says.
+  // Null goes back to following the category.
+  app.patch('/api/repairer/jobs/:id/electrical', async (request, reply) => {
+    const me = request.auth!;
+    const body = (request.body ?? {}) as { isElectrical?: unknown };
+    if (!(body.isElectrical === true || body.isElectrical === false || body.isElectrical === null)) {
+      reply.code(400).send({ error: 'isElectrical must be true, false or null', code: 'validation/failed' });
+      return;
+    }
+    const job = await patTarget(request, reply);
+    if (!job) return;
+    const [updated] = await db
+      .update(repairJobs)
+      .set({ isElectrical: body.isElectrical, updatedAt: new Date() })
+      .where(eq(repairJobs.id, job.id))
+      .returning();
+    await audit({
+      request,
+      actorId: me.sub,
+      actorType: me.role,
+      action: 'repair.electrical_changed',
+      entityType: 'repair_job',
+      entityId: job.id,
+      metadata: { isElectrical: body.isElectrical },
+    });
+    return updated;
   });
 
   app.patch('/api/repairer/jobs/:id/accept', async (request, reply) => {
@@ -369,6 +501,8 @@ export async function repairerRoutes(app: App): Promise<void> {
       environmentalSavingKg?: number | null;
       /** Lets a repairer correct what the visitor picked. */
       co2FactorId?: string | null;
+      /** The PAT test, recorded in the same step as finishing. */
+      pat?: { result?: unknown; notes?: unknown } | null;
     };
     const me = request.auth!;
     if (!['completed', 'cannot_repair', 'awaiting_return'].includes(body?.outcome)) {
@@ -388,6 +522,47 @@ export async function repairerRoutes(app: App): Promise<void> {
       reply.code(403).send({ error: 'Not your job', code: 'job/not_owner' });
       return;
     }
+
+    // PAT testing. While the cafe does PAT tests, an electrical item cannot
+    // be marked as fixed until a result is recorded, and an item that failed
+    // cannot be marked as fixed at all: it is not safe to take home.
+    const { patTestingEnabled } = await cafeFeatures();
+    let pat: { result: PatResult; notes: string | null } | null = null;
+    if (patTestingEnabled && body.pat) {
+      const parsedPat = patRecordSchema.safeParse(body.pat);
+      if (!parsedPat.success) {
+        reply.code(400).send({ error: 'Choose Passed, Failed or Not needed for the PAT test', code: 'validation/failed' });
+        return;
+      }
+      pat = { result: parsedPat.data.result, notes: parsedPat.data.notes?.trim() || null };
+    }
+    if (patTestingEnabled && body.outcome === 'completed') {
+      const [category] = existing.itemCategoryId
+        ? await db
+            .select({ isElectrical: skillCategories.isElectrical })
+            .from(skillCategories)
+            .where(eq(skillCategories.id, existing.itemCategoryId))
+            .limit(1)
+        : [];
+      if (needsPatTest(true, existing.isElectrical, category?.isElectrical)) {
+        const result = pat?.result ?? existing.patResult;
+        if (!result) {
+          reply.code(400).send({
+            error: 'This is an electrical item. Record the PAT test result before you mark it as fixed.',
+            code: 'pat/required',
+          });
+          return;
+        }
+        if (result === 'fail') {
+          reply.code(400).send({
+            error: 'This item failed its PAT test, so it cannot be marked as fixed. Choose "Could not fix", or test it again.',
+            code: 'pat/failed',
+          });
+          return;
+        }
+      }
+    }
+
     // Work the saving out from the kind of thing it is. A number typed in by
     // hand always wins: whoever did that has looked at the actual item.
     const factorId =
@@ -412,6 +587,9 @@ export async function repairerRoutes(app: App): Promise<void> {
             ? String(body.environmentalSavingKg)
             : existing.environmentalSavingKg,
         completedAt: isPaused ? null : new Date(),
+        ...(pat
+          ? { patResult: pat.result, patNotes: pat.notes, patTestedAt: new Date(), patTestedBy: me.sub }
+          : {}),
         updatedAt: new Date(),
       })
       .where(eq(repairJobs.id, id))

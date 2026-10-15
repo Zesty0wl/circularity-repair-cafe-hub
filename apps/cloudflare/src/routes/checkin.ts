@@ -1,7 +1,7 @@
 import type { App } from '../lib/router.js';
 import { db, inList } from '../db/index.js';
-import { cafes, events, repairImages, repairJobs, skillCategories, users, venues } from '../db/schema.js';
-import { and, asc, desc, eq } from 'drizzle-orm';
+import { cafes, events, preRegistrations, repairImages, repairJobs, skillCategories, users, venues } from '../db/schema.js';
+import { and, asc, desc, eq, inArray } from 'drizzle-orm';
 import { checkInSubmitSchema } from '@circularity/shared';
 import { withJobNumber } from '../services/jobNumber.js';
 import { audit } from '../utils/audit.js';
@@ -296,7 +296,50 @@ export async function checkInRoutes(app: App): Promise<void> {
       .where(eq(repairJobs.customerToken, customerToken))
       .orderBy(desc(repairJobs.createdAt));
 
-    if (rows.length === 0) {
+    // Items told to us before the session that have not arrived yet. Once one
+    // is checked in it shows as a repair above instead.
+    const preRows = await db
+      .select({
+        pre: {
+          id: preRegistrations.id,
+          status: preRegistrations.status,
+          itemDescription: preRegistrations.itemDescription,
+          itemBrand: preRegistrations.itemBrand,
+          faultDescription: preRegistrations.faultDescription,
+          customerName: preRegistrations.customerName,
+          repairerId: preRegistrations.repairerId,
+          createdAt: preRegistrations.createdAt,
+        },
+        category: {
+          name: skillCategories.name,
+          icon: skillCategories.icon,
+          colour: skillCategories.colour,
+        },
+        repairer: { displayName: users.displayName },
+        event: {
+          id: events.id,
+          name: events.name,
+          date: events.date,
+          startTime: events.startTime,
+          endTime: events.endTime,
+          status: events.status,
+        },
+        venue: { name: venues.name, address: venues.address },
+      })
+      .from(preRegistrations)
+      .innerJoin(events, eq(events.id, preRegistrations.eventId))
+      .innerJoin(venues, eq(venues.id, events.venueId))
+      .leftJoin(skillCategories, eq(skillCategories.id, preRegistrations.itemCategoryId))
+      .leftJoin(users, eq(users.id, preRegistrations.repairerId))
+      .where(
+        and(
+          eq(preRegistrations.customerToken, customerToken),
+          inArray(preRegistrations.status, ['open', 'cancelled']),
+        ),
+      )
+      .orderBy(asc(preRegistrations.createdAt));
+
+    if (rows.length === 0 && preRows.length === 0) {
       reply.code(404).send({ error: 'Tracking link not found', code: 'track/not_found' });
       return;
     }
@@ -326,16 +369,28 @@ export async function checkInRoutes(app: App): Promise<void> {
       }
     }
 
-    const first = rows[0];
+    const first = rows[0] ?? null;
+    const firstPre = preRows[0] ?? null;
 
     // Light caching hint — page polls every minute, no harm if a tab re-fetches.
     reply.header('Cache-Control', 'no-store');
 
     return {
-      customerName: first.job.customerName,
-      event: first.event,
-      venue: first.venue,
+      customerName: first?.job.customerName ?? firstPre?.pre.customerName ?? null,
+      event: first?.event ?? firstPre!.event,
+      venue: first?.venue ?? firstPre!.venue,
       cafe: cafe ?? { name: '', logoUrl: null, donateUrl: null },
+      preRegistrations: preRows.map((r) => ({
+        id: r.pre.id,
+        status: r.pre.status,
+        itemDescription: r.pre.itemDescription,
+        itemBrand: r.pre.itemBrand,
+        faultDescription: r.pre.faultDescription,
+        category: r.category?.name ? r.category : null,
+        // First name only, as for repairs: this is a public link.
+        repairerFirstName: r.pre.repairerId && r.repairer?.displayName ? r.repairer.displayName.split(' ')[0] : null,
+        createdAt: r.pre.createdAt,
+      })),
       jobs: rows.map((r) => {
         // `repair_images.file_path` is stored relative to the uploads dir
         // (see services/imageUpload.ts). Prefix `/uploads/` so the SPA can

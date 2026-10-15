@@ -144,7 +144,7 @@
                     <span class="card-text">
                       <span class="item">{j.item}</span>
                       <span class="meta">
-                        <span class="num">{j.jobNumber}</span>
+                        <span class="num">{j.callNumber}</span>
                         {#if control && j.customerName}<span>· {j.customerName}</span>{/if}
                         {#if j.repairerName}<span>· with {control ? j.repairerName : j.repairerName.split(' ')[0]}</span>{/if}
                       </span>
@@ -178,7 +178,7 @@
                     <span class="row-text">
                       <span class="item">{j.item}</span>
                       <span class="meta">
-                        <span class="num">{j.jobNumber}</span>
+                        <span class="num">{j.callNumber}</span>
                         {#if j.category}<span class="cat" style="--c: {j.categoryColour ?? '#64748b'}">{j.category}</span>{/if}
                         {#if control && j.customerName}<span>· {j.customerName}</span>{/if}
                       </span>
@@ -215,7 +215,7 @@
               {#each finished.slice(0, control ? 8 : 5) as j (j.jobNumber)}
                 <li class="ready-row" class:is-fixed={j.status === 'completed'}>
                   <svelte:element this={linkFor(j) ? 'a' : 'div'} href={linkFor(j)} class="ready-inner">
-                    <span class="num">{j.jobNumber}</span>
+                    <span class="num">{j.callNumber}</span>
                     <span class="ready-item">{j.item}</span>
                     <span class="ready-status">{#if j.status === 'completed'}<CheckCircle2 /> Fixed{:else}<Hand /> See the desk{/if}</span>
                   </svelte:element>

@@ -108,6 +108,7 @@ export async function displayRoutes(app: App): Promise<void> {
       ? await db
           .select({
             jobNumber: repairJobs.jobNumber,
+            cardNumber: repairJobs.cardNumber,
             item: repairJobs.itemDescription,
             status: repairJobs.status,
             createdAt: repairJobs.createdAt,
@@ -138,6 +139,7 @@ export async function displayRoutes(app: App): Promise<void> {
       )
       .map((r) => ({
         jobNumber: r.jobNumber,
+        cardNumber: r.cardNumber,
         // The visitor's own words, cut short. Long descriptions sometimes
         // carry more than the item, and a screen only needs enough to spot it.
         item: r.item.length > 60 ? `${r.item.slice(0, 57).trimEnd()}…` : r.item,

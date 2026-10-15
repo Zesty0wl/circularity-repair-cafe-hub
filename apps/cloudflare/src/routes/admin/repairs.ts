@@ -49,6 +49,7 @@ export async function adminRepairsRoutes(app: App): Promise<void> {
         customerName: repairJobs.customerName,
         itemDescription: repairJobs.itemDescription,
         status: repairJobs.status,
+        cardNumber: repairJobs.cardNumber,
         createdAt: repairJobs.createdAt,
         completedAt: repairJobs.completedAt,
         eventId: repairJobs.eventId,
@@ -117,7 +118,7 @@ export async function adminRepairsRoutes(app: App): Promise<void> {
       return;
     }
     const update: any = { updatedAt: new Date() };
-    for (const k of ['status', 'repairerId', 'outcomeNotes', 'partsUsed', 'customerName', 'customerContact', 'itemDescription', 'faultDescription', 'itemCategoryId', 'itemBrand']) {
+    for (const k of ['status', 'repairerId', 'outcomeNotes', 'partsUsed', 'customerName', 'customerContact', 'itemDescription', 'faultDescription', 'itemCategoryId', 'itemBrand', 'cardNumber']) {
       if ((data as any)[k] !== undefined) update[k] = (data as any)[k];
     }
     if (data.environmentalSavingKg !== undefined) {
@@ -186,6 +187,7 @@ export async function adminRepairsRoutes(app: App): Promise<void> {
         brand: repairJobs.itemBrand,
         fault: repairJobs.faultDescription,
         status: repairJobs.status,
+        cardNumber: repairJobs.cardNumber,
         repairer: users.displayName,
         outcomeNotes: repairJobs.outcomeNotes,
         environmentalSavingKg: repairJobs.environmentalSavingKg,
@@ -197,7 +199,7 @@ export async function adminRepairsRoutes(app: App): Promise<void> {
       .leftJoin(skillCategories, eq(skillCategories.id, repairJobs.itemCategoryId))
       .leftJoin(users, eq(users.id, repairJobs.repairerId))
       .orderBy(desc(repairJobs.createdAt));
-    const headers = ['jobNumber', 'eventDate', 'eventName', 'customerName', 'itemDescription', 'category', 'brand', 'fault', 'status', 'repairer', 'outcomeNotes', 'environmentalSavingKg', 'createdAt', 'completedAt'];
+    const headers = ['jobNumber', 'cardNumber', 'eventDate', 'eventName', 'customerName', 'itemDescription', 'category', 'brand', 'fault', 'status', 'repairer', 'outcomeNotes', 'environmentalSavingKg', 'createdAt', 'completedAt'];
     const esc = (v: unknown) => {
       if (v === null || v === undefined) return '';
       const s = String(v);

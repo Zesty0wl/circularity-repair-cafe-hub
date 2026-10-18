@@ -259,6 +259,13 @@ pnpm --filter @circularity/cloudflare exec wrangler login
 Your web browser opens a Cloudflare page. Sign in if it asks, then click
 **Allow**. The terminal then says "Successfully logged in".
 
+**If the computer has no web browser**, for example a server you reach over
+SSH (a remote connection from another computer), this login cannot finish.
+Use an API token (a kind of password for programs) instead. Follow
+[Publishing without a browser](./running-your-hub.md#publishing-without-a-browser),
+then come back and run the check below. The `export` lines only last until
+you log out, so run them again each time you connect to publish.
+
 To check which account you are connected to:
 
 ```

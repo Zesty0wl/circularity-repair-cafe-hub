@@ -2,16 +2,7 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
-## Unreleased
-
-### Fixed
-
-- **Average repair times on the Statistics page.** A repair that was taken on
-  at one session and only marked as finished at the next one counted the weeks
-  in between. One such repair turned a session's average of 83 minutes into
-  420 hours. Statistics now leave out any repair that took 4 hours or more, the
-  same rule the live board already used, and the session's page shows it as
-  "Finished later".
+## 1.13.0 (22 October 2026)
 
 ### Added
 
@@ -21,7 +12,6 @@ Notable changes to the Repair Café Hub. Newest first.
   once on the dashboard after updating, while no listing is linked. Linking it
   picks your cafe out on the Worldwide map and centres "Repair Cafes near us"
   on you. "We're not listed" stops the question.
-
 - **Two optional questions at check-in.** Under Settings, Check-in &
   preferences, you can now ask for the item's weight, and whether this is the
   visitor's first visit. Each has its own switch, and both are off by default.
@@ -54,6 +44,15 @@ Notable changes to the Repair Café Hub. Newest first.
 - The Maps tab under Settings has gone, because there is nothing left to set
   up. A CARTO key saved there before is no longer used. The database keeps the
   old column, so older backups still load.
+
+### Fixed
+
+- **Average repair times on the Statistics page.** A repair that was taken on
+  at one session and only marked as finished at the next one counted the weeks
+  in between. One such repair turned a session's average of 83 minutes into
+  420 hours. Statistics now leave out any repair that took 4 hours or more, the
+  same rule the live board already used, and the session's page shows it as
+  "Finished later".
 
 ## 1.12.1 (15 October 2026)
 

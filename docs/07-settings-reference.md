@@ -16,6 +16,7 @@ The basics. Used everywhere — header, hero, footer, emails, QR codes.
 | Contact email     | Footer, contact section                                       |
 | Phone             | Contact section (optional)                                    |
 | Public URL        | **Encoded into every QR code.** Match your reverse-proxy domain. |
+| Country code      | Your country as 3 letters, such as GBR or FRA. Used in the Open Repair export (optional). |
 | Primary colour    | Buttons, links, accents across the public + admin UI          |
 | Facebook URL      | Footer / contact icon link (optional)                         |
 | Twitter / X URL   | Footer / contact icon link (optional)                         |

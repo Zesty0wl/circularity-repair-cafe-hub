@@ -51,6 +51,15 @@
     window.location.href = `/api/admin/repairs/export.csv?${params}`;
   }
 
+  /**
+   * Every finished repair in the Open Repair Data Standard, for sharing with
+   * the Open Repair Alliance. It ignores the filters: the Alliance wants the
+   * whole record.
+   */
+  function exportOrds() {
+    window.location.href = '/api/admin/repairs/export.ords.csv';
+  }
+
   // Repairers + admins (active only) can be assigned a job.
   $: assignable = users
     .filter((u) => u.isActive && (u.role === 'repairer' || u.role === 'admin' || u.role === 'super_admin'))
@@ -82,6 +91,11 @@
   <div class="flex gap-2">
     <a href="/repairer/checkin" class="btn-primary">Add a repair</a>
     <button class="btn-secondary" on:click={exportCsv}>Export CSV</button>
+    <button
+      class="btn-secondary"
+      on:click={exportOrds}
+      title="Every finished repair, in the format the Open Repair Alliance uses"
+    >Open Repair export</button>
   </div>
 </div>
 

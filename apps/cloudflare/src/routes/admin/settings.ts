@@ -54,6 +54,9 @@ export async function adminSettingsRoutes(app: App): Promise<void> {
     if (data.repaircafeSlug !== undefined) {
       update.repaircafeSlug = normaliseRepaircafeSlug(data.repaircafeSlug);
     }
+    if (data.ordsCountry !== undefined) {
+      update.ordsCountry = data.ordsCountry ? data.ordsCountry.toUpperCase() : null;
+    }
     const [updated] = await db.update(cafes).set(update).where(eq(cafes.id, cafe.id)).returning();
     await audit({ request, actorId: me.sub, actorType: me.role, action: 'cafe.updated', entityType: 'cafe', entityId: cafe.id });
     return updated;

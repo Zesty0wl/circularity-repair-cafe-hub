@@ -23,6 +23,10 @@ Notable changes to the Repair Café Hub. Newest first.
   visitor, and the waiting-room screen calls them by it. A number is free again
   once the item leaves, so the same cards can be used all session. Off by
   default. Thanks again to Florian Chazal (#9).
+- **An Open Repair export.** A new button on the Repairs page downloads every
+  finished repair in the Open Repair Data Standard, so you can share your
+  results with the Open Repair Alliance. Set your country under Settings, Cafe
+  profile. Thanks again to Florian Chazal (#10).
 
 ### Changed
 

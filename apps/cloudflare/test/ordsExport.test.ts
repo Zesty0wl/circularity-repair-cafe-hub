@@ -62,6 +62,19 @@ describe('the ORDS export', () => {
     expect(rows[0][eventDateAt]).toBe(date);
   });
 
+  it('takes the country from Settings', async () => {
+    const bad = await call('/api/admin/settings', { method: 'PATCH', token: admin, json: { ordsCountry: 'France' } });
+    expect(bad.status).toBe(400);
+    const saved = await call('/api/admin/settings', { method: 'PATCH', token: admin, json: { ordsCountry: 'fra' } });
+    expect(saved.status).toBe(200);
+    expect(saved.body.ordsCountry).toBe('FRA');
+
+    const res = await call('/api/admin/repairs/export.ords.csv', { token: admin });
+    const lines = (await res.raw.text()).trim().split('\n');
+    const countryAt = lines[0].split(',').indexOf('country');
+    expect(lines.slice(1).map((l) => l.split(',')[countryAt])).toEqual(['FRA', 'FRA']);
+  });
+
   it('is refused without an admin', async () => {
     const res = await call('/api/admin/repairs/export.ords.csv', { token: repairer });
     expect(res.status).toBe(403);

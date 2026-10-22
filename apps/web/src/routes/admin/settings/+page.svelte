@@ -308,6 +308,7 @@
           bodyFont: bodyFontInput || null,
           donateUrl: cafe.donateUrl || null,
           repaircafeSlug: cafe.repaircafeSlug || null,
+          ordsCountry: cafe.ordsCountry || null,
           socialFacebook: cafe.socialFacebook || null, socialTwitter: cafe.socialTwitter || null,
           socialInstagram: cafe.socialInstagram || null,
         },
@@ -504,6 +505,14 @@
           Paste the address of your cafe's page on repaircafe.org. We use it to highlight you on the
           <a href="/world" class="text-brand-700 underline underline-offset-2" target="_blank" rel="noopener">world map</a>.
           Leave blank if you are not listed yet.
+        </p>
+      </div>
+      <div>
+        <label class="label" for="oc">Country code <span class="font-normal text-slate-500">(optional)</span></label>
+        <input id="oc" class="input w-32 uppercase" maxlength="3" placeholder="GBR" bind:value={cafe.ordsCountry} />
+        <p class="text-xs text-slate-500 mt-1">
+          The 3-letter code for your country, such as GBR, FRA or NLD. It goes in the Open Repair export on the
+          Repairs page.
         </p>
       </div>
       <div>

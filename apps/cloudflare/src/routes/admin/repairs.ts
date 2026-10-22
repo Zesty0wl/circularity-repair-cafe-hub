@@ -270,24 +270,26 @@ export async function adminRepairsRoutes(app: App): Promise<void> {
     return lines.join('\n');
   });
 
-  // ORDS export — the Open Repair Data Standard, for contributing to the Open
+  // ORDS export: the Open Repair Data Standard, for contributing to the Open
   // Repair Alliance's public dataset. See https://standard.openrepair.org/.
   //
   // One row per repair attempt, with the standard's field names (section 3.4.1)
   // and repair_status codes (3.4.3). Only jobs that reached an outcome are
   // included. Fields we do not collect yet (product category mapping, year of
-  // manufacture, barriers) are left blank for the Alliance to map — they map
+  // manufacture, barriers) are left blank for the Alliance to map. They map
   // partner categories and values at the source anyway.
   app.get('/api/admin/repairs/export.ords.csv', async (request, reply) => {
     const [cafe] = await db
-      .select({ id: cafes.id, name: cafes.name, slug: cafes.repaircafeSlug })
+      .select({ id: cafes.id, name: cafes.name, slug: cafes.repaircafeSlug, country: cafes.ordsCountry })
       .from(cafes)
       .limit(1);
     // A stable identifier for the group. The cafe's repaircafe.org listing is
     // the most meaningful when it has one, otherwise its internal id.
     const groupIdentifier = cafe?.slug?.trim() || cafe?.id || '';
     const dataProvider = cafe?.name?.trim() || 'Repair Cafe';
-    const country = env.ORDS_COUNTRY;
+    // The country set under Settings. Hubs that set it in the Cloudflare
+    // dashboard before there was a setting still work.
+    const country = cafe?.country?.trim().toUpperCase() || env.ORDS_COUNTRY;
 
     // repair_status: 0 Unknown, 1 Fixed, 2 Repairable, 3 End of life.
     // "returned" (the item was collected) says nothing about whether it was

@@ -422,4 +422,13 @@ export const cafeSettingsSchema = z.object({
   // The cafe's own listing on repaircafe.org. Admins may paste the full page
   // URL or just the slug; the server reduces it to a slug before saving.
   repaircafeSlug: z.string().max(300).optional().nullable().or(z.literal('')),
+  // The cafe's country as a 3-letter ISO code (GBR, FRA, NLD), for the Open
+  // Repair Data Standard export.
+  ordsCountry: z
+    .string()
+    .trim()
+    .regex(/^[A-Za-z]{3}$/, 'Use the 3-letter country code, such as GBR or FRA')
+    .optional()
+    .nullable()
+    .or(z.literal('')),
 });

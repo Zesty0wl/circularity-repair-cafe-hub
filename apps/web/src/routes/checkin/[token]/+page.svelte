@@ -325,6 +325,8 @@
         method: 'POST',
         formData: fd,
         autoRefresh: false,
+        // Proves this visitor checked the item in.
+        headers: customerToken ? { 'x-customer-token': customerToken } : undefined,
       });
       uploadedThumb = res.url;
     } catch (err: any) {

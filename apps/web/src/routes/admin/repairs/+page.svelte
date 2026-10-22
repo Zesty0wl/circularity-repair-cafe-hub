@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { api } from '$lib/api';
+  import { api, download } from '$lib/api';
 
   let categories: any[] = [];
   let users: any[] = [];
@@ -45,10 +45,21 @@
     load();
   }
 
+  let exportError = '';
+
+  async function saveExport(path: string, filename: string) {
+    exportError = '';
+    try {
+      await download(path, filename);
+    } catch (err: any) {
+      exportError = err?.message ?? 'The export could not be downloaded. Please try again.';
+    }
+  }
+
   function exportCsv() {
     const params = new URLSearchParams();
     for (const [k, v] of Object.entries(filters)) if (v) params.set(k, v);
-    window.location.href = `/api/admin/repairs/export.csv?${params}`;
+    void saveExport(`/api/admin/repairs/export.csv?${params}`, 'repairs.csv');
   }
 
   /**
@@ -57,7 +68,7 @@
    * whole record.
    */
   function exportOrds() {
-    window.location.href = '/api/admin/repairs/export.ords.csv';
+    void saveExport('/api/admin/repairs/export.ords.csv', 'repairs-ords.csv');
   }
 
   // Repairers + admins (active only) can be assigned a job.
@@ -98,6 +109,8 @@
     >Open Repair export</button>
   </div>
 </div>
+
+{#if exportError}<p class="mt-3 text-sm text-rose-700">{exportError}</p>{/if}
 
 <div class="card p-4 mt-4 grid sm:grid-cols-2 md:grid-cols-4 gap-3 text-sm">
   <input class="input" placeholder="Search…" bind:value={filters.search} />

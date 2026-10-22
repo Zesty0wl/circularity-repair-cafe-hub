@@ -6,7 +6,7 @@ import { cafes, users, venues } from '../db/schema.js';
 import { hashPassword } from '../utils/password.js';
 import { audit } from '../utils/audit.js';
 import { eq } from 'drizzle-orm';
-import { isSetupCompleted } from '../services/cafeCache.js';
+import { isSetupCompleted, markSetUp, wasEverSetUp } from '../services/cafeCache.js';
 import {
   findOurs,
   getNetwork,
@@ -39,7 +39,7 @@ export async function setupRoutes(app: App): Promise<void> {
   // Nobody is signed in yet, so this only answers until setup is finished.
   // Everything it returns is already public on repaircafe.org.
   app.get('/api/setup/repaircafe-listings', async (request, reply) => {
-    if (await isSetupCompleted()) {
+    if (await wasEverSetUp()) {
       reply.code(404).send({ error: 'Setup is already finished', code: 'setup/already_done' });
       return;
     }
@@ -60,9 +60,16 @@ export async function setupRoutes(app: App): Promise<void> {
   });
 
   app.post('/api/setup/complete', async (request, reply) => {
-    const [cafe] = await db.select().from(cafes).limit(1);
-    if (cafe?.setupCompleted) {
+    // Read fresh, never from the cache. See wasEverSetUp() for why the cafe
+    // row alone is not enough.
+    if (await wasEverSetUp()) {
       reply.code(409).send({ error: 'Setup already completed', code: 'setup/already_done' });
+      return;
+    }
+    const [cafe] = await db.select().from(cafes).limit(1);
+    if (!cafe) {
+      // Only while a backup is being restored onto this new hub.
+      reply.code(409).send({ error: 'A backup is being restored on this hub', code: 'setup/import_running' });
       return;
     }
 
@@ -132,7 +139,8 @@ export async function setupRoutes(app: App): Promise<void> {
         setupCompleted: true,
         updatedAt: new Date(),
       })
-      .where(eq(cafes.id, cafe!.id));
+      .where(eq(cafes.id, cafe.id));
+    await markSetUp();
 
     const tokens = await app.issueTokens({
       id: created.id,

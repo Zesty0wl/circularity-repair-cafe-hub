@@ -21,6 +21,7 @@
 //  See services/preRegistration.ts for how an item becomes a repair.
 // =============================================================================
 import { and, asc, count, eq, gte, inArray, sql } from 'drizzle-orm';
+import { withoutVisitorToken } from '../utils/visitor.js';
 import { needsPatTest, preRegistrationSchema } from '@circularity/shared';
 import type { App, HubReply } from '../lib/router.js';
 import { db } from '../db/index.js';
@@ -404,7 +405,7 @@ export async function preRegistrationStaffRoutes(app: App): Promise<void> {
       reply.code(409).send({ error: 'This item has already been checked in or cancelled', code: 'preregistration/not_open' });
       return;
     }
-    if (pre.repairerId === me.sub) return pre;
+    if (pre.repairerId === me.sub) return withoutVisitorToken(pre);
     const [updated] = await db
       .update(preRegistrations)
       .set({ repairerId: me.sub, claimedAt: new Date(), updatedAt: new Date() })
@@ -419,7 +420,7 @@ export async function preRegistrationStaffRoutes(app: App): Promise<void> {
       entityId: id,
       metadata: pre.repairerId ? { previousRepairerId: pre.repairerId } : undefined,
     });
-    return updated;
+    return withoutVisitorToken(updated);
   });
 
   app.patch('/api/repairer/pre-registrations/:id/release', async (request, reply) => {
@@ -449,7 +450,7 @@ export async function preRegistrationStaffRoutes(app: App): Promise<void> {
       entityType: 'pre_registration',
       entityId: id,
     });
-    return updated;
+    return withoutVisitorToken(updated);
   });
 
   // Notes stay with the item. Whoever repairs it on the day sees them.
@@ -478,7 +479,7 @@ export async function preRegistrationStaffRoutes(app: App): Promise<void> {
       .set({ researchNotes: notes || null, updatedAt: new Date() })
       .where(eq(preRegistrations.id, id))
       .returning();
-    return updated;
+    return withoutVisitorToken(updated);
   });
 
   // A volunteer checks the item in when the visitor arrives.

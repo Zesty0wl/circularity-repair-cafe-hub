@@ -18,7 +18,7 @@ import type { App, HubReply, HubRequest } from '../lib/router.js';
 import { bindings, env } from '../env.js';
 import { seed } from '../db/migrate.js';
 import { localToday } from '../lib/dates.js';
-import { resetCafeCache } from '../services/cafeCache.js';
+import { resetCafeCache, forgetSetUp } from '../services/cafeCache.js';
 import { wipeEverything } from './admin/backup.js';
 import { hasDemoKey } from '../plugins/demoMode.js';
 
@@ -96,6 +96,8 @@ export async function demoRoutes(app: App): Promise<void> {
   app.post('/api/demo/reset', keyed, async () => {
     await wipeEverything();
     await bindings().DB.prepare('DELETE FROM hub_meta WHERE key = ?').bind(STATE_KEY).run();
+    // The demo really does become a new hub, so its setup can run again.
+    await forgetSetUp();
     // Put back what a brand new hub starts with: the empty cafe row, the
     // default skill categories and the CO2 figures.
     await seed(bindings().DB, { force: true });

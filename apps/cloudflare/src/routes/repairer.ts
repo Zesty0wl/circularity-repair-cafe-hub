@@ -2,7 +2,14 @@ import type { App, HubReply, HubRequest } from '../lib/router.js';
 import { db } from '../db/index.js';
 import { cafes, events, preRegistrations, repairImages, repairJobs, skillCategories, users, venues } from '../db/schema.js';
 import { and, asc, count, desc, eq, sql } from 'drizzle-orm';
-import { assistedCheckInSchema, jobFeedbackSchema, needsPatTest, patRecordSchema, type PatResult } from '@circularity/shared';
+import {
+  MAX_CO2_SAVING_KG,
+  assistedCheckInSchema,
+  jobFeedbackSchema,
+  needsPatTest,
+  patRecordSchema,
+  type PatResult,
+} from '@circularity/shared';
 import { cafeFeatures } from '../services/preRegistration.js';
 import { saveValidatedImage } from '../services/imageUpload.js';
 import { withJobNumber } from '../services/jobNumber.js';
@@ -10,6 +17,7 @@ import { cardInUse, cardInUseError } from '../services/cardNumbers.js';
 import { randomToken } from '../utils/tokens.js';
 import { audit } from '../utils/audit.js';
 import { repairerSummary } from '../utils/users.js';
+import { withoutVisitorToken } from '../utils/visitor.js';
 import { env } from '../env.js';
 import { resolveSaving } from '../services/co2.js';
 
@@ -356,7 +364,7 @@ export async function repairerRoutes(app: App): Promise<void> {
       .where(eq(preRegistrations.repairJobId, id))
       .limit(1);
 
-    return { ...rows[0], images, pat, preRegistration: pre ?? null };
+    return { ...rows[0], job: withoutVisitorToken(job), images, pat, preRegistration: pre ?? null };
   });
 
   // ── PAT testing ────────────────────────────────────────────────────────
@@ -412,7 +420,7 @@ export async function repairerRoutes(app: App): Promise<void> {
       entityId: job.id,
       metadata: { result: parsed.data.result },
     });
-    return updated;
+    return withoutVisitorToken(updated);
   });
 
   // Say whether this one item is electrical, whatever its category says.
@@ -440,7 +448,7 @@ export async function repairerRoutes(app: App): Promise<void> {
       entityId: job.id,
       metadata: { isElectrical: body.isElectrical },
     });
-    return updated;
+    return withoutVisitorToken(updated);
   });
 
   app.patch('/api/repairer/jobs/:id/accept', async (request, reply) => {
@@ -457,7 +465,7 @@ export async function repairerRoutes(app: App): Promise<void> {
     }
     if (existing.status === 'in_progress' && existing.repairerId === me.sub) {
       // Already mine — no-op
-      return existing;
+      return withoutVisitorToken(existing);
     }
     const isTakeover = existing.status === 'in_progress' && existing.repairerId && existing.repairerId !== me.sub;
     const previousRepairerId = existing.repairerId;
@@ -475,7 +483,7 @@ export async function repairerRoutes(app: App): Promise<void> {
       entityId: id,
       metadata: isTakeover ? { previousRepairerId } : undefined,
     });
-    return updated;
+    return withoutVisitorToken(updated);
   });
 
   app.patch('/api/repairer/jobs/:id/release', async (request, reply) => {
@@ -503,7 +511,7 @@ export async function repairerRoutes(app: App): Promise<void> {
       entityType: 'repair_job',
       entityId: id,
     });
-    return updated;
+    return withoutVisitorToken(updated);
   });
 
   app.patch('/api/repairer/jobs/:id/complete', async (request, reply) => {
@@ -521,6 +529,18 @@ export async function repairerRoutes(app: App): Promise<void> {
     const me = request.auth!;
     if (!['completed', 'cannot_repair', 'awaiting_return'].includes(body?.outcome)) {
       reply.code(400).send({ error: 'Outcome required', code: 'validation/failed' });
+      return;
+    }
+    // The same limits as an admin's edit. The CO2 figure reaches the public
+    // pages and the shared figures, so it must be a real, sensible number.
+    const kg = body.environmentalSavingKg;
+    if (kg !== undefined && kg !== null && (typeof kg !== 'number' || !Number.isFinite(kg) || kg < 0 || kg > MAX_CO2_SAVING_KG)) {
+      reply.code(400).send({ error: `The CO2 saving must be between 0 and ${MAX_CO2_SAVING_KG} kg`, code: 'validation/failed' });
+      return;
+    }
+    const tooLong = (v: unknown, max: number) => v !== undefined && v !== null && (typeof v !== 'string' || v.length > max);
+    if (tooLong(body.outcomeNotes, 2000) || tooLong(body.partsUsed, 500)) {
+      reply.code(400).send({ error: 'Notes are too long', code: 'validation/failed' });
       return;
     }
     // "Awaiting return" pauses a repair rather than finishing it: the visitor
@@ -609,7 +629,10 @@ export async function repairerRoutes(app: App): Promise<void> {
       .where(eq(repairJobs.id, id))
       .returning();
 
-    if (existing.repairerId && !isPaused) {
+    // Count a repair once, when it is first finished. Saving a finished repair
+    // again, to correct a note, must not add to the repairer's total.
+    const wasFinished = existing.status === 'completed' || existing.status === 'cannot_repair';
+    if (existing.repairerId && !isPaused && !wasFinished) {
       await db.run(
         sql`UPDATE users SET repair_count_cache = repair_count_cache + 1 WHERE id = ${existing.repairerId}`
       );
@@ -623,7 +646,7 @@ export async function repairerRoutes(app: App): Promise<void> {
       entityType: 'repair_job',
       entityId: id,
     });
-    return updated;
+    return withoutVisitorToken(updated);
   });
 
   // The visitor's own verdict, recorded at the exit. Optional: a cafe that does
@@ -665,7 +688,7 @@ export async function repairerRoutes(app: App): Promise<void> {
       entityId: id,
       metadata: { satisfaction },
     });
-    return updated;
+    return withoutVisitorToken(updated);
   });
 
   app.post('/api/repairer/jobs/:id/image', async (request, reply) => {

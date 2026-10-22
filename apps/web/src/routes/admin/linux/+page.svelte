@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { api } from '$lib/api';
+  import { api, download } from '$lib/api';
   import {
     LINUX_DEVICE_TYPES,
     LINUX_PREVIOUS_OS,
@@ -244,8 +244,12 @@
     }
   }
 
-  function exportCsv() {
-    window.location.href = '/api/admin/linux/installs.csv';
+  async function exportCsv() {
+    try {
+      await download('/api/admin/linux/installs.csv', 'linux-installs.csv');
+    } catch (err: any) {
+      loadError = err?.message ?? 'The export could not be downloaded. Please try again.';
+    }
   }
 
   function prettyDate(iso: string): string {

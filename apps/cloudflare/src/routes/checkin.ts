@@ -1,7 +1,7 @@
-import type { App } from '../lib/router.js';
+import type { App, HubRequest } from '../lib/router.js';
 import { db, inList } from '../db/index.js';
 import { cafes, events, preRegistrations, repairImages, repairJobs, skillCategories, users, venues } from '../db/schema.js';
-import { and, asc, desc, eq, inArray } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { checkInSubmitSchema } from '@circularity/shared';
 import { withJobNumber } from '../services/jobNumber.js';
 import { cardInUse, cardInUseError } from '../services/cardNumbers.js';
@@ -21,6 +21,15 @@ async function loadEventByToken(token: string) {
     .where(eq(events.checkInToken, token))
     .limit(1);
   return rows[0] ?? null;
+}
+
+/** The most photos a visitor can add to one item at check-in. */
+const MAX_CHECKIN_PHOTOS = 3;
+
+/** The visitor's tracking token, sent by the check-in page. Empty when missing. */
+function visitorToken(request: HubRequest): string {
+  const value = request.headers['x-customer-token'];
+  return typeof value === 'string' ? value.trim() : '';
 }
 
 export async function checkInRoutes(app: App): Promise<void> {
@@ -198,6 +207,10 @@ export async function checkInRoutes(app: App): Promise<void> {
     };
   });
 
+  // The check-in link is printed on posters and shown on the waiting-room
+  // screen, and a job id can be seen in the address of a published repair
+  // photo. Neither says who owns a repair, so these two routes also need the
+  // visitor's own tracking token, which only they were given.
   app.get('/api/checkin/:token/jobs/:id', async (request, reply) => {
     const { token, id } = request.params as { token: string; id: string };
     const found = await loadEventByToken(token);
@@ -213,7 +226,13 @@ export async function checkInRoutes(app: App): Promise<void> {
         customerName: repairJobs.customerName,
       })
       .from(repairJobs)
-      .where(and(eq(repairJobs.id, id), eq(repairJobs.eventId, found.event.id)))
+      .where(
+        and(
+          eq(repairJobs.id, id),
+          eq(repairJobs.eventId, found.event.id),
+          eq(repairJobs.customerToken, visitorToken(request)),
+        ),
+      )
       .limit(1);
     if (!job) {
       reply.code(404).send({ error: 'Job not found', code: 'job/not_found' });
@@ -232,10 +251,29 @@ export async function checkInRoutes(app: App): Promise<void> {
     const [job] = await db
       .select()
       .from(repairJobs)
-      .where(and(eq(repairJobs.id, id), eq(repairJobs.eventId, found.event.id)))
+      .where(
+        and(
+          eq(repairJobs.id, id),
+          eq(repairJobs.eventId, found.event.id),
+          eq(repairJobs.customerToken, visitorToken(request)),
+        ),
+      )
       .limit(1);
     if (!job) {
       reply.code(404).send({ error: 'Job not found', code: 'job/not_found' });
+      return;
+    }
+    // A photo of the item as it came in: only while it waits, and only a few.
+    if (job.status !== 'waiting') {
+      reply.code(409).send({ error: 'Photos can only be added while the item is waiting', code: 'upload/too_late' });
+      return;
+    }
+    const [{ n }] = await db
+      .select({ n: sql<number>`COUNT(*)` })
+      .from(repairImages)
+      .where(and(eq(repairImages.repairJobId, job.id), eq(repairImages.stage, 'check_in')));
+    if (Number(n) >= MAX_CHECKIN_PHOTOS) {
+      reply.code(409).send({ error: `You can add up to ${MAX_CHECKIN_PHOTOS} photos`, code: 'upload/too_many' });
       return;
     }
     const file = await request.file();

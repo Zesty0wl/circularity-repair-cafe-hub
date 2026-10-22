@@ -13,6 +13,7 @@ import type { App } from '../../lib/router.js';
 import { db, execute } from '../../db/index.js';
 import { cafes, co2Factors, events, linuxInstalls, users, venues } from '../../db/schema.js';
 import { and, asc, desc, eq, sql } from 'drizzle-orm';
+import { csvCell } from '../../lib/csv.js';
 import { linuxInstallCreateSchema, linuxInstallUpdateSchema } from '@circularity/shared';
 import { resolveSaving } from '../../services/co2.js';
 import { audit } from '../../utils/audit.js';
@@ -493,14 +494,9 @@ export async function adminLinuxRoutes(app: App): Promise<void> {
       'outcome',
       'co2SavingKg',
     ];
-    const escape = (v: unknown): string => {
-      if (v === null || v === undefined) return '';
-      const s = String(v);
-      return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
-    };
     const lines = [headers.join(',')];
     for (const row of rows) {
-      lines.push(headers.map((h) => escape((row as Record<string, unknown>)[h])).join(','));
+      lines.push(headers.map((h) => csvCell((row as Record<string, unknown>)[h])).join(','));
     }
     void reply.header('Content-Type', 'text/csv');
     void reply.header('Content-Disposition', 'attachment; filename="linux-installs.csv"');

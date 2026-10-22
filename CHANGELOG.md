@@ -2,6 +2,42 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
+## 1.13.1 (22 October 2026)
+
+### Security
+
+**Please update.** These come from a security review of the hub.
+
+- **A hub could be taken over during a restore.** While a super admin restored
+  a backup, the hub looked brand new for a few minutes. Anyone who noticed
+  could finish setup and get a super admin account, or start a restore of
+  their own. The hub now remembers that it has been set up, somewhere a restore
+  does not wipe, and refuses both.
+- **An admin could take over a super admin account.** An admin could make a
+  password reset link for a super admin, which signs whoever uses it in as
+  them. An admin could also demote, lock out or change the email of a super
+  admin. Only a super admin can do these things now.
+- **A visitor's name could be read by anyone.** With a session's check-in link
+  and the address of a published repair photo, anyone could read the name of
+  the visitor who brought the item in, and add photos to it. Both now need the
+  visitor's own tracking token, which only they are given. A visitor can add up
+  to 3 photos, and only while the item is waiting.
+- **Volunteers were sent visitors' tracking tokens.** Some pages for
+  volunteers received a visitor's tracking token, which a volunteer could use
+  to cancel the visitor's pre-registered items. Volunteers no longer receive it.
+- **A volunteer could save any CO2 figure, and count a repair many times.**
+  The CO2 saving must now be between 0 and 10,000 kg, and saving a finished
+  repair again no longer adds to the repairer's total.
+
+### Fixed
+
+- **The CSV exports work again.** The Export CSV buttons on the Repairs and
+  Statistics pages, the Open Repair export, and the Linux installs export all
+  failed with "Authentication required". They now download properly.
+- **Exports are safe to open in a spreadsheet.** Text that a spreadsheet would
+  run as a formula, such as a name that starts with "=", is now saved as plain
+  text.
+
 ## 1.13.0 (22 October 2026)
 
 ### Added

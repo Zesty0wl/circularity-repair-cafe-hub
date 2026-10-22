@@ -183,8 +183,9 @@ describe('backing up a Cloudflare hub and restoring it', () => {
     });
     expect(begun.status).toBe(200);
     const token = begun.body.importToken;
-    // Everything is gone until it is put back.
-    expect((await call('/api/setup/status')).body.setupCompleted).toBe(false);
+    // Everything is gone until it is put back, but the hub does not look new:
+    // that would let a stranger set it up mid-restore. See wasEverSetUp().
+    expect((await call('/api/setup/status')).body.setupCompleted).toBe(true);
     expect((await call('/uploads/branding/logo.jpg')).status).toBe(404);
 
     await sendTables(token, tables);

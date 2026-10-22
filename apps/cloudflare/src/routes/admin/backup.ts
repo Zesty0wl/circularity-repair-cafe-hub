@@ -35,7 +35,7 @@ import { hashToken, randomToken } from '../../utils/tokens.js';
 import { audit } from '../../utils/audit.js';
 import { APP_VERSION, BACKUP_FORMAT_VERSION, EDITION } from '../../version.js';
 import { insertStatement, PortableRowError, TABLES, TABLE_BY_NAME, toPortable } from '../../services/portable.js';
-import { resetCafeCache } from '../../services/cafeCache.js';
+import { markSetUp, resetCafeCache, wasEverSetUp } from '../../services/cafeCache.js';
 
 const CONFIRM_HEADER = 'x-confirm-wipe';
 const CONFIRM_VALUE = 'WIPE AND RESTORE';
@@ -204,8 +204,8 @@ export async function adminBackupRoutes(app: App): Promise<void> {
 
 export async function setupImportRoutes(app: App): Promise<void> {
   app.post('/api/setup/import/begin', async (request, reply) => {
-    const [cafe] = await db.select({ setupCompleted: cafes.setupCompleted }).from(cafes).limit(1);
-    if (cafe?.setupCompleted) {
+    // Not the cafe row: a restore in progress has emptied it. See wasEverSetUp().
+    if (await wasEverSetUp()) {
       reply.code(409).send({
         error: 'This hub is already set up. Sign in as a super admin and restore from Settings instead.',
         code: 'setup/already_done',
@@ -281,6 +281,8 @@ export async function importRoutes(app: App): Promise<void> {
     // the CO2 reference data and so on. It never overwrites imported rows.
     await seed(bindings().DB, { force: true });
     await db.delete(hubMeta).where(eq(hubMeta.key, IMPORT_SESSION_KEY));
+    const [restored] = await db.select({ setupCompleted: cafes.setupCompleted }).from(cafes).limit(1);
+    if (restored?.setupCompleted) await markSetUp();
     resetCafeCache();
     const counts: Record<string, number> = {};
     for (const t of TABLES) {

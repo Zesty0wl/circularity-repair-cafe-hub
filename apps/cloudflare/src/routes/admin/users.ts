@@ -9,6 +9,18 @@ import { audit } from '../../utils/audit.js';
 import { withoutPassword } from '../../utils/users.js';
 import { randomToken } from '../../utils/tokens.js';
 
+/**
+ * Whether a user is a super admin. Admins may manage everyone else, but only
+ * a super admin may change a super admin: their role, email, whether they are
+ * active, or their password. Otherwise an admin could demote, lock out or
+ * become one, and reach what only super admins can do (backups, restores,
+ * deleting users).
+ */
+async function isSuperAdmin(id: string): Promise<boolean> {
+  const [u] = await db.select({ role: users.role }).from(users).where(eq(users.id, id)).limit(1);
+  return u?.role === 'super_admin';
+}
+
 export async function adminUsersRoutes(app: App): Promise<void> {
   app.get('/api/admin/users', async () => {
     return db
@@ -99,6 +111,10 @@ export async function adminUsersRoutes(app: App): Promise<void> {
       reply.code(403).send({ error: 'Only super admins can promote to super admin', code: 'auth/forbidden' });
       return;
     }
+    if (me.role !== 'super_admin' && (await isSuperAdmin(id))) {
+      reply.code(403).send({ error: 'Only super admins can change a super admin', code: 'auth/forbidden' });
+      return;
+    }
     const update: any = { updatedAt: new Date() };
     for (const k of ['displayName', 'role', 'bio', 'skills', 'isActive', 'showOnPublicPage', 'showOnHomePage', 'linuxRepairer', 'joinDate']) {
       if ((data as any)[k] !== undefined) update[k] = (data as any)[k];
@@ -115,6 +131,12 @@ export async function adminUsersRoutes(app: App): Promise<void> {
     const [u] = await db.select().from(users).where(eq(users.id, id)).limit(1);
     if (!u) {
       reply.code(404).send({ error: 'User not found', code: 'user/not_found' });
+      return;
+    }
+    // A reset link signs whoever uses it in as that user. An admin who could
+    // make one for a super admin could become one.
+    if (u.role === 'super_admin' && me.role !== 'super_admin') {
+      reply.code(403).send({ error: 'Only super admins can reset a super admin', code: 'auth/forbidden' });
       return;
     }
     const token = await generateResetLinkForUser(id);

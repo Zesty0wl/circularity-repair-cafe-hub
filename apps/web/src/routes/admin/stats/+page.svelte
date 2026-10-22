@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { api } from '$lib/api';
+  import { api, download } from '$lib/api';
   import { CalendarDays, Wrench, Users, Leaf, Clock, CheckCircle2 } from 'lucide-svelte';
 
   type Range = '3m' | '6m' | '12m' | 'all';
@@ -147,14 +147,22 @@
     return m === 0 ? `${h} hr` : `${h} hr ${m} min`;
   }
 
-  function exportCsv() {
-    window.location.href = `/api/admin/repairs/export.csv`;
+  let exportError = '';
+
+  async function exportCsv() {
+    exportError = '';
+    try {
+      await download('/api/admin/repairs/export.csv', 'repairs.csv');
+    } catch (err: any) {
+      exportError = err?.message ?? 'The export could not be downloaded. Please try again.';
+    }
   }
 </script>
 
 <div class="flex flex-wrap items-center justify-between gap-3">
   <h1 class="text-2xl font-bold">Statistics</h1>
   <button class="btn-secondary" on:click={exportCsv}>Export raw data (CSV)</button>
+  {#if exportError}<p class="text-sm text-rose-700">{exportError}</p>{/if}
 </div>
 
 <!-- Period selector. Applies to summary cards and the events table.

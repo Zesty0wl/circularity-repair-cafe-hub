@@ -87,6 +87,39 @@ export async function api<T = unknown>(path: string, opts: ApiOptions = {}): Pro
   return handleResponse<T>(res);
 }
 
+/**
+ * Download a file from a signed-in route, such as a CSV export, and save it.
+ *
+ * Those routes need the sign-in, which only travels as a header. A plain link
+ * or `window.location.href` cannot send a header, so the hub refused them. This
+ * fetches the file with the sign-in and then saves it.
+ */
+export async function download(path: string, filename: string): Promise<void> {
+  const send = () => {
+    const state = get(auth);
+    const headers: Record<string, string> = {};
+    if (state?.accessToken) headers['Authorization'] = `Bearer ${state.accessToken}`;
+    return fetch(path, { headers, credentials: 'include' });
+  };
+  let res = await send();
+  if (res.status === 401) {
+    await refreshAccessToken();
+    res = await send();
+  }
+  if (!res.ok) {
+    await handleResponse(res);
+    return;
+  }
+  const url = URL.createObjectURL(await res.blob());
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}
+
 export interface UploadOptions {
   /** Form field name the server reads the file from. */
   fieldName?: string;

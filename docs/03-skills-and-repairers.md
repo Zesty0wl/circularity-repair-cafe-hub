@@ -68,8 +68,8 @@ makes them different is their **role**.
 
 | Role          | What they can do                                                          |
 | ------------- | ------------------------------------------------------------------------- |
-| `super_admin` | Everything. Can create/promote/demote other admins. Created by the setup wizard. There can be more than one — see below. |
-| `admin`       | Everything except create/promote `super_admin` users.                     |
+| `super_admin` | Everything. Can create/promote/demote other admins. Created by the setup wizard. There can be more than one. See below. |
+| `admin`       | Everything except creating, changing or resetting a `super_admin`, and backups. |
 | `repairer`    | Sign in to `/repairer`, view the active event's queue, accept jobs, upload photos, mark complete. |
 
 ### Adding a new repairer (or admin) — `/admin/repairers`
@@ -95,6 +95,9 @@ Click their name in the list. From there you can:
 
 - Change name, email, **role** (admins can promote to admin; only super-admins
   can promote to super-admin), bio, skills.
+- Only a super-admin can change a super-admin: their role, email, whether they
+  are active, or their password reset link. An admin who could do that could
+  make themselves a super-admin.
 - Toggle **Active** off — they keep all their history but can't sign in
   any more. Use this when someone steps away.
 - **Delete** entirely — only do this for accounts created in error. If

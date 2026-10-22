@@ -289,12 +289,19 @@ export const userUpdateSchema = userCreateSchema.partial().extend({
   isActive: z.boolean().optional(),
 });
 
+/**
+ * The largest CO2 saving one repair can record, in kilograms. Far above any
+ * real item, but it stops a mistyped or made-up figure swamping the totals on
+ * the public pages and in the shared figures.
+ */
+export const MAX_CO2_SAVING_KG = 10_000;
+
 export const repairUpdateSchema = z.object({
   status: z.enum(['waiting', 'in_progress', 'completed', 'cannot_repair', 'awaiting_return', 'returned']).optional(),
   repairerId: z.string().uuid().nullable().optional(),
   outcomeNotes: z.string().max(2000).optional().nullable(),
   partsUsed: z.string().max(500).optional().nullable(),
-  environmentalSavingKg: z.number().nonnegative().optional().nullable(),
+  environmentalSavingKg: z.number().nonnegative().max(MAX_CO2_SAVING_KG).optional().nullable(),
   customerName: z.string().max(50).optional().nullable(),
   customerContact: z.string().max(100).optional().nullable(),
   itemDescription: z.string().max(200).optional(),

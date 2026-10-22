@@ -138,9 +138,18 @@ describe('a repair session from start to finish', () => {
     expect(second.status).toBe(200);
     expect(second.body.jobNumber).toMatch(/-0002$/);
 
+    // Knowing the check-in link and the job is not enough: the visitor's own
+    // tracking token proves the item is theirs.
+    const stranger = await call(`/api/checkin/${state.checkInToken}/jobs/${state.jobId}/image`, {
+      method: 'POST',
+      body: photoForm(bytes(JPEG_WITH_GPS)),
+    });
+    expect(stranger.status).toBe(404);
+    const visitor = { 'x-customer-token': state.customerToken! };
     const photo = await call(`/api/checkin/${state.checkInToken}/jobs/${state.jobId}/image`, {
       method: 'POST',
       body: photoForm(bytes(JPEG_WITH_GPS)),
+      headers: visitor,
     });
     expect(photo.status).toBe(200);
     expect(photo.body.url).toMatch(/^\/uploads\/repairs\/.+\.jpg$/);
@@ -154,6 +163,7 @@ describe('a repair session from start to finish', () => {
     const fake = await call(`/api/checkin/${state.checkInToken}/jobs/${state.jobId}/image`, {
       method: 'POST',
       body: photoForm(new TextEncoder().encode('<html>not a photo</html>')),
+      headers: visitor,
     });
     expect(fake.status).toBe(400);
   });

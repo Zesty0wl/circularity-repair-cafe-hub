@@ -11,13 +11,8 @@ import { audit } from '../../utils/audit.js';
 import { repairerSummary } from '../../utils/users.js';
 import { deleteImage } from '../../services/imageUpload.js';
 import { env } from '../../env.js';
+import { csvCell } from '../../lib/csv.js';
 
-/** Escape one CSV cell: quote it when it contains a comma, a quote or a newline. */
-function escapeCsv(value: unknown): string {
-  if (value === null || value === undefined) return '';
-  const s = String(value);
-  return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
-}
 
 export async function adminRepairsRoutes(app: App): Promise<void> {
   app.get('/api/admin/repairs', async (request) => {
@@ -263,7 +258,7 @@ export async function adminRepairsRoutes(app: App): Promise<void> {
     if ((await cafeFeatures()).patTestingEnabled) headers.push('patResult', 'patTestedAt', 'patTestedBy');
     const lines = [headers.join(',')];
     for (const r of rows) {
-      lines.push(headers.map((h) => escapeCsv((r as any)[h])).join(','));
+      lines.push(headers.map((h) => csvCell((r as any)[h])).join(','));
     }
     reply.header('Content-Type', 'text/csv');
     reply.header('Content-Disposition', `attachment; filename="repairs.csv"`);
@@ -351,7 +346,7 @@ export async function adminRepairsRoutes(app: App): Promise<void> {
         data_provider: dataProvider,
         country,
       };
-      lines.push(headers.map((h) => escapeCsv(out[h])).join(','));
+      lines.push(headers.map((h) => csvCell(out[h])).join(','));
     }
     reply.header('Content-Type', 'text/csv');
     reply.header('Content-Disposition', `attachment; filename="repairs-ords.csv"`);

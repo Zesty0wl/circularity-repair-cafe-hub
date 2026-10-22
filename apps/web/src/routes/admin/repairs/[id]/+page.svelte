@@ -4,6 +4,7 @@
   import { onMount } from 'svelte';
   import { api } from '$lib/api';
   import { auth } from '$lib/stores/auth';
+  import { cafe } from '$lib/stores/cafe';
   import PatBadge from '$lib/components/PatBadge.svelte';
   import { ArrowLeft } from 'lucide-svelte';
 
@@ -38,7 +39,8 @@
     partsUsed: '',
     environmentalSavingKg: '' as string | number,
     weightKg: '' as string | number,
-    isFirstVisit: false,
+    /** 'yes', 'no', or '' when nobody answered. */
+    firstVisit: '' as '' | 'yes' | 'no',
     status: 'waiting',
   };
 
@@ -60,7 +62,7 @@
       partsUsed: detail.job.partsUsed ?? '',
       environmentalSavingKg: detail.job.environmentalSavingKg ?? '',
       weightKg: detail.job.weightKg ?? '',
-      isFirstVisit: detail.job.isFirstVisit ?? false,
+      firstVisit: detail.job.isFirstVisit === true ? 'yes' : detail.job.isFirstVisit === false ? 'no' : '',
       status: detail.job.status,
     };
   }
@@ -84,7 +86,7 @@
           partsUsed: form.partsUsed || null,
           environmentalSavingKg: form.environmentalSavingKg === '' ? null : Number(form.environmentalSavingKg),
           weightKg: form.weightKg === '' ? null : Number(form.weightKg),
-          isFirstVisit: form.isFirstVisit,
+          isFirstVisit: form.firstVisit === 'yes' ? true : form.firstVisit === 'no' ? false : null,
         },
       });
       await load();
@@ -234,13 +236,24 @@
       <div><label class="label" for="pa">Parts used</label><input id="pa" class="input" bind:value={form.partsUsed} /></div>
       <div><label class="label" for="es">Saving (kg)</label><input id="es" class="input" type="number" step="0.001" bind:value={form.environmentalSavingKg} /></div>
     </div>
-    <div class="grid sm:grid-cols-2 gap-3">
-      <div><label class="label" for="wt">Weight (kg)</label><input id="wt" class="input" type="number" step="0.001" bind:value={form.weightKg} /></div>
-      <label class="flex items-center gap-3 cursor-pointer text-sm text-slate-700 sm:pt-6">
-        <input type="checkbox" class="h-5 w-5 rounded border-slate-300 text-brand-600" bind:checked={form.isFirstVisit} />
-        <span>First visit</span>
-      </label>
-    </div>
+    <!-- Shown while the cafe asks for them, or when this repair already has an answer. -->
+    {#if $cafe?.weighItemsEnabled || $cafe?.askFirstVisitEnabled || form.weightKg !== '' || form.firstVisit !== ''}
+      <div class="grid sm:grid-cols-2 gap-3">
+        {#if $cafe?.weighItemsEnabled || form.weightKg !== ''}
+          <div><label class="label" for="wt">Weight (kg)</label><input id="wt" class="input" type="number" min="0" step="0.001" bind:value={form.weightKg} /></div>
+        {/if}
+        {#if $cafe?.askFirstVisitEnabled || form.firstVisit !== ''}
+          <div>
+            <label class="label" for="fv">First visit</label>
+            <select id="fv" class="input" bind:value={form.firstVisit}>
+              <option value="">Not answered</option>
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+            </select>
+          </div>
+        {/if}
+      </div>
+    {/if}
     <div>
       <label class="label" for="st">Status</label>
       <select id="st" class="input" bind:value={form.status}>

@@ -4,6 +4,15 @@ Notable changes to the Repair Café Hub. Newest first.
 
 ## Unreleased
 
+### Added
+
+- **Two optional questions at check-in.** Under Settings, Check-in &
+  preferences, you can now ask for the item's weight, and whether this is the
+  visitor's first visit. Each has its own switch, and both are off by default.
+  The Statistics page shows the total weight of the items that were fixed, and
+  both answers are in the repairs export. Thanks to Florian Chazal of the
+  Repair Café in Villeneuve-Loubet (#7).
+
 ### Changed
 
 - **The maps no longer need a key.** The map of nearby cafes on the home page

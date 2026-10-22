@@ -67,6 +67,8 @@ export async function adminSettingsRoutes(app: App): Promise<void> {
       dataRetentionDays?: number;
       patTestingEnabled?: boolean;
       preRegistrationEnabled?: boolean;
+      weighItemsEnabled?: boolean;
+      askFirstVisitEnabled?: boolean;
     };
     const [cafe] = await db.select().from(cafes).limit(1);
     if (!cafe) {
@@ -79,6 +81,8 @@ export async function adminSettingsRoutes(app: App): Promise<void> {
     if (typeof body.dataRetentionDays === 'number' && body.dataRetentionDays > 0) update.dataRetentionDays = body.dataRetentionDays;
     if (typeof body.patTestingEnabled === 'boolean') update.patTestingEnabled = body.patTestingEnabled;
     if (typeof body.preRegistrationEnabled === 'boolean') update.preRegistrationEnabled = body.preRegistrationEnabled;
+    if (typeof body.weighItemsEnabled === 'boolean') update.weighItemsEnabled = body.weighItemsEnabled;
+    if (typeof body.askFirstVisitEnabled === 'boolean') update.askFirstVisitEnabled = body.askFirstVisitEnabled;
     const [updated] = await db.update(cafes).set(update).where(eq(cafes.id, cafe.id)).returning();
     await audit({
       request,

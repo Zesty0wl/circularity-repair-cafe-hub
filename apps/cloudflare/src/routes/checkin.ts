@@ -36,6 +36,8 @@ export async function checkInRoutes(app: App): Promise<void> {
         logoUrl: cafes.logoUrl,
         allowSkipPhoto: cafes.allowSkipPhoto,
         enableContactField: cafes.enableContactField,
+        weighItemsEnabled: cafes.weighItemsEnabled,
+        askFirstVisitEnabled: cafes.askFirstVisitEnabled,
         donateUrl: cafes.donateUrl,
       })
       .from(cafes)
@@ -59,7 +61,15 @@ export async function checkInRoutes(app: App): Promise<void> {
         name: found.venue.name,
         address: found.venue.address,
       },
-      cafe: cafe ?? { name: '', logoUrl: null, allowSkipPhoto: true, enableContactField: true, donateUrl: null },
+      cafe: cafe ?? {
+        name: '',
+        logoUrl: null,
+        allowSkipPhoto: true,
+        enableContactField: true,
+        weighItemsEnabled: false,
+        askFirstVisitEnabled: false,
+        donateUrl: null,
+      },
       categories: cats,
     };
   });

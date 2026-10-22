@@ -17,7 +17,15 @@
   interface CheckInData {
     event: { id: string; name: string; date: string; startTime: string; endTime: string; status: string };
     venue: { name: string; address: string | null };
-    cafe: { name: string; logoUrl: string | null; allowSkipPhoto: boolean; enableContactField: boolean; donateUrl: string | null };
+    cafe: {
+      name: string;
+      logoUrl: string | null;
+      allowSkipPhoto: boolean;
+      enableContactField: boolean;
+      weighItemsEnabled?: boolean;
+      askFirstVisitEnabled?: boolean;
+      donateUrl: string | null;
+    };
     categories: SkillCategory[];
   }
 
@@ -45,8 +53,11 @@
   let itemBrand = '';
   /** Item weight in kilograms, as typed. Empty means "not weighed". */
   let weightKg = '';
-  /** Whether the visitor says this is their first time at the cafe. */
-  let isFirstVisit = false;
+  /**
+   * Whether the visitor says this is their first time at the cafe. Null means
+   * they did not answer, which is not the same as "no".
+   */
+  let isFirstVisit: boolean | null = null;
   let itemCategoryId: string | null = null;
   /** Which kind of thing it is, so the CO2 saving can be looked up. */
   let co2FactorId: string | null = null;
@@ -239,9 +250,12 @@
     return `${window.location.origin}/track/${t}`;
   }
 
-  /** The typed weight as a number, or null when it was left empty. */
+  /**
+   * The typed weight as a number, or null when it was left empty. A comma
+   * works as the decimal mark too, so "1,5" and "1.5" are both 1.5 kg.
+   */
   function weightValue(): number | null {
-    const raw = String(weightKg).trim();
+    const raw = String(weightKg).trim().replace(',', '.');
     if (!raw) return null;
     const n = Number(raw);
     return Number.isFinite(n) && n >= 0 ? n : null;
@@ -261,8 +275,8 @@
         itemBrand: itemBrand.trim() || null,
         itemCategoryId,
         co2FactorId,
-        weightKg: weightValue(),
-        isFirstVisit,
+        weightKg: info?.cafe.weighItemsEnabled ? weightValue() : null,
+        isFirstVisit: info?.cafe.askFirstVisitEnabled ? isFirstVisit : null,
       };
       if (customerToken) {
         payload.customerToken = customerToken;
@@ -327,7 +341,7 @@
     faultDescription = '';
     itemBrand = '';
     weightKg = '';
-    isFirstVisit = false;
+    isFirstVisit = null;
     itemCategoryId = null;
     co2FactorId = null;
     createdJob = null;
@@ -345,7 +359,7 @@
     faultDescription = '';
     itemBrand = '';
     weightKg = '';
-    isFirstVisit = false;
+    isFirstVisit = null;
     itemCategoryId = null;
     co2FactorId = null;
     createdJob = null;
@@ -562,14 +576,29 @@
               <label class="label text-base" for="ib">Brand (optional)</label>
               <input id="ib" class="input text-lg py-4" maxlength="100" bind:value={itemBrand} />
             </div>
-            <div>
-              <label class="label text-base" for="wt">Weight in kg (optional)</label>
-              <input id="wt" type="text" inputmode="decimal" class="input text-lg py-4" placeholder="e.g. 1.5" bind:value={weightKg} />
-            </div>
-            <label class="flex items-center gap-3 text-base text-slate-700">
-              <input type="checkbox" class="h-5 w-5 rounded border-slate-300" bind:checked={isFirstVisit} />
-              <span>This is my first visit</span>
-            </label>
+            {#if info.cafe.weighItemsEnabled}
+              <div>
+                <label class="label text-base" for="wt">Weight in kg (optional)</label>
+                <input id="wt" type="text" inputmode="decimal" class="input text-lg py-4" placeholder="For example 1.5" bind:value={weightKg} />
+              </div>
+            {/if}
+            {#if info.cafe.askFirstVisitEnabled}
+              <fieldset>
+                <legend class="label text-base">Is this your first visit to us? (optional)</legend>
+                <div class="flex gap-2">
+                  {#each [[true, 'Yes'], [false, 'No']] as [value, text]}
+                    <button
+                      type="button"
+                      class="flex-1 rounded-xl py-3 text-base font-semibold ring-1 transition {isFirstVisit === value
+                        ? 'ring-2 ring-brand-600 bg-brand-50 text-brand-800'
+                        : 'ring-slate-200 bg-white text-slate-700 hover:bg-slate-50'}"
+                      aria-pressed={isFirstVisit === value}
+                      on:click={() => (isFirstVisit = isFirstVisit === value ? null : (value as boolean))}
+                    >{text}</button>
+                  {/each}
+                </div>
+              </fieldset>
+            {/if}
             <div>
               <label class="label text-base" for="fd">What's wrong with it?</label>
               <textarea id="fd" class="input text-lg py-4" rows="3" maxlength="500" placeholder="e.g. Won't turn on, battery seems dead" bind:value={faultDescription}></textarea>

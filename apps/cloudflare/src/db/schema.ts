@@ -173,6 +173,16 @@ export const cafes = sqliteTable('cafes', {
   patTestingEnabled: bool('pat_testing_enabled').notNull().default(false),
   /** Let visitors tell us about an item before the session. */
   preRegistrationEnabled: bool('pre_registration_enabled').notNull().default(false),
+  /** Ask for the item's weight at check-in. */
+  weighItemsEnabled: bool('weigh_items_enabled').notNull().default(false),
+  /** Ask whether this is the visitor's first visit. */
+  askFirstVisitEnabled: bool('ask_first_visit_enabled').notNull().default(false),
+  /** Ask the visitor at the exit whether they are satisfied. */
+  askSatisfactionEnabled: bool('ask_satisfaction_enabled').notNull().default(false),
+  /** Give each visitor a numbered card for the session. */
+  cardNumbersEnabled: bool('card_numbers_enabled').notNull().default(false),
+  /** The cafe's country for the ORDS export, as a 3-letter code such as GBR. */
+  ordsCountry: text('ords_country'),
   dataRetentionDays: integer('data_retention_days').notNull().default(365),
   createdAt: timestamp('created_at').notNull().$defaultFn(() => new Date()),
   updatedAt: timestamp('updated_at').notNull().$defaultFn(() => new Date()),

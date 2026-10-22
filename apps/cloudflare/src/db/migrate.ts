@@ -24,13 +24,17 @@ import m0002 from './migrations/0002_display_token.js';
 import m0003 from './migrations/0003_qwa_analytics.js';
 import m0004 from './migrations/0004_pat_and_preregistration.js';
 import m0004CheckinWeight from './migrations/0004_checkin_weight_first_visit.js';
+import m0007 from './migrations/0007_feature_switches.js';
 
 const MIGRATIONS: Array<{ id: string; sql: string }> = [
   { id: '0001_init', sql: m0001 },
   { id: '0002_display_token', sql: m0002 },
   { id: '0003_qwa_analytics', sql: m0003 },
   { id: '0004_pat_and_preregistration', sql: m0004 },
+  // Contributed from a cafe's own hub, which had already run it under this
+  // name. Keeping the name means that hub does not run it a second time.
   { id: '0004_checkin_weight_first_visit', sql: m0004CheckinWeight },
+  { id: '0007_feature_switches', sql: m0007 },
 ];
 
 /** Split a migration into statements. Our SQL never puts ";" inside a string. */

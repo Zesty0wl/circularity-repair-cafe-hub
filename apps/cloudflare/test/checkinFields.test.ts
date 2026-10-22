@@ -1,6 +1,7 @@
 // The optional check-in details: the item's weight, and whether the visitor is
 // new. Both are nullable and used for reporting (mass kept out of waste, new vs
-// returning visitors). See migrations/0004_checkin_weight_first_visit.ts.
+// returning visitors). See migrations/0004_checkin_weight_first_visit.ts, and
+// migrations/0007_feature_switches.ts for the switches that show them.
 import { beforeAll, describe, expect, it } from 'vitest';
 import { call, freshHub, setUpHub } from './helpers.js';
 
@@ -56,9 +57,46 @@ describe('check-in details', () => {
     expect(stored.body.job.weightKg).toBe('3.500');
     expect(stored.body.job.isFirstVisit).toBe(false);
 
-    const stats = await call('/api/admin/stats/overview', { token: admin });
+    // Only fixed items count towards the weight kept out of the bin.
+    let stats = await call('/api/admin/stats/overview', { token: admin });
     expect(stats.status).toBe(200);
-    expect(stats.body.totalWeightKg).toBeCloseTo(4.75, 2);
+    expect(stats.body.fixedWeightKg).toBe(0);
+    await call(`/api/admin/repairs/${job.body.id}`, { method: 'PATCH', token: admin, json: { status: 'completed' } });
+    stats = await call('/api/admin/stats/overview', { token: admin });
+    expect(stats.body.fixedWeightKg).toBeCloseTo(3.5, 2);
+  });
+
+  it('keeps "not answered" apart from "not a first visit"', async () => {
+    const job = await call(`/api/checkin/${checkInToken}/jobs`, {
+      json: { customerName: 'Sam Visitor', gdprConsent: true, itemDescription: 'Radio', faultDescription: 'Crackles' },
+    });
+    expect(job.status).toBe(200);
+    let stored = await call(`/api/admin/repairs/${job.body.id}`, { token: admin });
+    expect(stored.body.job.isFirstVisit).toBeNull();
+    // Saving the repair with no answer leaves it unanswered.
+    await call(`/api/admin/repairs/${job.body.id}`, { method: 'PATCH', token: admin, json: { isFirstVisit: null } });
+    stored = await call(`/api/admin/repairs/${job.body.id}`, { token: admin });
+    expect(stored.body.job.isFirstVisit).toBeNull();
+  });
+
+  it('starts with both questions switched off, and an admin can turn them on', async () => {
+    let profile = await call('/api/public/cafe');
+    expect(profile.body.weighItemsEnabled).toBe(false);
+    expect(profile.body.askFirstVisitEnabled).toBe(false);
+    let info = await call(`/api/checkin/${checkInToken}`);
+    expect(info.body.cafe.weighItemsEnabled).toBe(false);
+
+    const saved = await call('/api/admin/settings/preferences', {
+      method: 'PATCH',
+      token: admin,
+      json: { weighItemsEnabled: true, askFirstVisitEnabled: true },
+    });
+    expect(saved.status).toBe(200);
+    profile = await call('/api/public/cafe');
+    expect(profile.body.weighItemsEnabled).toBe(true);
+    expect(profile.body.askFirstVisitEnabled).toBe(true);
+    info = await call(`/api/checkin/${checkInToken}`);
+    expect(info.body.cafe.askFirstVisitEnabled).toBe(true);
   });
 
   it('refuses a negative weight', async () => {

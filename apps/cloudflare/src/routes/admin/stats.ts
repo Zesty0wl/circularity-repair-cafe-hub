@@ -48,7 +48,7 @@ export async function adminStatsRoutes(app: App): Promise<void> {
         COUNT(rj.id) FILTER (WHERE rj.status = 'returned') AS returned,
         COUNT(DISTINCT rj.repairer_id) FILTER (WHERE rj.repairer_id IS NOT NULL) AS repairer_count,
         COALESCE(SUM(rj.co2_saving_kg) FILTER (WHERE rj.status = 'completed'), 0) AS savings_kg,
-        COALESCE(SUM(rj.weight_kg), 0) AS weight_kg_total,
+        COALESCE(SUM(rj.weight_kg) FILTER (WHERE rj.status = 'completed'), 0) AS fixed_weight_kg,
         COALESCE(AVG(${DURATION_MIN})
                  FILTER (WHERE rj.accepted_at IS NOT NULL AND rj.completed_at IS NOT NULL), 0) AS avg_duration_min
       FROM events e
@@ -72,9 +72,9 @@ export async function adminStatsRoutes(app: App): Promise<void> {
       avgDurationMin: Math.round(Number(r.avg_duration_min ?? 0)),
       avgRepairsPerEvent: eventCount > 0 ? Math.round((repairCount / eventCount) * 10) / 10 : 0,
       environmentalSavingKg: Number(r.savings_kg ?? 0),
-      // Total weight of items recorded, in kilograms. Zero when no cafe using
-      // this hub weighs items.
-      totalWeightKg: Math.round(Number(r.weight_kg_total ?? 0) * 100) / 100,
+      // The weight of the items that were fixed, in kilograms: what was kept
+      // out of the bin. Zero when the cafe does not weigh items.
+      fixedWeightKg: Math.round(Number(r.fixed_weight_kg ?? 0) * 100) / 100,
     };
   });
 

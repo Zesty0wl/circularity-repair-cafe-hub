@@ -328,6 +328,8 @@
           dataRetentionDays: cafe.dataRetentionDays,
           patTestingEnabled: cafe.patTestingEnabled === true,
           preRegistrationEnabled: cafe.preRegistrationEnabled === true,
+          weighItemsEnabled: cafe.weighItemsEnabled === true,
+          askFirstVisitEnabled: cafe.askFirstVisitEnabled === true,
         },
       });
       // The menu and the public pages read these from the cafe profile.
@@ -1116,6 +1118,23 @@
         <p class="text-sm text-slate-600">
           The repair does not start until the item is checked in on the day. The visitor can check in by scanning the
           QR code, or a volunteer can do it on the "Check in a visitor" page. The repair time starts at check-in.
+        </p>
+      </section>
+
+      <section class="pt-4 border-t border-slate-200 space-y-2">
+        <h2 class="text-lg font-semibold">Extra questions at check-in</h2>
+        <label class="flex items-start gap-3">
+          <input type="checkbox" class="mt-1" bind:checked={cafe.weighItemsEnabled} />
+          <span>Ask for the item's weight</span>
+        </label>
+        <label class="flex items-start gap-3">
+          <input type="checkbox" class="mt-1" bind:checked={cafe.askFirstVisitEnabled} />
+          <span>Ask whether this is the visitor's first visit</span>
+        </label>
+        <p class="text-sm text-slate-600">
+          Each question appears on the visitor's check-in form and on the "Check in a visitor" page. Both are optional,
+          so nobody has to answer. The weight helps you report how much was kept out of the bin: the Statistics page
+          shows the total weight of the items that were fixed. Both answers are in the repairs export.
         </p>
       </section>
 

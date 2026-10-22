@@ -21,8 +21,8 @@
   let itemBrand = '';
   /** Item weight in kilograms, as typed. Empty means "not weighed". */
   let weightKg = '';
-  /** Whether this is the customer's first visit. */
-  let isFirstVisit = false;
+  /** Whether this is the visitor's first visit. Null means not asked or not answered. */
+  let isFirstVisit: boolean | null = null;
   let faultDescription = '';
   // Customer (all optional for a walk-in)
   let customerName = '';
@@ -122,9 +122,12 @@
     }
   });
 
-  /** The typed weight as a number, or null when it was left empty. */
+  /**
+   * The typed weight as a number, or null when it was left empty. A comma
+   * works as the decimal mark too, so "1,5" and "1.5" are both 1.5 kg.
+   */
   function weightValue(): number | null {
-    const raw = String(weightKg).trim();
+    const raw = String(weightKg).trim().replace(',', '.');
     if (!raw) return null;
     const n = Number(raw);
     return Number.isFinite(n) && n >= 0 ? n : null;
@@ -144,8 +147,8 @@
         faultDescription: faultDescription.trim(),
         itemBrand: itemBrand.trim() || null,
         itemCategoryId,
-        weightKg: weightValue(),
-        isFirstVisit,
+        weightKg: $cafe?.weighItemsEnabled ? weightValue() : null,
+        isFirstVisit: $cafe?.askFirstVisitEnabled ? isFirstVisit : null,
         customerName: customerName.trim() || null,
         customerContact: customerContact.trim() || null,
         gdprConsent: hasPii ? consent : false,
@@ -176,7 +179,7 @@
     itemDescription = '';
     itemBrand = '';
     weightKg = '';
-    isFirstVisit = false;
+    isFirstVisit = null;
     faultDescription = '';
     customerName = '';
     customerContact = '';
@@ -301,15 +304,30 @@
         <input id="brand" class="input" maxlength="100" bind:value={itemBrand} />
       </div>
 
-      <div>
-        <label class="label" for="weight">Weight in kg <span class="font-normal text-slate-400">(optional)</span></label>
-        <input id="weight" type="text" inputmode="decimal" class="input" placeholder="e.g. 1.5" bind:value={weightKg} />
-      </div>
+      {#if $cafe?.weighItemsEnabled}
+        <div>
+          <label class="label" for="weight">Weight in kg <span class="font-normal text-slate-400">(optional)</span></label>
+          <input id="weight" type="text" inputmode="decimal" class="input" placeholder="For example 1.5" bind:value={weightKg} />
+        </div>
+      {/if}
 
-      <label class="flex items-center gap-3 cursor-pointer text-sm text-slate-700">
-        <input type="checkbox" class="h-5 w-5 rounded border-slate-300 text-brand-600" bind:checked={isFirstVisit} />
-        <span>This is the customer's first visit</span>
-      </label>
+      {#if $cafe?.askFirstVisitEnabled}
+        <fieldset>
+          <legend class="label">Is this their first visit? <span class="font-normal text-slate-400">(optional)</span></legend>
+          <div class="flex gap-2">
+            {#each [[true, 'Yes'], [false, 'No']] as [value, text]}
+              <button
+                type="button"
+                class="flex-1 rounded-lg py-2 text-sm font-semibold ring-1 transition {isFirstVisit === value
+                  ? 'ring-2 ring-brand-600 bg-brand-50 text-brand-800'
+                  : 'ring-slate-200 bg-white text-slate-700 hover:bg-slate-50'}"
+                aria-pressed={isFirstVisit === value}
+                on:click={() => (isFirstVisit = isFirstVisit === value ? null : (value as boolean))}
+              >{text}</button>
+            {/each}
+          </div>
+        </fieldset>
+      {/if}
 
       <div>
         <label class="label" for="fault">What's wrong with it?</label>

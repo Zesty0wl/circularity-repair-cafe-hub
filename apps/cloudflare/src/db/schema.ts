@@ -163,6 +163,8 @@ export const cafes = sqliteTable('cafes', {
   telemetryLevel: text('telemetry_level').notNull().default('none'),
   telemetryInstallId: uuid('telemetry_install_id'),
   telemetryToken: text('telemetry_token'),
+  /** This hub's own secret for the collector. Only its hash is ever published. */
+  telemetryClaim: text('telemetry_claim'),
   telemetryLastSentAt: timestamp('telemetry_last_sent_at'),
   telemetryDecidedAt: timestamp('telemetry_decided_at'),
   telemetryPromptedVersion: text('telemetry_prompted_version'),

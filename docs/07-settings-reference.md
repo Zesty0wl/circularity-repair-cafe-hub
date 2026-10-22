@@ -357,6 +357,17 @@ time.
 The summary goes once a day and always carries running totals, so a session
 offline changes nothing: the next message carries the full picture.
 
+To check your hub is real, the project reads `/api/public/telemetry` on your
+own web address. Only the figures it reads there are published, never the ones
+in the message. On the map you appear with the name your site shows, a link to
+your site, and a pin from your repaircafe.org listing (set it under Cafe
+profile).
+
+Your hub also makes a secret of its own and sends it with each message. Only a
+scrambled version of it (a hash) appears on `/api/public/telemetry`. This stops
+anybody who copies your hub's details from pretending to be you. If that ever
+happened, your hub would take its place back by itself.
+
 Someone running this server can rule it out entirely with `TELEMETRY_DISABLED=true`
 in the environment, in which case this tab says so and the choices do nothing.
 

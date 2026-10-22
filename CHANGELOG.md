@@ -2,6 +2,18 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
+## 1.13.2 (22 October 2026)
+
+### Security
+
+- **Nobody can pass as your hub on the community map.** Your hub's install
+  id is public, because the project reads it from your site to check your hub
+  is real. Somebody could copy it and register as your hub before it did, then
+  show your cafe on the map with their own link and lock your hub out. Your hub
+  now makes a secret of its own, sends it with each message, and publishes only
+  its hash. The project, from collector 3.2.0, refuses anybody whose secret does
+  not match, and your hub takes its place back by itself if it is ever refused.
+
 ## 1.13.1 (22 October 2026)
 
 ### Security

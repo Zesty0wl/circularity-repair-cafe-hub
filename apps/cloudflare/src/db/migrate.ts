@@ -29,6 +29,7 @@ import m0006 from './migrations/0006_session_card_number.js';
 import m0007 from './migrations/0007_feature_switches.js';
 import m0008 from './migrations/0008_repaircafe_listing_prompt.js';
 import m0009 from './migrations/0009_setup_done_marker.js';
+import m0010 from './migrations/0010_telemetry_claim.js';
 
 const MIGRATIONS: Array<{ id: string; sql: string }> = [
   { id: '0001_init', sql: m0001 },
@@ -43,6 +44,7 @@ const MIGRATIONS: Array<{ id: string; sql: string }> = [
   { id: '0007_feature_switches', sql: m0007 },
   { id: '0008_repaircafe_listing_prompt', sql: m0008 },
   { id: '0009_setup_done_marker', sql: m0009 },
+  { id: '0010_telemetry_claim', sql: m0010 },
 ];
 
 /** Split a migration into statements. Our SQL never puts ";" inside a string. */

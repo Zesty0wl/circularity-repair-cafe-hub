@@ -24,9 +24,10 @@
 // =============================================================================
 import { db, execute } from '../db/index.js';
 import { cafes } from '../db/schema.js';
-import { eq, sql } from 'drizzle-orm';
+import { eq, sql, and, isNull } from 'drizzle-orm';
 import { env } from '../env.js';
 import { APP_VERSION } from '../version.js';
+import { randomToken } from '../lib/crypto.js';
 import { activeAnalytics } from '@circularity/shared';
 
 /** What a cafe agreed to. */
@@ -68,6 +69,8 @@ export interface TelemetryPayload {
     name?: string | null;
     publicUrl?: string | null;
   };
+  /** This hub's claim secret. See telemetryClaim(). */
+  claim?: string;
 }
 
 /** The telemetry settings, or null when this install has no cafe row yet. */
@@ -125,6 +128,30 @@ export function shouldPrompt(state: {
   if (state.disabledByEnv) return false;
   if (state.level !== 'none') return false;
   return state.promptedVersion !== APP_VERSION;
+}
+
+/**
+ * This hub's claim secret, made the first time it is needed.
+ *
+ * The install id is public, so it cannot prove which hub is which. The secret
+ * can: we send it to the collector with each ping, and publish only its hash
+ * on /api/public/telemetry. Somebody who copies the id cannot make a site
+ * that shows the same hash, and if they claim our id first, the collector
+ * gives it back to us when we show the secret. It travels with backups, so a
+ * hub moved to a new account keeps it.
+ */
+export async function telemetryClaim(): Promise<string | null> {
+  const [cafe] = await db.select({ id: cafes.id, claim: cafes.telemetryClaim }).from(cafes).limit(1);
+  if (!cafe) return null;
+  if (cafe.claim) return cafe.claim;
+  const claim = randomToken(32);
+  // Only fill it in if it is still empty, in case two requests got here at once.
+  await db
+    .update(cafes)
+    .set({ telemetryClaim: claim })
+    .where(and(eq(cafes.id, cafe.id), isNull(cafes.telemetryClaim)));
+  const [saved] = await db.select({ claim: cafes.telemetryClaim }).from(cafes).limit(1);
+  return saved?.claim ?? claim;
 }
 
 /**
@@ -239,6 +266,7 @@ export async function buildPayload(level: 'standard' | 'community'): Promise<Tel
             publicUrl: cafe.publicUrl || null,
           }
         : null,
+    claim: (await telemetryClaim()) ?? undefined,
   };
 }
 
@@ -274,19 +302,29 @@ export async function sendTelemetry(options: { force?: boolean } = {}): Promise<
     const payload = await buildPayload(state.level as 'standard' | 'community');
     if (!payload) return { ok: false, skipped: 'no_cafe' };
 
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      'User-Agent': USER_AGENT,
+    const post = (token: string | null) => {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'User-Agent': USER_AGENT,
+      };
+      if (token) headers.Authorization = `Bearer ${token}`;
+      return fetch(`${env.TELEMETRY_ENDPOINT.replace(/\/+$/, '')}/api/v1/ping`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(SEND_TIMEOUT_MS),
+      });
     };
-    if (state.token) headers.Authorization = `Bearer ${state.token}`;
 
-    const res = await fetch(`${env.TELEMETRY_ENDPOINT.replace(/\/+$/, '')}/api/v1/ping`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(SEND_TIMEOUT_MS),
-    });
+    let res = await post(state.token);
+    // Refused with our token: the collector forgot us, or somebody else
+    // claimed our id. Our claim secret, in the payload, lets us take it back,
+    // so forget the old token and ask once more without it.
+    if (res.status === 401 && state.token) {
+      await db.update(cafes).set({ telemetryToken: null, telemetryVerified: null });
+      res = await post(null);
+    }
 
     if (!res.ok) return { ok: false, status: res.status, error: `collector responded ${res.status}` };
 

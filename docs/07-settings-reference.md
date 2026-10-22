@@ -129,6 +129,7 @@ Three controls that change the customer check-in flow.
 | Pre-registration                  | Off by default. When it is on, visitors can tell you about an item before a session. See below. |
 | Ask for the item's weight         | Off by default. Adds an optional weight field to check-in. See below. |
 | Ask whether this is the visitor's first visit | Off by default. Adds an optional Yes or No question to check-in. See below. |
+| Ask visitors if they are satisfied | Off by default. Adds a question to a finished repair's page, for when the visitor collects their item. See below. |
 
 **Save preferences** commits this tab.
 
@@ -173,6 +174,23 @@ check-in form and on the **Check in a visitor** page. Nobody has to answer.
 
 Admins can change both answers on a repair's page. Both are in the CSV export,
 as `weightKg` and `isFirstVisit`.
+
+### Question at the exit
+
+When you turn on **Ask visitors if they are satisfied when they collect their
+item**, a finished repair's page has two buttons, **Satisfied** and **Not
+satisfied**, and a box for a comment. Any volunteer can record the answer, so
+the person at the door does not have to be the repairer who did the work. A
+wrong answer can be changed or cleared.
+
+The **Statistics** page shows the share of visitors who said they were
+satisfied, counting only the visitors who answered. Admins can change the
+answer on a repair's page, and the CSV export has `satisfaction` and
+`satisfactionComment` columns.
+
+People often put a name or a phone number in a comment. So the comment is
+removed with the visitor's other personal details at the end of the data
+retention period. The answer itself stays, for the statistics.
 
 ### Pre-registration
 

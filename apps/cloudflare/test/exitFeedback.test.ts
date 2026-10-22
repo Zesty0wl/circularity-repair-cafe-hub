@@ -1,5 +1,6 @@
 // The visitor's verdict at the exit: recorded by a volunteer on the job, and
 // counted in the stats. See migrations/0005_exit_satisfaction.ts.
+import { env } from 'cloudflare:workers';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { call, freshHub, setUpHub } from './helpers.js';
 
@@ -34,6 +35,16 @@ describe('exit satisfaction', () => {
 
     await call(`/api/repairer/jobs/${jobId}/accept`, { method: 'PATCH', token: repairer });
     await call(`/api/repairer/jobs/${jobId}/complete`, { method: 'PATCH', token: repairer, json: { outcome: 'completed' } });
+
+    // The question starts switched off, and the route says so.
+    const off = await call(`/api/repairer/jobs/${jobId}/feedback`, {
+      method: 'PATCH',
+      token: repairer,
+      json: { satisfaction: 'satisfied' },
+    });
+    expect(off.status).toBe(404);
+    expect(off.body.code).toBe('feedback/off');
+    await call('/api/admin/settings/preferences', { method: 'PATCH', token: admin, json: { askSatisfactionEnabled: true } });
 
     // Nobody has answered yet, so the rate is null, not a misleading zero.
     let stats = await call('/api/admin/stats/overview', { token: admin });
@@ -75,5 +86,26 @@ describe('exit satisfaction', () => {
       json: { satisfaction: null },
     });
     expect(cleared.body.satisfaction).toBeNull();
+  });
+
+  it('removes the comment with the other personal details when they expire', async () => {
+    await call(`/api/repairer/jobs/${jobId}/feedback`, {
+      method: 'PATCH',
+      token: repairer,
+      json: { satisfaction: 'satisfied', satisfactionComment: 'Thanks, call me on 07700 900123' },
+    });
+    const db = (env as unknown as { DB: D1Database }).DB;
+    await db.prepare("UPDATE repair_jobs SET data_retention_date = '2000-01-01' WHERE id = ?").bind(jobId).run();
+
+    const res = await call('/api/admin/repairs/purge-expired-pii', { method: 'POST', token: admin });
+    expect(res.status).toBe(200);
+    const row = await db
+      .prepare('SELECT customer_name, satisfaction, satisfaction_comment FROM repair_jobs WHERE id = ?')
+      .bind(jobId)
+      .first<{ customer_name: string | null; satisfaction: string | null; satisfaction_comment: string | null }>();
+    expect(row?.customer_name).toBeNull();
+    expect(row?.satisfaction_comment).toBeNull();
+    // The answer itself is not personal, so it stays for the statistics.
+    expect(row?.satisfaction).toBe('satisfied');
   });
 });

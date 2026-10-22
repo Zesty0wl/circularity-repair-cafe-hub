@@ -12,6 +12,12 @@ Notable changes to the Repair Café Hub. Newest first.
   The Statistics page shows the total weight of the items that were fixed, and
   both answers are in the repairs export. Thanks to Florian Chazal of the
   Repair Café in Villeneuve-Loubet (#7).
+- **A question at the exit.** A new switch under Settings, Check-in &
+  preferences. When it is on, a volunteer can record whether the visitor was
+  satisfied when they collected their item, with an optional comment. The
+  Statistics page shows the share who were satisfied. The comment is removed
+  with the visitor's other personal details. Off by default. Thanks again to
+  Florian Chazal (#8).
 
 ### Changed
 

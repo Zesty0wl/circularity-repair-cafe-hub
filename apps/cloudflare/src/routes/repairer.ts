@@ -621,6 +621,10 @@ export async function repairerRoutes(app: App): Promise<void> {
   app.patch('/api/repairer/jobs/:id/feedback', async (request, reply) => {
     const { id } = request.params as { id: string };
     const me = request.auth!;
+    if (!(await cafeFeatures()).askSatisfactionEnabled) {
+      reply.code(404).send({ error: 'The exit question is switched off', code: 'feedback/off' });
+      return;
+    }
     const parsed = jobFeedbackSchema.safeParse(request.body);
     if (!parsed.success) {
       reply.code(400).send({ error: 'Validation failed', code: 'validation/failed', details: parsed.error.flatten() });

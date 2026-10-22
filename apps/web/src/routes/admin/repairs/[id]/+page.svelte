@@ -270,6 +270,7 @@
         <option value="awaiting_return">Awaiting return</option>
       </select>
     </div>
+    {#if $cafe?.askSatisfactionEnabled || form.satisfaction !== '' || form.satisfactionComment !== ''}
     <div class="grid sm:grid-cols-2 gap-3">
       <div>
         <label class="label" for="sat">Satisfaction</label>
@@ -281,6 +282,7 @@
       </div>
       <div><label class="label" for="satc">Comment</label><input id="satc" class="input" maxlength="500" bind:value={form.satisfactionComment} /></div>
     </div>
+    {/if}
     <div class="flex justify-end"><button class="btn-primary" on:click={save} disabled={busy}>Save</button></div>
   </div>
 

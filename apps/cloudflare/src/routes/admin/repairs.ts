@@ -256,16 +256,17 @@ export async function adminRepairsRoutes(app: App): Promise<void> {
   // GDPR PII purge
   //
   // Covers every place a visitor's name or contact detail is written down, not
-  // just repairs. A Linux install records the same details for the same
+  // just repairs. The visitor's comment at the exit goes too, because people
+  // often put a name or a phone number in it. A Linux install records the same details for the same
   // reason, so it has to be forgotten on the same day.
   app.post('/api/admin/repairs/purge-expired-pii', async (request) => {
     const me = request.auth!;
     const today = localToday();
     const now = Date.now();
     const result = await db.run(sql`
-      UPDATE repair_jobs SET customer_name = NULL, customer_contact = NULL, updated_at = ${now}
+      UPDATE repair_jobs SET customer_name = NULL, customer_contact = NULL, satisfaction_comment = NULL, updated_at = ${now}
       WHERE data_retention_date IS NOT NULL AND data_retention_date < ${today}
-      AND (customer_name IS NOT NULL OR customer_contact IS NOT NULL)
+      AND (customer_name IS NOT NULL OR customer_contact IS NOT NULL OR satisfaction_comment IS NOT NULL)
     `);
     const linuxResult = await db.run(sql`
       UPDATE linux_installs SET customer_name = NULL, customer_contact = NULL, updated_at = ${now}

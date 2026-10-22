@@ -19,6 +19,7 @@
   import { onMount } from 'svelte';
   import { api } from '$lib/api';
   import { auth } from '$lib/stores/auth';
+  import { cafe } from '$lib/stores/cafe';
   import CameraCapture from '$lib/components/CameraCapture.svelte';
   import PatBadge from '$lib/components/PatBadge.svelte';
   import { clockTime, firstName, minutesBetween, statusLabel, formatDuration } from '$lib/staff/queue';
@@ -509,6 +510,7 @@
             <p class="text-sm flex items-center gap-2 flex-wrap"><PatBadge result={pat.result} /> <span class="text-slate-600">{#if pat.testedByName}by {pat.testedByName}{/if}{#if pat.testedAt} at {clockTime(pat.testedAt)}{/if}</span></p>
             {#if pat.notes}<p class="text-sm text-slate-700">{pat.notes}</p>{/if}
           {/if}
+          {#if $cafe?.askSatisfactionEnabled}
           <div class="pt-3 mt-1 border-t border-slate-100">
             <p class="text-sm font-medium text-slate-700">At the exit, was the visitor satisfied?</p>
             <div class="mt-2 flex flex-wrap items-center gap-2">
@@ -530,6 +532,7 @@
             </div>
             <input class="input mt-3" maxlength="500" placeholder="Comment (optional)" bind:value={satisfactionComment} on:change={() => satisfaction && saveFeedback(satisfaction)} />
           </div>
+          {/if}
         </section>
       {/if}
       {#if error && !isMine}<p class="text-sm text-rose-700">{error}</p>{/if}

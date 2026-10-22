@@ -67,6 +67,8 @@ export interface CafeInfo {
   weighItemsEnabled?: boolean;
   /** Ask whether this is the visitor's first visit. Off unless an admin turns it on. */
   askFirstVisitEnabled?: boolean;
+  /** Ask the visitor at the exit if they are satisfied. Off unless an admin turns it on. */
+  askSatisfactionEnabled?: boolean;
   gallery: GalleryImage[];
   primaryColor: string | null;
   accentColor: string | null;

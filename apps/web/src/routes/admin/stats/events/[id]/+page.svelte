@@ -47,6 +47,8 @@
       status: Status;
       environmentalSavingKg: number | null;
       durationMin: number | null;
+      /** Finished, but not within one sitting, so it has no repair time. */
+      finishedLater?: boolean;
       repairerName: string | null;
       categoryName: string | null;
       categoryIcon: string | null;
@@ -274,7 +276,13 @@
                     {statusLabel(j.status)}
                   </span>
                 </td>
-                <td class="px-3 py-2 text-right text-slate-600 whitespace-nowrap">{fmtDuration(j.durationMin)}</td>
+                <td class="px-3 py-2 text-right text-slate-600 whitespace-nowrap">
+                  {#if j.finishedLater}
+                    <span title="This repair took 4 hours or more, so it was most likely finished after the session. Its time is left out of the averages.">Finished later</span>
+                  {:else}
+                    {fmtDuration(j.durationMin)}
+                  {/if}
+                </td>
               </tr>
             {/each}
           </tbody>

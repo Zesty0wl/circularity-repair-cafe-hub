@@ -3,6 +3,7 @@ import { db, inList } from '../../db/index.js';
 import { localToday } from '../../lib/dates.js';
 import { events, repairImages, repairJobs, skillCategories, users } from '../../db/schema.js';
 import { and, asc, desc, eq, sql } from 'drizzle-orm';
+import { isBenchTime } from '@circularity/shared';
 
 /**
  * Live "kiosk" board endpoint — returns the jobs that should appear on the
@@ -126,7 +127,7 @@ export async function adminBoardRoutes(app: App): Promise<void> {
       const durations = all
         .filter((r) => r.acceptedAt && r.completedAt)
         .map((r) => new Date(r.completedAt!).getTime() - new Date(r.acceptedAt!).getTime())
-        .filter((ms) => ms > 0 && ms < 4 * 60 * 60 * 1000);
+        .filter((ms) => isBenchTime(ms / 60_000));
       today = {
         checkedIn: all.length,
         fixed: fixed.length,

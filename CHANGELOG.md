@@ -4,6 +4,15 @@ Notable changes to the Repair Café Hub. Newest first.
 
 ## Unreleased
 
+### Fixed
+
+- **Average repair times on the Statistics page.** A repair that was taken on
+  at one session and only marked as finished at the next one counted the weeks
+  in between. One such repair turned a session's average of 83 minutes into
+  420 hours. Statistics now leave out any repair that took 4 hours or more, the
+  same rule the live board already used, and the session's page shows it as
+  "Finished later".
+
 ### Added
 
 - **Find your cafe on repaircafe.org.** The setup wizard now asks which

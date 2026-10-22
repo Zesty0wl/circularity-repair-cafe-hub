@@ -86,12 +86,6 @@ export interface CafeInfo {
   qwaSrc?: string | null;
   /** The QWA events this cafe counts. */
   qwaEvents?: QwaEventKey[];
-  /**
-   * The cafe's key for CARTO's free map tiles, or null while there is none.
-   * Without it the maps still draw, but every tile carries an "API key
-   * required" watermark.
-   */
-  cartoApiKey: string | null;
   /** Slug of this cafe's own listing on repaircafe.org, when it has one. */
   repaircafeSlug: string | null;
   // Hash of the branding the home screen icons are built from. Used to point

@@ -117,7 +117,6 @@
             {cafes}
             {ours}
             {selected}
-            cartoApiKey={$cafe?.cartoApiKey ?? null}
             on:select={(e) => choose(e.detail)}
           />
 
@@ -360,21 +359,20 @@
     slightly fewer than the total. The map is drawn with
     <a
       class="underline underline-offset-2 hover:text-slate-700"
-      href="https://leafletjs.com/"
+      href="https://maplibre.org/"
       target="_blank"
       rel="noopener"
-    >Leaflet</a>, and its tiles are
-    &copy; <a
+    >MapLibre</a> with free tiles from <a
+      class="underline underline-offset-2 hover:text-slate-700"
+      href="https://openfreemap.org/"
+      target="_blank"
+      rel="noopener"
+    >OpenFreeMap</a>. Map data &copy; <a
       class="underline underline-offset-2 hover:text-slate-700"
       href="https://www.openstreetmap.org/copyright"
       target="_blank"
       rel="noopener"
-    >OpenStreetMap</a> contributors, &copy; <a
-      class="underline underline-offset-2 hover:text-slate-700"
-      href="https://carto.com/attributions"
-      target="_blank"
-      rel="noopener"
-    >CARTO</a>.
+    >OpenStreetMap</a> contributors.
   </p>
 </section>
 
@@ -413,13 +411,12 @@
   .map-tools {
     position: absolute;
     pointer-events: none;
-    /* Above Leaflet's own controls, which sit in the same corners. */
+    /* Above the map's own controls, which sit in the same corners. */
     z-index: 2;
   }
   .map-counts {
     left: 1rem;
-    /* Clear of Leaflet's credit, which on a narrow screen is a bar across the
-       whole width of the map. */
+    /* Clear of the map's credit line in the bottom corner. */
     bottom: 1.6rem;
     padding: 0.35rem 0.6rem;
     border-radius: 0.6rem;

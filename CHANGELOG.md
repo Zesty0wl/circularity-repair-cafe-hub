@@ -2,6 +2,19 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
+## Unreleased
+
+### Changed
+
+- **The maps no longer need a key.** The map of nearby cafes on the home page
+  and the Worldwide map now use free map tiles from
+  [OpenFreeMap](https://openfreemap.org/), drawn with MapLibre GL. OpenFreeMap
+  needs no key, no account and no sign-up, so the maps work as soon as the hub
+  is installed, with no "API key required" watermark.
+- The Maps tab under Settings has gone, because there is nothing left to set
+  up. A CARTO key saved there before is no longer used. The database keeps the
+  old column, so older backups still load.
+
 ## 1.12.1 (15 October 2026)
 
 ### Fixed

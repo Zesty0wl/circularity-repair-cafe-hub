@@ -34,6 +34,8 @@ export interface Bindings {
   REFRESH_TOKEN_DAYS?: string;
   DATA_RETENTION_DEFAULT_DAYS?: string;
   EVENT_GENERATION_MONTHS?: string;
+  /** The language to show: 'auto' (the browser's), 'en' or 'fr'. Optional. */
+  LANGUAGE?: string;
 }
 
 export function bindings(): Bindings {
@@ -87,5 +89,10 @@ export const env = {
   },
   get EVENT_GENERATION_MONTHS(): number {
     return positiveInt(bindings().EVENT_GENERATION_MONTHS, 12);
+  },
+  /** The language to show. 'auto' follows the browser; otherwise 'en' or 'fr'. */
+  get LANGUAGE(): string {
+    const value = bindings().LANGUAGE?.trim().toLowerCase();
+    return value === 'en' || value === 'fr' ? value : 'auto';
   },
 };

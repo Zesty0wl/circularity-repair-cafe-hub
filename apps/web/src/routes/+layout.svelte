@@ -16,6 +16,7 @@
   import InstallPrompt from '$lib/components/InstallPrompt.svelte';
   import { serializeJsonLd, shortAppName, type PageSeo } from '@circularity/shared';
   import { track, trackPageview } from '$lib/analytics';
+  import { setLocale, type Locale } from '$lib/i18n';
   import type { LayoutData } from './$types';
   import DemoBanner from '$lib/components/DemoBanner.svelte';
 
@@ -32,6 +33,7 @@
   // (see onMount) so it can never leak between SSR requests.
   $: cafe.set(data.cafe);
   $: setupCompleted.set(data.setupCompleted);
+  $: setLocale((data.locale ?? 'en') as Locale);
 
   // Re-theme the UI whenever the cafe's branding changes. Unset colours/fonts
   // fall back to the Circularity defaults declared in app.css. Guarded to the

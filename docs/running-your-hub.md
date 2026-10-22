@@ -91,7 +91,7 @@ fine.
 detail on each.
 
 1. **Install the tools,** if this computer does not have them yet: Git and
-   Node.js 22 or newer (install guide, Step 5), then pnpm (Step 6). Open a new
+   Node.js 22 or newer (install guide, Step 4), then pnpm (Step 5). Open a new
    terminal afterwards.
 2. **Download the hub:**
 

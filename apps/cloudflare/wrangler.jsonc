@@ -22,12 +22,13 @@
     "binding": "ASSETS"
   },
 
-  // The cafe's own web address is not set here, so this file works for any
-  // cafe. Pass it the first time you publish instead:
-  //   pnpm cf:deploy -- --domain repair.example.org
-  // Cloudflare then creates the DNS record and the HTTPS certificate. The
-  // domain must already be on your Cloudflare account. Until then the hub is
-  // also reachable at <name>.<your-subdomain>.workers.dev.
+  // A new hub runs at <name>.<your-subdomain>.workers.dev, so it needs no
+  // domain. A cafe's own web address is not set here, so this file works for
+  // any cafe. To add one later, add a custom domain in the dashboard, or pass
+  // it once when you publish:
+  //   pnpm cf:deploy --domain repair.example.org
+  // The domain must already be on your Cloudflare account. See "Later: add
+  // your own web address" in docs/install.md.
   "workers_dev": true,
 
   // The database and the file bucket. No ids are written here: the first

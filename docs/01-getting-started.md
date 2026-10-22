@@ -6,7 +6,7 @@ about ten minutes.
 ## Before you start
 
 You need a hub that has been published to Cloudflare. If you don't have one
-yet, follow the [install guide](./install.md) up to Step 10. Then open your
+yet, follow the [install guide](./install.md) up to Step 9. Then open your
 hub's web address in a browser.
 
 ## The setup wizard

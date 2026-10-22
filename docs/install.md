@@ -4,23 +4,30 @@ This guide takes you from nothing to a working repair cafe website. You do not
 need to know how to program. You will copy a few commands into a window on your
 computer, and click through some Cloudflare pages.
 
-**How long it takes:** about an hour the first time. Most of that is waiting
-for things to download, or for your domain to move to Cloudflare.
+**How long it takes:** about 45 minutes the first time. Most of that is waiting
+for things to download.
 
-**What it costs:** nothing. Everything runs on Cloudflare's free plan. A domain
-name costs money (usually £5 to £15 a year), but you can try the hub without
-one.
+**What it costs:** nothing. Everything runs on Cloudflare's free plan.
+
+**What you need from anyone else:** only a free Cloudflare account. You do not
+need a domain name. You do not change anything about your cafe's existing
+website or email.
 
 ## What you will end up with
 
-- Your cafe's own website, for example `https://repair.yourcafe.org`, with a
-  padlock (HTTPS).
+- Your cafe's own website, at a free address such as
+  `https://repair-cafe-hub.yourcafe.workers.dev`, with a padlock (HTTPS).
 - Visitors can check in their broken items by scanning a QR code with their
   phone.
 - Volunteers have a repair queue, and admins have reports, a live board and a
   screen for the waiting area.
 - Nothing to look after afterwards. There is no server, and nothing to switch
   on or keep running. Cloudflare runs it.
+
+Later, if you want, you can give your hub your own address, such as
+`https://repair.yourcafe.org`. You do not have to, and you do not need to
+decide now. [Later: add your own web address](#later-add-your-own-web-address),
+at the end of this guide, explains how.
 
 ## What you need
 
@@ -34,10 +41,6 @@ Tick these off before you start.
       storage. You will not be charged: a repair cafe uses far less than the
       free allowance. If you cannot add a card, ask someone in your group who
       can.
-- [ ] **A domain name**, such as `yourcafe.org`. This is optional. You can
-      start without one, and add it later. If you already have one for your
-      cafe, you can use a part of it, such as `repair.yourcafe.org`, and leave
-      your existing website alone.
 
 You will install three free programs during the guide: Git, Node.js and pnpm.
 
@@ -50,10 +53,8 @@ node --version
 ```
 
 You type it (or copy and paste it) into a **terminal**, then press Enter. A
-terminal is a window where you type commands instead of clicking. Step 4 shows
+terminal is a window where you type commands instead of clicking. Step 3 shows
 you how to open one.
-
-Wherever you see `repair.example.org`, put your own web address instead.
 
 ---
 
@@ -65,49 +66,15 @@ Wherever you see `repair.example.org`, put your own web address instead.
    cafe's website.
 3. Cloudflare sends you an email. Open it and click the link to confirm your
    address.
-4. If Cloudflare asks what you want to do first, you can skip it.
+4. If Cloudflare asks what you want to do first, or asks you to add a domain,
+   you can skip it.
 
 Your account is free. You do not need to choose a paid plan at any point.
 
 **Tip:** in your Cloudflare profile, turn on two-factor authentication. It
 stops someone who guesses your password from taking over your website.
 
-## Step 2. Put your domain on Cloudflare (optional)
-
-Skip this step if you do not have a domain yet. Your hub will get a free
-address ending in `workers.dev`, and you can come back to this step later.
-
-Cloudflare can only give your hub a web address on a domain that it looks
-after. So your domain has to be added to your Cloudflare account. This is the
-step people get wrong most often, so take it slowly.
-
-**If you do not have a domain yet** and want one, you can buy it from
-Cloudflare: in the dashboard, choose **Domain Registration**, then **Register
-Domains**. A domain bought there is already on Cloudflare, so skip to Step 3.
-
-**If you already have a domain** with another company (such as GoDaddy, 123
-Reg, Namecheap or IONOS):
-
-1. In the Cloudflare dashboard, choose **Add a domain** (it may say **Add a
-   site**).
-2. Type your domain without `www`, for example `yourcafe.org`, and continue.
-3. Choose the **Free** plan.
-4. Cloudflare looks for your existing settings and shows them. Check that your
-   current website and email are in the list, then continue. This keeps them
-   working.
-5. Cloudflare shows you **two nameservers**. They look like
-   `ada.ns.cloudflare.com` and `bob.ns.cloudflare.com`. Keep this page open.
-6. In another browser tab, sign in to the company where you bought the
-   domain. Find the nameserver settings for your domain. They are often under
-   "DNS" or "Nameservers".
-7. Replace the nameservers there with the two from Cloudflare. Save.
-8. Go back to Cloudflare and click **Check nameservers**.
-
-Cloudflare emails you when your domain is active. This usually takes less than
-an hour, but it can take up to a day. You can carry on with Steps 3 to 8 while
-you wait. You only need the domain to be active in Step 9.
-
-## Step 3. Switch on photo storage
+## Step 2. Switch on photo storage
 
 The hub keeps photos in a Cloudflare service called **R2**. It has to be
 switched on once.
@@ -122,7 +89,7 @@ switched on once.
 You do not need to create anything inside R2. The hub creates what it needs in
 Step 9.
 
-## Step 4. Open a terminal
+## Step 3. Open a terminal
 
 You will use the terminal for the rest of the guide.
 
@@ -139,7 +106,7 @@ Leave the terminal open. When a step says "close the terminal and open a new
 one", do that, because a new terminal is the only one that knows about newly
 installed programs.
 
-## Step 5. Install Git and Node.js
+## Step 4. Install Git and Node.js
 
 **Git** downloads the hub's code. **Node.js** runs the tools that build and
 publish it.
@@ -196,7 +163,7 @@ something like `v22.12.0`. The number after the `v` must be 22 or more. If
 either says "not recognised" or "command not found", close the terminal, open
 a new one and try again. If it still fails, install that program again.
 
-## Step 6. Install pnpm
+## Step 5. Install pnpm
 
 **pnpm** downloads the libraries the hub is built from. Type:
 
@@ -220,7 +187,7 @@ pnpm --version
 
 It shows a number such as `11.3.0`.
 
-## Step 7. Download the hub
+## Step 6. Download the hub
 
 Choose where to keep the hub's files. Your home folder is fine. Type:
 
@@ -240,7 +207,7 @@ first:
 cd circularity-repair-cafe-hub
 ```
 
-## Step 8. Install the hub's libraries
+## Step 7. Install the hub's libraries
 
 ```
 pnpm install
@@ -250,7 +217,7 @@ This downloads everything the hub is built from. It takes a minute or two and
 prints a lot of text. It is finished when you can type again. Warnings are
 fine. If the last lines say "ERR", see [If something goes wrong](#if-something-goes-wrong).
 
-## Step 9. Connect to your Cloudflare account
+## Step 8. Connect to your Cloudflare account
 
 ```
 pnpm --filter @circularity/cloudflare exec wrangler login
@@ -272,16 +239,7 @@ To check which account you are connected to:
 pnpm --filter @circularity/cloudflare exec wrangler whoami
 ```
 
-## Step 10. Publish your hub
-
-**With your own domain** (its status in the Cloudflare dashboard must say
-**Active**). Put your own address in place of `repair.example.org`:
-
-```
-pnpm cf:deploy --domain repair.example.org
-```
-
-**Without a domain**, for now:
+## Step 9. Publish your hub
 
 ```
 pnpm cf:deploy
@@ -293,29 +251,32 @@ account, and publishes everything. It takes two or three minutes.
 It may ask you questions the first time:
 
 - **"Would you like to register a workers.dev subdomain?"** Answer yes. Then
-  type a short name, such as your cafe's name. Your hub gets a free address
-  ending in `.workers.dev` with that name in it.
+  type a short name for your cafe, such as `woodvillerepaircafe`. Use only
+  lowercase letters, numbers and hyphens.
+
+  **Choose this name with care.** It becomes part of your hub's address, and
+  that address goes on every QR code poster you print. You can change it later
+  in the dashboard, but if you do, every printed poster and every saved link
+  stops working.
+
+  If Cloudflare does not ask, your account already has a name, and the hub
+  uses it.
 - **Whether to create a new database or a new bucket.** Choose to create a
   new one.
 - **Which account to use**, if your login can see more than one. Choose the
   one you created in Step 1.
 
-When it finishes, it prints your hub's addresses, for example:
+When it finishes, it prints your hub's address, for example:
 
 ```
 Deployed repair-cafe-hub triggers
-  https://repair-cafe-hub.yourname.workers.dev
-  repair.example.org (custom domain)
+  https://repair-cafe-hub.woodvillerepaircafe.workers.dev
 ```
 
-You only need `--domain` the first time. Cloudflare remembers it, and creates
-the HTTPS certificate for you. A new certificate can take a few minutes to
-start working.
+Copy this address and keep it somewhere safe. It is your hub's address from
+now on.
 
-**To add a domain later**, finish Step 2, then run the command with
-`--domain` once.
-
-## Step 11. Set up your cafe
+## Step 10. Set up your cafe
 
 Open your hub's address in a web browser. A setup wizard starts. Choose
 **Let's get started**. It asks for:
@@ -324,9 +285,9 @@ Open your hub's address in a web browser. A setup wizard starts. Choose
    the wizard becomes the main admin, so do this yourself, straight away.
 2. **Your repair cafe:** its name and a short description.
 3. **Your home venue:** where you hold your sessions.
-4. **Your public URL:** your hub's web address. It is filled in for you.
-   Check it is the address you will use from now on, because the QR codes use
-   it.
+4. **Your public URL:** your hub's web address. It is filled in for you with
+   your `workers.dev` address. Keep it. The QR codes use it. If you add your
+   own web address later, you change it then.
 5. **Your branding:** your colours and logo. You can change these later.
 6. **One last thing:** whether your hub may send a few counts (such as how
    many repairs you did) to help the project. You can say no.
@@ -339,7 +300,7 @@ volunteers and your first session.
 **Move from an existing hub** instead. See
 [Backups and moving a hub](./backups-and-moving.md).
 
-## Step 12. Check it works
+## Step 11. Check it works
 
 Do these once, a few days before your first session:
 
@@ -349,11 +310,16 @@ Do these once, a few days before your first session:
       start it, and open its QR code poster.
 - [ ] Scan the poster with your phone and check in a pretend item. It appears
       in the **Repair queue**.
+- [ ] At your venue, connect your phone to the venue's Wi-Fi and open your
+      hub. A few filtered networks, for example in some libraries and
+      schools, block `workers.dev` addresses. If yours does, ask the venue to
+      allow your hub's address, ask visitors to use mobile data, or
+      [add your own web address](#later-add-your-own-web-address).
 - [ ] Open **Live board** and choose **Show on a screen**. The address it
       gives opens the waiting-room screen on any computer or TV.
 - [ ] Delete the pretend item and the test session afterwards.
 
-## Step 13. Keep it safe
+## Step 12. Keep it safe
 
 - **Take a backup** now, and after each session: **Settings**, **Backup &
   restore**, **Download backup zip**. Keep the file somewhere other than your
@@ -364,7 +330,7 @@ Do these once, a few days before your first session:
   choose **Manage Account**, **Members**, then **Invite**, and give them the
   **Super Administrator** role. See
   [If nobody can get into the Cloudflare account](./running-your-hub.md#if-nobody-can-get-into-the-cloudflare-account).
-- **Keep the folder** from Step 7 if you can. It makes updating quicker, but
+- **Keep the folder** from Step 6 if you can. It makes updating quicker, but
   you do not need it: you can
   [update from any computer](./running-your-hub.md#updating-from-a-different-computer).
 - **Update now and then.** The admin area tells you when a new version is out.
@@ -374,19 +340,150 @@ That is it. Your hub is live.
 
 ---
 
+## Later: add your own web address
+
+This part is optional. Many cafes never need it. Your `workers.dev` address
+keeps working for as long as you like, and every part of the hub works on it.
+You can do this at any time: next week, next year, or never.
+
+Reasons you might want your own address:
+
+- It is shorter, and easier to say, type and remember. For example,
+  `repair.yourcafe.org`.
+- It matches your cafe's other website and email.
+- Public pages load a little faster. Cloudflare can keep a copy of each public
+  page for a minute, and it cannot do this on a `workers.dev` address.
+- It works on filtered Wi-Fi that blocks `workers.dev` addresses.
+
+If somebody else looks after your cafe's domain, such as a web company or
+another volunteer, you can give them this section.
+
+### Choose how
+
+Cloudflare can only connect an address to your hub if Cloudflare looks after
+that domain's **DNS**. DNS is the internet's address book. It tells computers
+where to find your website and where to deliver your email. So there are two
+ways to do this:
+
+**A. Buy a new domain from Cloudflare.** This is the simplest way. Nothing
+moves, because a domain bought there is already on Cloudflare. A domain costs
+around £5 to £15 a year.
+
+1. In the Cloudflare dashboard, choose **Domain Registration**, then
+   **Register Domains**.
+2. Search for a name, buy it, and wait until its status says **Active**.
+3. Go to [Connect the address to your hub](#connect-the-address-to-your-hub).
+
+**B. Use a domain your cafe already has.** For example, if you own
+`yourcafe.org`, you can use `repair.yourcafe.org` and leave your existing
+website at `yourcafe.org` alone. First, the domain's DNS has to move to
+Cloudflare. Your domain stays with the company you bought it from, and you
+keep paying them as before. Only the address book moves. Your website and
+email keep working, as long as every record in it is copied across. The next
+section shows you how to check this.
+
+### Move your domain's DNS to Cloudflare
+
+You only need this for option B.
+
+**Before you start:**
+
+- Make sure you can sign in to the company where you bought the domain (such
+  as GoDaddy, 123 Reg, Namecheap or IONOS).
+- At that company, find your domain's DNS records, and take a screenshot or
+  write them all down. You will compare them with Cloudflare's list. The
+  records called **MX** and **TXT** matter most, because they make your email
+  work.
+- If **DNSSEC** is switched on at that company, switch it off, then wait a day
+  before you go on. DNSSEC is a security setting. If it is still on when you
+  change your nameservers, your domain can stop working. You can switch it on
+  again in Cloudflare afterwards.
+- Pick a quiet time, not the day before a session.
+
+**Steps:**
+
+1. In the Cloudflare dashboard, choose **Add a domain** (it may say **Add a
+   site**).
+2. Type your domain without `www`, for example `yourcafe.org`, and continue.
+3. Choose the **Free** plan.
+4. Cloudflare looks for your existing records and shows them. Compare them
+   with your screenshot. If one is missing, add it with **Add record**, using
+   the same type, name and content. Then continue.
+5. Cloudflare shows you **two nameservers**. They look like
+   `ada.ns.cloudflare.com` and `bob.ns.cloudflare.com`. Keep this page open.
+6. In another browser tab, sign in to the company where you bought the
+   domain. Find the nameserver settings for your domain. They are often under
+   "DNS" or "Nameservers".
+7. Write down the nameservers that are there now, so you can put them back if
+   you need to. Then replace them with the two from Cloudflare, and save.
+8. Go back to Cloudflare and click **Check nameservers**.
+
+Cloudflare emails you when your domain is active. This usually takes less than
+an hour, but it can take up to a day. Your hub keeps working at its
+`workers.dev` address the whole time.
+
+**If your website or email stops working**, a record is missing. In the
+Cloudflare dashboard, open your domain, then **DNS**, then **Records**, and add
+it from your screenshot. **To undo the whole move**, put the old nameservers
+back at the company where you bought the domain.
+
+### Connect the address to your hub
+
+When your domain's status in the Cloudflare dashboard says **Active**:
+
+1. In the Cloudflare dashboard, open **Workers & Pages**, then
+   **repair-cafe-hub**, then **Settings**.
+2. Under **Domains & Routes**, choose **Add**, then **Custom domain**.
+3. Type the address you want, such as `repair.yourcafe.org`, and choose **Add
+   domain**.
+
+Cloudflare creates the DNS record and the HTTPS certificate for you. A new
+certificate can take up to 15 minutes to start working.
+
+If you prefer the terminal, you can run this once in the hub's folder instead.
+You do not need `--domain` again after this.
+
+```
+pnpm cf:deploy --domain repair.yourcafe.org
+```
+
+### Tell the hub about its new address
+
+1. Open your new address and sign in. You need to sign in again, because a
+   sign-in belongs to one address.
+2. Go to **Settings**, **Cafe profile**. Change the **Public URL** to your new
+   address, such as `https://repair.yourcafe.org`, and save.
+3. For each upcoming session that already has a QR code, open the session and
+   choose **Regenerate** under **QR code**. Print the new posters when you
+   next need them. Sessions you plan from now on use the new address by
+   themselves.
+4. If you use Plausible or Quick Web Analytics, change the site's domain in
+   **Settings**, **SEO & analytics**.
+5. Tell your volunteers the new address, and that they need to sign in again.
+   For the waiting-room screen, choose **Show on a screen** again and open the
+   new link. Anyone who installed the hub as an app on their phone should
+   install it again from the new address.
+
+Your old `workers.dev` address keeps working too. Posters you have already
+printed, saved links and the old screen link all still open your hub, so
+nothing breaks while people catch up.
+
+---
+
 ## If something goes wrong
 
 | What you see | What to do |
 | --- | --- |
-| `'git' is not recognized` or `command not found: node` | Close the terminal and open a new one. If it still happens, install that program again (Step 5). |
+| `'git' is not recognized` or `command not found: node` | Close the terminal and open a new one. If it still happens, install that program again (Step 4). |
 | `pnpm` is not recognised, or PowerShell says "running scripts is disabled" | Use **Command Prompt**, not PowerShell. Open a new one after installing pnpm. |
 | `EACCES` or "permission denied" when installing pnpm | Use `sudo npm install -g pnpm` (Mac or Linux). |
-| `ERR_PNPM_UNSUPPORTED_ENGINE` or "Unsupported engine" | Your Node.js is too old. Install the LTS version from nodejs.org (Step 5). |
+| `ERR_PNPM_UNSUPPORTED_ENGINE` or "Unsupported engine" | Your Node.js is too old. Install the LTS version from nodejs.org (Step 4). |
 | "No such file or directory" or "Could not find package.json" | You are not in the hub's folder. Run `cd circularity-repair-cafe-hub` first. |
-| "Please enable R2 through the Cloudflare Dashboard" | Do Step 3, wait a minute, then publish again. |
-| "Authentication error" or "Not logged in" | Do Step 9 again. |
-| "Could not find zone" or the domain is refused | The domain is not on this Cloudflare account yet, or is not active. Check Step 2, or publish without `--domain` for now. |
-| "A DNS record already exists" for your address | Something else already uses that address. Choose another one (for example `hub.yourcafe.org`), or delete the old record in the dashboard under **DNS**, **Records**, then publish again. |
+| "Please enable R2 through the Cloudflare Dashboard" | Do Step 2, wait a minute, then publish again. |
+| "Authentication error" or "Not logged in" | Do Step 8 again. |
+| The hub's page does not open on the venue's Wi-Fi, but works on mobile data | The network blocks `workers.dev` addresses. Ask the venue to allow your hub's address, or [add your own web address](#later-add-your-own-web-address). |
+| "Could not find zone" or the domain is refused | The domain is not on this Cloudflare account yet, or is not active. See [Move your domain's DNS to Cloudflare](#move-your-domains-dns-to-cloudflare). Your hub still works at its `workers.dev` address meanwhile. |
+| "A DNS record already exists" for your address | Something else already uses that address. Choose another one (for example `hub.yourcafe.org`), or delete the old record in the dashboard under **DNS**, **Records**, then try again. |
 | The address shows a certificate warning | A new certificate can take up to 15 minutes. Wait, then try again. |
 | "This account has reached the limit" for Workers or cron triggers | Another project on the same account uses them up. The hub itself needs no cron triggers. Ask for help. |
 
@@ -401,8 +498,10 @@ terminal printed. Do not paste passwords.
 | --- | --- |
 | Terminal | A window where you type commands. Called Command Prompt on Windows. |
 | Command | A line of text you type into the terminal, then press Enter. |
+| `workers.dev` address | The free web address Cloudflare gives your hub, such as `repair-cafe-hub.yourcafe.workers.dev`. |
 | Domain | A web address you own, such as `yourcafe.org`. |
-| Nameservers | The settings that tell the internet which company looks after a domain. |
+| DNS | The internet's address book. It tells computers where a domain's website and email are. |
+| Nameservers | The settings that tell the internet which company looks after a domain's DNS. |
 | Cloudflare | The company whose free service runs your hub. |
 | Worker | A program that runs on Cloudflare's computers. Your hub is one. |
 | D1 | Cloudflare's database service. It holds your cafe's records. |

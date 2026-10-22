@@ -45,7 +45,7 @@ environment in `apps/cloudflare/wrangler.jsonc`. It can share a Cloudflare
 account with a test site, but should not share one with a real cafe.
 
 1. **Publish it.** In the project folder, signed in to the right Cloudflare
-   account (see the [install guide](./install.md), Steps 5 to 9):
+   account (see the [install guide](./install.md), Steps 3 to 8):
 
    ```
    pnpm demo:deploy

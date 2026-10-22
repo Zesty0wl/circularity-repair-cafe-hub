@@ -2,6 +2,18 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
+## Unreleased
+
+### Changed
+
+- **You can install the hub with only a free Cloudflare account.** The install
+  guide no longer starts with a domain name. Your hub starts on its free
+  `workers.dev` address, and every part of it works there. Moving a domain's
+  DNS to Cloudflare worried some cafes, so it is now an optional last section,
+  "Later: add your own web address". It covers buying a new domain from
+  Cloudflare (nothing moves), moving an existing domain safely without losing
+  your website or email, and what to change in the hub afterwards.
+
 ## 1.13.2 (22 October 2026)
 
 ### Security

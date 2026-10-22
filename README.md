@@ -134,10 +134,13 @@ git clone https://github.com/Zesty0wl/circularity-repair-cafe-hub.git
 cd circularity-repair-cafe-hub
 pnpm install
 pnpm --filter @circularity/cloudflare exec wrangler login
-pnpm cf:deploy --domain repair.example.org
+pnpm cf:deploy
 ```
 
-Then open your address, and the setup wizard starts.
+Then open the `workers.dev` address it prints, and the setup wizard starts.
+You do not need a domain name. You can add your own web address later, at any
+time. See
+[Later: add your own web address](./docs/install.md#later-add-your-own-web-address).
 
 ## Updating
 

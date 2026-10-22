@@ -22,7 +22,8 @@ The **Public URL** matters: it's encoded into the QR code on every event
 poster, so customers scanning the poster end up at the right place. It should
 be the address people use to reach your hub, such as
 `https://repaircafe.example.org`. If you start on a `workers.dev` address and
-add your own domain later, change it here.
+add your own domain later, change it here. See
+[Later: add your own web address](./install.md#later-add-your-own-web-address).
 
 ### Logo and banner
 

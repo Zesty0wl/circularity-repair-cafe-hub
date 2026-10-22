@@ -55,7 +55,7 @@ For example, when the person who set up the hub hands it over to someone else.
 
 1. Take a backup on the old hub.
 2. On the new account, follow the [install guide](./install.md) up to and
-   including Step 10, but leave out `--domain` for now.
+   including Step 9.
 3. Open the new hub's `workers.dev` address. On the first page of the setup
    wizard, choose **Move from an existing hub**, and pick the backup.
 4. Check the new hub, then move your web address to it, as in
@@ -76,9 +76,9 @@ Docker hub first: version 1.8.4 or newer works.
 
 ### 1. Set up the new hub
 
-Follow the [install guide](./install.md) up to and including Step 10. Your
-address still points at the Docker hub, so leave out `--domain` and use the
-`workers.dev` address it prints. **Do not finish the setup wizard.**
+Follow the [install guide](./install.md) up to and including Step 9. Your
+address still points at the Docker hub, so use the `workers.dev` address it
+prints. **Do not finish the setup wizard.**
 
 ### 2. Take a backup on the Docker hub
 

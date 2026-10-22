@@ -18,12 +18,21 @@ becomes the super-admin (the only role that can create more admins).
 
 The wizard collects:
 
-| Step | What it asks for                                                  |
-| ---- | ----------------------------------------------------------------- |
-| 1    | Your **name, email, password** (your super-admin account)         |
-| 2    | Your cafe's **name, tagline, and short description**              |
-| 3    | Your **home venue**: name, address, postcode                     |
-| 4    | The **public URL** people will use to reach the site              |
+| Step | What it asks for |
+| ---- | ---------------- |
+| 1    | Your **name, email, password** (your super-admin account) |
+| 2    | Your cafe's **name, tagline, and short description** |
+| 3    | Your **home venue**: name, address, postcode |
+| 4    | Your cafe's **page on repaircafe.org**, if it has one (see below) |
+| 5    | The **public URL** people will use to reach the site |
+| 6    | Your **brand colour and fonts** (optional) |
+| 7    | Whether to **share your numbers** with the project (optional) |
+
+At step 4 the wizard suggests listings from repaircafe.org that match your
+cafe's name, town and postcode. Choose yours, search for it, or tick **We're
+not on repaircafe.org yet**. Linking your listing picks your cafe out on the
+Worldwide map and centres "Repair Cafes near us" on you. If repaircafe.org
+cannot be reached, skip the step: the hub asks again on your dashboard later.
 
 Passwords must be at least 10 characters with at least one uppercase letter,
 one lowercase letter and one digit.

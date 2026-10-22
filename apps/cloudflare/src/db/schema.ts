@@ -155,6 +155,10 @@ export const cafes = sqliteTable('cafes', {
   /** The secret part of the waiting-room display link. See routes/display.ts. */
   displayToken: text('display_token'),
   repaircafeSlug: text('repaircafe_slug'),
+  /** The hub version at which we last asked which listing is ours. */
+  listingPromptedVersion: text('listing_prompted_version'),
+  /** The admin told us the cafe is not on repaircafe.org, so we stop asking. */
+  listingNotListed: bool('listing_not_listed').notNull().default(false),
   localCafeSlugs: textArray('local_cafe_slugs').notNull().default([]),
   telemetryLevel: text('telemetry_level').notNull().default('none'),
   telemetryInstallId: uuid('telemetry_install_id'),

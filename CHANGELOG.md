@@ -6,6 +6,13 @@ Notable changes to the Repair Café Hub. Newest first.
 
 ### Added
 
+- **Find your cafe on repaircafe.org.** The setup wizard now asks which
+  repaircafe.org listing is your cafe's own, and suggests likely matches from
+  your cafe's name, town and postcode. Hubs that are already running are asked
+  once on the dashboard after updating, while no listing is linked. Linking it
+  picks your cafe out on the Worldwide map and centres "Repair Cafes near us"
+  on you. "We're not listed" stops the question.
+
 - **Two optional questions at check-in.** Under Settings, Check-in &
   preferences, you can now ask for the item's weight, and whether this is the
   visitor's first visit. Each has its own switch, and both are off by default.

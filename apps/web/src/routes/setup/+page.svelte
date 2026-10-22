@@ -6,11 +6,12 @@
   import { FONT_OPTIONS } from '@circularity/shared';
   import ProgressBar from '$lib/components/ProgressBar.svelte';
   import TelemetryChoice from '$lib/components/TelemetryChoice.svelte';
+  import ListingPicker, { type ListingAnswer } from '$lib/components/ListingPicker.svelte';
   import BackupImport from '$lib/components/BackupImport.svelte';
   import { CheckCircle2 } from 'lucide-svelte';
   import { onMount } from 'svelte';
 
-  const TOTAL = 8;
+  const TOTAL = 9;
   let step = 1;
 
   let admin = { displayName: '', email: '', password: '', confirm: '' };
@@ -35,6 +36,19 @@
   // says plainly what is and is not sent, so it is a choice rather than a
   // default nobody saw.
   let telemetryLevel: 'none' | 'standard' | 'community' = 'standard';
+
+  // The cafe's own listing on repaircafe.org, if it has one. Suggestions come
+  // from the name and venue typed in the steps before.
+  let listingSlug: string | null = null;
+  let notListed = false;
+  let listingAvailable = true;
+  $: if (listingSlug) notListed = false;
+
+  function loadListings(q: string) {
+    const params = new URLSearchParams({ name: cafe.name, town: venue.town, postcode: venue.postcode });
+    if (q) params.set('q', q);
+    return api<ListingAnswer>(`/api/setup/repaircafe-listings?${params}`, { autoRefresh: false });
+  }
 
   let busy = false;
   let error = '';
@@ -87,7 +101,7 @@
     if (step === 4) {
       if (!venue.name.trim()) return (error = 'Please enter your venue name');
     }
-    if (step === 5) {
+    if (step === 6) {
       if (!publicUrl.trim()) return (error = 'Public URL is required');
       try { new URL(publicUrl); } catch { return (error = 'Please enter a valid URL'); }
     }
@@ -145,6 +159,9 @@
         },
         publicUrl: publicUrl.trim(),
         telemetry: { level: telemetryLevel },
+        // Left out when the directory could not be reached, so the dashboard
+        // asks once the hub is running.
+        repaircafeListing: listingAvailable ? { slug: listingSlug, notListed } : undefined,
       };
       const body = await api<{ accessToken: string; user: any }>('/api/setup/complete', {
         method: 'POST',
@@ -274,6 +291,22 @@
           </div>
         </div>
       {:else if step === 5}
+        <h1 class="text-2xl font-semibold">Find your cafe on repaircafe.org</h1>
+        <p class="mt-2 text-slate-600">
+          Repair Café International lists Repair Cafés around the world on repaircafe.org. If your cafe is listed,
+          choose it here. Your cafe is then picked out on the Worldwide map, and "Repair Cafes near us" is measured
+          from it. You can change this later.
+        </p>
+        <div class="mt-6">
+          <ListingPicker load={loadListings} bind:selected={listingSlug} bind:available={listingAvailable} />
+        </div>
+        {#if listingAvailable}
+          <label class="mt-5 flex items-start gap-3 text-sm text-slate-700">
+            <input type="checkbox" class="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600" bind:checked={notListed} disabled={Boolean(listingSlug)} />
+            <span>We're not on repaircafe.org yet</span>
+          </label>
+        {/if}
+      {:else if step === 6}
         <h1 class="text-2xl font-semibold">Your public URL</h1>
         <p class="mt-2 text-slate-600">This is the web address where your hub is hosted. We need this to generate QR codes for your customers.</p>
         <div class="mt-6 space-y-3">
@@ -287,7 +320,7 @@
             {#if urlOk === false}<span class="text-amber-700 text-sm">Could not verify (you can still continue)</span>{/if}
           </div>
         </div>
-      {:else if step === 6}
+      {:else if step === 7}
         <h1 class="text-2xl font-semibold">Your branding</h1>
         <p class="mt-2 text-slate-600">Make the hub yours. You can change any of this later under Admin → Settings, and upload your logo there too.</p>
         <div class="mt-6 space-y-5">
@@ -330,20 +363,21 @@
             </div>
           </div>
         </div>
-      {:else if step === 7}
+      {:else if step === 8}
         <h1 class="text-2xl font-semibold">One last thing</h1>
         <p class="mt-2 text-slate-600">Entirely up to you, and easy to change later.</p>
         <div class="mt-6">
           <TelemetryChoice bind:level={telemetryLevel} cafeName={cafe.name || 'Your Repair Café'} />
         </div>
 
-      {:else if step === 8}
+      {:else if step === 9}
         <h1 class="text-2xl font-semibold">Ready</h1>
         <p class="mt-2 text-slate-600">Review your setup:</p>
         <dl class="mt-6 space-y-2 text-sm">
           <div class="flex justify-between border-b border-slate-100 pb-2"><dt class="text-slate-500">Cafe name</dt><dd class="font-medium">{cafe.name}</dd></div>
           <div class="flex justify-between border-b border-slate-100 pb-2"><dt class="text-slate-500">Admin email</dt><dd class="font-medium">{admin.email}</dd></div>
           <div class="flex justify-between border-b border-slate-100 pb-2"><dt class="text-slate-500">Home venue</dt><dd class="font-medium">{venue.name}</dd></div>
+          <div class="flex justify-between border-b border-slate-100 pb-2"><dt class="text-slate-500">repaircafe.org</dt><dd class="font-medium">{listingSlug ? 'Linked' : notListed ? 'Not listed yet' : 'Not chosen'}</dd></div>
           <div class="flex justify-between border-b border-slate-100 pb-2"><dt class="text-slate-500">Public URL</dt><dd class="font-medium break-all">{publicUrl}</dd></div>
         </dl>
         <button class="btn-primary mt-8 w-full" disabled={busy} on:click={submit}>
@@ -355,12 +389,12 @@
         <p class="mt-4 text-sm text-rose-600">{error}</p>
       {/if}
 
-      {#if step > 1 && step < 8}
+      {#if step > 1 && step < 9}
         <div class="mt-8 flex justify-between">
           <button class="btn-ghost" type="button" on:click={prev}>Back</button>
           <button class="btn-primary" type="button" on:click={next}>Next</button>
         </div>
-      {:else if step === 8}
+      {:else if step === 9}
         <div class="mt-3"><button class="btn-ghost" type="button" on:click={prev}>Back</button></div>
       {/if}
     </div>

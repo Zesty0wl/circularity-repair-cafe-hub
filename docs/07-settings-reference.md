@@ -16,6 +16,7 @@ The basics. Used everywhere — header, hero, footer, emails, QR codes.
 | Contact email     | Footer, contact section                                       |
 | Phone             | Contact section (optional)                                    |
 | Public URL        | **Encoded into every QR code.** Match your reverse-proxy domain. |
+| Your page on repaircafe.org | Your cafe's listing on repaircafe.org (optional). It picks you out on the Worldwide map, and "Repair Cafes near us" is measured from it. Paste the page's address. |
 | Country code      | Your country as 3 letters, such as GBR or FRA. Used in the Open Repair export (optional). |
 | Primary colour    | Buttons, links, accents across the public + admin UI          |
 | Facebook URL      | Footer / contact icon link (optional)                         |
@@ -96,6 +97,12 @@ all changes are immediate.
 Pick up to ten nearby Repair Cafes you know and want to support. They show on
 your home page as a small map beside a numbered list, so a visitor you cannot
 help can find someone who can.
+
+If your hub does not know your repaircafe.org page yet, the dashboard asks
+once after each update: **Is your cafe on repaircafe.org?** It suggests
+listings that match your cafe's name and home venue. Choose **This is us**,
+**We're not listed** (it stops asking), or **Not now** (it asks again after the
+next update).
 
 Search by name or town. Once your own repaircafe.org page is set under Cafe
 profile, the list starts with your closest neighbours. Only the repaircafe.org

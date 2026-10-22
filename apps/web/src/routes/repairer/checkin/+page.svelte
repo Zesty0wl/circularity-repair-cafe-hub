@@ -255,10 +255,19 @@
       <span class="h-16 w-16 mx-auto rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center"><CheckCircle2 size={32} /></span>
       <h1 class="text-3xl font-bold mt-5">Repair registered</h1>
       <p class="mt-2 text-slate-700">It's now in the queue for this event.</p>
-      <p class="mt-6 text-sm uppercase tracking-wide text-slate-500">Job number</p>
-      <p class="text-5xl font-extrabold text-brand-700 mt-1 tracking-wide">{created.cardNumber ?? created.jobNumber}</p>
-      {#if created.cardNumber}<p class="text-sm text-slate-500 mt-1">Job {created.jobNumber}</p>{/if}
-      <p class="mt-5 text-slate-600">Write this number on the item's tag and let the customer know it. That's how we'll match the item back to them.</p>
+      {#if created.cardNumber}
+        <p class="mt-6 text-sm uppercase tracking-wide text-slate-500">Card number</p>
+        <p class="text-5xl font-extrabold text-brand-700 mt-1 tracking-wide">{created.cardNumber}</p>
+        <p class="text-sm text-slate-500 mt-1">Job number {created.jobNumber}</p>
+        <p class="mt-5 text-slate-600">
+          The visitor keeps card {created.cardNumber}, and we call them by that number. Write the job number on the
+          item's tag, so we can match the item back to them.
+        </p>
+      {:else}
+        <p class="mt-6 text-sm uppercase tracking-wide text-slate-500">Job number</p>
+        <p class="text-5xl font-extrabold text-brand-700 mt-1 tracking-wide">{created.jobNumber}</p>
+        <p class="mt-5 text-slate-600">Write this number on the item's tag and let the customer know it. That's how we'll match the item back to them.</p>
+      {/if}
       {#if photoWarning}<p class="mt-4 text-sm text-amber-700">{photoWarning}</p>{/if}
       <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
         <button type="button" class="btn-primary" on:click={registerAnother}>

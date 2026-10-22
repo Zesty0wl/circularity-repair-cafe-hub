@@ -190,7 +190,7 @@
       <div class="flex items-center gap-2 text-slate-500 text-xs"><CheckCircle2 size={14} /> Success rate</div>
       <p class="text-2xl font-bold mt-1">{overview.successRate}%</p>
       <p class="text-xs text-slate-400 mt-0.5">
-        {overview.cannotRepairCount} couldn't fix{#if overview.satisfactionRate !== null} · {overview.satisfactionRate}% satisfied{/if}
+        {overview.cannotRepairCount} couldn't fix{#if overview.satisfactionRate !== null}, {overview.satisfactionRate}% satisfied{/if}
       </p>
     </div>
     <div class="card p-4">

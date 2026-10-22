@@ -2,10 +2,11 @@ import type { App, HubReply, HubRequest } from '../lib/router.js';
 import { db } from '../db/index.js';
 import { cafes, events, preRegistrations, repairImages, repairJobs, skillCategories, users, venues } from '../db/schema.js';
 import { and, asc, count, desc, eq, sql } from 'drizzle-orm';
-import { assistedCheckInSchema, needsPatTest, patRecordSchema, type PatResult } from '@circularity/shared';
+import { assistedCheckInSchema, jobFeedbackSchema, needsPatTest, patRecordSchema, type PatResult } from '@circularity/shared';
 import { cafeFeatures } from '../services/preRegistration.js';
 import { saveValidatedImage } from '../services/imageUpload.js';
 import { withJobNumber } from '../services/jobNumber.js';
+import { cardInUse, cardInUseError } from '../services/cardNumbers.js';
 import { randomToken } from '../utils/tokens.js';
 import { audit } from '../utils/audit.js';
 import { repairerSummary } from '../utils/users.js';
@@ -154,6 +155,7 @@ export async function repairerRoutes(app: App): Promise<void> {
       .select({
         id: repairJobs.id,
         jobNumber: repairJobs.jobNumber,
+        cardNumber: repairJobs.cardNumber,
         customerName: repairJobs.customerName,
         itemDescription: repairJobs.itemDescription,
         faultDescription: repairJobs.faultDescription,
@@ -241,6 +243,14 @@ export async function repairerRoutes(app: App): Promise<void> {
     const retentionDate = new Date();
     retentionDate.setDate(retentionDate.getDate() + retentionDays);
 
+    // A card number only has to be unique among the open jobs in this event.
+    // While the cafe does not use cards, a number sent anyway is ignored.
+    const cardNumber = (await cafeFeatures()).cardNumbersEnabled ? (data.cardNumber ?? null) : null;
+    if (cardNumber != null && (await cardInUse(activeEvent.id, cardNumber))) {
+      reply.code(409).send(cardInUseError(cardNumber));
+      return;
+    }
+
     const [job] = await withJobNumber((jobNumber) =>
       db
         .insert(repairJobs)
@@ -256,6 +266,9 @@ export async function repairerRoutes(app: App): Promise<void> {
           // repairer can correct it if the visitor picked the wrong thing.
           co2FactorId: data.co2FactorId ?? null,
           itemBrand: data.itemBrand ?? null,
+          weightKg: data.weightKg != null ? String(data.weightKg) : null,
+          isFirstVisit: data.isFirstVisit ?? null,
+          cardNumber,
           faultDescription: data.faultDescription,
           gdprConsent,
           dataRetentionDate: retentionDate.toISOString().slice(0, 10),
@@ -609,6 +622,48 @@ export async function repairerRoutes(app: App): Promise<void> {
       action: `repair.${body.outcome}`,
       entityType: 'repair_job',
       entityId: id,
+    });
+    return updated;
+  });
+
+  // The visitor's own verdict, recorded at the exit. Optional: a cafe that does
+  // not ask simply never calls this. Sending `satisfaction: null` clears an
+  // answer given by mistake.
+  app.patch('/api/repairer/jobs/:id/feedback', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const me = request.auth!;
+    if (!(await cafeFeatures()).askSatisfactionEnabled) {
+      reply.code(404).send({ error: 'The exit question is switched off', code: 'feedback/off' });
+      return;
+    }
+    const parsed = jobFeedbackSchema.safeParse(request.body);
+    if (!parsed.success) {
+      reply.code(400).send({ error: 'Validation failed', code: 'validation/failed', details: parsed.error.flatten() });
+      return;
+    }
+    const [existing] = await db.select({ id: repairJobs.id }).from(repairJobs).where(eq(repairJobs.id, id)).limit(1);
+    if (!existing) {
+      reply.code(404).send({ error: 'Job not found', code: 'job/not_found' });
+      return;
+    }
+    const { satisfaction, satisfactionComment } = parsed.data;
+    const [updated] = await db
+      .update(repairJobs)
+      .set({
+        satisfaction,
+        satisfactionComment: satisfactionComment ?? null,
+        updatedAt: new Date(),
+      })
+      .where(eq(repairJobs.id, id))
+      .returning();
+    await audit({
+      request,
+      actorId: me.sub,
+      actorType: me.role,
+      action: 'repair.feedback',
+      entityType: 'repair_job',
+      entityId: id,
+      metadata: { satisfaction },
     });
     return updated;
   });

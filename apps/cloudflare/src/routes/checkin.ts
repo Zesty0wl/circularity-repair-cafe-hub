@@ -4,6 +4,7 @@ import { cafes, events, preRegistrations, repairImages, repairJobs, skillCategor
 import { and, asc, desc, eq, inArray } from 'drizzle-orm';
 import { checkInSubmitSchema } from '@circularity/shared';
 import { withJobNumber } from '../services/jobNumber.js';
+import { cardInUse, cardInUseError } from '../services/cardNumbers.js';
 import { audit } from '../utils/audit.js';
 import { saveValidatedImage } from '../services/imageUpload.js';
 import { randomToken } from '../utils/tokens.js';
@@ -36,6 +37,8 @@ export async function checkInRoutes(app: App): Promise<void> {
         logoUrl: cafes.logoUrl,
         allowSkipPhoto: cafes.allowSkipPhoto,
         enableContactField: cafes.enableContactField,
+        weighItemsEnabled: cafes.weighItemsEnabled,
+        askFirstVisitEnabled: cafes.askFirstVisitEnabled,
         donateUrl: cafes.donateUrl,
       })
       .from(cafes)
@@ -59,7 +62,15 @@ export async function checkInRoutes(app: App): Promise<void> {
         name: found.venue.name,
         address: found.venue.address,
       },
-      cafe: cafe ?? { name: '', logoUrl: null, allowSkipPhoto: true, enableContactField: true, donateUrl: null },
+      cafe: cafe ?? {
+        name: '',
+        logoUrl: null,
+        allowSkipPhoto: true,
+        enableContactField: true,
+        weighItemsEnabled: false,
+        askFirstVisitEnabled: false,
+        donateUrl: null,
+      },
       categories: cats,
     };
   });
@@ -126,6 +137,16 @@ export async function checkInRoutes(app: App): Promise<void> {
     const retentionDate = new Date();
     retentionDate.setDate(retentionDate.getDate() + retentionDays);
 
+    // A card number only has to be unique among the open jobs in this event,
+    // so a card handed back at the exit frees its number for someone else.
+    // While the cafe does not use cards, a number sent anyway is ignored.
+    const [cardSetting] = await db.select({ on: cafes.cardNumbersEnabled }).from(cafes).limit(1);
+    const cardNumber = cardSetting?.on ? (data.cardNumber ?? null) : null;
+    if (cardNumber != null && (await cardInUse(found.event.id, cardNumber))) {
+      reply.code(409).send(cardInUseError(cardNumber));
+      return;
+    }
+
     const [job] = await withJobNumber((jobNumber) =>
       db
         .insert(repairJobs)
@@ -141,6 +162,9 @@ export async function checkInRoutes(app: App): Promise<void> {
           // repairer can correct it if the visitor picked the wrong thing.
           co2FactorId: data.co2FactorId ?? null,
           itemBrand: data.itemBrand ?? null,
+          weightKg: data.weightKg != null ? String(data.weightKg) : null,
+          isFirstVisit: data.isFirstVisit ?? null,
+          cardNumber,
           faultDescription: data.faultDescription,
           gdprConsent,
           dataRetentionDate: retentionDate.toISOString().slice(0, 10),

@@ -48,6 +48,7 @@ export async function adminBoardRoutes(app: App): Promise<void> {
         .select({
           id: repairJobs.id,
           jobNumber: repairJobs.jobNumber,
+          cardNumber: repairJobs.cardNumber,
           customerName: repairJobs.customerName,
           itemDescription: repairJobs.itemDescription,
           itemBrand: repairJobs.itemBrand,

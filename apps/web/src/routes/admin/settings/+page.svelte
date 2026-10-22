@@ -308,6 +308,7 @@
           bodyFont: bodyFontInput || null,
           donateUrl: cafe.donateUrl || null,
           repaircafeSlug: cafe.repaircafeSlug || null,
+          ordsCountry: cafe.ordsCountry || null,
           socialFacebook: cafe.socialFacebook || null, socialTwitter: cafe.socialTwitter || null,
           socialInstagram: cafe.socialInstagram || null,
         },
@@ -328,6 +329,10 @@
           dataRetentionDays: cafe.dataRetentionDays,
           patTestingEnabled: cafe.patTestingEnabled === true,
           preRegistrationEnabled: cafe.preRegistrationEnabled === true,
+          weighItemsEnabled: cafe.weighItemsEnabled === true,
+          askFirstVisitEnabled: cafe.askFirstVisitEnabled === true,
+          askSatisfactionEnabled: cafe.askSatisfactionEnabled === true,
+          cardNumbersEnabled: cafe.cardNumbersEnabled === true,
         },
       });
       // The menu and the public pages read these from the cafe profile.
@@ -500,6 +505,14 @@
           Paste the address of your cafe's page on repaircafe.org. We use it to highlight you on the
           <a href="/world" class="text-brand-700 underline underline-offset-2" target="_blank" rel="noopener">world map</a>.
           Leave blank if you are not listed yet.
+        </p>
+      </div>
+      <div>
+        <label class="label" for="oc">Country code <span class="font-normal text-slate-500">(optional)</span></label>
+        <input id="oc" class="input w-32 uppercase" maxlength="3" placeholder="GBR" bind:value={cafe.ordsCountry} />
+        <p class="text-xs text-slate-500 mt-1">
+          The 3-letter code for your country, such as GBR, FRA or NLD. It goes in the Open Repair export on the
+          Repairs page.
         </p>
       </div>
       <div>
@@ -1116,6 +1129,51 @@
         <p class="text-sm text-slate-600">
           The repair does not start until the item is checked in on the day. The visitor can check in by scanning the
           QR code, or a volunteer can do it on the "Check in a visitor" page. The repair time starts at check-in.
+        </p>
+      </section>
+
+      <section class="pt-4 border-t border-slate-200 space-y-2">
+        <h2 class="text-lg font-semibold">Extra questions at check-in</h2>
+        <label class="flex items-start gap-3">
+          <input type="checkbox" class="mt-1" bind:checked={cafe.weighItemsEnabled} />
+          <span>Ask for the item's weight</span>
+        </label>
+        <label class="flex items-start gap-3">
+          <input type="checkbox" class="mt-1" bind:checked={cafe.askFirstVisitEnabled} />
+          <span>Ask whether this is the visitor's first visit</span>
+        </label>
+        <p class="text-sm text-slate-600">
+          Each question appears on the visitor's check-in form and on the "Check in a visitor" page. Both are optional,
+          so nobody has to answer. The weight helps you report how much was kept out of the bin: the Statistics page
+          shows the total weight of the items that were fixed. Both answers are in the repairs export.
+        </p>
+      </section>
+
+      <section class="pt-4 border-t border-slate-200 space-y-2">
+        <h2 class="text-lg font-semibold">Question at the exit</h2>
+        <label class="flex items-start gap-3">
+          <input type="checkbox" class="mt-1" bind:checked={cafe.askSatisfactionEnabled} />
+          <span>Ask visitors if they are satisfied when they collect their item</span>
+        </label>
+        <p class="text-sm text-slate-600">
+          When this is on, a finished repair's page has two buttons, "Satisfied" and "Not satisfied", and a box for a
+          comment. Any volunteer can record the answer, so the person at the door does not have to be the repairer. The
+          Statistics page shows the share of visitors who were satisfied. A comment is removed with the visitor's other
+          personal details at the end of the data retention period.
+        </p>
+      </section>
+
+      <section class="pt-4 border-t border-slate-200 space-y-2">
+        <h2 class="text-lg font-semibold">Numbered cards</h2>
+        <label class="flex items-start gap-3">
+          <input type="checkbox" class="mt-1" bind:checked={cafe.cardNumbersEnabled} />
+          <span>Give each visitor a numbered card at check-in</span>
+        </label>
+        <p class="text-sm text-slate-600">
+          Some cafes keep a set of numbered cards, from 1 to 50 or fewer. A volunteer hands one to each visitor and
+          uses the number to call them. When this is on, the "Check in a visitor" page asks which card was handed
+          out, and the waiting-room screen shows the card number instead of the job number. A number is free again
+          once the item is collected, so the same cards can be used all session.
         </p>
       </section>
 

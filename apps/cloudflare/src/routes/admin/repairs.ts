@@ -1,14 +1,23 @@
 import type { App } from '../../lib/router.js';
 import { db } from '../../db/index.js';
 import { addDaysIso, localMidnightMs, localToday } from '../../lib/dates.js';
-import { events, preRegistrations, repairImages, repairJobs, skillCategories, users } from '../../db/schema.js';
-import { and, count, desc, eq, like, or, sql } from 'drizzle-orm';
+import { cafes, co2Factors, events, preRegistrations, repairImages, repairJobs, skillCategories, users } from '../../db/schema.js';
+import { and, asc, count, desc, eq, inArray, like, or, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
 import { needsPatTest, repairUpdateSchema } from '@circularity/shared';
 import { cafeFeatures } from '../../services/preRegistration.js';
+import { cardInUse, cardInUseError, holdsCard } from '../../services/cardNumbers.js';
 import { audit } from '../../utils/audit.js';
 import { repairerSummary } from '../../utils/users.js';
 import { deleteImage } from '../../services/imageUpload.js';
+import { env } from '../../env.js';
+
+/** Escape one CSV cell: quote it when it contains a comma, a quote or a newline. */
+function escapeCsv(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  const s = String(value);
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
 
 export async function adminRepairsRoutes(app: App): Promise<void> {
   app.get('/api/admin/repairs', async (request) => {
@@ -51,7 +60,11 @@ export async function adminRepairsRoutes(app: App): Promise<void> {
         jobNumber: repairJobs.jobNumber,
         customerName: repairJobs.customerName,
         itemDescription: repairJobs.itemDescription,
+        isFirstVisit: repairJobs.isFirstVisit,
+        weightKg: repairJobs.weightKg,
         status: repairJobs.status,
+        satisfaction: repairJobs.satisfaction,
+        cardNumber: repairJobs.cardNumber,
         createdAt: repairJobs.createdAt,
         completedAt: repairJobs.completedAt,
         eventId: repairJobs.eventId,
@@ -131,7 +144,7 @@ export async function adminRepairsRoutes(app: App): Promise<void> {
     }
     const data = parsed.data;
     const [existing] = await db
-      .select({ status: repairJobs.status })
+      .select({ status: repairJobs.status, eventId: repairJobs.eventId, cardNumber: repairJobs.cardNumber })
       .from(repairJobs)
       .where(eq(repairJobs.id, id))
       .limit(1);
@@ -139,12 +152,26 @@ export async function adminRepairsRoutes(app: App): Promise<void> {
       reply.code(404).send({ error: 'Repair not found', code: 'repair/not_found' });
       return;
     }
+    // A card number must not clash with another open repair in the same
+    // session. Check before saving, both when the number changes and when a
+    // finished repair is opened again, as its number may have been reused.
+    if (data.cardNumber !== undefined || data.status !== undefined) {
+      const card = data.cardNumber !== undefined ? data.cardNumber : existing.cardNumber;
+      const status = data.status ?? existing.status;
+      if (card != null && holdsCard(status) && (await cardInUse(existing.eventId, card, id))) {
+        reply.code(409).send(cardInUseError(card));
+        return;
+      }
+    }
     const update: any = { updatedAt: new Date() };
-    for (const k of ['status', 'repairerId', 'outcomeNotes', 'partsUsed', 'customerName', 'customerContact', 'itemDescription', 'faultDescription', 'itemCategoryId', 'itemBrand']) {
+    for (const k of ['status', 'repairerId', 'outcomeNotes', 'partsUsed', 'customerName', 'customerContact', 'itemDescription', 'faultDescription', 'itemCategoryId', 'itemBrand', 'isFirstVisit', 'satisfaction', 'satisfactionComment', 'cardNumber']) {
       if ((data as any)[k] !== undefined) update[k] = (data as any)[k];
     }
     if (data.environmentalSavingKg !== undefined) {
       update.environmentalSavingKg = data.environmentalSavingKg !== null ? String(data.environmentalSavingKg) : null;
+    }
+    if (data.weightKg !== undefined) {
+      update.weightKg = data.weightKg !== null ? String(data.weightKg) : null;
     }
     // Stamp completed_at only when the job actually *transitions* into a terminal
     // state (completed / cannot_repair). Re-saving an already-terminal job (e.g.
@@ -208,10 +235,15 @@ export async function adminRepairsRoutes(app: App): Promise<void> {
         itemDescription: repairJobs.itemDescription,
         category: skillCategories.name,
         brand: repairJobs.itemBrand,
+        weightKg: repairJobs.weightKg,
+        isFirstVisit: repairJobs.isFirstVisit,
         fault: repairJobs.faultDescription,
         status: repairJobs.status,
+        cardNumber: repairJobs.cardNumber,
         repairer: users.displayName,
         outcomeNotes: repairJobs.outcomeNotes,
+        satisfaction: repairJobs.satisfaction,
+        satisfactionComment: repairJobs.satisfactionComment,
         environmentalSavingKg: repairJobs.environmentalSavingKg,
         createdAt: repairJobs.createdAt,
         completedAt: repairJobs.completedAt,
@@ -225,37 +257,121 @@ export async function adminRepairsRoutes(app: App): Promise<void> {
       .leftJoin(users, eq(users.id, repairJobs.repairerId))
       .leftJoin(patTester, eq(patTester.id, repairJobs.patTestedBy))
       .orderBy(desc(repairJobs.createdAt));
-    const headers = ['jobNumber', 'eventDate', 'eventName', 'customerName', 'itemDescription', 'category', 'brand', 'fault', 'status', 'repairer', 'outcomeNotes', 'environmentalSavingKg', 'createdAt', 'completedAt'];
+    const headers = ['jobNumber', 'cardNumber', 'eventDate', 'eventName', 'customerName', 'itemDescription', 'category', 'brand', 'weightKg', 'isFirstVisit', 'fault', 'status', 'repairer', 'outcomeNotes', 'satisfaction', 'satisfactionComment', 'environmentalSavingKg', 'createdAt', 'completedAt'];
     // The PAT columns only appear while the cafe does PAT tests, so the file
     // is the same as before for everyone else.
     if ((await cafeFeatures()).patTestingEnabled) headers.push('patResult', 'patTestedAt', 'patTestedBy');
-    const esc = (v: unknown) => {
-      if (v === null || v === undefined) return '';
-      const s = String(v);
-      return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
-    };
     const lines = [headers.join(',')];
     for (const r of rows) {
-      lines.push(headers.map((h) => esc((r as any)[h])).join(','));
+      lines.push(headers.map((h) => escapeCsv((r as any)[h])).join(','));
     }
     reply.header('Content-Type', 'text/csv');
     reply.header('Content-Disposition', `attachment; filename="repairs.csv"`);
     return lines.join('\n');
   });
 
+  // ORDS export: the Open Repair Data Standard, for contributing to the Open
+  // Repair Alliance's public dataset. See https://standard.openrepair.org/.
+  //
+  // One row per repair attempt, with the standard's field names (section 3.4.1)
+  // and repair_status codes (3.4.3). Only jobs that reached an outcome are
+  // included. Fields we do not collect yet (product category mapping, year of
+  // manufacture, barriers) are left blank for the Alliance to map. They map
+  // partner categories and values at the source anyway.
+  app.get('/api/admin/repairs/export.ords.csv', async (request, reply) => {
+    const [cafe] = await db
+      .select({ id: cafes.id, name: cafes.name, slug: cafes.repaircafeSlug, country: cafes.ordsCountry })
+      .from(cafes)
+      .limit(1);
+    // A stable identifier for the group. The cafe's repaircafe.org listing is
+    // the most meaningful when it has one, otherwise its internal id.
+    const groupIdentifier = cafe?.slug?.trim() || cafe?.id || '';
+    const dataProvider = cafe?.name?.trim() || 'Repair Cafe';
+    // The country set under Settings. Hubs that set it in the Cloudflare
+    // dashboard before there was a setting still work.
+    const country = cafe?.country?.trim().toUpperCase() || env.ORDS_COUNTRY;
+
+    // repair_status: 0 Unknown, 1 Fixed, 2 Repairable, 3 End of life.
+    // "returned" (the item was collected) says nothing about whether it was
+    // fixed, so it is recorded as Unknown rather than guessed.
+    const ORDS_STATUS: Record<string, string> = {
+      completed: '1',
+      awaiting_return: '2',
+      cannot_repair: '3',
+      returned: '0',
+    };
+
+    const rows = await db
+      .select({
+        id: repairJobs.id,
+        eventDate: events.date,
+        partnerCategory: skillCategories.name,
+        itemType: co2Factors.label,
+        brand: repairJobs.itemBrand,
+        problem: repairJobs.faultDescription,
+        status: repairJobs.status,
+      })
+      .from(repairJobs)
+      .innerJoin(events, eq(events.id, repairJobs.eventId))
+      .leftJoin(skillCategories, eq(skillCategories.id, repairJobs.itemCategoryId))
+      .leftJoin(co2Factors, eq(co2Factors.id, repairJobs.co2FactorId))
+      .where(inArray(repairJobs.status, ['completed', 'cannot_repair', 'awaiting_return', 'returned']))
+      .orderBy(asc(events.date), asc(repairJobs.createdAt));
+
+    const headers = [
+      'id',
+      'partner_product_category',
+      'product_category',
+      'brand',
+      'year_of_manufacture',
+      'problem',
+      'repair_status',
+      'repair_barrier_if_end_of_life',
+      'group_identifier',
+      'event_date',
+      'data_provider',
+      'country',
+    ];
+    const lines = [headers.join(',')];
+    for (const r of rows) {
+      // The Alliance concatenates the cafe's category with the item type, the
+      // way most partner datasets look.
+      const partnerCategory = [r.partnerCategory, r.itemType].filter(Boolean).join(' ~ ');
+      const out: Record<string, string> = {
+        id: r.id,
+        partner_product_category: partnerCategory,
+        product_category: '',
+        brand: r.brand ?? '',
+        year_of_manufacture: '',
+        problem: r.problem,
+        repair_status: ORDS_STATUS[r.status] ?? '0',
+        repair_barrier_if_end_of_life: '',
+        group_identifier: groupIdentifier,
+        event_date: r.eventDate,
+        data_provider: dataProvider,
+        country,
+      };
+      lines.push(headers.map((h) => escapeCsv(out[h])).join(','));
+    }
+    reply.header('Content-Type', 'text/csv');
+    reply.header('Content-Disposition', `attachment; filename="repairs-ords.csv"`);
+    return lines.join('\n');
+  });
+
   // GDPR PII purge
   //
   // Covers every place a visitor's name or contact detail is written down, not
-  // just repairs. A Linux install records the same details for the same
+  // just repairs. The visitor's comment at the exit goes too, because people
+  // often put a name or a phone number in it. A Linux install records the same details for the same
   // reason, so it has to be forgotten on the same day.
   app.post('/api/admin/repairs/purge-expired-pii', async (request) => {
     const me = request.auth!;
     const today = localToday();
     const now = Date.now();
     const result = await db.run(sql`
-      UPDATE repair_jobs SET customer_name = NULL, customer_contact = NULL, updated_at = ${now}
+      UPDATE repair_jobs SET customer_name = NULL, customer_contact = NULL, satisfaction_comment = NULL, updated_at = ${now}
       WHERE data_retention_date IS NOT NULL AND data_retention_date < ${today}
-      AND (customer_name IS NOT NULL OR customer_contact IS NOT NULL)
+      AND (customer_name IS NOT NULL OR customer_contact IS NOT NULL OR satisfaction_comment IS NOT NULL)
     `);
     const linuxResult = await db.run(sql`
       UPDATE linux_installs SET customer_name = NULL, customer_contact = NULL, updated_at = ${now}

@@ -34,6 +34,8 @@ export interface Bindings {
   REFRESH_TOKEN_DAYS?: string;
   DATA_RETENTION_DEFAULT_DAYS?: string;
   EVENT_GENERATION_MONTHS?: string;
+  /** ISO 3166-1 alpha-3 country code for the ORDS export, e.g. FRA. Optional. */
+  ORDS_COUNTRY?: string;
 }
 
 export function bindings(): Bindings {
@@ -87,5 +89,9 @@ export const env = {
   },
   get EVENT_GENERATION_MONTHS(): number {
     return positiveInt(bindings().EVENT_GENERATION_MONTHS, 12);
+  },
+  /** The cafe's country for the ORDS export, as a 3-letter ISO code. Empty when unset. */
+  get ORDS_COUNTRY(): string {
+    return bindings().ORDS_COUNTRY?.trim().toUpperCase() || '';
   },
 };

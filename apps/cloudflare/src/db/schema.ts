@@ -103,6 +103,8 @@ export const REPAIR_STATUSES = [
   'awaiting_return',
   'returned',
 ] as const;
+/** How the visitor said the repair went, asked at the exit. */
+export const SATISFACTION_VALUES = ['satisfied', 'not_satisfied'] as const;
 export const EVENT_STATUSES = ['scheduled', 'active', 'completed', 'cancelled'] as const;
 export const IMAGE_STAGES = ['check_in', 'during_repair', 'completed'] as const;
 export const PAT_RESULTS = ['pass', 'fail', 'not_needed'] as const;
@@ -173,6 +175,16 @@ export const cafes = sqliteTable('cafes', {
   patTestingEnabled: bool('pat_testing_enabled').notNull().default(false),
   /** Let visitors tell us about an item before the session. */
   preRegistrationEnabled: bool('pre_registration_enabled').notNull().default(false),
+  /** Ask for the item's weight at check-in. */
+  weighItemsEnabled: bool('weigh_items_enabled').notNull().default(false),
+  /** Ask whether this is the visitor's first visit. */
+  askFirstVisitEnabled: bool('ask_first_visit_enabled').notNull().default(false),
+  /** Ask the visitor at the exit whether they are satisfied. */
+  askSatisfactionEnabled: bool('ask_satisfaction_enabled').notNull().default(false),
+  /** Give each visitor a numbered card for the session. */
+  cardNumbersEnabled: bool('card_numbers_enabled').notNull().default(false),
+  /** The cafe's country for the ORDS export, as a 3-letter code such as GBR. */
+  ordsCountry: text('ords_country'),
   dataRetentionDays: integer('data_retention_days').notNull().default(365),
   createdAt: timestamp('created_at').notNull().$defaultFn(() => new Date()),
   updatedAt: timestamp('updated_at').notNull().$defaultFn(() => new Date()),
@@ -350,12 +362,18 @@ export const repairJobs = sqliteTable(
       .notNull()
       .references(() => events.id),
     jobNumber: text('job_number').notNull().unique(),
+    /** A short per-session number, for a reusable card. Optional. */
+    cardNumber: integer('card_number'),
     customerName: text('customer_name'),
     customerContact: text('customer_contact'),
     customerToken: text('customer_token'),
+    /** Whether this is the visitor's first time at the cafe. Optional. */
+    isFirstVisit: bool('is_first_visit'),
     itemDescription: text('item_description').notNull(),
     itemCategoryId: uuid('item_category_id').references(() => skillCategories.id),
     itemBrand: text('item_brand'),
+    /** How heavy the item is, in kilograms. Optional; used for waste reports. */
+    weightKg: numeric('weight_kg', 3),
     faultDescription: text('fault_description').notNull(),
     status: text('status', { enum: REPAIR_STATUSES }).notNull().default('waiting'),
     repairerId: uuid('repairer_id').references(() => users.id),
@@ -363,6 +381,9 @@ export const repairJobs = sqliteTable(
     completedAt: timestamp('completed_at'),
     outcomeNotes: text('outcome_notes'),
     partsUsed: text('parts_used'),
+    /** The visitor's own verdict at the exit. Optional. */
+    satisfaction: text('satisfaction', { enum: SATISFACTION_VALUES }),
+    satisfactionComment: text('satisfaction_comment'),
     environmentalSavingKg: numeric('environmental_saving_kg', 3),
     co2FactorId: uuid('co2_factor_id'),
     co2SavingKg: numeric('co2_saving_kg', 3),

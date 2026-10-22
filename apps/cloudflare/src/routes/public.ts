@@ -56,6 +56,13 @@ export async function publicRoutes(app: App): Promise<void> {
       // unless an admin turns them on.
       preRegistrationEnabled: cafe.preRegistrationEnabled,
       patTestingEnabled: cafe.patTestingEnabled,
+      // The optional questions at check-in and at the exit. Each is off unless
+      // an admin turns it on.
+      weighItemsEnabled: cafe.weighItemsEnabled,
+      askFirstVisitEnabled: cafe.askFirstVisitEnabled,
+      askSatisfactionEnabled: cafe.askSatisfactionEnabled,
+      // Numbered cards handed to visitors at check-in. Off unless turned on.
+      cardNumbersEnabled: cafe.cardNumbersEnabled,
       primaryColor: cafe.primaryColor,
       accentColor: cafe.accentColor,
       headingFont: cafe.headingFont,

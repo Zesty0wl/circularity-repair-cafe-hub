@@ -54,6 +54,9 @@ export async function adminSettingsRoutes(app: App): Promise<void> {
     if (data.repaircafeSlug !== undefined) {
       update.repaircafeSlug = normaliseRepaircafeSlug(data.repaircafeSlug);
     }
+    if (data.ordsCountry !== undefined) {
+      update.ordsCountry = data.ordsCountry ? data.ordsCountry.toUpperCase() : null;
+    }
     const [updated] = await db.update(cafes).set(update).where(eq(cafes.id, cafe.id)).returning();
     await audit({ request, actorId: me.sub, actorType: me.role, action: 'cafe.updated', entityType: 'cafe', entityId: cafe.id });
     return updated;
@@ -67,6 +70,10 @@ export async function adminSettingsRoutes(app: App): Promise<void> {
       dataRetentionDays?: number;
       patTestingEnabled?: boolean;
       preRegistrationEnabled?: boolean;
+      weighItemsEnabled?: boolean;
+      askFirstVisitEnabled?: boolean;
+      askSatisfactionEnabled?: boolean;
+      cardNumbersEnabled?: boolean;
     };
     const [cafe] = await db.select().from(cafes).limit(1);
     if (!cafe) {
@@ -79,6 +86,10 @@ export async function adminSettingsRoutes(app: App): Promise<void> {
     if (typeof body.dataRetentionDays === 'number' && body.dataRetentionDays > 0) update.dataRetentionDays = body.dataRetentionDays;
     if (typeof body.patTestingEnabled === 'boolean') update.patTestingEnabled = body.patTestingEnabled;
     if (typeof body.preRegistrationEnabled === 'boolean') update.preRegistrationEnabled = body.preRegistrationEnabled;
+    if (typeof body.weighItemsEnabled === 'boolean') update.weighItemsEnabled = body.weighItemsEnabled;
+    if (typeof body.askFirstVisitEnabled === 'boolean') update.askFirstVisitEnabled = body.askFirstVisitEnabled;
+    if (typeof body.askSatisfactionEnabled === 'boolean') update.askSatisfactionEnabled = body.askSatisfactionEnabled;
+    if (typeof body.cardNumbersEnabled === 'boolean') update.cardNumbersEnabled = body.cardNumbersEnabled;
     const [updated] = await db.update(cafes).set(update).where(eq(cafes.id, cafe.id)).returning();
     await audit({
       request,

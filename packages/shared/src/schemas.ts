@@ -106,6 +106,14 @@ export const checkInSubmitSchema = z
     // because a visitor may not find their item in the list.
     co2FactorId: z.string().uuid().optional().nullable(),
     itemBrand: z.string().max(100).optional().nullable(),
+    // How heavy the item is, in kilograms. Optional; some cafes weigh what
+    // comes in so they can report the mass kept out of waste.
+    weightKg: z.number().nonnegative().max(1000).optional().nullable(),
+    // Whether this is the visitor's first time at the cafe. Optional.
+    isFirstVisit: z.boolean().optional().nullable(),
+    // A short number for a reusable card, unique among the open jobs in this
+    // event. Optional.
+    cardNumber: z.number().int().positive().max(999).optional().nullable(),
   })
   .refine(
     (v) => Boolean(v.customerToken) || (Boolean(v.customerName) && v.gdprConsent === true),
@@ -132,6 +140,13 @@ export const assistedCheckInSchema = z
     // because a visitor may not find their item in the list.
     co2FactorId: z.string().uuid().optional().nullable(),
     itemBrand: z.string().max(100).optional().nullable(),
+    // How heavy the item is, in kilograms. Optional.
+    weightKg: z.number().nonnegative().max(1000).optional().nullable(),
+    // Whether this is the visitor's first time at the cafe. Optional.
+    isFirstVisit: z.boolean().optional().nullable(),
+    // A short number for a reusable card, unique among the open jobs in this
+    // event. Optional.
+    cardNumber: z.number().int().positive().max(999).optional().nullable(),
   })
   .refine(
     (v) => {
@@ -278,7 +293,21 @@ export const repairUpdateSchema = z.object({
   faultDescription: z.string().max(500).optional(),
   itemCategoryId: z.string().uuid().optional().nullable(),
   itemBrand: z.string().max(100).optional().nullable(),
+  weightKg: z.number().nonnegative().max(1000).optional().nullable(),
+  isFirstVisit: z.boolean().optional().nullable(),
+  satisfaction: z.enum(['satisfied', 'not_satisfied']).nullable().optional(),
+  satisfactionComment: z.string().max(500).optional().nullable(),
+  cardNumber: z.number().int().positive().max(999).optional().nullable(),
 });
+
+// Recording how the visitor said the repair went, at the exit. Both fields are
+// optional, and `satisfaction: null` clears an answer given by mistake.
+export const jobFeedbackSchema = z.object({
+  satisfaction: z.enum(['satisfied', 'not_satisfied']).nullable(),
+  satisfactionComment: z.string().max(500).optional().nullable(),
+});
+
+export type JobFeedbackPayload = z.infer<typeof jobFeedbackSchema>;
 
 // ─────────────────────────── Linux Repair Cafe ───────────────────────────
 // A Linux Repair Cafe helps people move an ageing computer to Linux instead of
@@ -393,4 +422,13 @@ export const cafeSettingsSchema = z.object({
   // The cafe's own listing on repaircafe.org. Admins may paste the full page
   // URL or just the slug; the server reduces it to a slug before saving.
   repaircafeSlug: z.string().max(300).optional().nullable().or(z.literal('')),
+  // The cafe's country as a 3-letter ISO code (GBR, FRA, NLD), for the Open
+  // Repair Data Standard export.
+  ordsCountry: z
+    .string()
+    .trim()
+    .regex(/^[A-Za-z]{3}$/, 'Use the 3-letter country code, such as GBR or FRA')
+    .optional()
+    .nullable()
+    .or(z.literal('')),
 });

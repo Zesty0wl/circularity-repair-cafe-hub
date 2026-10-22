@@ -16,6 +16,7 @@ The basics. Used everywhere — header, hero, footer, emails, QR codes.
 | Contact email     | Footer, contact section                                       |
 | Phone             | Contact section (optional)                                    |
 | Public URL        | **Encoded into every QR code.** Match your reverse-proxy domain. |
+| Country code      | Your country as 3 letters, such as GBR or FRA. Used in the Open Repair export (optional). |
 | Primary colour    | Buttons, links, accents across the public + admin UI          |
 | Facebook URL      | Footer / contact icon link (optional)                         |
 | Twitter / X URL   | Footer / contact icon link (optional)                         |
@@ -127,6 +128,10 @@ Three controls that change the customer check-in flow.
 | Data retention period (days)      | How long after the event date customer name/contact is kept. Default 365. Used by the GDPR purge. |
 | PAT testing                       | Off by default. When it is on, electrical items need a PAT test before they can be marked as fixed. See below. |
 | Pre-registration                  | Off by default. When it is on, visitors can tell you about an item before a session. See below. |
+| Ask for the item's weight         | Off by default. Adds an optional weight field to check-in. See below. |
+| Ask whether this is the visitor's first visit | Off by default. Adds an optional Yes or No question to check-in. See below. |
+| Ask visitors if they are satisfied | Off by default. Adds a question to a finished repair's page, for when the visitor collects their item. See below. |
+| Give each visitor a numbered card | Off by default. Lets volunteers hand out reusable numbered cards and call visitors by them. See below. |
 
 **Save preferences** commits this tab.
 
@@ -155,6 +160,57 @@ item, with the **This is an electrical item** tick box on the repair's page.
 
 When PAT testing is off, nothing about it appears anywhere, and repairs work
 exactly as before.
+
+### Extra questions at check-in
+
+Two optional questions, each with its own switch. They appear on the visitor's
+check-in form and on the **Check in a visitor** page. Nobody has to answer.
+
+- **Ask for the item's weight.** Some cafes weigh what comes in, so they can
+  report how much was kept out of the bin. Funders and councils often ask for
+  this. Type the weight in kilograms. "1,5" and "1.5" both work. The
+  **Statistics** page shows the total weight of the items that were fixed.
+- **Ask whether this is the visitor's first visit.** The answer is Yes, No, or
+  not answered. Not answering is kept apart from No, so your figures only count
+  the people who answered.
+
+Admins can change both answers on a repair's page. Both are in the CSV export,
+as `weightKg` and `isFirstVisit`.
+
+### Question at the exit
+
+When you turn on **Ask visitors if they are satisfied when they collect their
+item**, a finished repair's page has two buttons, **Satisfied** and **Not
+satisfied**, and a box for a comment. Any volunteer can record the answer, so
+the person at the door does not have to be the repairer who did the work. A
+wrong answer can be changed or cleared.
+
+The **Statistics** page shows the share of visitors who said they were
+satisfied, counting only the visitors who answered. Admins can change the
+answer on a repair's page, and the CSV export has `satisfaction` and
+`satisfactionComment` columns.
+
+People often put a name or a phone number in a comment. So the comment is
+removed with the visitor's other personal details at the end of the data
+retention period. The answer itself stays, for the statistics.
+
+### Numbered cards
+
+Some cafes keep a set of numbered cards, from 1 to 50 or fewer. A volunteer
+hands one to each visitor at check-in, and calls them by that number. When
+you turn on **Give each visitor a numbered card at check-in**:
+
+- The **Check in a visitor** page shows the numbers 1 to 50. Tap the number on
+  the card you handed out. Numbers already with a visitor are greyed out.
+- The waiting-room screen shows the card number instead of the job number.
+- A number is free again once the item leaves: fixed, could not be fixed, or
+  collected. So the same cards can be used all session, and in every session.
+- If two volunteers pick the same number at the same moment, the second is told
+  the number is taken and can pick another.
+
+Admins can change a repair's card number on its page. The hub will not let two
+open repairs in the same session have the same number. The CSV export has a
+`cardNumber` column.
 
 ### Pre-registration
 

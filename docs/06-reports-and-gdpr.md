@@ -58,6 +58,22 @@ The CSV includes job number, customer, item, fault, category, status,
 repairer, event, dates, parts, notes, and CO₂. **It does not include
 photo URLs** (those would expire as they reference local upload paths).
 
+### Open Repair export
+
+The **Open Repair export** button gives you every finished repair in the
+[Open Repair Data Standard](https://standard.openrepair.org/) (ORDS). This is
+the format the Open Repair Alliance uses for its public dataset of repairs, so
+you can share your cafe's results with it.
+
+- It has one row for each finished repair: fixed, could not be fixed, coming
+  back with a part, or collected. Items still waiting or being repaired are
+  left out.
+- It ignores the filters, because the Alliance wants the whole record.
+- It has no names or contact details. It does include the visitor's own words
+  about the fault, so check these before you share the file.
+- Set your country under Settings, Cafe profile, **Country code** (for
+  example GBR or FRA). Without it the `country` column is empty.
+
 ## Statistics dashboard — `/admin/stats`
 
 The visual summary, powered by Chart.js. There's a single

@@ -4,6 +4,30 @@ Notable changes to the Repair Café Hub. Newest first.
 
 ## Unreleased
 
+### Added
+
+- **Two optional questions at check-in.** Under Settings, Check-in &
+  preferences, you can now ask for the item's weight, and whether this is the
+  visitor's first visit. Each has its own switch, and both are off by default.
+  The Statistics page shows the total weight of the items that were fixed, and
+  both answers are in the repairs export. Thanks to Florian Chazal of the
+  Repair Café in Villeneuve-Loubet (#7).
+- **A question at the exit.** A new switch under Settings, Check-in &
+  preferences. When it is on, a volunteer can record whether the visitor was
+  satisfied when they collected their item, with an optional comment. The
+  Statistics page shows the share who were satisfied. The comment is removed
+  with the visitor's other personal details. Off by default. Thanks again to
+  Florian Chazal (#8).
+- **Numbered cards.** A new switch under Settings, Check-in & preferences.
+  When it is on, a volunteer picks the number of the card they handed to the
+  visitor, and the waiting-room screen calls them by it. A number is free again
+  once the item leaves, so the same cards can be used all session. Off by
+  default. Thanks again to Florian Chazal (#9).
+- **An Open Repair export.** A new button on the Repairs page downloads every
+  finished repair in the Open Repair Data Standard, so you can share your
+  results with the Open Repair Alliance. Set your country under Settings, Cafe
+  profile. Thanks again to Florian Chazal (#10).
+
 ### Changed
 
 - **The maps no longer need a key.** The map of nearby cafes on the home page

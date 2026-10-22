@@ -26,12 +26,16 @@ export const MAX_OPEN_PER_EVENT = 200;
 /** The most items one visitor may pre-register for one session. */
 export const MAX_PER_VISITOR = 10;
 
-/** The two switches and the settings pre-registration needs, in one read. */
+/** The feature switches, and the settings pre-registration needs, in one read. */
 export async function cafeFeatures() {
   const [cafe] = await db
     .select({
       preRegistrationEnabled: cafes.preRegistrationEnabled,
       patTestingEnabled: cafes.patTestingEnabled,
+      weighItemsEnabled: cafes.weighItemsEnabled,
+      askFirstVisitEnabled: cafes.askFirstVisitEnabled,
+      askSatisfactionEnabled: cafes.askSatisfactionEnabled,
+      cardNumbersEnabled: cafes.cardNumbersEnabled,
       enableContactField: cafes.enableContactField,
       dataRetentionDays: cafes.dataRetentionDays,
     })
@@ -40,6 +44,10 @@ export async function cafeFeatures() {
   return {
     preRegistrationEnabled: cafe?.preRegistrationEnabled ?? false,
     patTestingEnabled: cafe?.patTestingEnabled ?? false,
+    weighItemsEnabled: cafe?.weighItemsEnabled ?? false,
+    askFirstVisitEnabled: cafe?.askFirstVisitEnabled ?? false,
+    askSatisfactionEnabled: cafe?.askSatisfactionEnabled ?? false,
+    cardNumbersEnabled: cafe?.cardNumbersEnabled ?? false,
     enableContactField: cafe?.enableContactField ?? true,
     dataRetentionDays: cafe?.dataRetentionDays ?? env.DATA_RETENTION_DEFAULT_DAYS,
   };

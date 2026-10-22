@@ -19,6 +19,10 @@
   let itemCategoryId: string | null = null;
   let itemDescription = '';
   let itemBrand = '';
+  /** Item weight in kilograms, as typed. Empty means "not weighed". */
+  let weightKg = '';
+  /** Whether this is the visitor's first visit. Null means not asked or not answered. */
+  let isFirstVisit: boolean | null = null;
   let faultDescription = '';
   // Customer (all optional for a walk-in)
   let customerName = '';
@@ -32,7 +36,14 @@
 
   let busy = false;
   let error = '';
-  let created: { jobNumber: string } | null = null;
+  let created: { jobNumber: string; cardNumber: number | null } | null = null;
+
+  /** The session card numbers, 1..50. A cafe may use fewer. */
+  const CARD_NUMBERS = Array.from({ length: 50 }, (_, i) => i + 1);
+  /** The number on the card handed to this visitor, or null. */
+  let cardNumber: number | null = null;
+  /** Numbers already in use by an open job this session. */
+  let takenCards: number[] = [];
 
   // Items visitors pre-registered for this session that have not arrived yet.
   // Only while the cafe has pre-registration switched on.
@@ -101,15 +112,40 @@
     photoPreview = null;
   }
 
+  type SessionJob = { cardNumber: number | null; status: string };
+
+  /** A number is taken while its job is still open. The rest are free. */
+  function cardsInUse(jobs: SessionJob[] | undefined): number[] {
+    const open = ['waiting', 'in_progress', 'awaiting_return'];
+    return (jobs ?? []).filter((j) => open.includes(j.status) && j.cardNumber != null).map((j) => j.cardNumber as number);
+  }
+
+  /**
+   * Other volunteers check people in and hand cards back at the same time, so
+   * read the numbers in use again before each new visitor, and after a clash.
+   */
+  async function refreshCards() {
+    if (!$cafe?.cardNumbersEnabled) return;
+    try {
+      takenCards = cardsInUse((await api<{ jobs?: SessionJob[] }>('/api/repairer/active-event')).jobs);
+    } catch {
+      // Keep the list we have. The hub still refuses a number that is taken.
+    }
+  }
+
   onMount(async () => {
     try {
       const [active, cats] = await Promise.all([
-        api<{ event: { id: string; name: string; venueName?: string } | null }>('/api/repairer/active-event'),
+        api<{
+          event: { id: string; name: string; venueName?: string } | null;
+          jobs?: SessionJob[];
+        }>('/api/repairer/active-event'),
         api<SkillCategory[]>('/api/public/skill-categories', { autoRefresh: false }),
       ]);
       activeEvent = active.event
         ? { id: active.event.id, name: active.event.name, venueName: active.event.venueName }
         : null;
+      takenCards = cardsInUse(active.jobs);
       categories = cats;
     } catch (err: any) {
       loadError = err?.message || 'Could not load the check-in form';
@@ -117,6 +153,17 @@
       loading = false;
     }
   });
+
+  /**
+   * The typed weight as a number, or null when it was left empty. A comma
+   * works as the decimal mark too, so "1,5" and "1.5" are both 1.5 kg.
+   */
+  function weightValue(): number | null {
+    const raw = String(weightKg).trim().replace(',', '.');
+    if (!raw) return null;
+    const n = Number(raw);
+    return Number.isFinite(n) && n >= 0 ? n : null;
+  }
 
   async function submit() {
     error = '';
@@ -132,6 +179,9 @@
         faultDescription: faultDescription.trim(),
         itemBrand: itemBrand.trim() || null,
         itemCategoryId,
+        weightKg: $cafe?.weighItemsEnabled ? weightValue() : null,
+        isFirstVisit: $cafe?.askFirstVisitEnabled ? isFirstVisit : null,
+        cardNumber: $cafe?.cardNumbersEnabled ? cardNumber : null,
         customerName: customerName.trim() || null,
         customerContact: customerContact.trim() || null,
         gdprConsent: hasPii ? consent : false,
@@ -148,9 +198,15 @@
           photoWarning = 'The repair was registered, but the photo could not be uploaded.';
         }
       }
-      created = { jobNumber: res.jobNumber };
+      created = { jobNumber: res.jobNumber, cardNumber: $cafe?.cardNumbersEnabled ? cardNumber : null };
+      if (created.cardNumber != null) takenCards = [...takenCards, created.cardNumber];
     } catch (err: any) {
       error = err?.message || 'Could not register the repair';
+      // The number may have just been taken by someone else. Show it as taken.
+      if (cardNumber != null) {
+        await refreshCards();
+        if (takenCards.includes(cardNumber)) cardNumber = null;
+      }
     } finally {
       busy = false;
     }
@@ -161,6 +217,10 @@
     itemCategoryId = null;
     itemDescription = '';
     itemBrand = '';
+    weightKg = '';
+    isFirstVisit = null;
+    cardNumber = null;
+    void refreshCards();
     faultDescription = '';
     customerName = '';
     customerContact = '';
@@ -195,9 +255,19 @@
       <span class="h-16 w-16 mx-auto rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center"><CheckCircle2 size={32} /></span>
       <h1 class="text-3xl font-bold mt-5">Repair registered</h1>
       <p class="mt-2 text-slate-700">It's now in the queue for this event.</p>
-      <p class="mt-6 text-sm uppercase tracking-wide text-slate-500">Job number</p>
-      <p class="text-5xl font-extrabold text-brand-700 mt-1 tracking-wide">{created.jobNumber}</p>
-      <p class="mt-5 text-slate-600">Write this number on the item's tag and let the customer know it. That's how we'll match the item back to them.</p>
+      {#if created.cardNumber}
+        <p class="mt-6 text-sm uppercase tracking-wide text-slate-500">Card number</p>
+        <p class="text-5xl font-extrabold text-brand-700 mt-1 tracking-wide">{created.cardNumber}</p>
+        <p class="text-sm text-slate-500 mt-1">Job number {created.jobNumber}</p>
+        <p class="mt-5 text-slate-600">
+          The visitor keeps card {created.cardNumber}, and we call them by that number. Write the job number on the
+          item's tag, so we can match the item back to them.
+        </p>
+      {:else}
+        <p class="mt-6 text-sm uppercase tracking-wide text-slate-500">Job number</p>
+        <p class="text-5xl font-extrabold text-brand-700 mt-1 tracking-wide">{created.jobNumber}</p>
+        <p class="mt-5 text-slate-600">Write this number on the item's tag and let the customer know it. That's how we'll match the item back to them.</p>
+      {/if}
       {#if photoWarning}<p class="mt-4 text-sm text-amber-700">{photoWarning}</p>{/if}
       <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
         <button type="button" class="btn-primary" on:click={registerAnother}>
@@ -275,6 +345,24 @@
         </div>
       {/if}
 
+      <!-- Card number: the number on the card handed to the visitor. -->
+      {#if $cafe?.cardNumbersEnabled}
+      <div>
+        <p class="label">Card number <span class="font-normal text-slate-400">(optional)</span></p>
+        <p class="text-sm text-slate-500 mb-2">Tap the number on the card you gave the visitor. Numbers already in use are greyed out.</p>
+        <div class="grid grid-cols-10 gap-1.5">
+          {#each CARD_NUMBERS as n}
+            <button
+              type="button"
+              class="rounded-lg py-1.5 text-sm font-semibold ring-1 transition {cardNumber === n ? 'ring-2 ring-brand-600 bg-brand-50 text-brand-800' : takenCards.includes(n) ? 'ring-slate-100 bg-slate-100 text-slate-300' : 'ring-slate-200 bg-white hover:bg-slate-50 text-slate-700'}"
+              disabled={takenCards.includes(n)}
+              on:click={() => (cardNumber = cardNumber === n ? null : n)}
+            >{n}</button>
+          {/each}
+        </div>
+      </div>
+      {/if}
+
       <div>
         <label class="label" for="item">Item description</label>
         <input id="item" class="input" maxlength="200" placeholder="e.g. Bosch cordless drill, blue" bind:value={itemDescription} />
@@ -284,6 +372,31 @@
         <label class="label" for="brand">Brand <span class="font-normal text-slate-400">(optional)</span></label>
         <input id="brand" class="input" maxlength="100" bind:value={itemBrand} />
       </div>
+
+      {#if $cafe?.weighItemsEnabled}
+        <div>
+          <label class="label" for="weight">Weight in kg <span class="font-normal text-slate-400">(optional)</span></label>
+          <input id="weight" type="text" inputmode="decimal" class="input" placeholder="For example 1.5" bind:value={weightKg} />
+        </div>
+      {/if}
+
+      {#if $cafe?.askFirstVisitEnabled}
+        <fieldset>
+          <legend class="label">Is this their first visit? <span class="font-normal text-slate-400">(optional)</span></legend>
+          <div class="flex gap-2">
+            {#each [[true, 'Yes'], [false, 'No']] as [value, text]}
+              <button
+                type="button"
+                class="flex-1 rounded-lg py-2 text-sm font-semibold ring-1 transition {isFirstVisit === value
+                  ? 'ring-2 ring-brand-600 bg-brand-50 text-brand-800'
+                  : 'ring-slate-200 bg-white text-slate-700 hover:bg-slate-50'}"
+                aria-pressed={isFirstVisit === value}
+                on:click={() => (isFirstVisit = isFirstVisit === value ? null : (value as boolean))}
+              >{text}</button>
+            {/each}
+          </div>
+        </fieldset>
+      {/if}
 
       <div>
         <label class="label" for="fault">What's wrong with it?</label>

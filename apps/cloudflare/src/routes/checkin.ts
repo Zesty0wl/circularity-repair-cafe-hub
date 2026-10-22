@@ -4,6 +4,7 @@ import { cafes, events, preRegistrations, repairImages, repairJobs, skillCategor
 import { and, asc, desc, eq, inArray } from 'drizzle-orm';
 import { checkInSubmitSchema } from '@circularity/shared';
 import { withJobNumber } from '../services/jobNumber.js';
+import { cardInUse, cardInUseError } from '../services/cardNumbers.js';
 import { audit } from '../utils/audit.js';
 import { saveValidatedImage } from '../services/imageUpload.js';
 import { randomToken } from '../utils/tokens.js';
@@ -138,22 +139,12 @@ export async function checkInRoutes(app: App): Promise<void> {
 
     // A card number only has to be unique among the open jobs in this event,
     // so a card handed back at the exit frees its number for someone else.
-    if (data.cardNumber != null) {
-      const clash = await db
-        .select({ id: repairJobs.id })
-        .from(repairJobs)
-        .where(
-          and(
-            eq(repairJobs.eventId, found.event.id),
-            eq(repairJobs.cardNumber, data.cardNumber),
-            inList(repairJobs.status, ['waiting', 'in_progress', 'awaiting_return']),
-          ),
-        )
-        .limit(1);
-      if (clash.length > 0) {
-        reply.code(409).send({ error: `Card number ${data.cardNumber} is already in use`, code: 'checkin/card_in_use' });
-        return;
-      }
+    // While the cafe does not use cards, a number sent anyway is ignored.
+    const [cardSetting] = await db.select({ on: cafes.cardNumbersEnabled }).from(cafes).limit(1);
+    const cardNumber = cardSetting?.on ? (data.cardNumber ?? null) : null;
+    if (cardNumber != null && (await cardInUse(found.event.id, cardNumber))) {
+      reply.code(409).send(cardInUseError(cardNumber));
+      return;
     }
 
     const [job] = await withJobNumber((jobNumber) =>
@@ -173,7 +164,7 @@ export async function checkInRoutes(app: App): Promise<void> {
           itemBrand: data.itemBrand ?? null,
           weightKg: data.weightKg != null ? String(data.weightKg) : null,
           isFirstVisit: data.isFirstVisit ?? null,
-          cardNumber: data.cardNumber ?? null,
+          cardNumber,
           faultDescription: data.faultDescription,
           gdprConsent,
           dataRetentionDate: retentionDate.toISOString().slice(0, 10),

@@ -228,9 +228,11 @@
       <div><label class="label" for="im">Item</label><input id="im" class="input" bind:value={form.itemDescription} /></div>
       <div><label class="label" for="br">Brand</label><input id="br" class="input" bind:value={form.itemBrand} /></div>
     </div>
-    <div class="grid sm:grid-cols-2 gap-3">
-      <div><label class="label" for="cn2">Session number</label><input id="cn2" class="input" type="number" min="0" bind:value={form.cardNumber} /></div>
-    </div>
+    {#if $cafe?.cardNumbersEnabled || form.cardNumber !== ''}
+      <div class="grid sm:grid-cols-2 gap-3">
+        <div><label class="label" for="cn2">Card number</label><input id="cn2" class="input" type="number" min="1" max="999" bind:value={form.cardNumber} /></div>
+      </div>
+    {/if}
     <div>
       <label class="label" for="cat">Category</label>
       <select id="cat" class="input" bind:value={form.categoryId}>

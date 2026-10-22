@@ -35,6 +35,7 @@ export async function cafeFeatures() {
       weighItemsEnabled: cafes.weighItemsEnabled,
       askFirstVisitEnabled: cafes.askFirstVisitEnabled,
       askSatisfactionEnabled: cafes.askSatisfactionEnabled,
+      cardNumbersEnabled: cafes.cardNumbersEnabled,
       enableContactField: cafes.enableContactField,
       dataRetentionDays: cafes.dataRetentionDays,
     })
@@ -46,6 +47,7 @@ export async function cafeFeatures() {
     weighItemsEnabled: cafe?.weighItemsEnabled ?? false,
     askFirstVisitEnabled: cafe?.askFirstVisitEnabled ?? false,
     askSatisfactionEnabled: cafe?.askSatisfactionEnabled ?? false,
+    cardNumbersEnabled: cafe?.cardNumbersEnabled ?? false,
     enableContactField: cafe?.enableContactField ?? true,
     dataRetentionDays: cafe?.dataRetentionDays ?? env.DATA_RETENTION_DEFAULT_DAYS,
   };

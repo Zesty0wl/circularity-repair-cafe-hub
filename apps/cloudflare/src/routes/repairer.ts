@@ -6,6 +6,7 @@ import { assistedCheckInSchema, jobFeedbackSchema, needsPatTest, patRecordSchema
 import { cafeFeatures } from '../services/preRegistration.js';
 import { saveValidatedImage } from '../services/imageUpload.js';
 import { withJobNumber } from '../services/jobNumber.js';
+import { cardInUse, cardInUseError } from '../services/cardNumbers.js';
 import { randomToken } from '../utils/tokens.js';
 import { audit } from '../utils/audit.js';
 import { repairerSummary } from '../utils/users.js';
@@ -154,6 +155,7 @@ export async function repairerRoutes(app: App): Promise<void> {
       .select({
         id: repairJobs.id,
         jobNumber: repairJobs.jobNumber,
+        cardNumber: repairJobs.cardNumber,
         customerName: repairJobs.customerName,
         itemDescription: repairJobs.itemDescription,
         faultDescription: repairJobs.faultDescription,
@@ -242,22 +244,11 @@ export async function repairerRoutes(app: App): Promise<void> {
     retentionDate.setDate(retentionDate.getDate() + retentionDays);
 
     // A card number only has to be unique among the open jobs in this event.
-    if (data.cardNumber != null) {
-      const clash = await db
-        .select({ id: repairJobs.id })
-        .from(repairJobs)
-        .where(
-          and(
-            eq(repairJobs.eventId, activeEvent.id),
-            eq(repairJobs.cardNumber, data.cardNumber),
-            sql`${repairJobs.status} IN ('waiting', 'in_progress', 'awaiting_return')`,
-          ),
-        )
-        .limit(1);
-      if (clash.length > 0) {
-        reply.code(409).send({ error: `Card number ${data.cardNumber} is already in use`, code: 'checkin/card_in_use' });
-        return;
-      }
+    // While the cafe does not use cards, a number sent anyway is ignored.
+    const cardNumber = (await cafeFeatures()).cardNumbersEnabled ? (data.cardNumber ?? null) : null;
+    if (cardNumber != null && (await cardInUse(activeEvent.id, cardNumber))) {
+      reply.code(409).send(cardInUseError(cardNumber));
+      return;
     }
 
     const [job] = await withJobNumber((jobNumber) =>
@@ -277,7 +268,7 @@ export async function repairerRoutes(app: App): Promise<void> {
           itemBrand: data.itemBrand ?? null,
           weightKg: data.weightKg != null ? String(data.weightKg) : null,
           isFirstVisit: data.isFirstVisit ?? null,
-          cardNumber: data.cardNumber ?? null,
+          cardNumber,
           faultDescription: data.faultDescription,
           gdprConsent,
           dataRetentionDate: retentionDate.toISOString().slice(0, 10),

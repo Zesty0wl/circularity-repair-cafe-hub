@@ -70,6 +70,7 @@ export async function adminSettingsRoutes(app: App): Promise<void> {
       weighItemsEnabled?: boolean;
       askFirstVisitEnabled?: boolean;
       askSatisfactionEnabled?: boolean;
+      cardNumbersEnabled?: boolean;
     };
     const [cafe] = await db.select().from(cafes).limit(1);
     if (!cafe) {
@@ -85,6 +86,7 @@ export async function adminSettingsRoutes(app: App): Promise<void> {
     if (typeof body.weighItemsEnabled === 'boolean') update.weighItemsEnabled = body.weighItemsEnabled;
     if (typeof body.askFirstVisitEnabled === 'boolean') update.askFirstVisitEnabled = body.askFirstVisitEnabled;
     if (typeof body.askSatisfactionEnabled === 'boolean') update.askSatisfactionEnabled = body.askSatisfactionEnabled;
+    if (typeof body.cardNumbersEnabled === 'boolean') update.cardNumbersEnabled = body.cardNumbersEnabled;
     const [updated] = await db.update(cafes).set(update).where(eq(cafes.id, cafe.id)).returning();
     await audit({
       request,

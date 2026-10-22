@@ -331,6 +331,7 @@
           weighItemsEnabled: cafe.weighItemsEnabled === true,
           askFirstVisitEnabled: cafe.askFirstVisitEnabled === true,
           askSatisfactionEnabled: cafe.askSatisfactionEnabled === true,
+          cardNumbersEnabled: cafe.cardNumbersEnabled === true,
         },
       });
       // The menu and the public pages read these from the cafe profile.
@@ -1150,6 +1151,20 @@
           comment. Any volunteer can record the answer, so the person at the door does not have to be the repairer. The
           Statistics page shows the share of visitors who were satisfied. A comment is removed with the visitor's other
           personal details at the end of the data retention period.
+        </p>
+      </section>
+
+      <section class="pt-4 border-t border-slate-200 space-y-2">
+        <h2 class="text-lg font-semibold">Numbered cards</h2>
+        <label class="flex items-start gap-3">
+          <input type="checkbox" class="mt-1" bind:checked={cafe.cardNumbersEnabled} />
+          <span>Give each visitor a numbered card at check-in</span>
+        </label>
+        <p class="text-sm text-slate-600">
+          Some cafes keep a set of numbered cards, from 1 to 50 or fewer. A volunteer hands one to each visitor and
+          uses the number to call them. When this is on, the "Check in a visitor" page asks which card was handed
+          out, and the waiting-room screen shows the card number instead of the job number. A number is free again
+          once the item is collected, so the same cards can be used all session.
         </p>
       </section>
 

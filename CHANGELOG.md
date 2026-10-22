@@ -18,6 +18,11 @@ Notable changes to the Repair Café Hub. Newest first.
   Statistics page shows the share who were satisfied. The comment is removed
   with the visitor's other personal details. Off by default. Thanks again to
   Florian Chazal (#8).
+- **Numbered cards.** A new switch under Settings, Check-in & preferences.
+  When it is on, a volunteer picks the number of the card they handed to the
+  visitor, and the waiting-room screen calls them by it. A number is free again
+  once the item leaves, so the same cards can be used all session. Off by
+  default. Thanks again to Florian Chazal (#9).
 
 ### Changed
 

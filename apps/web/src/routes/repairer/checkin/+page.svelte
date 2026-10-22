@@ -112,23 +112,40 @@
     photoPreview = null;
   }
 
+  type SessionJob = { cardNumber: number | null; status: string };
+
+  /** A number is taken while its job is still open. The rest are free. */
+  function cardsInUse(jobs: SessionJob[] | undefined): number[] {
+    const open = ['waiting', 'in_progress', 'awaiting_return'];
+    return (jobs ?? []).filter((j) => open.includes(j.status) && j.cardNumber != null).map((j) => j.cardNumber as number);
+  }
+
+  /**
+   * Other volunteers check people in and hand cards back at the same time, so
+   * read the numbers in use again before each new visitor, and after a clash.
+   */
+  async function refreshCards() {
+    if (!$cafe?.cardNumbersEnabled) return;
+    try {
+      takenCards = cardsInUse((await api<{ jobs?: SessionJob[] }>('/api/repairer/active-event')).jobs);
+    } catch {
+      // Keep the list we have. The hub still refuses a number that is taken.
+    }
+  }
+
   onMount(async () => {
     try {
       const [active, cats] = await Promise.all([
         api<{
           event: { id: string; name: string; venueName?: string } | null;
-          jobs?: Array<{ cardNumber: number | null; status: string }>;
+          jobs?: SessionJob[];
         }>('/api/repairer/active-event'),
         api<SkillCategory[]>('/api/public/skill-categories', { autoRefresh: false }),
       ]);
       activeEvent = active.event
         ? { id: active.event.id, name: active.event.name, venueName: active.event.venueName }
         : null;
-      // A number is taken while its job is still open; the rest are free.
-      const open = ['waiting', 'in_progress', 'awaiting_return'];
-      takenCards = (active.jobs ?? [])
-        .filter((j) => open.includes(j.status) && j.cardNumber != null)
-        .map((j) => j.cardNumber as number);
+      takenCards = cardsInUse(active.jobs);
       categories = cats;
     } catch (err: any) {
       loadError = err?.message || 'Could not load the check-in form';
@@ -164,7 +181,7 @@
         itemCategoryId,
         weightKg: $cafe?.weighItemsEnabled ? weightValue() : null,
         isFirstVisit: $cafe?.askFirstVisitEnabled ? isFirstVisit : null,
-        cardNumber,
+        cardNumber: $cafe?.cardNumbersEnabled ? cardNumber : null,
         customerName: customerName.trim() || null,
         customerContact: customerContact.trim() || null,
         gdprConsent: hasPii ? consent : false,
@@ -181,10 +198,15 @@
           photoWarning = 'The repair was registered, but the photo could not be uploaded.';
         }
       }
-      created = { jobNumber: res.jobNumber, cardNumber };
-      if (cardNumber != null) takenCards = [...takenCards, cardNumber];
+      created = { jobNumber: res.jobNumber, cardNumber: $cafe?.cardNumbersEnabled ? cardNumber : null };
+      if (created.cardNumber != null) takenCards = [...takenCards, created.cardNumber];
     } catch (err: any) {
       error = err?.message || 'Could not register the repair';
+      // The number may have just been taken by someone else. Show it as taken.
+      if (cardNumber != null) {
+        await refreshCards();
+        if (takenCards.includes(cardNumber)) cardNumber = null;
+      }
     } finally {
       busy = false;
     }
@@ -198,6 +220,7 @@
     weightKg = '';
     isFirstVisit = null;
     cardNumber = null;
+    void refreshCards();
     faultDescription = '';
     customerName = '';
     customerContact = '';
@@ -313,9 +336,10 @@
         </div>
       {/if}
 
-      <!-- Session number: the number on the card handed to the visitor. -->
+      <!-- Card number: the number on the card handed to the visitor. -->
+      {#if $cafe?.cardNumbersEnabled}
       <div>
-        <p class="label">Session number <span class="font-normal text-slate-400">(optional)</span></p>
+        <p class="label">Card number <span class="font-normal text-slate-400">(optional)</span></p>
         <p class="text-sm text-slate-500 mb-2">Tap the number on the card you gave the visitor. Numbers already in use are greyed out.</p>
         <div class="grid grid-cols-10 gap-1.5">
           {#each CARD_NUMBERS as n}
@@ -328,6 +352,7 @@
           {/each}
         </div>
       </div>
+      {/if}
 
       <div>
         <label class="label" for="item">Item description</label>

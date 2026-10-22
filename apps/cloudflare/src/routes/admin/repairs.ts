@@ -6,6 +6,7 @@ import { and, count, desc, eq, like, or, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
 import { needsPatTest, repairUpdateSchema } from '@circularity/shared';
 import { cafeFeatures } from '../../services/preRegistration.js';
+import { cardInUse, cardInUseError, holdsCard } from '../../services/cardNumbers.js';
 import { audit } from '../../utils/audit.js';
 import { repairerSummary } from '../../utils/users.js';
 import { deleteImage } from '../../services/imageUpload.js';
@@ -135,13 +136,24 @@ export async function adminRepairsRoutes(app: App): Promise<void> {
     }
     const data = parsed.data;
     const [existing] = await db
-      .select({ status: repairJobs.status })
+      .select({ status: repairJobs.status, eventId: repairJobs.eventId, cardNumber: repairJobs.cardNumber })
       .from(repairJobs)
       .where(eq(repairJobs.id, id))
       .limit(1);
     if (!existing) {
       reply.code(404).send({ error: 'Repair not found', code: 'repair/not_found' });
       return;
+    }
+    // A card number must not clash with another open repair in the same
+    // session. Check before saving, both when the number changes and when a
+    // finished repair is opened again, as its number may have been reused.
+    if (data.cardNumber !== undefined || data.status !== undefined) {
+      const card = data.cardNumber !== undefined ? data.cardNumber : existing.cardNumber;
+      const status = data.status ?? existing.status;
+      if (card != null && holdsCard(status) && (await cardInUse(existing.eventId, card, id))) {
+        reply.code(409).send(cardInUseError(card));
+        return;
+      }
     }
     const update: any = { updatedAt: new Date() };
     for (const k of ['status', 'repairerId', 'outcomeNotes', 'partsUsed', 'customerName', 'customerContact', 'itemDescription', 'faultDescription', 'itemCategoryId', 'itemBrand', 'isFirstVisit', 'satisfaction', 'satisfactionComment', 'cardNumber']) {

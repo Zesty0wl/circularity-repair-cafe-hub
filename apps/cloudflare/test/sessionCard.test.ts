@@ -9,6 +9,8 @@ beforeAll(freshHub);
 describe('session card numbers', () => {
   let admin = '';
   let repairer = '';
+  let firstId = '';
+  let reuseId = '';
 
   it('keeps a number unique among open jobs, and frees it when the job closes', async () => {
     admin = (await setUpHub()).token;
@@ -27,6 +29,15 @@ describe('session card numbers', () => {
     repairer = (await call(`/api/auth/reset/${user.body.resetToken}`, { json: { password: 'Soldering1Iron' } })).body
       .accessToken;
 
+    // Cards start switched off, and a number sent anyway is ignored.
+    const ignored = await call('/api/repairer/checkin', {
+      token: repairer,
+      json: { itemDescription: 'Clock', faultDescription: 'Stopped', cardNumber: 3 },
+    });
+    expect(ignored.status).toBe(200);
+    expect((await call(`/api/admin/repairs/${ignored.body.id}`, { token: admin })).body.job.cardNumber).toBeNull();
+    await call('/api/admin/settings/preferences', { method: 'PATCH', token: admin, json: { cardNumbersEnabled: true } });
+
     const first = await call('/api/repairer/checkin', {
       token: repairer,
       json: { itemDescription: 'Kettle', faultDescription: 'Dead', cardNumber: 7 },
@@ -35,6 +46,11 @@ describe('session card numbers', () => {
 
     const stored = await call(`/api/admin/repairs/${first.body.id}`, { token: admin });
     expect(stored.body.job.cardNumber).toBe(7);
+    firstId = first.body.id;
+
+    // The check-in page reads the numbers in use from the session's job list.
+    const active = await call('/api/repairer/active-event', { token: repairer });
+    expect(active.body.jobs.map((j: any) => j.cardNumber)).toContain(7);
 
     // The same number while the first job is open is refused.
     const clash = await call('/api/repairer/checkin', {
@@ -64,6 +80,24 @@ describe('session card numbers', () => {
       json: { itemDescription: 'Fan', faultDescription: 'Rattles', cardNumber: 7 },
     });
     expect(reuse.status).toBe(200);
+    reuseId = reuse.body.id;
+  });
+
+  it('refuses a clash from the admin page with a clear message, not a server error', async () => {
+    // Giving the toaster card 7, which the fan has.
+    const jobs = (await call('/api/repairer/active-event', { token: repairer })).body.jobs;
+    const toaster = jobs.find((j: any) => j.cardNumber === 8);
+    const moved = await call(`/api/admin/repairs/${toaster.id}`, { method: 'PATCH', token: admin, json: { cardNumber: 7 } });
+    expect(moved.status).toBe(409);
+    expect(moved.body.code).toBe('checkin/card_in_use');
+
+    // Opening the kettle again, while its card 7 is now with the fan.
+    const reopened = await call(`/api/admin/repairs/${firstId}`, { method: 'PATCH', token: admin, json: { status: 'waiting' } });
+    expect(reopened.status).toBe(409);
+
+    // Saving the fan with its own number is fine.
+    const same = await call(`/api/admin/repairs/${reuseId}`, { method: 'PATCH', token: admin, json: { cardNumber: 7 } });
+    expect(same.status).toBe(200);
   });
 
   it('shows the card number on the waiting-room display', async () => {

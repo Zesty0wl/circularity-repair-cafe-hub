@@ -289,7 +289,18 @@ export const repairUpdateSchema = z.object({
   itemBrand: z.string().max(100).optional().nullable(),
   weightKg: z.number().nonnegative().max(1000).optional().nullable(),
   isFirstVisit: z.boolean().optional().nullable(),
+  satisfaction: z.enum(['satisfied', 'not_satisfied']).nullable().optional(),
+  satisfactionComment: z.string().max(500).optional().nullable(),
 });
+
+// Recording how the visitor said the repair went, at the exit. Both fields are
+// optional, and `satisfaction: null` clears an answer given by mistake.
+export const jobFeedbackSchema = z.object({
+  satisfaction: z.enum(['satisfied', 'not_satisfied']).nullable(),
+  satisfactionComment: z.string().max(500).optional().nullable(),
+});
+
+export type JobFeedbackPayload = z.infer<typeof jobFeedbackSchema>;
 
 // ─────────────────────────── Linux Repair Cafe ───────────────────────────
 // A Linux Repair Cafe helps people move an ageing computer to Linux instead of

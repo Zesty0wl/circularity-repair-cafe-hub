@@ -103,6 +103,8 @@ export const REPAIR_STATUSES = [
   'awaiting_return',
   'returned',
 ] as const;
+/** How the visitor said the repair went, asked at the exit. */
+export const SATISFACTION_VALUES = ['satisfied', 'not_satisfied'] as const;
 export const EVENT_STATUSES = ['scheduled', 'active', 'completed', 'cancelled'] as const;
 export const IMAGE_STAGES = ['check_in', 'during_repair', 'completed'] as const;
 export const PAT_RESULTS = ['pass', 'fail', 'not_needed'] as const;
@@ -377,6 +379,9 @@ export const repairJobs = sqliteTable(
     completedAt: timestamp('completed_at'),
     outcomeNotes: text('outcome_notes'),
     partsUsed: text('parts_used'),
+    /** The visitor's own verdict at the exit. Optional. */
+    satisfaction: text('satisfaction', { enum: SATISFACTION_VALUES }),
+    satisfactionComment: text('satisfaction_comment'),
     environmentalSavingKg: numeric('environmental_saving_kg', 3),
     co2FactorId: uuid('co2_factor_id'),
     co2SavingKg: numeric('co2_saving_kg', 3),

@@ -43,6 +43,7 @@
     firstVisit: '' as '' | 'yes' | 'no',
     satisfaction: '' as '' | 'satisfied' | 'not_satisfied',
     satisfactionComment: '',
+    cardNumber: '' as string | number,
     status: 'waiting',
   };
 
@@ -67,6 +68,7 @@
       firstVisit: detail.job.isFirstVisit === true ? 'yes' : detail.job.isFirstVisit === false ? 'no' : '',
       satisfaction: detail.job.satisfaction ?? '',
       satisfactionComment: detail.job.satisfactionComment ?? '',
+      cardNumber: detail.job.cardNumber ?? '',
       status: detail.job.status,
     };
   }
@@ -93,6 +95,7 @@
           isFirstVisit: form.firstVisit === 'yes' ? true : form.firstVisit === 'no' ? false : null,
           satisfaction: form.satisfaction || null,
           satisfactionComment: form.satisfactionComment || null,
+          cardNumber: form.cardNumber === '' ? null : Number(form.cardNumber),
         },
       });
       await load();
@@ -224,6 +227,9 @@
     <div class="grid sm:grid-cols-2 gap-3">
       <div><label class="label" for="im">Item</label><input id="im" class="input" bind:value={form.itemDescription} /></div>
       <div><label class="label" for="br">Brand</label><input id="br" class="input" bind:value={form.itemBrand} /></div>
+    </div>
+    <div class="grid sm:grid-cols-2 gap-3">
+      <div><label class="label" for="cn2">Session number</label><input id="cn2" class="input" type="number" min="0" bind:value={form.cardNumber} /></div>
     </div>
     <div>
       <label class="label" for="cat">Category</label>

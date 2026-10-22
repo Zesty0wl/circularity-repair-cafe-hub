@@ -241,6 +241,25 @@ export async function repairerRoutes(app: App): Promise<void> {
     const retentionDate = new Date();
     retentionDate.setDate(retentionDate.getDate() + retentionDays);
 
+    // A card number only has to be unique among the open jobs in this event.
+    if (data.cardNumber != null) {
+      const clash = await db
+        .select({ id: repairJobs.id })
+        .from(repairJobs)
+        .where(
+          and(
+            eq(repairJobs.eventId, activeEvent.id),
+            eq(repairJobs.cardNumber, data.cardNumber),
+            sql`${repairJobs.status} IN ('waiting', 'in_progress', 'awaiting_return')`,
+          ),
+        )
+        .limit(1);
+      if (clash.length > 0) {
+        reply.code(409).send({ error: `Card number ${data.cardNumber} is already in use`, code: 'checkin/card_in_use' });
+        return;
+      }
+    }
+
     const [job] = await withJobNumber((jobNumber) =>
       db
         .insert(repairJobs)
@@ -258,6 +277,7 @@ export async function repairerRoutes(app: App): Promise<void> {
           itemBrand: data.itemBrand ?? null,
           weightKg: data.weightKg != null ? String(data.weightKg) : null,
           isFirstVisit: data.isFirstVisit ?? null,
+          cardNumber: data.cardNumber ?? null,
           faultDescription: data.faultDescription,
           gdprConsent,
           dataRetentionDate: retentionDate.toISOString().slice(0, 10),

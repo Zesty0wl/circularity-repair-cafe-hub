@@ -111,6 +111,9 @@ export const checkInSubmitSchema = z
     weightKg: z.number().nonnegative().max(1000).optional().nullable(),
     // Whether this is the visitor's first time at the cafe. Optional.
     isFirstVisit: z.boolean().optional().nullable(),
+    // A short number for a reusable card, unique among the open jobs in this
+    // event. Optional.
+    cardNumber: z.number().int().positive().max(999).optional().nullable(),
   })
   .refine(
     (v) => Boolean(v.customerToken) || (Boolean(v.customerName) && v.gdprConsent === true),
@@ -141,6 +144,9 @@ export const assistedCheckInSchema = z
     weightKg: z.number().nonnegative().max(1000).optional().nullable(),
     // Whether this is the visitor's first time at the cafe. Optional.
     isFirstVisit: z.boolean().optional().nullable(),
+    // A short number for a reusable card, unique among the open jobs in this
+    // event. Optional.
+    cardNumber: z.number().int().positive().max(999).optional().nullable(),
   })
   .refine(
     (v) => {
@@ -291,6 +297,7 @@ export const repairUpdateSchema = z.object({
   isFirstVisit: z.boolean().optional().nullable(),
   satisfaction: z.enum(['satisfied', 'not_satisfied']).nullable().optional(),
   satisfactionComment: z.string().max(500).optional().nullable(),
+  cardNumber: z.number().int().positive().max(999).optional().nullable(),
 });
 
 // Recording how the visitor said the repair went, at the exit. Both fields are

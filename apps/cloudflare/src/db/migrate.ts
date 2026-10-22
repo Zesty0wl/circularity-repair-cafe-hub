@@ -25,6 +25,7 @@ import m0003 from './migrations/0003_qwa_analytics.js';
 import m0004 from './migrations/0004_pat_and_preregistration.js';
 import m0004CheckinWeight from './migrations/0004_checkin_weight_first_visit.js';
 import m0005 from './migrations/0005_exit_satisfaction.js';
+import m0006 from './migrations/0006_session_card_number.js';
 import m0007 from './migrations/0007_feature_switches.js';
 
 const MIGRATIONS: Array<{ id: string; sql: string }> = [
@@ -36,6 +37,7 @@ const MIGRATIONS: Array<{ id: string; sql: string }> = [
   // names. Keeping the names means that hub does not run them a second time.
   { id: '0004_checkin_weight_first_visit', sql: m0004CheckinWeight },
   { id: '0005_exit_satisfaction', sql: m0005 },
+  { id: '0006_session_card_number', sql: m0006 },
   { id: '0007_feature_switches', sql: m0007 },
 ];
 

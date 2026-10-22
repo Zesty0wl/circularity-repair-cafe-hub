@@ -362,6 +362,8 @@ export const repairJobs = sqliteTable(
       .notNull()
       .references(() => events.id),
     jobNumber: text('job_number').notNull().unique(),
+    /** A short per-session number, for a reusable card. Optional. */
+    cardNumber: integer('card_number'),
     customerName: text('customer_name'),
     customerContact: text('customer_contact'),
     customerToken: text('customer_token'),

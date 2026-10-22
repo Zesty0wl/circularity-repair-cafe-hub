@@ -55,6 +55,7 @@ export async function adminRepairsRoutes(app: App): Promise<void> {
         weightKg: repairJobs.weightKg,
         status: repairJobs.status,
         satisfaction: repairJobs.satisfaction,
+        cardNumber: repairJobs.cardNumber,
         createdAt: repairJobs.createdAt,
         completedAt: repairJobs.completedAt,
         eventId: repairJobs.eventId,
@@ -143,7 +144,7 @@ export async function adminRepairsRoutes(app: App): Promise<void> {
       return;
     }
     const update: any = { updatedAt: new Date() };
-    for (const k of ['status', 'repairerId', 'outcomeNotes', 'partsUsed', 'customerName', 'customerContact', 'itemDescription', 'faultDescription', 'itemCategoryId', 'itemBrand', 'isFirstVisit', 'satisfaction', 'satisfactionComment']) {
+    for (const k of ['status', 'repairerId', 'outcomeNotes', 'partsUsed', 'customerName', 'customerContact', 'itemDescription', 'faultDescription', 'itemCategoryId', 'itemBrand', 'isFirstVisit', 'satisfaction', 'satisfactionComment', 'cardNumber']) {
       if ((data as any)[k] !== undefined) update[k] = (data as any)[k];
     }
     if (data.environmentalSavingKg !== undefined) {
@@ -218,6 +219,7 @@ export async function adminRepairsRoutes(app: App): Promise<void> {
         isFirstVisit: repairJobs.isFirstVisit,
         fault: repairJobs.faultDescription,
         status: repairJobs.status,
+        cardNumber: repairJobs.cardNumber,
         repairer: users.displayName,
         outcomeNotes: repairJobs.outcomeNotes,
         satisfaction: repairJobs.satisfaction,
@@ -235,7 +237,7 @@ export async function adminRepairsRoutes(app: App): Promise<void> {
       .leftJoin(users, eq(users.id, repairJobs.repairerId))
       .leftJoin(patTester, eq(patTester.id, repairJobs.patTestedBy))
       .orderBy(desc(repairJobs.createdAt));
-    const headers = ['jobNumber', 'eventDate', 'eventName', 'customerName', 'itemDescription', 'category', 'brand', 'weightKg', 'isFirstVisit', 'fault', 'status', 'repairer', 'outcomeNotes', 'satisfaction', 'satisfactionComment', 'environmentalSavingKg', 'createdAt', 'completedAt'];
+    const headers = ['jobNumber', 'cardNumber', 'eventDate', 'eventName', 'customerName', 'itemDescription', 'category', 'brand', 'weightKg', 'isFirstVisit', 'fault', 'status', 'repairer', 'outcomeNotes', 'satisfaction', 'satisfactionComment', 'environmentalSavingKg', 'createdAt', 'completedAt'];
     // The PAT columns only appear while the cafe does PAT tests, so the file
     // is the same as before for everyone else.
     if ((await cafeFeatures()).patTestingEnabled) headers.push('patResult', 'patTestedAt', 'patTestedBy');

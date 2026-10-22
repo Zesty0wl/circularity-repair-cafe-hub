@@ -465,3 +465,71 @@ export function resolveSlugs(
   }
   return out;
 }
+
+// ── Finding a cafe's own listing ────────────────────────────────────────────
+//
+// A hub works better when it knows which repaircafe.org listing is its own:
+// the world map highlights it, "Repair Cafes near us" is measured from it, and
+// the project's map can place its pin. We never pick a listing for the cafe.
+// Names and addresses are free text and a town can have several cafes, so we
+// only suggest, and an admin chooses.
+
+/** Words in a cafe's name that say nothing about which cafe it is. */
+const NAME_NOISE = new Set([
+  'repair', 'repaircafe', 'cafe', 'cafes', 'the', 'and', 'of', 'at', 'in',
+  'de', 'du', 'des', 'la', 'le', 'les', 'et', 'het', 'van', 'der', 'den', 'di', 'il', 'el', 'und',
+]);
+
+/** The words of a name or place worth searching for. */
+function searchWords(value: string | null | undefined): string[] {
+  return foldForSearch(value ?? '')
+    .split(/[^a-z0-9]+/)
+    .filter((w) => w.length >= 3 && !NAME_NOISE.has(w));
+}
+
+export interface ListingHints {
+  /** The cafe's name, as the hub knows it. */
+  name?: string | null;
+  /** The town the cafe meets in. */
+  town?: string | null;
+  /** The postcode of its venue. */
+  postcode?: string | null;
+}
+
+/**
+ * The listings most likely to be this cafe's own, best first.
+ *
+ * A listing scores for sharing the cafe's distinctive name words, for being in
+ * the same town and for having the same postcode. Each test is all-or-nothing
+ * on its words, so "Villeneuve Loubet" does not match every Villeneuve.
+ */
+export function suggestListings(snapshot: NetworkSnapshot, hints: ListingHints, limit = 6): NetworkCafe[] {
+  const tests: Array<{ words: string[]; weight: number }> = [
+    { words: searchWords(hints.name), weight: 3 },
+    { words: searchWords(hints.town), weight: 2 },
+    { words: foldForSearch(hints.postcode ?? '').split(/\s+/).filter((w) => w.length >= 2), weight: 2 },
+  ].filter((t) => t.words.length > 0);
+  if (tests.length === 0) return [];
+
+  const scored: Array<{ cafe: NetworkCafe; score: number }> = [];
+  for (const cafe of snapshot.cafes) {
+    if (!cafe.slug) continue;
+    const haystack = foldForSearch(`${cafe.name} ${cafe.address ?? ''}`);
+    let score = 0;
+    for (const test of tests) {
+      if (test.words.every((w) => haystack.includes(w))) score += test.weight;
+    }
+    if (score > 0) scored.push({ cafe, score });
+  }
+  scored.sort((a, b) => b.score - a.score || a.cafe.name.localeCompare(b.cafe.name));
+  return scored.slice(0, limit).map((s) => s.cafe);
+}
+
+/** The town in a venue address: its last line, which is where the wizard puts it. */
+export function townFromAddress(address: string | null | undefined): string | null {
+  const lines = (address ?? '')
+    .split(/[\n,]/)
+    .map((l) => l.trim())
+    .filter(Boolean);
+  return lines.length > 0 ? lines[lines.length - 1]! : null;
+}

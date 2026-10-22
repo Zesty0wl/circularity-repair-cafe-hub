@@ -82,6 +82,14 @@ export const setupCompleteSchema = z.object({
   telemetry: z
     .object({ level: z.enum(['none', 'standard', 'community']) })
     .optional(),
+  // The cafe's own repaircafe.org listing, chosen in the wizard. Left out when
+  // the wizard could not reach the directory, so the admin is asked later.
+  repaircafeListing: z
+    .object({
+      slug: z.string().max(300).nullable(),
+      notListed: z.boolean().optional(),
+    })
+    .optional(),
 });
 
 export type SetupCompletePayload = z.infer<typeof setupCompleteSchema>;

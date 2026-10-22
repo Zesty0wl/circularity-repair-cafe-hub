@@ -13,8 +13,9 @@
   import { onMount } from 'svelte';
   import { api } from '$lib/api';
   import { formatDistanceToNowStrict } from 'date-fns';
-  import { cafe } from '$lib/stores/cafe';
+  import { cafe, loadCafe } from '$lib/stores/cafe';
   import TelemetryChoice from '$lib/components/TelemetryChoice.svelte';
+  import ListingPicker, { type ListingAnswer } from '$lib/components/ListingPicker.svelte';
   import ScreenLinkDialog from '$lib/components/ScreenLinkDialog.svelte';
   import { activityLink, describeActivity } from '$lib/staff/activity';
   import { WAIT_TONE_CLASS, averageRepairMinutes, firstName, formatMinutes, minutesBetween, sessionTimes, waitTone, formatDuration } from '$lib/staff/queue';
@@ -52,6 +53,52 @@
   let showScreenLink = false;
   let confirmEnd = false;
   let busy = false;
+
+  // ── Which repaircafe.org listing is ours ──────────────────────────
+  // Asked once per version while no listing is linked, like the question
+  // below. The server decides. New hubs answer this in the setup wizard.
+  let askListing = false;
+  let listingSlug: string | null = null;
+  let listingBusy = false;
+  let listingDone = '';
+  let listingError = '';
+
+  async function loadListingPrompt() {
+    try {
+      const l = await api<{ shouldPrompt: boolean; available: boolean }>('/api/admin/repaircafe-listing');
+      // Only ask when there is something to choose from.
+      askListing = l?.shouldPrompt === true && l?.available === true;
+    } catch {
+      askListing = false;
+    }
+  }
+
+  const loadListings = (q: string) =>
+    api<ListingAnswer>(`/api/admin/repaircafe-listing${q ? `?q=${encodeURIComponent(q)}` : ''}`);
+
+  async function answerListing(action: 'link' | 'not_listed' | 'not_now') {
+    listingBusy = true;
+    listingError = '';
+    try {
+      await api('/api/admin/repaircafe-listing', { method: 'PATCH', json: { action, slug: listingSlug } });
+      if (action === 'not_now') {
+        askListing = false;
+        return;
+      }
+      if (action === 'link') {
+        listingDone = 'Linked. Your cafe is now picked out on the Worldwide map.';
+        // The public pages read the listing from the cafe profile.
+        await loadCafe();
+      } else {
+        listingDone = 'Thank you. We will not ask again. You can link a listing later under Settings, Cafe profile.';
+      }
+      setTimeout(() => (askListing = false), 3000);
+    } catch (err: any) {
+      listingError = err?.message ?? 'That did not save. Please try again.';
+    } finally {
+      listingBusy = false;
+    }
+  }
 
   // ── Sharing our numbers with the project ──────────────────────────
   // Only ever shown when nobody has said yes yet, and only once per version:
@@ -99,6 +146,7 @@
   onMount(() => {
     load();
     void loadTelemetryPrompt();
+    void loadListingPrompt();
     const poll = setInterval(load, 20_000);
     const tick = setInterval(() => (now = Date.now()), 30_000);
     return () => {
@@ -175,6 +223,38 @@
     <a href="/admin/events/new" class="btn-secondary btn-sm"><CalendarPlus size={16} /> Plan a session</a>
   </div>
 </div>
+
+{#if askListing}
+  <!-- Quiet by design, like the card below: part of the page, not a dialog. -->
+  <section class="card p-5 mb-5 ring-brand-200 bg-brand-50/40 relative">
+    <button class="absolute top-3 right-3 p-1.5 rounded-lg text-slate-400 hover:bg-white hover:text-slate-700" type="button" aria-label="Not now" on:click={() => answerListing('not_now')}>
+      <X size={16} />
+    </button>
+    {#if listingDone}
+      <p class="text-sm text-emerald-800 font-medium">{listingDone}</p>
+    {:else}
+      <h2 class="font-semibold text-slate-900 pr-8">Is your cafe on repaircafe.org?</h2>
+      <p class="mt-1 text-sm text-slate-600 max-w-2xl">
+        Link your cafe's page on repaircafe.org. Your cafe is then picked out on the Worldwide map, and "Repair Cafes
+        near us" is measured from it. If you share your numbers on the community map, it also puts your pin in the
+        right place.
+      </p>
+      <div class="mt-4 max-w-2xl">
+        <ListingPicker load={loadListings} bind:selected={listingSlug} />
+      </div>
+      {#if listingError}<p class="mt-3 text-sm text-rose-700">{listingError}</p>{/if}
+      <div class="mt-4 flex flex-wrap gap-2">
+        <button class="btn-primary btn-sm" type="button" disabled={listingBusy || !listingSlug} on:click={() => answerListing('link')}>
+          This is us
+        </button>
+        <button class="btn-secondary btn-sm" type="button" disabled={listingBusy} on:click={() => answerListing('not_listed')}>
+          We're not listed
+        </button>
+        <button class="btn-ghost btn-sm" type="button" disabled={listingBusy} on:click={() => answerListing('not_now')}>Not now</button>
+      </div>
+    {/if}
+  </section>
+{/if}
 
 {#if askTelemetry}
   <!-- Quiet by design: a card in the flow of the page, not a dialog over it. -->

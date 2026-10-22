@@ -16,6 +16,7 @@
 // =============================================================================
 import type { App } from '../lib/router.js';
 import { and, asc, eq, or } from 'drizzle-orm';
+import { isBenchTime } from '@circularity/shared';
 import { db, inList } from '../db/index.js';
 import { localToday } from '../lib/dates.js';
 import { cafes, events, repairJobs, skillCategories, users, venues } from '../db/schema.js';
@@ -157,7 +158,7 @@ export async function displayRoutes(app: App): Promise<void> {
     const durations = rows
       .filter((r) => r.acceptedAt && r.completedAt)
       .map((r) => new Date(r.completedAt!).getTime() - new Date(r.acceptedAt!).getTime())
-      .filter((ms) => ms > 0 && ms < 4 * 60 * 60 * 1000);
+      .filter((ms) => isBenchTime(ms / 60_000));
 
     void reply.header('Cache-Control', 'no-store');
     return {

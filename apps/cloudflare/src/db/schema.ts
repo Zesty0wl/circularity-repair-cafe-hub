@@ -144,6 +144,11 @@ export const cafes = sqliteTable('cafes', {
   qwaSrc: text('qwa_src'),
   /** The QWA events to count. Null means every one. */
   qwaEvents: json('qwa_events'),
+  /**
+   * No longer used. Hubs before 1.13.0 kept a CARTO map key here. The maps now
+   * use OpenFreeMap, which needs no key. The column stays so that older
+   * databases and backups still load.
+   */
   cartoApiKey: text('carto_api_key'),
   /** The secret part of the waiting-room display link. See routes/display.ts. */
   displayToken: text('display_token'),

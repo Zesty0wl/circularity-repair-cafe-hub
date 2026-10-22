@@ -102,7 +102,8 @@ volunteers and CO2 saved, with every session listed.
 - **Repair guides** from [iFixit](https://www.ifixit.com/api-docs), searchable
   from your own site.
 - **Maps** of every Repair Café in the world, and of the cafes near you, from
-  [repaircafe.org](https://www.repaircafe.org/en/api/).
+  [repaircafe.org](https://www.repaircafe.org/en/api/). The maps use free
+  [OpenFreeMap](https://openfreemap.org/) tiles, so there is no map key to set up.
 - **Linux Repair Cafe** (off until you switch it on): help people move an old
   computer to Linux instead of throwing it away, and record each install.
   See [docs/08-linux-repair-cafe.md](./docs/08-linux-repair-cafe.md).

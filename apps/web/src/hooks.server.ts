@@ -5,8 +5,8 @@ import { env } from '$env/dynamic/private';
 // svelte.config.js, with no exceptions. There used to be one, for the 3D globe
 // on /world: CesiumJS builds functions from strings, compiles WebAssembly, and
 // starts its workers from blobs it makes in memory, none of which the policy
-// allows. That page now draws a flat Leaflet map, which needs none of those, so
-// the exception has gone.
+// allows. That page now draws a flat MapLibre map, which loads its worker from
+// this site (see $lib/mapStyle), so the exception has gone.
 
 // During server rendering, load functions call relative URLs such as
 // /api/public/cafe. The API runs in the same Worker as these pages. The Worker

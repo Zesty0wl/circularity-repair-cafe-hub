@@ -141,6 +141,8 @@ export async function checkInRoutes(app: App): Promise<void> {
           // repairer can correct it if the visitor picked the wrong thing.
           co2FactorId: data.co2FactorId ?? null,
           itemBrand: data.itemBrand ?? null,
+          weightKg: data.weightKg != null ? String(data.weightKg) : null,
+          isFirstVisit: data.isFirstVisit ?? null,
           faultDescription: data.faultDescription,
           gdprConsent,
           dataRetentionDate: retentionDate.toISOString().slice(0, 10),

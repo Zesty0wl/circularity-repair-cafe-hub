@@ -16,6 +16,7 @@
     avgDurationMin: number;
     avgRepairsPerEvent: number;
     environmentalSavingKg: number;
+    totalWeightKg: number;
   };
   type HeatmapDay = { day: string; events: number; repairs: number; completed: number };
   type EventRow = {
@@ -179,7 +180,9 @@
     <div class="card p-4">
       <div class="flex items-center gap-2 text-slate-500 text-xs"><Wrench size={14} /> Items in</div>
       <p class="text-2xl font-bold mt-1">{overview.repairCount}</p>
-      <p class="text-xs text-slate-400 mt-0.5">{overview.completedCount} fixed</p>
+      <p class="text-xs text-slate-400 mt-0.5">
+        {overview.completedCount} fixed{#if overview.totalWeightKg > 0} · {overview.totalWeightKg.toFixed(1)} kg{/if}
+      </p>
     </div>
     <div class="card p-4">
       <div class="flex items-center gap-2 text-slate-500 text-xs"><CheckCircle2 size={14} /> Success rate</div>

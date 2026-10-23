@@ -123,6 +123,7 @@ export async function checkInPreRegistration(pre: PreRegistration, at: Date = ne
           co2FactorId: pre.co2FactorId,
           itemBrand: pre.itemBrand,
           faultDescription: pre.faultDescription,
+          isElectrical: pre.isElectrical,
           gdprConsent: pre.gdprConsent,
           dataRetentionDate: retentionDate(features.dataRetentionDays, at),
           status: repairerId ? 'in_progress' : 'waiting',

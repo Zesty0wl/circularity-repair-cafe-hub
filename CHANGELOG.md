@@ -2,7 +2,17 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
-## Unreleased
+## 1.14.0 (23 October 2026)
+
+### Added
+
+- **Change whether a pre-registered item needs a PAT test.** A pre-registered
+  item took its PAT test label from its category, and nobody could change it
+  until the item arrived. So a games controller that only uses batteries showed
+  **PAT test needed** because it was listed under small electricals. The item's
+  page now has a **This is an electrical item** tick box, like a repair's page.
+  The repairer who took the item, or an admin, can untick it before the day.
+  The repair keeps that choice when the item is checked in.
 
 ### Changed
 

@@ -280,6 +280,30 @@ describe('pre-registration', () => {
     expect(early.body.code).toBe('event/not_active');
   });
 
+  it('lets a volunteer say whether an item needs a PAT test before the day', async () => {
+    const url = (id: string) => `/api/repairer/pre-registrations/${id}/electrical`;
+    // Only the repairer who took it, or an admin, can change it.
+    expect((await call(url(radioId), { method: 'PATCH', token: ben, json: { isElectrical: false } })).status).toBe(403);
+    expect((await call(url(radioId), { method: 'PATCH', token: ada, json: { isElectrical: 'no' } })).status).toBe(400);
+
+    // A battery radio in an electrical category.
+    expect((await call(url(radioId), { method: 'PATCH', token: ada, json: { isElectrical: false } })).status).toBe(200);
+    let detail = (await call(`/api/repairer/pre-registrations/${radioId}`, { token: ada })).body;
+    expect(detail.needsPat).toBe(false);
+    expect(detail.pat).toEqual({ needed: false, itemIsElectrical: false, categoryIsElectrical: true });
+    const listed = (await call('/api/repairer/pre-registrations', { token: ada })).body.items.find((i: any) => i.id === radioId);
+    expect(listed.needsPat).toBe(false);
+
+    // Null follows the category again.
+    expect((await call(url(radioId), { method: 'PATCH', token: ada, json: { isElectrical: null } })).status).toBe(200);
+    detail = (await call(`/api/repairer/pre-registrations/${radioId}`, { token: ada })).body;
+    expect(detail.pat).toEqual({ needed: true, itemIsElectrical: null, categoryIsElectrical: true });
+
+    // An admin can change an item nobody has taken.
+    expect((await call(url(clockId), { method: 'PATCH', token: admin, json: { isElectrical: true } })).status).toBe(200);
+    expect((await call(`/api/repairer/pre-registrations/${clockId}`, { token: ada })).body.needsPat).toBe(true);
+  });
+
   it('lets the visitor call an item off', async () => {
     const extra = await call(`/api/public/events/${event.id}/pre-register`, {
       json: { customerToken: visitorToken, itemDescription: 'Hairdryer', faultDescription: 'Smells hot' },
@@ -326,6 +350,11 @@ describe('pre-registration', () => {
     expect(detail.job.customerContact).toBe('priya@example.org');
     expect(detail.preRegistration.researchNotes).toContain('dry joint');
     expect(detail.pat.needed).toBe(true);
+
+    // The clock keeps the setting it was given before the day.
+    const clockPat = (await call(`/api/repairer/jobs/${arrived.body.jobs[1].id}`, { token: admin })).body.pat;
+    expect(clockPat).toMatchObject({ needed: true, itemIsElectrical: true, categoryIsElectrical: false });
+    expect((await call(`/api/repairer/pre-registrations/${clockId}/electrical`, { method: 'PATCH', token: admin, json: { isElectrical: false } })).status).toBe(409);
 
     // Arriving twice changes nothing.
     expect((await call(`/api/checkin/${event.checkInToken}/arrive`, { json: { customerToken: visitorToken } })).body.jobs).toEqual([]);

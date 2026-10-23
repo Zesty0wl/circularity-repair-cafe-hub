@@ -110,7 +110,8 @@ example, an item that only uses batteries). Your name and the time are saved
 with the result.
 
 - If the label is wrong for an item, use the **This is an electrical item** tick
-  box on the repair's page.
+  box on the repair's page. For a pre-registered item, you can also do this
+  before the day, on the item's page.
 - An item that **failed** cannot be marked as fixed. Mark it as **Could not
   fix**, or test it again after more work.
 
@@ -129,6 +130,12 @@ does, you see **Pre-registered items** in the menu.
    notes are on the repair's page.
 
 If you cannot do it after all, press **Give it back for someone else to take**.
+
+If your cafe does PAT tests, the item's page also has a **This is an electrical
+item** tick box. Untick it if the item does not need a PAT test, for example a
+games controller that only uses batteries. Take the item first. Admins can
+change it without taking the item. The repair keeps your choice when the item
+is checked in.
 
 ## Etiquette
 

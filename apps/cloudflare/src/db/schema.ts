@@ -520,6 +520,8 @@ export const preRegistrations = sqliteTable(
     repairerId: uuid('repairer_id').references(() => users.id, { onDelete: 'set null' }),
     claimedAt: timestamp('claimed_at'),
     researchNotes: text('research_notes'),
+    /** Null means "the same as its category". Copied to the repair at check-in. */
+    isElectrical: bool('is_electrical'),
     /** The repair it became when it was checked in. */
     repairJobId: uuid('repair_job_id').references(() => repairJobs.id, { onDelete: 'set null' }),
     checkedInAt: timestamp('checked_in_at'),

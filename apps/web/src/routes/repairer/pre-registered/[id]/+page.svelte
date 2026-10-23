@@ -29,6 +29,8 @@
     category: { name: string; colour: string } | null;
     repairer: { id: string; displayName: string } | null;
     needsPat: boolean;
+    /** Null while the cafe does not do PAT tests. */
+    pat: { needed: boolean; itemIsElectrical: boolean | null; categoryIsElectrical: boolean } | null;
   }
 
   $: id = $page.params.id;
@@ -86,6 +88,10 @@
     await run(() => api(`/api/repairer/pre-registrations/${id}/notes`, { method: 'PATCH', json: { researchNotes: notes } }), 'Could not save your notes');
     if (!error) saved = true;
   }
+
+  // Say whether this one item is electrical, whatever its category says.
+  const setElectrical = (value: boolean) =>
+    run(() => api(`/api/repairer/pre-registrations/${id}/electrical`, { method: 'PATCH', json: { isElectrical: value } }), 'Could not save that change');
 
   async function checkIn() {
     busy = true;
@@ -235,6 +241,28 @@
             <button class="btn-primary w-full mt-4" disabled={busy} on:click={take}>{busy ? 'Taking…' : 'Take this item'}</button>
           {/if}
         </section>
+
+        {#if detail.pat}
+          <section class="card p-5 {detail.pat.needed ? 'bg-amber-50/60' : ''}">
+            <label class="flex items-start gap-3 text-sm {canWrite ? 'cursor-pointer' : ''}">
+              <input
+                type="checkbox"
+                class="h-5 w-5 rounded border-slate-300 text-brand-600 mt-0.5"
+                checked={detail.pat.needed}
+                disabled={busy || !canWrite}
+                on:change={(e) => setElectrical(e.currentTarget.checked)}
+              />
+              <span>
+                <span class="font-medium text-slate-900">This is an electrical item</span>
+                <span class="block text-xs text-slate-500">
+                  {#if detail.pat.itemIsElectrical === null}Set from its category.{:else}Changed for this item.{/if}
+                  Electrical items need a PAT test.
+                  {#if !canWrite}Take this item to change this.{/if}
+                </span>
+              </span>
+            </label>
+          </section>
+        {/if}
 
         {#if running}
           <section class="card p-5">

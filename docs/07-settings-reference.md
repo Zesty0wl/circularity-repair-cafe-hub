@@ -163,7 +163,10 @@ When you turn on **Ask repairers for a PAT test on electrical items**:
 Which items are electrical? Each skill category has an **Electrical** label on
 the **Skills** page. New hubs start with **Electronics** and **Small
 appliances** marked as electrical. A repairer can also change it for a single
-item, with the **This is an electrical item** tick box on the repair's page.
+item, with the **This is an electrical item** tick box on the repair's page. A
+pre-registered item has the same tick box on its page, so the repairer who took
+it, or an admin, can change it before the day. The repair keeps that choice
+when the item is checked in.
 
 When PAT testing is off, nothing about it appears anywhere, and repairs work
 exactly as before.

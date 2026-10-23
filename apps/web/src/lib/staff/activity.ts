@@ -40,6 +40,7 @@ export function describeActivity(a: any): { who: string | null; rest: string } {
     case 'preregistration.released': return { who, rest: 'gave back a pre-registered item' };
     case 'preregistration.checked_in': return { who, rest: `checked in a pre-registered item as repair #${a.metadata?.jobNumber ?? ''}` };
     case 'preregistration.cancelled': return { who, rest: 'cancelled a pre-registered item' };
+    case 'preregistration.electrical_changed': return { who, rest: 'changed whether a pre-registered item needs a PAT test' };
     case 'event.created': return { who, rest: `created the event ${ev}` };
     case 'event.updated': return { who, rest: `updated the event ${ev}` };
     case 'event.activated': return { who, rest: `started the event ${ev}` };

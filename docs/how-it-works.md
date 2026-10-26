@@ -128,6 +128,28 @@ with the demo cafe, run `python3 demo/seed.py` while it is running.
 Every pull request runs the tests, the type check and a full build
 (`.github/workflows/ci.yml`).
 
+## Languages
+
+The hub is in English and French. The English text in the code is also the
+key for its translation, so a page reads the same as before:
+`{$t('Add another item')}` in a Svelte page, or `tNow('…')` in plain code.
+
+- The French is in `packages/shared/src/i18n/fr.ts`. It lives in the shared
+  package so the Worker can use it too, for the pictures it draws.
+- `pickLocale` (`packages/shared/src/i18n/index.ts`) chooses the language for
+  each request, from the `LANGUAGE` setting or the browser. Both
+  `apps/web/src/hooks.server.ts` and the Worker's copy of public pages use it.
+- Messages from the API stay in English. The website translates them when it
+  shows them (`apps/web/src/lib/api.ts`), so give a message that a visitor may
+  see a fixed wording. If it must contain a value, also send the wording with
+  a placeholder as `template` and the value in `params`, as `cardInUseError`
+  does in `apps/cloudflare/src/services/cardNumbers.ts`.
+- When you add or change text, wrap it in `$t(…)` and add the French to
+  `fr.ts`. Text that is missing from `fr.ts` shows in English, so nothing
+  breaks, but French cafes will notice.
+- To add a language, add a dictionary next to `fr.ts`, and add the language
+  to `Locale` and `isLocale` in the same folder.
+
 ## Releasing a new version
 
 Every cafe's hub is its own Worker, on its own Cloudflare account, so the

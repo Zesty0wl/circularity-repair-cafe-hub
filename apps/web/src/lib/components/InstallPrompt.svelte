@@ -4,6 +4,7 @@
   import { onMount } from 'svelte';
   import { Download, X } from 'lucide-svelte';
   import { cafe } from '$lib/stores/cafe';
+  import { t } from '$lib/i18n';
 
   // A quiet offer to install the app. It only appears when the browser says
   // the site is installable, and once someone dismisses it we do not ask
@@ -71,19 +72,21 @@
     class="no-print fixed inset-x-0 {raised ? 'bottom-16 md:bottom-0 md:left-64' : 'bottom-0'} z-40 border-t border-brand-700 bg-brand-800 text-white"
     style="padding-bottom: env(safe-area-inset-bottom)"
     role="region"
-    aria-label="Install this app"
+    aria-label={$t('Install this app')}
   >
     <div class="max-w-6xl mx-auto flex items-center gap-3 px-4 py-3">
       <p class="flex-1 text-sm">
-        Add {$cafe?.name ?? 'this site'} to your home screen for quicker access.
+        {$cafe?.name
+          ? $t('Add {name} to your home screen for quicker access.', { name: $cafe.name })
+          : $t('Add this site to your home screen for quicker access.')}
       </p>
       <button type="button" class="btn-primary btn-sm !bg-white !text-brand-800 hover:!bg-slate-100" on:click={install}>
-        <Download size={16} /> Install
+        <Download size={16} /> {$t('Install')}
       </button>
       <button
         type="button"
         class="shrink-0 rounded-lg p-2 text-white/70 hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
-        aria-label="Not now"
+        aria-label={$t('Not now')}
         on:click={() => hide(true)}
       >
         <X size={18} />

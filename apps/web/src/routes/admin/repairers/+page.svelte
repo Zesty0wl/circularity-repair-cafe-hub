@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { api } from '$lib/api';
+  import { t, tNow } from '$lib/i18n';
 
   let users: any[] = [];
 
@@ -15,25 +16,25 @@
   async function resetLink(id: string) {
     const res = await api<{ token: string }>(`/api/admin/users/${id}/reset-link`, { method: 'POST', json: {} });
     const url = `${window.location.origin}/reset/${res.token}`;
-    prompt('Reset link (14-day expiry, single use):', url);
+    prompt(tNow('Reset link (14-day expiry, single use):'), url);
   }
 </script>
 
 <div class="flex justify-between items-center">
-  <h1 class="text-2xl font-bold">Repairers &amp; admins</h1>
-  <a href="/admin/repairers/new" class="btn-primary">Add repairer</a>
+  <h1 class="text-2xl font-bold">{$t('Repairers & admins')}</h1>
+  <a href="/admin/repairers/new" class="btn-primary">{$t('Add repairer')}</a>
 </div>
 
 <div class="card mt-4 overflow-x-auto">
   <table class="w-full text-sm">
     <thead class="bg-slate-50 text-left text-slate-600">
       <tr>
-        <th class="px-3 py-2">Name</th>
-        <th class="px-3 py-2">Email</th>
-        <th class="px-3 py-2">Role</th>
-        <th class="px-3 py-2">Skills</th>
-        <th class="px-3 py-2">Repairs</th>
-        <th class="px-3 py-2">Active</th>
+        <th class="px-3 py-2">{$t('Name')}</th>
+        <th class="px-3 py-2">{$t('Email')}</th>
+        <th class="px-3 py-2">{$t('Role')}</th>
+        <th class="px-3 py-2">{$t('Skills')}</th>
+        <th class="px-3 py-2">{$t('Repairs')}</th>
+        <th class="px-3 py-2">{$t('Active')}</th>
         <th class="px-3 py-2"></th>
       </tr>
     </thead>
@@ -42,11 +43,11 @@
         <tr>
           <td class="px-3 py-2"><a href={`/admin/repairers/${u.id}`} class="text-brand-700 hover:underline">{u.displayName}</a></td>
           <td class="px-3 py-2">{u.email}</td>
-          <td class="px-3 py-2"><span class="badge bg-slate-100 text-slate-700">{u.role}</span></td>
-          <td class="px-3 py-2 text-xs text-slate-600">{(u.skills || []).length} skill{(u.skills || []).length === 1 ? '' : 's'}</td>
+          <td class="px-3 py-2"><span class="badge bg-slate-100 text-slate-700">{$t(u.role)}</span></td>
+          <td class="px-3 py-2 text-xs text-slate-600">{(u.skills || []).length === 1 ? $t('{count} skill', { count: 1 }) : $t('{count} skills', { count: (u.skills || []).length })}</td>
           <td class="px-3 py-2">{u.repairCountCache}</td>
-          <td class="px-3 py-2"><button class="badge {u.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'}" on:click={() => toggleActive(u)}>{u.isActive ? 'Yes' : 'No'}</button></td>
-          <td class="px-3 py-2 text-right"><button class="btn-ghost btn-sm" on:click={() => resetLink(u.id)}>Reset link</button></td>
+          <td class="px-3 py-2"><button class="badge {u.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'}" on:click={() => toggleActive(u)}>{u.isActive ? $t('Yes') : $t('No')}</button></td>
+          <td class="px-3 py-2 text-right"><button class="btn-ghost btn-sm" on:click={() => resetLink(u.id)}>{$t('Reset link')}</button></td>
         </tr>
       {/each}
     </tbody>

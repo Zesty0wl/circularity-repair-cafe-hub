@@ -53,9 +53,22 @@ function interpolate(text: string, vars?: Record<string, string | number>): stri
   return text.replace(/\{(\w+)\}/g, (whole, key: string) => (key in vars ? String(vars[key]) : whole));
 }
 
-/** Translate `source` for a locale. An unknown string falls back to the source. */
-export function translate(locale: Locale, source: string, vars?: Record<string, string | number>): string {
-  const text = locale === 'en' ? source : (dictionaries[locale]?.[source] ?? source);
+/**
+ * Translate `source` for a locale. An unknown string falls back to the source.
+ *
+ * A few short English words need different translations in different places,
+ * such as "Next" on a button ("Suivant") and on a date badge ("Prochaine").
+ * For those, pass a `context`: the dictionary entry 'badge|Next' is used first,
+ * then the plain 'Next'. English always shows `source` as it is.
+ */
+export function translate(
+  locale: Locale,
+  source: string,
+  vars?: Record<string, string | number>,
+  context?: string,
+): string {
+  const dictionary = locale === 'en' ? undefined : dictionaries[locale];
+  const text = (context && dictionary?.[`${context}|${source}`]) || dictionary?.[source] || source;
   return interpolate(text, vars);
 }
 

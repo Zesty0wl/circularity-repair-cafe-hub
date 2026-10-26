@@ -181,7 +181,7 @@
       await api(`/api/repairer/jobs/${id}/electrical`, { method: 'PATCH', json: { isElectrical: value } });
       await load();
     } catch (err: any) {
-      error = err?.message ?? 'Could not save that change';
+      error = err?.message ?? tNow('Could not save that change');
     }
   }
 
@@ -302,8 +302,8 @@
 
       {#if detail.preRegistration?.researchNotes}
         <section class="card p-5">
-          <h2 class="font-semibold flex items-center gap-2"><NotebookPen size={18} class="text-slate-500" /> Notes from before the session</h2>
-          <p class="mt-1 text-xs text-slate-500">The visitor pre-registered this item.{detail.preRegistration.repairerName ? ` ${detail.preRegistration.repairerName} looked into it.` : ''}</p>
+          <h2 class="font-semibold flex items-center gap-2"><NotebookPen size={18} class="text-slate-500" /> {$t('Notes from before the session')}</h2>
+          <p class="mt-1 text-xs text-slate-500">{detail.preRegistration.repairerName ? $t('The visitor pre-registered this item. {name} looked into it.', { name: detail.preRegistration.repairerName }) : $t('The visitor pre-registered this item.')}</p>
           <p class="mt-2 text-slate-700 whitespace-pre-line">{detail.preRegistration.researchNotes}</p>
         </section>
       {/if}
@@ -321,7 +321,7 @@
           <div class="mt-3 grid grid-cols-3 sm:grid-cols-4 gap-2">
             {#each detail.images as img}
               <a href={`/uploads/${img.filePath}`} target="_blank" rel="noopener" class="block">
-                <img src={`/uploads/${img.filePath}`} alt={img.stage.replace('_', ' ')} class="w-full aspect-square object-cover rounded-xl ring-1 ring-slate-200" />
+                <img src={`/uploads/${img.filePath}`} alt={$t(img.stage.replace('_', ' '))} class="w-full aspect-square object-cover rounded-xl ring-1 ring-slate-200" />
               </a>
             {/each}
           </div>
@@ -397,10 +397,10 @@
                   on:change={(e) => setElectrical(e.currentTarget.checked)}
                 />
                 <span>
-                  <span class="font-medium text-slate-900">This is an electrical item</span>
+                  <span class="font-medium text-slate-900">{$t('This is an electrical item')}</span>
                   <span class="block text-xs text-slate-500">
-                    {#if pat.itemIsElectrical === null}Set from its category.{:else}Changed for this item.{/if}
-                    Electrical items need a PAT test.
+                    {#if pat.itemIsElectrical === null}{$t('Set from its category.')}{:else}{$t('Changed for this item.')}{/if}
+                    {$t('Electrical items need a PAT test.')}
                   </span>
                 </span>
               </label>
@@ -408,14 +408,14 @@
               {#if patNeeded}
                 {#if pat.result && !changingPat}
                   <div class="text-sm">
-                    <p class="flex items-center gap-2 flex-wrap"><PatBadge result={pat.result} /> <span class="text-slate-600">{#if pat.testedByName}by {pat.testedByName}{/if}{#if pat.testedAt} at {clockTime(pat.testedAt)}{/if}</span></p>
+                    <p class="flex items-center gap-2 flex-wrap"><PatBadge result={pat.result} /> <span class="text-slate-600">{#if pat.testedByName}{$t('by {name}', { name: pat.testedByName })}{/if}{#if pat.testedAt} {$t('at {time}', { time: clockTime(pat.testedAt) })}{/if}</span></p>
                     {#if pat.notes}<p class="mt-1 text-slate-700 whitespace-pre-line">{pat.notes}</p>{/if}
-                    <button type="button" class="mt-2 text-sm text-slate-600 underline underline-offset-2" on:click={() => { changingPat = true; patChoice = null; }}>Test it again</button>
+                    <button type="button" class="mt-2 text-sm text-slate-600 underline underline-offset-2" on:click={() => { changingPat = true; patChoice = null; }}>{$t('Test it again')}</button>
                   </div>
                 {:else}
                   <div>
-                    <p class="text-sm font-medium text-slate-900 flex items-center gap-1.5"><Zap size={16} class="text-amber-700" /> PAT test result</p>
-                    <div class="mt-2 grid grid-cols-3 gap-2" role="radiogroup" aria-label="PAT test result">
+                    <p class="text-sm font-medium text-slate-900 flex items-center gap-1.5"><Zap size={16} class="text-amber-700" /> {$t('PAT test result')}</p>
+                    <div class="mt-2 grid grid-cols-3 gap-2" role="radiogroup" aria-label={$t('PAT test result')}>
                       {#each PAT_RESULTS as r}
                         <button
                           type="button"
@@ -429,12 +429,12 @@
                                 : 'ring-2 ring-slate-500 bg-slate-50 text-slate-900'
                             : 'ring-slate-200 bg-white hover:bg-slate-50 text-slate-700'}"
                           on:click={() => (patChoice = r.value)}
-                        >{r.label}</button>
+                        >{$t(r.label)}</button>
                       {/each}
                     </div>
-                    <label class="label mt-3" for="patnotes">PAT notes <span class="font-normal text-slate-400">(optional)</span></label>
-                    <input id="patnotes" class="input" maxlength="500" placeholder="For example: battery only, or why it failed" bind:value={patNotes} />
-                    <p class="mt-1 text-xs text-slate-500">Your name and the time are saved with the result.</p>
+                    <label class="label mt-3" for="patnotes">{$t('PAT notes')} <span class="font-normal text-slate-400">{$t('(optional)')}</span></label>
+                    <input id="patnotes" class="input" maxlength="500" placeholder={$t('For example: battery only, or why it failed')} bind:value={patNotes} />
+                    <p class="mt-1 text-xs text-slate-500">{$t('Your name and the time are saved with the result.')}</p>
                   </div>
                 {/if}
               {/if}
@@ -483,8 +483,8 @@
 
           {#if patBlocksFix}
             <p class="text-sm text-amber-900 bg-amber-50 rounded-lg px-3 py-2">
-              {#if patEffective === 'fail'}This item failed its PAT test, so it cannot be marked as fixed. Choose "Could not fix", or test it again.
-              {:else}This is an electrical item. Choose the PAT test result before you mark it as fixed.{/if}
+              {#if patEffective === 'fail'}{$t('This item failed its PAT test, so it cannot be marked as fixed. Choose "Could not fix", or test it again.')}
+              {:else}{$t('This is an electrical item. Choose the PAT test result before you mark it as fixed.')}{/if}
             </p>
           {/if}
           {#if error}<p class="text-sm text-rose-700">{error}</p>{/if}

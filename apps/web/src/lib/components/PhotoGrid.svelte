@@ -8,6 +8,7 @@
    */
   import { X, ChevronLeft, ChevronRight } from 'lucide-svelte';
   import type { GalleryPhoto } from '$lib/gallery';
+  import { t } from '$lib/i18n';
 
   export let photos: GalleryPhoto[] = [];
   /** How many to show before the "Show all" button. 0 shows every photo. */
@@ -55,11 +56,11 @@
       type="button"
       on:click={() => open(i)}
       class="relative aspect-[4/3] overflow-hidden rounded-xl bg-slate-200 group focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
-      aria-label={photo.caption ? `View larger: ${photo.caption}` : `View photo ${i + 1} of ${photos.length}`}
+      aria-label={photo.caption ? $t('View larger: {caption}', { caption: photo.caption }) : $t('View photo {n} of {total}', { n: i + 1, total: photos.length })}
     >
       <img
         src={photo.url}
-        alt={photo.caption || fallbackAlt}
+        alt={photo.caption || $t(fallbackAlt)}
         loading="lazy"
         class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
       />
@@ -70,7 +71,7 @@
 {#if previewCount > 0 && photos.length > previewCount}
   <div class="text-center mt-8">
     <button type="button" class="btn-secondary" on:click={() => (showAll = !showAll)}>
-      {showAll ? 'Show fewer photos' : `Show all ${photos.length} photos`}
+      {showAll ? $t('Show fewer photos') : $t('Show all {n} photos', { n: photos.length })}
     </button>
   </div>
 {/if}
@@ -81,12 +82,12 @@
     class="fixed inset-0 z-50 bg-black/90 flex flex-col"
     role="dialog"
     aria-modal="true"
-    aria-label="Photo viewer"
+    aria-label={$t('Photo viewer')}
     tabindex="-1"
   >
     <!-- Tapping the space around the photo closes the viewer. It is a real
          button so a keyboard and a screen reader can do the same. -->
-    <button type="button" class="absolute inset-0 cursor-default" aria-label="Close photo viewer" on:click={close}></button>
+    <button type="button" class="absolute inset-0 cursor-default" aria-label={$t('Close photo viewer')} on:click={close}></button>
 
     <div class="relative z-10 flex items-center justify-between px-4 py-3 text-white/90 text-sm">
       <span class="font-mono tabular-nums">{index + 1} / {photos.length}</span>
@@ -94,7 +95,7 @@
         type="button"
         on:click={close}
         class="p-2 rounded-full hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/50"
-        aria-label="Close (Esc)"
+        aria-label={$t('Close (Esc)')}
       >
         <X size={24} />
       </button>
@@ -111,7 +112,7 @@
           type="button"
           on:click={prev}
           class="pointer-events-auto absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-white/50"
-          aria-label="Previous photo (←)"
+          aria-label={$t('Previous photo (←)')}
         >
           <ChevronLeft size={28} />
         </button>
@@ -119,7 +120,7 @@
           type="button"
           on:click={next}
           class="pointer-events-auto absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-white/50"
-          aria-label="Next photo (→)"
+          aria-label={$t('Next photo (→)')}
         >
           <ChevronRight size={28} />
         </button>
@@ -135,7 +136,7 @@
           href={`/events/${photos[index].eventId}`}
           class="mt-1 inline-block text-white/70 underline underline-offset-2 hover:text-white text-sm"
         >
-          From {photos[index].eventName}
+          {$t('From {name}', { name: photos[index].eventName ?? '' })}
         </a>
       {/if}
     </div>

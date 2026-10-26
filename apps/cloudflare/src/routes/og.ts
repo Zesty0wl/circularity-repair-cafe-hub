@@ -1,5 +1,6 @@
 import type { App } from '../lib/router.js';
-import { SHARE_CARD_STYLES, type ShareCardStyle } from '@circularity/shared';
+import { SHARE_CARD_STYLES, dateLocale, translate, type Locale, type ShareCardStyle } from '@circularity/shared';
+import { env } from '../env.js';
 import { db } from '../db/index.js';
 import { cafes, events, skillCategories, users, venues } from '../db/schema.js';
 import { and, asc, eq, gte, ne } from 'drizzle-orm';
@@ -14,7 +15,16 @@ import { avatarDiskPath, renderRepairerCard } from '../services/shareCard.js';
  * cookie. See services/ogImage.ts for how they are drawn.
  */
 
-/** The sections that get a card, and what each card says. */
+/**
+ * The language the cards are drawn in. Chat apps and search engines fetch
+ * these pictures, and they send no useful language, so the cards follow the
+ * LANGUAGE setting only: French when it is 'fr', English otherwise.
+ */
+function cardLocale(): Locale {
+  return env.LANGUAGE === 'fr' ? 'fr' : 'en';
+}
+
+/** The sections that get a card, and what each card says, in English. */
 const SECTIONS: Record<string, { title: string; subtitle?: string }> = {
   home: { title: 'Free community repairs', subtitle: 'Bring a broken thing, fix it together' },
   events: { title: 'Upcoming repair sessions' },
@@ -35,8 +45,8 @@ const SECTIONS: Record<string, { title: string; subtitle?: string }> = {
 };
 
 /** Long date, e.g. "Saturday 9 August". */
-function longDate(date: string): string {
-  return new Date(`${date}T12:00:00Z`).toLocaleDateString('en-GB', {
+function longDate(date: string, locale: Locale): string {
+  return new Date(`${date}T12:00:00Z`).toLocaleDateString(dateLocale(locale), {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -78,11 +88,16 @@ export async function ogRoutes(app: App): Promise<void> {
 
   app.get('/og/section/:key.png', async (request, reply) => {
     const { key } = request.params as { key: string };
-    const section = SECTIONS[key];
-    if (!section) {
+    const english = SECTIONS[key];
+    if (!english) {
       reply.code(404).send({ error: 'Unknown section', code: 'og/unknown' });
       return;
     }
+    const locale = cardLocale();
+    const section: CardContent = {
+      title: translate(locale, english.title),
+      subtitle: english.subtitle ? translate(locale, english.subtitle) : undefined,
+    };
 
     // The events card names the next session, so a shared link says when to
     // turn up rather than just that sessions exist.
@@ -96,7 +111,7 @@ export async function ogRoutes(app: App): Promise<void> {
         .limit(1);
       await send(reply, {
         ...section,
-        subtitle: next ? `Next session: ${longDate(next.date)}` : section.subtitle,
+        subtitle: next ? translate(locale, 'Next session: {date}', { date: longDate(next.date, locale) }) : section.subtitle,
       });
       return;
     }
@@ -120,7 +135,7 @@ export async function ogRoutes(app: App): Promise<void> {
     }
     await send(reply, {
       title: event.name,
-      subtitle: [longDate(event.date), event.venue].filter(Boolean).join(' · '),
+      subtitle: [longDate(event.date, cardLocale()), event.venue].filter(Boolean).join(' · '),
     });
   });
 
@@ -173,9 +188,14 @@ export async function ogRoutes(app: App): Promise<void> {
       .where(and(eq(events.isPublished, true), ne(events.status, 'cancelled'), gte(events.date, today)))
       .orderBy(asc(events.date), asc(events.startTime))
       .limit(1);
+    const locale = cardLocale();
     const event = next
       ? {
-          dateLine: `${longDate(next.date)}, ${next.startTime.slice(0, 5)} to ${next.endTime.slice(0, 5)}`,
+          dateLine: translate(locale, '{date}, {start} to {end}', {
+            date: longDate(next.date, locale),
+            start: next.startTime.slice(0, 5),
+            end: next.endTime.slice(0, 5),
+          }),
           venueLine: next.venue ?? '',
         }
       : null;
@@ -188,6 +208,7 @@ export async function ogRoutes(app: App): Promise<void> {
         otherSkills,
         event,
         brand: await branding(),
+        locale,
       },
       style,
     );

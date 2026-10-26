@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { cafe } from '$lib/stores/cafe';
+  import { t, tNow, dateLocale } from '$lib/i18n';
   import SiteHeader from '$lib/components/SiteHeader.svelte';
   import SiteFooter from '$lib/components/SiteFooter.svelte';
   import PageHeader from '$lib/components/PageHeader.svelte';
@@ -29,7 +30,7 @@
   $: cafes = snapshot?.cafes ?? [];
   $: ours = snapshot?.ours ?? null;
   $: results = searchCafes(cafes, term);
-  $: cafeName = $cafe?.name || 'our Repair Café';
+  $: cafeName = $cafe?.name || $t('our Repair Café');
 
   onMount(async () => {
     try {
@@ -60,7 +61,7 @@
   function findNearMe(): void {
     locateError = '';
     if (!navigator.geolocation) {
-      locateError = 'Your browser cannot share your location.';
+      locateError = tNow('Your browser cannot share your location.');
       return;
     }
     locating = true;
@@ -76,7 +77,7 @@
       },
       () => {
         locating = false;
-        locateError = 'We could not get your location. Please search instead.';
+        locateError = tNow('We could not get your location. Please search instead.');
       },
       { timeout: 10_000 },
     );
@@ -89,18 +90,20 @@
   const TELEMETRY_SITE = 'https://repaircafetelemetry.bzwrd.co.uk';
 
   function formatKm(km: number): string {
-    return km < 10 ? `${km.toFixed(1)} km` : `${Math.round(km).toLocaleString('en-GB')} km`;
+    return km < 10
+      ? `${km.toLocaleString(dateLocale(), { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km`
+      : `${Math.round(km).toLocaleString(dateLocale())} km`;
   }
 
-  const number = (n: number) => n.toLocaleString('en-GB');
+  const number = (n: number) => n.toLocaleString(dateLocale());
 </script>
 
 <SiteHeader variant="public" />
 
 <PageHeader
   eyebrow="Repair Café International"
-  title="Part of a worldwide movement"
-  lede="Every time we fix something together, we join thousands of other Repair Cafés doing the same thing. Here is the whole family, on one map."
+  title={$t('Part of a worldwide movement')}
+  lede={$t('Every time we fix something together, we join thousands of other Repair Cafés doing the same thing. Here is the whole family, on one map.')}
 >
   <span slot="icon"><Globe2 size={22} /></span>
 </PageHeader>
@@ -121,35 +124,35 @@
           />
 
           <div class="map-counts">
-            <p><strong>{number(cafes.length)}</strong> Repair Cafés on the map</p>
-            <p class="muted">{number(snapshot?.totalListed ?? 0)} listed worldwide</p>
+            <p><strong>{number(cafes.length)}</strong> {$t('Repair Cafés on the map')}</p>
+            <p class="muted">{$t('{count} listed worldwide', { count: number(snapshot?.totalListed ?? 0) })}</p>
           </div>
 
           <div class="map-tools">
             {#if ours}
               <button type="button" class="map-btn" on:click={showUs}>
-                <MapPin size={15} /> Find us
+                <MapPin size={15} /> {$t('Find us')}
               </button>
             {/if}
             <button type="button" class="map-btn" on:click={clearSelection}>
-              <RotateCcw size={15} /> Reset
+              <RotateCcw size={15} /> {$t('Reset')}
             </button>
           </div>
         {:else if status === 'loading'}
           <div class="map-state">
             <span class="spinner" aria-hidden="true"></span>
-            <p>Loading Repair Cafés from around the world…</p>
+            <p>{$t('Loading Repair Cafés from around the world…')}</p>
           </div>
         {:else}
           <div class="map-state">
-            <p>We could not load the worldwide map just now.</p>
+            <p>{$t('We could not load the worldwide map just now.')}</p>
             <a
               class="underline underline-offset-4 hover:text-brand-800"
               href="https://www.repaircafe.org/en/visit/"
               target="_blank"
               rel="noopener"
             >
-              Browse the map on repaircafe.org
+              {$t('Browse the map on repaircafe.org')}
             </a>
           </div>
         {/if}
@@ -157,14 +160,14 @@
 
       <!-- Search and results -->
       <aside class="map-panel">
-        <label class="sr-only" for="cafe-search">Search Repair Cafés</label>
+        <label class="sr-only" for="cafe-search">{$t('Search Repair Cafés')}</label>
         <div class="search-row">
           <Search size={16} class="shrink-0 opacity-60" />
           <input
             id="cafe-search"
             class="search-input"
             type="search"
-            placeholder="Search by name or town"
+            placeholder={$t('Search by name or town')}
             autocomplete="off"
             bind:value={term}
             disabled={status !== 'ready'}
@@ -178,29 +181,29 @@
           disabled={status !== 'ready' || locating}
         >
           <LocateFixed size={15} />
-          {locating ? 'Finding you…' : 'Find cafés near me'}
+          {locating ? $t('Finding you…') : $t('Find cafés near me')}
         </button>
         {#if locateError}<p class="panel-note">{locateError}</p>{/if}
 
         {#if selected}
           <div class="selected-card">
-            <button type="button" class="selected-close" on:click={clearSelection} aria-label="Close">
+            <button type="button" class="selected-close" on:click={clearSelection} aria-label={$t('Close')}>
               <X size={15} />
             </button>
             <p class="selected-name">{selected.name}</p>
             {#if ours && selected.slug === ours.slug}
-              <p class="selected-badge">This is us</p>
+              <p class="selected-badge">{$t('This is us')}</p>
             {/if}
             {#if selected.address}<p class="selected-address">{selected.address}</p>{/if}
             <div class="selected-links">
               {#if cafeUrl(selected)}
                 <a href={cafeUrl(selected)} target="_blank" rel="noopener">
-                  On repaircafe.org <ExternalLink size={13} />
+                  {$t('On repaircafe.org')} <ExternalLink size={13} />
                 </a>
               {/if}
               {#if selected.website}
                 <a href={selected.website} target="_blank" rel="noopener noreferrer">
-                  Their website <ExternalLink size={13} />
+                  {$t('Their website')} <ExternalLink size={13} />
                 </a>
               {/if}
             </div>
@@ -209,7 +212,11 @@
 
         {#if term.trim().length >= 2}
           <p class="panel-heading">
-            {results.length > 0 ? `${number(results.length)} match${results.length === 1 ? '' : 'es'}` : 'No matches'}
+            {results.length === 0
+              ? $t('No matches')
+              : results.length === 1
+                ? $t('{count} match', { count: number(results.length) })
+                : $t('{count} matches', { count: number(results.length) })}
           </p>
           <ul class="result-list">
             {#each results as result (result.slug ?? result.name + result.lat)}
@@ -222,24 +229,22 @@
             {/each}
           </ul>
         {:else if nearby.length > 0}
-          <p class="panel-heading">Closest to you</p>
+          <p class="panel-heading">{$t('Closest to you')}</p>
           <ul class="result-list">
             {#each nearby as near (near.slug ?? near.name + near.lat)}
               <li>
                 <button type="button" class="result" on:click={() => choose(near)}>
                   <span class="result-name">{near.name}</span>
-                  <span class="result-meta">{formatKm(near.km)} away</span>
+                  <span class="result-meta">{$t('{distance} away', { distance: formatKm(near.km) })}</span>
                 </button>
               </li>
             {/each}
           </ul>
         {:else}
           <p class="panel-note">
-            Where cafés sit close together they are grouped into one circle with a number in
-            it. Click a circle to zoom in and split it up. Drag the map to move around,
-            and click any pin to see that café.
+            {$t('Where cafés sit close together they are grouped into one circle with a number in it. Click a circle to zoom in and split it up. Drag the map to move around, and click any pin to see that café.')}
             {#if ours}
-              Ours is the orange pin, and every other café is green.
+              {$t('Ours is the orange pin, and every other café is green.')}
             {/if}
           </p>
         {/if}
@@ -250,41 +255,34 @@
 
 <!-- ── What the organisation is ──────────────────────────────────────────── -->
 <section class="max-w-4xl mx-auto px-4 py-16 md:py-20">
-  <SectionHeading eyebrow="Where it started" title="What is Repair Café International?" />
+  <SectionHeading eyebrow={$t('Where it started')} title={$t('What is Repair Café International?')} />
 
   <div class="mt-8 space-y-5 text-lg text-slate-700">
     <p>
-      The first Repair Café was held in Amsterdam on 18 October 2009. Martine Postma, a Dutch
-      journalist, wanted to show that repairing things is practical, sociable and worth doing. People
-      brought broken lamps, clothes and bicycles, and volunteers helped them fix the items themselves.
+      {$t('The first Repair Café was held in Amsterdam on 18 October 2009. Martine Postma, a Dutch journalist, wanted to show that repairing things is practical, sociable and worth doing. People brought broken lamps, clothes and bicycles, and volunteers helped them fix the items themselves.')}
     </p>
     <p>
-      The idea spread quickly. In 2011 the Repair Café International Foundation was set up to help
-      other groups start their own. It is a non-profit organisation based in the Netherlands. It does
-      not run the local cafés. Instead it gives new groups the advice, materials and shared name they
-      need to get going.
+      {$t('The idea spread quickly. In 2011 the Repair Café International Foundation was set up to help other groups start their own. It is a non-profit organisation based in the Netherlands. It does not run the local cafés. Instead it gives new groups the advice, materials and shared name they need to get going.')}
     </p>
     <p>
-      Every Repair Café is run by local volunteers and makes its own decisions. What we share is the
-      idea: bring a broken thing, sit down with someone who knows how to fix it, and learn something
-      while you are there. Nothing is thrown away that could have been saved.
+      {$t('Every Repair Café is run by local volunteers and makes its own decisions. What we share is the idea: bring a broken thing, sit down with someone who knows how to fix it, and learn something while you are there. Nothing is thrown away that could have been saved.')}
     </p>
   </div>
 
   <div class="mt-10 grid gap-4 sm:grid-cols-3">
     <div class="card p-5">
       <p class="text-3xl font-display font-semibold text-pine">2009</p>
-      <p class="mt-1 text-sm text-slate-600">The first Repair Café, in Amsterdam.</p>
+      <p class="mt-1 text-sm text-slate-600">{$t('The first Repair Café, in Amsterdam.')}</p>
     </div>
     <div class="card p-5">
       <p class="text-3xl font-display font-semibold text-pine">2011</p>
-      <p class="mt-1 text-sm text-slate-600">The foundation starts helping new groups.</p>
+      <p class="mt-1 text-sm text-slate-600">{$t('The foundation starts helping new groups.')}</p>
     </div>
     <div class="card p-5">
       <p class="text-3xl font-display font-semibold text-pine">
-        {status === 'ready' ? number(snapshot?.totalListed ?? 0) : 'Thousands'}
+        {status === 'ready' ? number(snapshot?.totalListed ?? 0) : $t('Thousands')}
       </p>
-      <p class="mt-1 text-sm text-slate-600">Repair Cafés listed around the world today.</p>
+      <p class="mt-1 text-sm text-slate-600">{$t('Repair Cafés listed around the world today.')}</p>
     </div>
   </div>
 </section>
@@ -292,22 +290,19 @@
 <!-- ── How we fit in ─────────────────────────────────────────────────────── -->
 <section class="band">
   <div class="max-w-4xl mx-auto px-4 py-16 md:py-20">
-    <SectionHeading eyebrow="Our place in it" title="How {cafeName} fits in" />
+    <SectionHeading eyebrow={$t('Our place in it')} title={$t('How {name} fits in', { name: cafeName })} />
     <div class="mt-8 space-y-5 text-lg text-slate-700">
       <p>
-        We are one of the pins on that map. We run our own sessions, keep our own volunteers and
-        raise our own funds, and we follow the same simple idea as everyone else on the map.
+        {$t('We are one of the pins on that map. We run our own sessions, keep our own volunteers and raise our own funds, and we follow the same simple idea as everyone else on the map.')}
       </p>
       <p>
-        If you are travelling, or you live somewhere else, use the map above to find a Repair Café
-        near you. If there is not one yet, you can start one. The foundation has a starter kit and
-        will help you set it up.
+        {$t('If you are travelling, or you live somewhere else, use the map above to find a Repair Café near you. If there is not one yet, you can start one. The foundation has a starter kit and will help you set it up.')}
       </p>
     </div>
 
     <div class="mt-8 flex flex-wrap gap-3">
       <a class="btn-primary" href="https://www.repaircafe.org/en/" target="_blank" rel="noopener">
-        Visit repaircafe.org <ExternalLink size={16} />
+        {$t('Visit repaircafe.org')} <ExternalLink size={16} />
       </a>
       <a
         class="btn-secondary"
@@ -315,7 +310,7 @@
         target="_blank"
         rel="noopener"
       >
-        Start a Repair Café <ExternalLink size={16} />
+        {$t('Start a Repair Café')} <ExternalLink size={16} />
       </a>
     </div>
   </div>
@@ -323,24 +318,20 @@
 
 <!-- ── Cafés running this software ───────────────────────────────────────── -->
 <section class="max-w-4xl mx-auto px-4 py-16 md:py-20">
-  <SectionHeading eyebrow="Open figures" title="Cafés running this software" />
+  <SectionHeading eyebrow={$t('Open figures')} title={$t('Cafés running this software')} />
 
   <div class="mt-8 space-y-5 text-lg text-slate-700">
     <p>
-      This website runs on Repair Café Hub. It is free software that any Repair Café can use to
-      run its own site, book its sessions and keep track of what it repairs.
+      {$t('This website runs on Repair Café Hub. It is free software that any Repair Café can use to run its own site, book its sessions and keep track of what it repairs.')}
     </p>
     <p>
-      Cafés using it can choose to share a few counts with us: how many repairs they recorded,
-      how many were fixed, and the kinds of thing they saw. No names, no notes and no
-      photographs are ever sent. We publish every figure we are given on one open page, so
-      anyone can see how much the software is used and what it all adds up to.
+      {$t('Cafés using it can choose to share a few counts with us: how many repairs they recorded, how many were fixed, and the kinds of thing they saw. No names, no notes and no photographs are ever sent. We publish every figure we are given on one open page, so anyone can see how much the software is used and what it all adds up to.')}
     </p>
   </div>
 
   <div class="mt-8">
     <a class="btn-primary" href={TELEMETRY_SITE} target="_blank" rel="noopener">
-      See the shared figures <ExternalLink size={16} />
+      {$t('See the shared figures')} <ExternalLink size={16} />
     </a>
   </div>
 </section>
@@ -348,31 +339,30 @@
 <!-- ── Where the data comes from ─────────────────────────────────────────── -->
 <section class="max-w-4xl mx-auto px-4 py-10">
   <p class="text-sm text-slate-500">
-    Café locations come from the
+    {$t('Café locations come from the')}
     <a
       class="underline underline-offset-2 hover:text-slate-700"
       href="https://www.repaircafe.org/en/api/"
       target="_blank"
       rel="noopener"
-    >Repair Café location API</a>
-    and are refreshed once a day. Some cafés are listed without a map position, so the map shows
-    slightly fewer than the total. The map is drawn with
+    >{$t('Repair Café location API')}</a>
+    {$t('and are refreshed once a day. Some cafés are listed without a map position, so the map shows slightly fewer than the total. The map is drawn with')}
     <a
       class="underline underline-offset-2 hover:text-slate-700"
       href="https://maplibre.org/"
       target="_blank"
       rel="noopener"
-    >MapLibre</a> with free tiles from <a
+    >MapLibre</a> {$t('with free tiles from')} <a
       class="underline underline-offset-2 hover:text-slate-700"
       href="https://openfreemap.org/"
       target="_blank"
       rel="noopener"
-    >OpenFreeMap</a>. Map data &copy; <a
+    >OpenFreeMap</a>. {$t('Map data ©')} <a
       class="underline underline-offset-2 hover:text-slate-700"
       href="https://www.openstreetmap.org/copyright"
       target="_blank"
       rel="noopener"
-    >OpenStreetMap</a> contributors.
+    >OpenStreetMap</a> {$t('contributors')}.
   </p>
 </section>
 

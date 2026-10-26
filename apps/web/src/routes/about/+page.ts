@@ -6,7 +6,7 @@ import type { PageLoad } from './$types';
  * can show its workings even to a reader with JavaScript switched off.
  */
 export const load: PageLoad = async ({ fetch, url, parent }) => {
-  const { cafe } = await parent();
+  const { cafe, locale } = await parent();
 
   const co2 = await fetch('/api/public/co2-factors')
     .then((res) => (res.ok ? res.json() : null))
@@ -21,6 +21,7 @@ export const load: PageLoad = async ({ fetch, url, parent }) => {
     origin: url.origin,
     pathname: url.pathname,
     cafe,
+    locale,
   });
 
   return { co2, stats, seo };

@@ -12,6 +12,7 @@
   import { Calendar, Clock, MapPin, ChevronDown, CheckCircle2, Laptop, ArrowRight } from 'lucide-svelte';
   import Icon from '@iconify/svelte';
   import { categoryIcon, categoryTint, categoryInk } from '$lib/categoryIcon';
+  import { t, dateLocale } from '$lib/i18n';
   import type { PageData } from './$types';
 
   interface PublicEvent {
@@ -56,7 +57,7 @@
 
   // A short form for the hero, where the full date is too long on a phone.
   function formatDateShort(d: string): string {
-    return new Date(d + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+    return new Date(d + 'T12:00:00Z').toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
   }
   // Split a date into the pieces a calendar tile needs (day number, short
   // month, weekday name). Anchored at UTC noon + a fixed locale so the server
@@ -64,9 +65,9 @@
   function dateParts(d: string) {
     const dt = new Date(d + 'T12:00:00Z');
     return {
-      day: dt.toLocaleDateString('en-GB', { day: 'numeric', timeZone: 'UTC' }),
-      monthShort: dt.toLocaleDateString('en-GB', { month: 'short', timeZone: 'UTC' }),
-      weekdayLong: dt.toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'UTC' }),
+      day: dt.toLocaleDateString(dateLocale(), { day: 'numeric', timeZone: 'UTC' }),
+      monthShort: dt.toLocaleDateString(dateLocale(), { month: 'short', timeZone: 'UTC' }),
+      weekdayLong: dt.toLocaleDateString(dateLocale(), { weekday: 'long', timeZone: 'UTC' }),
     };
   }
 
@@ -100,13 +101,13 @@
   $: statTiles = !stats
     ? []
     : [
-        { value: stats.completedCount.toLocaleString('en-GB'), label: 'Repairs done', show: stats.completedCount > 0 },
+        { value: stats.completedCount.toLocaleString(dateLocale()), label: $t('Repairs done'), show: stats.completedCount > 0 },
         // Same figure the admin stats page reports as "CO₂ saved" (the
         // environmental_saving_kg a repairer records on a finished job), so
         // the public number and the internal one always agree.
-        { value: `${stats.co2SavedKg.toLocaleString('en-GB')} kg`, label: 'CO₂ saved', show: stats.co2SavedKg > 0 },
-        { value: stats.volunteerCount.toLocaleString('en-GB'), label: 'Volunteers', show: stats.volunteerCount > 0 },
-        { value: stats.eventCount.toLocaleString('en-GB'), label: 'Sessions held', show: stats.eventCount > 0 },
+        { value: `${stats.co2SavedKg.toLocaleString(dateLocale())} kg`, label: $t('CO₂ saved'), show: stats.co2SavedKg > 0 },
+        { value: stats.volunteerCount.toLocaleString(dateLocale()), label: $t('Volunteers'), show: stats.volunteerCount > 0 },
+        { value: stats.eventCount.toLocaleString(dateLocale()), label: $t('Sessions held'), show: stats.eventCount > 0 },
       ].filter((t) => t.show);
 
   // The closing band sits on a real photo of a session. Nothing else does:
@@ -149,12 +150,14 @@
   // fallback so the card still reads properly if they clear a field.
   $: linuxEnabled = $cafe?.linuxEnabled === true;
   $: linuxCard = $cafe?.linuxPage?.homeCard ?? {};
-  $: linuxHeading = linuxCard.heading?.trim() || 'We are a Linux Repair Cafe';
+  $: linuxHeading = linuxCard.heading?.trim() || $t('We are a Linux Repair Cafe');
   $: linuxBody =
     linuxCard.body?.trim() ||
-    'Is your computer too old for Windows 11? We can put Linux on it instead, for free. ' +
-      'It keeps working, it keeps getting updates, and it stays out of the bin.';
-  $: linuxCta = linuxCard.ctaLabel?.trim() || 'Find out about Linux';
+    $t(
+      'Is your computer too old for Windows 11? We can put Linux on it instead, for free. ' +
+        'It keeps working, it keeps getting updates, and it stays out of the bin.',
+    );
+  $: linuxCta = linuxCard.ctaLabel?.trim() || $t('Find out about Linux');
   // The soonest session where Linux help is on offer, so the card can give a
   // date rather than only an explanation.
   $: nextLinuxEvent = upcomingEvents.find((e) => e.supportsLinux) ?? null;
@@ -183,7 +186,7 @@
        visitors came to find. -->
   <section class="bg-brand-600 text-white">
     <div class="max-w-3xl mx-auto px-4 py-20 md:py-28 text-center">
-      <h1 class="text-4xl md:text-6xl font-bold tracking-tight">{$cafe?.name ?? 'Welcome'}</h1>
+      <h1 class="text-4xl md:text-6xl font-bold tracking-tight">{$cafe?.name ?? $t('Welcome')}</h1>
       {#if $cafe?.tagline}
         <p class="mt-4 text-xl md:text-2xl text-white/90">{$cafe.tagline}</p>
       {/if}
@@ -193,7 +196,7 @@
 
       {#if nextEvent}
         <div class="mt-10 inline-flex flex-col items-center gap-1 rounded-2xl bg-white/10 ring-1 ring-white/20 px-6 py-4">
-          <span class="eyebrow text-white/70">Next session</span>
+          <span class="eyebrow text-white/70">{$t('Next session')}</span>
           <span class="text-lg font-semibold">
             {formatDateShort(nextEvent.date)}, {nextEvent.startTime.slice(0,5)}–{nextEvent.endTime.slice(0,5)}
           </span>
@@ -208,11 +211,11 @@
 
       <div class="mt-8 flex flex-col sm:flex-row flex-wrap gap-3 sm:justify-center">
         {#if upcomingEvents.length > 0}
-          <a href="#when" class="btn-primary !bg-white !text-brand-800 hover:!bg-slate-100"><Calendar size={18} /> See upcoming events</a>
+          <a href="#when" class="btn-primary !bg-white !text-brand-800 hover:!bg-slate-100"><Calendar size={18} /> {$t('See upcoming events')}</a>
         {:else}
-          <a href="/events" class="btn-primary !bg-white !text-brand-800 hover:!bg-slate-100"><Calendar size={18} /> See upcoming events</a>
+          <a href="/events" class="btn-primary !bg-white !text-brand-800 hover:!bg-slate-100"><Calendar size={18} /> {$t('See upcoming events')}</a>
         {/if}
-        <a href="/skills" class="btn-secondary !bg-white/10 !text-white !ring-white/40 hover:!bg-white/20">What we repair</a>
+        <a href="/skills" class="btn-secondary !bg-white/10 !text-white !ring-white/40 hover:!bg-white/20">{$t('What we repair')}</a>
       </div>
     </div>
   </section>
@@ -240,7 +243,7 @@
   {#if Array.isArray(hp.howItWorks) && hp.howItWorks.length > 0}
     <section class="band">
       <div class="section">
-        <SectionHeading eyebrow="Your visit" title="How it works" />
+        <SectionHeading eyebrow={$t('Your visit')} title={$t('How it works')} />
         <div class="relative mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10">
           <!-- Hairline joining the numbered steps, so they read as one
                sequence rather than four separate boxes. -->
@@ -266,9 +269,9 @@
       <div class="section">
         <SectionHeading
           tone="inverse"
-          eyebrow="What we have done together"
-          title="Our numbers"
-          lede="Every repair keeps something working, and keeps it out of the bin."
+          eyebrow={$t('What we have done together')}
+          title={$t('Our numbers')}
+          lede={$t('Every repair keeps something working, and keeps it out of the bin.')}
         />
         <dl class="mt-12 grid grid-cols-2 gap-8 {statTiles.length >= 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}">
           {#each statTiles as tile}
@@ -289,17 +292,17 @@
   {#if gallery.length > 0}
     <section class="section">
       <SectionHeading
-        eyebrow="From our sessions"
-        title="In the workshop"
+        eyebrow={$t('From our sessions')}
+        title={$t('In the workshop')}
         lede={galleryHasSessions
-          ? 'Photos from recent repair sessions. Open one to see which session it came from.'
-          : 'A few photos from recent repair sessions.'}
+          ? $t('Photos from recent repair sessions. Open one to see which session it came from.')
+          : $t('A few photos from recent repair sessions.')}
       />
       <div class="mt-10">
         <PhotoGrid
           photos={gallery}
           previewCount={PHOTO_PREVIEW}
-          fallbackAlt={`${cafeName} repair café`}
+          fallbackAlt={$t('{name} repair café', { name: cafeName })}
         />
       </div>
     </section>
@@ -309,7 +312,7 @@
   {#if upcomingEvents.length > 0}
     <section id="when" class="band">
       <div class="section">
-        <SectionHeading eyebrow="Mark your calendar" title="When &amp; where">
+        <SectionHeading eyebrow={$t('Mark your calendar')} title={$t('When & where')}>
           {#if homeVenue}
             <!-- The pin is inline, not a flex sibling, so it stays next to the
                  first word instead of being stranded when the address wraps. -->
@@ -324,7 +327,7 @@
             {@const p = dateParts(e.date)}
             <div class="group relative card overflow-hidden text-center transition-shadow hover:ring-brand-400">
               {#if i === 0}
-                <span class="absolute top-2 right-2 z-10 rounded-full bg-accent-600 text-white text-[10px] font-bold uppercase tracking-wide px-2 py-0.5">Next</span>
+                <span class="absolute top-2 right-2 z-10 rounded-full bg-accent-600 text-white text-[10px] font-bold uppercase tracking-wide px-2 py-0.5">{$t('Next', undefined, 'badge')}</span>
               {/if}
               <div class="absolute top-2 left-2 z-10">
                 <!-- Dark, so it reads on the lead tile's solid strip and on
@@ -355,10 +358,12 @@
         <div class="text-center mt-10">
           {#if upcomingEvents.length > DATE_PREVIEW}
             <p class="mb-4 text-sm text-slate-500">
-              We have {upcomingEvents.length - DATE_PREVIEW} more {upcomingEvents.length - DATE_PREVIEW === 1 ? 'date' : 'dates'} booked after these.
+              {upcomingEvents.length - DATE_PREVIEW === 1
+                ? $t('We have {count} more date booked after these.', { count: upcomingEvents.length - DATE_PREVIEW })
+                : $t('We have {count} more dates booked after these.', { count: upcomingEvents.length - DATE_PREVIEW })}
             </p>
           {/if}
-          <a href="/events" class="btn-secondary">See full schedule</a>
+          <a href="/events" class="btn-secondary">{$t('See full schedule')}</a>
         </div>
       </div>
     </section>
@@ -367,7 +372,7 @@
   <!-- ────────────────── What to bring ───────────────────────── -->
   {#if hp.whatToBring?.body}
     <section class="section">
-      <SectionHeading eyebrow="Before you come" title={hp.whatToBring.heading || 'What to bring'} />
+      <SectionHeading eyebrow={$t('Before you come')} title={hp.whatToBring.heading || $t('What to bring')} />
       <div class="mt-10 max-w-3xl mx-auto card p-6 sm:p-10">
         {#if bring.isList}
           <ul class="space-y-4">
@@ -394,9 +399,9 @@
     <section class="band">
       <div class="section">
         <SectionHeading
-          eyebrow="What we can look at"
-          title="What we repair"
-          lede="Bring one of these along, or just ask. We will always take a look."
+          eyebrow={$t('What we can look at')}
+          title={$t('What we repair')}
+          lede={$t('Bring one of these along, or just ask. We will always take a look.')}
         />
         <div class="mt-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
           {#each categories as cat}
@@ -411,7 +416,11 @@
                 <Icon icon={categoryIcon(cat.icon, cat.name)} width="24" height="24" />
               </span>
               <p class="mt-3 font-medium text-pine">{cat.name}</p>
-              <p class="text-xs text-slate-500">{cat.repairerCount} volunteer{cat.repairerCount === 1 ? '' : 's'}</p>
+              <p class="text-xs text-slate-500">
+                {cat.repairerCount === 1
+                  ? $t('{count} volunteer', { count: cat.repairerCount })
+                  : $t('{count} volunteers', { count: cat.repairerCount })}
+              </p>
             </div>
           {/each}
         </div>
@@ -432,7 +441,7 @@
             <Laptop size={26} />
           </span>
           <div class="min-w-0 flex-1">
-            <p class="eyebrow">Also here</p>
+            <p class="eyebrow">{$t('Also here')}</p>
             <h2 class="mt-2 text-2xl sm:text-3xl font-bold font-display text-pine">{linuxHeading}</h2>
             <p class="mt-3 text-slate-700 leading-relaxed whitespace-pre-line">{linuxBody}</p>
 
@@ -440,7 +449,7 @@
               <p class="mt-4 inline-flex items-start gap-2 rounded-xl bg-white ring-1 ring-brand-200 px-4 py-2.5 text-sm text-slate-700">
                 <Calendar size={16} class="shrink-0 mt-0.5 text-brand-700" />
                 <span>
-                  Next session with Linux help:
+                  {$t('Next session with Linux help:')}
                   <span class="font-semibold text-pine">{formatDateShort(nextLinuxEvent.date)}</span>,
                   {nextLinuxEvent.startTime.slice(0, 5)}–{nextLinuxEvent.endTime.slice(0, 5)}
                 </span>
@@ -462,9 +471,9 @@
   {#if homeRepairers.length > 0}
     <section class="section">
       <SectionHeading
-        eyebrow="The people who fix things"
-        title="Meet our team"
-        lede="Our repairers are volunteers. They give their time, their tools and their know-how."
+        eyebrow={$t('The people who fix things')}
+        title={$t('Meet our team')}
+        lede={$t('Our repairers are volunteers. They give their time, their tools and their know-how.')}
       />
       <div class="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {#each homeRepairers.slice(0, TEAM_PREVIEW) as r}
@@ -472,7 +481,7 @@
         {/each}
       </div>
       <div class="text-center mt-10">
-        <a href="/skills" class="btn-secondary">See everyone</a>
+        <a href="/skills" class="btn-secondary">{$t('See everyone')}</a>
       </div>
     </section>
   {/if}
@@ -481,7 +490,7 @@
   {#if Array.isArray(hp.faqs) && hp.faqs.length > 0}
     <section class="band">
       <div class="section">
-        <SectionHeading eyebrow="Good to know" title="Common questions" />
+        <SectionHeading eyebrow={$t('Good to know')} title={$t('Common questions')} />
         <div class="mt-10 max-w-3xl mx-auto space-y-3">
           {#each hp.faqs as faq, i}
             <details
@@ -508,9 +517,9 @@
   {#if localCafes.length > 0}
     <section class="section">
       <SectionHeading
-        eyebrow="Not just us"
-        title="Repair Cafes near us"
-        lede="We are part of a wider community of repairers. If we cannot help, one of these might."
+        eyebrow={$t('Not just us')}
+        title={$t('Repair Cafes near us')}
+        lede={$t('We are part of a wider community of repairers. If we cannot help, one of these might.')}
       />
       <div class="mt-10 grid gap-6 lg:grid-cols-5 items-start">
         <div class="lg:col-span-3">
@@ -522,7 +531,7 @@
             on:select={(e) => pickLocalCafe(e.detail.slug)}
           />
           <p class="mt-2 text-xs text-slate-500">
-            Tap a pin to find that cafe in the list. Details come from
+            {$t('Tap a pin to find that cafe in the list. Details come from')}
             <a href="https://www.repaircafe.org" target="_blank" rel="noopener" class="underline underline-offset-2">repaircafe.org</a>.
           </p>
         </div>
@@ -542,7 +551,7 @@
                   class="mt-0.5 shrink-0 h-6 w-6 rounded-full text-xs font-bold ring-2 transition-colors {selectedLocalSlug === cafe.slug
                     ? 'bg-brand-700 text-white ring-brand-700'
                     : 'bg-white text-brand-800 ring-brand-600 hover:bg-brand-50'}"
-                  aria-label={`Show ${cafe.name} on the map`}
+                  aria-label={$t('Show {name} on the map', { name: cafe.name })}
                   on:click={() => (selectedLocalSlug = selectedLocalSlug === cafe.slug ? null : cafe.slug)}
                 >
                   {i + 1}
@@ -558,12 +567,12 @@
                     {/if}
                     {#if cafe.website}
                       <a href={cafe.website} target="_blank" rel="noopener" class="text-brand-700 underline underline-offset-2 hover:text-brand-800">
-                        Their website
+                        {$t('Their website')}
                       </a>
                     {/if}
                     {#if repairCafeOrgUrl(cafe.slug)}
                       <a href={repairCafeOrgUrl(cafe.slug)} target="_blank" rel="noopener" class="text-brand-700 underline underline-offset-2 hover:text-brand-800">
-                        On repaircafe.org
+                        {$t('On repaircafe.org')}
                       </a>
                     {/if}
                   </p>

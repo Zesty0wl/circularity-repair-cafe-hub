@@ -16,7 +16,7 @@
   import PatBadge from '$lib/components/PatBadge.svelte';
   import { WAIT_TONE_CLASS, firstName, minutesBetween, sessionTimes, statusLabel, waitTone, formatAgo, formatDuration } from '$lib/staff/queue';
   import { CalendarClock, Camera, CheckCircle2, ChevronRight, Clock, RefreshCw, UserPlus, Wrench, X } from 'lucide-svelte';
-  import { currentLocale, t, tNow } from '$lib/i18n';
+  import { currentLocale, dateLocale, t, tNow } from '$lib/i18n';
 
   interface Job {
     id: string;
@@ -297,7 +297,7 @@
           {@const waited = minutesBetween(j.createdAt, now)}
           <li class="card p-4 flex gap-4">
             {#if tab === 'waiting'}
-              <span class="h-9 w-9 shrink-0 rounded-full {i === 0 && !onlyMine ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'} flex items-center justify-center font-bold text-sm" title="Place in the queue">{i + 1}</span>
+              <span class="h-9 w-9 shrink-0 rounded-full {i === 0 && !onlyMine ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'} flex items-center justify-center font-bold text-sm" title={$t('Place in the queue')}>{i + 1}</span>
             {/if}
             <div class="min-w-0 flex-1">
               <div class="flex items-start justify-between gap-2">
@@ -318,7 +318,7 @@
                   {#if tab === 'waiting'}{$t('Waiting {duration}', { duration: formatDuration(waited) })}
                   {:else if tab === 'in_progress'}{$t('{who} · {duration}', { who: j.repairerId === myId ? $t('With you') : $t('With {name}', { name: firstName(j.repairerName) || $t('someone') }), duration: formatDuration(minutesBetween(j.acceptedAt ?? j.createdAt, now)) })}
                   {:else if j.repairerName}{firstName(j.repairerName)}
-                  {:else}{$t('Checked in at {time}', { time: new Date(j.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) })}{/if}
+                  {:else}{$t('Checked in at {time}', { time: new Date(j.createdAt).toLocaleTimeString(dateLocale(), { hour: '2-digit', minute: '2-digit' }) })}{/if}
                 </p>
                 <div class="flex gap-2">
                   {#if j.status === 'waiting'}

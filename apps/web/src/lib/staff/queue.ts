@@ -7,7 +7,7 @@
 // =============================================================================
 
 import { isBenchTime } from '@circularity/shared';
-import { tNow } from '$lib/i18n';
+import { dateLocale, tNow } from '$lib/i18n';
 
 export type RepairStatus = 'waiting' | 'in_progress' | 'completed' | 'cannot_repair' | 'awaiting_return' | 'returned';
 
@@ -71,7 +71,7 @@ export const WAIT_TONE_CLASS: Record<ReturnType<typeof waitTone>, string> = {
 /** A clock time, "14:05", in the visitor's own time zone. */
 export function clockTime(ts: string | null | undefined): string {
   if (!ts) return '';
-  return new Date(ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  return new Date(ts).toLocaleTimeString(dateLocale(), { hour: '2-digit', minute: '2-digit' });
 }
 
 /** "10:00 to 13:00" from Postgres-style times. */

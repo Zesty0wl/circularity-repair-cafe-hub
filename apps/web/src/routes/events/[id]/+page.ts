@@ -10,7 +10,7 @@ export const load: PageLoad = async ({ fetch, url, params, parent }) => {
     .then((r) => (r.ok ? r.json() : null))
     .catch(() => null);
 
-  const { cafe } = await parent();
+  const { cafe, locale } = await parent();
   const res = await eventP;
 
   let event = null;
@@ -28,6 +28,7 @@ export const load: PageLoad = async ({ fetch, url, params, parent }) => {
     origin: url.origin,
     pathname: url.pathname,
     cafe,
+    locale,
     event,
     venue,
   });

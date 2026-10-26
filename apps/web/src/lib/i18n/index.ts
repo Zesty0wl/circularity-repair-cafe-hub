@@ -23,12 +23,13 @@ export function currentLocale(): Locale {
 /** Reactive translator for components: `$t('How did it go?')`. */
 export const t = derived(
   localeStore,
-  (l) => (source: string, vars?: Record<string, string | number>) => translate(l, source, vars),
+  (l) => (source: string, vars?: Record<string, string | number>, context?: string) =>
+    translate(l, source, vars, context),
 );
 
 /** For code that runs outside a component and does not need reactivity. */
-export function tNow(source: string, vars?: Record<string, string | number>): string {
-  return translate(get(localeStore), source, vars);
+export function tNow(source: string, vars?: Record<string, string | number>, context?: string): string {
+  return translate(get(localeStore), source, vars, context);
 }
 
 /**

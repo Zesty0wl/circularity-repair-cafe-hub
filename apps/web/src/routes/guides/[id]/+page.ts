@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit';
-import { buildSeo } from '@circularity/shared';
+import { buildSeo, translate } from '@circularity/shared';
 import type { GuideDetail } from '$lib/guides';
 import type { PageLoad } from './$types';
 
@@ -9,27 +9,30 @@ import type { PageLoad } from './$types';
  */
 export const load: PageLoad = async ({ fetch, params, url, parent }) => {
   const res = await fetch(`/api/public/guides/${params.id}`);
-  if (res.status === 404) error(404, 'That repair guide could not be found');
-  if (!res.ok) error(503, 'Repair guides are not available right now');
+  const { cafe, locale } = await parent();
+  if (res.status === 404) error(404, translate(locale, 'That repair guide could not be found'));
+  if (!res.ok) error(503, translate(locale, 'Repair guides are not available right now'));
 
   const guide = (await res.json()) as GuideDetail;
-  const { cafe } = await parent();
 
   const seo = buildSeo({
     route: 'guides',
     origin: url.origin,
     pathname: url.pathname,
     cafe,
+    locale,
   });
 
   return {
     guide,
     seo: {
       ...seo,
-      title: `${guide.title} | Repair guide`,
+      title: `${guide.title} | ${translate(locale, 'Repair guide')}`,
       description:
         guide.summary ??
-        `Step-by-step guide to ${guide.title.toLowerCase()}, from the iFixit community.`,
+        translate(locale, 'Step-by-step guide to {title}, from the iFixit community.', {
+          title: guide.title.toLowerCase(),
+        }),
       // The guide itself belongs to iFixit. Point search engines at their copy
       // rather than competing with it.
       canonical: guide.url,

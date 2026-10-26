@@ -6,6 +6,7 @@
   import PageHeader from '$lib/components/PageHeader.svelte';
   import AddToCalendar from '$lib/components/AddToCalendar.svelte';
   import { Mail, MapPin, Navigation, Locate, Car, Accessibility, Info, Globe, CalendarDays, Clock, Heart } from 'lucide-svelte';
+  import { t, dateLocale } from '$lib/i18n';
   import type { PageData } from './$types';
 
   interface PublicEvent {
@@ -35,7 +36,7 @@
   $: nextEvent = ((data.upcoming ?? []) as PublicEvent[])[0] ?? null;
 
   function fullDate(d: string): string {
-    return new Date(d + 'T12:00:00Z').toLocaleDateString('en-GB', {
+    return new Date(d + 'T12:00:00Z').toLocaleDateString(dateLocale(), {
       weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC',
     });
   }
@@ -84,9 +85,9 @@
 
 <main>
   <PageHeader
-    eyebrow="Contact"
-    title="Get in touch"
-    lede="Come along to a session, or reach us before you visit."
+    eyebrow={$t('Contact')}
+    title={$t('Get in touch')}
+    lede={$t('Come along to a session, or reach us before you visit.')}
   >
     <Mail size={22} slot="icon" />
   </PageHeader>
@@ -96,7 +97,7 @@
        first, and the venue is no use without a date. -->
   {#if nextEvent}
     <div class="card p-6">
-      <p class="kicker">Next session</p>
+      <p class="kicker">{$t('Next session')}</p>
       <p class="mt-2 flex items-start gap-2 text-xl font-semibold text-pine">
         <CalendarDays size={22} class="shrink-0 mt-0.5 text-clay" /> <span>{fullDate(nextEvent.date)}</span>
       </p>
@@ -105,14 +106,14 @@
       </p>
       <div class="mt-5 flex flex-wrap gap-2">
         <AddToCalendar event={nextEvent} variant="button" class="!py-2" />
-        <a href="/events" class="btn-secondary !py-2">See all dates</a>
+        <a href="/events" class="btn-secondary !py-2">{$t('See all dates')}</a>
       </div>
     </div>
   {/if}
 
   {#if $cafe?.contactEmail}
     <a href="mailto:{$cafe.contactEmail}" class="card-link p-6" on:click={() => track('contact', { place: 'contact page' })}>
-      <p class="kicker">Email us</p>
+      <p class="kicker">{$t('Email us')}</p>
       <p class="mt-2 inline-flex items-center gap-2 text-xl font-semibold text-brand-700">
         <Mail size={20} /> {$cafe.contactEmail}
       </p>
@@ -123,7 +124,7 @@
     <!-- Find us -->
     <div class="card p-6 space-y-4">
       <div>
-        <p class="kicker">Find us</p>
+        <p class="kicker">{$t('Find us')}</p>
         <p class="mt-2 inline-flex items-start gap-2 text-xl font-semibold">
           <MapPin size={22} class="shrink-0 mt-1" /> <span>{venue.name}</span>
         </p>
@@ -147,7 +148,7 @@
           <!-- The explanation is helpful but not essential, so it drops away
                on a phone rather than wrapping to a second line. -->
           <span class="hidden sm:inline text-slate-400">·</span>
-          <span class="hidden sm:inline">pin-precise location</span>
+          <span class="hidden sm:inline">{$t('pin-precise location')}</span>
         </a>
       {/if}
 
@@ -159,18 +160,18 @@
           on:click={() => track('directions', { kind: 'directions' })}
           class="btn-primary !py-2"
         >
-          <Navigation size={18} /> Get directions
+          <Navigation size={18} /> {$t('Get directions')}
         </a>
         <!-- A map link that cannot be embedded becomes a button here, so all
              the venue actions stay on one row. -->
         {#if venue.mapUrl && !isEmbeddableMap(venue.mapUrl)}
           <a href={venue.mapUrl} target="_blank" rel="noopener" class="btn-secondary !py-2" on:click={() => track('directions', { kind: 'map' })}>
-            <MapPin size={16} /> View on map
+            <MapPin size={16} /> {$t('View on map')}
           </a>
         {/if}
         {#if $cafe?.websiteUrl}
           <a href={$cafe.websiteUrl} target="_blank" rel="noopener" class="btn-secondary !py-2">
-            <Globe size={16} /> Visit our website
+            <Globe size={16} /> {$t('Visit our website')}
           </a>
         {/if}
       </div>
@@ -178,7 +179,7 @@
       {#if venue.mapUrl && isEmbeddableMap(venue.mapUrl)}
         <iframe
           src={venue.mapUrl}
-          title="Map of {venue.name}"
+          title={$t('Map of {name}', { name: venue.name })}
           loading="lazy"
           referrerpolicy="no-referrer-when-downgrade"
           class="w-full h-64 sm:h-80 rounded-xl border border-slate-200"
@@ -188,28 +189,28 @@
 
     {#if venue.directions}
       <div class="card p-6">
-        <p class="kicker flex items-center gap-2"><Info size={14} /> How to find us</p>
+        <p class="kicker flex items-center gap-2"><Info size={14} /> {$t('How to find us')}</p>
         <p class="mt-3 text-slate-700 whitespace-pre-line leading-relaxed">{venue.directions}</p>
       </div>
     {/if}
 
     {#if venue.parkingInfo}
       <div class="card p-6">
-        <p class="kicker flex items-center gap-2"><Car size={14} /> Parking &amp; transport</p>
+        <p class="kicker flex items-center gap-2"><Car size={14} /> {$t('Parking & transport')}</p>
         <p class="mt-3 text-slate-700 whitespace-pre-line leading-relaxed">{venue.parkingInfo}</p>
       </div>
     {/if}
 
     {#if venue.accessibilityInfo}
       <div class="card p-6">
-        <p class="kicker flex items-center gap-2"><Accessibility size={14} /> Accessibility</p>
+        <p class="kicker flex items-center gap-2"><Accessibility size={14} /> {$t('Accessibility')}</p>
         <p class="mt-3 text-slate-700 whitespace-pre-line leading-relaxed">{venue.accessibilityInfo}</p>
       </div>
     {/if}
 
     {#if venue.notes}
       <div class="card p-6">
-        <p class="kicker">Good to know</p>
+        <p class="kicker">{$t('Good to know')}</p>
         <p class="mt-3 text-slate-700 whitespace-pre-line leading-relaxed">{venue.notes}</p>
       </div>
     {/if}
@@ -217,7 +218,7 @@
 
   {#if $cafe?.socialLinks && Object.values($cafe.socialLinks).some((v) => v)}
     <div class="card p-6">
-      <p class="kicker">Find us online</p>
+      <p class="kicker">{$t('Find us online')}</p>
       <ul class="mt-3 space-y-2">
         {#each Object.entries($cafe.socialLinks) as [k, v]}
           {#if v}
@@ -234,12 +235,12 @@
 
   {#if $cafe?.donateUrl}
     <div class="card p-6">
-      <p class="kicker">Support us</p>
+      <p class="kicker">{$t('Support us')}</p>
       <p class="mt-2 text-slate-700 leading-relaxed">
-        Repairs are free. Donations pay for the tools, the room and the tea, and they keep the sessions running.
+        {$t('Repairs are free. Donations pay for the tools, the room and the tea, and they keep the sessions running.')}
       </p>
       <a href={$cafe.donateUrl} target="_blank" rel="noopener" class="btn-secondary !py-2 mt-5" on:click={() => track('donate', { place: 'contact page' })}>
-        <Heart size={18} /> Make a donation
+        <Heart size={18} /> {$t('Make a donation')}
       </a>
     </div>
   {/if}

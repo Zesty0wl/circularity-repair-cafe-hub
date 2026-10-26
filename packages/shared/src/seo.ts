@@ -18,6 +18,8 @@
 //  escaped (see serializeJsonLd) so DB-sourced strings can't break out.
 // =============================================================================
 
+import { dateLocale, translate, type Locale } from './i18n/index.js';
+
 export interface SeoCafe {
   name: string;
   tagline?: string | null;
@@ -101,6 +103,8 @@ export interface BuildSeoOptions {
   /** Card style for the team profile share picture (?style= on the page URL). */
   shareStyle?: string | null;
   categories?: string[]; // skills page (category names)
+  /** The language to write the titles and descriptions in. English by default. */
+  locale?: Locale;
 }
 
 export interface JsonLdGraph {
@@ -160,8 +164,8 @@ function isoDateTime(isoDate: string, time: string): string {
 
 // Human-friendly date (e.g. "Saturday, 20 June 2026"). Anchored at UTC noon +
 // a fixed locale so SSR and the browser render identical text.
-function humanDate(isoDate: string): string {
-  return new Date(`${isoDate}T12:00:00Z`).toLocaleDateString('en-GB', {
+function humanDate(isoDate: string, locale: Locale): string {
+  return new Date(`${isoDate}T12:00:00Z`).toLocaleDateString(dateLocale(locale), {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -235,13 +239,13 @@ function openingHoursFrom(events: SeoEvent[]): Node[] {
   return specs;
 }
 
-function contactPoint(cafe: SeoCafe): Node | undefined {
+function contactPoint(cafe: SeoCafe, locale: Locale): Node | undefined {
   if (!cafe.contactEmail) return undefined;
   return {
     '@type': 'ContactPoint',
     contactType: 'customer service',
     email: cafe.contactEmail,
-    availableLanguage: 'en',
+    availableLanguage: locale,
   };
 }
 
@@ -257,13 +261,19 @@ function contactPoint(cafe: SeoCafe): Node | undefined {
 // NOTE: geo (latitude/longitude) is intentionally omitted — there is no lat/lng
 // in the data model yet. Add a `geo: { '@type': 'GeoCoordinates', latitude,
 // longitude }` node here once coordinates are captured on the venue/cafe.
-function businessNode(cafe: SeoCafe, venue: SeoVenue | null, events: SeoEvent[], origin: string): Node {
+function businessNode(
+  cafe: SeoCafe,
+  venue: SeoVenue | null,
+  events: SeoEvent[],
+  origin: string,
+  locale: Locale,
+): Node {
   const node: Node = {
     '@type': 'LocalBusiness',
     '@id': `${origin}/#organization`,
     name: siteName(cafe),
     url: `${origin}/`,
-    priceRange: 'Free',
+    priceRange: translate(locale, 'Free'),
   };
 
   const description = clamp(cafe.seoDescription || cafe.description || cafe.tagline, 300);
@@ -281,7 +291,7 @@ function businessNode(cafe: SeoCafe, venue: SeoVenue | null, events: SeoEvent[],
   const locality = localityFrom(venue?.address ?? cafe.address, venue?.postcode);
   if (locality) node.areaServed = locality;
 
-  const cp = contactPoint(cafe);
+  const cp = contactPoint(cafe, locale);
   if (cp) node.contactPoint = cp;
 
   const hours = openingHoursFrom(events);
@@ -294,7 +304,7 @@ function businessNode(cafe: SeoCafe, venue: SeoVenue | null, events: SeoEvent[],
   return node;
 }
 
-function webSiteNode(cafe: SeoCafe, origin: string): Node {
+function webSiteNode(cafe: SeoCafe, origin: string, locale: Locale): Node {
   const description = clamp(cafe.seoDescription || cafe.description || cafe.tagline, 300);
   return {
     '@type': 'WebSite',
@@ -303,11 +313,11 @@ function webSiteNode(cafe: SeoCafe, origin: string): Node {
     name: siteName(cafe),
     ...(description ? { description } : {}),
     publisher: { '@id': `${origin}/#organization` },
-    inLanguage: 'en',
+    inLanguage: locale,
   };
 }
 
-function eventNode(event: SeoEvent, cafe: SeoCafe, origin: string): Node {
+function eventNode(event: SeoEvent, cafe: SeoCafe, origin: string, locale: Locale): Node {
   const url = `${origin}/events/${event.id}`;
   const image = absoluteUrl(cafe.ogImageUrl || cafe.bannerUrl || cafe.logoUrl, origin);
   const venueAddress = postalAddress(event.venue);
@@ -338,7 +348,8 @@ function eventNode(event: SeoEvent, cafe: SeoCafe, origin: string): Node {
     },
   };
   const description = clamp(
-    event.description || `Free community repair session hosted by ${siteName(cafe)}.`,
+    event.description ||
+      translate(locale, 'Free community repair session hosted by {name}.', { name: siteName(cafe) }),
     500,
   );
   if (description) node.description = description;
@@ -396,21 +407,27 @@ function breadcrumbNode(origin: string, trail: Array<{ name: string; path: strin
 // Title / description defaults
 // -----------------------------------------------------------------------------
 
-function locationDescriptor(cafe: SeoCafe, venue: SeoVenue | null): string {
+function locationDescriptor(cafe: SeoCafe, venue: SeoVenue | null, locale: Locale): string {
   const locality = localityFrom(venue?.address ?? cafe.address, venue?.postcode ?? null);
-  return locality ? `Repair Café in ${locality}` : 'Community Repair Café';
+  return locality
+    ? translate(locale, 'Repair Café in {place}', { place: locality })
+    : translate(locale, 'Community Repair Café');
 }
 
-function defaultTitle(cafe: SeoCafe, venue: SeoVenue | null): string {
-  return cafe.seoTitle?.trim() || `${siteName(cafe)} | ${locationDescriptor(cafe, venue)}`;
+function defaultTitle(cafe: SeoCafe, venue: SeoVenue | null, locale: Locale): string {
+  return cafe.seoTitle?.trim() || `${siteName(cafe)} | ${locationDescriptor(cafe, venue, locale)}`;
 }
 
-function defaultDescription(cafe: SeoCafe): string {
+function defaultDescription(cafe: SeoCafe, locale: Locale): string {
   return clamp(
     cafe.seoDescription ||
       cafe.description ||
       cafe.tagline ||
-      `Free community repair events at ${siteName(cafe)}. Bring an item and our volunteers will help you fix it.`,
+      translate(
+        locale,
+        'Free community repair events at {name}. Bring an item and our volunteers will help you fix it.',
+        { name: siteName(cafe) },
+      ),
     300,
   );
 }
@@ -421,6 +438,8 @@ function defaultDescription(cafe: SeoCafe): string {
 
 export function buildSeo(opts: BuildSeoOptions): PageSeo {
   const { route, origin, pathname, cafe } = opts;
+  const locale: Locale = opts.locale ?? 'en';
+  const tr = (source: string, vars?: Record<string, string | number>): string => translate(locale, source, vars);
   const canonical = `${origin}${pathname || '/'}`;
 
   if (!cafe) {
@@ -431,10 +450,13 @@ export function buildSeo(opts: BuildSeoOptions): PageSeo {
   const venue = opts.venue ?? null;
   const defaultImage = absoluteUrl(cafe.ogImageUrl || cafe.bannerUrl || cafe.logoUrl, origin);
   const hoursEvents = opts.events ?? (opts.event ? [opts.event] : []);
-  const graph: Node[] = [businessNode(cafe, venue, hoursEvents, origin), webSiteNode(cafe, origin)];
+  const graph: Node[] = [
+    businessNode(cafe, venue, hoursEvents, origin, locale),
+    webSiteNode(cafe, origin, locale),
+  ];
 
-  let title = defaultTitle(cafe, venue);
-  let description = defaultDescription(cafe);
+  let title = defaultTitle(cafe, venue, locale);
+  let description = defaultDescription(cafe, locale);
   let ogType = 'website';
   let noindex = false;
 
@@ -462,7 +484,7 @@ export function buildSeo(opts: BuildSeoOptions): PageSeo {
 
   switch (route) {
     case 'home': {
-      for (const event of (opts.events ?? []).slice(0, 12)) graph.push(eventNode(event, cafe, origin));
+      for (const event of (opts.events ?? []).slice(0, 12)) graph.push(eventNode(event, cafe, origin, locale));
       const faq = faqNode(cafe, origin);
       if (faq) graph.push(faq);
       break;
@@ -470,133 +492,162 @@ export function buildSeo(opts: BuildSeoOptions): PageSeo {
     case 'events': {
       const events = opts.events ?? [];
       const next = events[0];
-      title = `Upcoming Repair Events | ${name}`;
+      title = `${tr('Upcoming Repair Events')} | ${name}`;
       description = clamp(
         next
-          ? `See upcoming repair events at ${name}. Next session: ${humanDate(next.date)} at ${next.venue.name}. Bring an item and we'll help you fix it for free.`
-          : `Upcoming repair events at ${name}. Bring an item and our volunteers will help you fix it for free.`,
+          ? tr(
+              "See upcoming repair events at {name}. Next session: {date} at {venue}. Bring an item and we'll help you fix it for free.",
+              { name, date: humanDate(next.date, locale), venue: next.venue.name },
+            )
+          : tr('Upcoming repair events at {name}. Bring an item and our volunteers will help you fix it for free.', {
+              name,
+            }),
         300,
       );
       graph.push(
         breadcrumbNode(origin, [
-          { name: 'Home', path: '/' },
-          { name: 'Events', path: '/events' },
+          { name: tr('Home'), path: '/' },
+          { name: tr('Events'), path: '/events' },
         ]),
       );
-      for (const event of events.slice(0, 25)) graph.push(eventNode(event, cafe, origin));
+      for (const event of events.slice(0, 25)) graph.push(eventNode(event, cafe, origin, locale));
       break;
     }
     case 'event': {
       const event = opts.event ?? null;
       if (!event) {
-        title = `Event | ${name}`;
+        title = `${tr('Event')} | ${name}`;
         noindex = true;
         break;
       }
       // A shared session shows its own date and venue on the card.
       ogImage = `${origin}/og/event/${event.id}.png`;
-      title = `${event.name} · ${humanDate(event.date)} | ${name}`;
+      title = `${event.name} · ${humanDate(event.date, locale)} | ${name}`;
       description = clamp(
         event.description ||
-          `Join ${name} on ${humanDate(event.date)} at ${event.venue.name} for a free community repair session. Bring an item and we'll help you fix it.`,
+          tr(
+            "Join {name} on {date} at {venue} for a free community repair session. Bring an item and we'll help you fix it.",
+            { name, date: humanDate(event.date, locale), venue: event.venue.name },
+          ),
         300,
       );
       ogType = 'article';
       graph.push(
         breadcrumbNode(origin, [
-          { name: 'Home', path: '/' },
-          { name: 'Events', path: '/events' },
+          { name: tr('Home'), path: '/' },
+          { name: tr('Events'), path: '/events' },
           { name: event.name, path: `/events/${event.id}` },
         ]),
       );
-      graph.push(eventNode(event, cafe, origin));
+      graph.push(eventNode(event, cafe, origin, locale));
       break;
     }
     case 'skills': {
       const categories = opts.categories ?? [];
-      title = `What We Repair | ${name}`;
+      title = `${tr('What We Repair')} | ${name}`;
       description = clamp(
         categories.length
-          ? `Discover what our volunteers can help fix at ${name}: ${categories.slice(0, 10).join(', ')}. Free community repairs.`
-          : `Discover what our volunteers can help fix at ${name}. Free community repairs, every session.`,
+          ? tr('Discover what our volunteers can help fix at {name}: {categories}. Free community repairs.', {
+              name,
+              categories: categories.slice(0, 10).join(', '),
+            })
+          : tr('Discover what our volunteers can help fix at {name}. Free community repairs, every session.', { name }),
         300,
       );
       graph.push(
         breadcrumbNode(origin, [
-          { name: 'Home', path: '/' },
-          { name: 'What We Repair', path: '/skills' },
+          { name: tr('Home'), path: '/' },
+          { name: tr('What We Repair'), path: '/skills' },
         ]),
       );
       break;
     }
     case 'world': {
-      title = `The Worldwide Repair Café Movement | ${name}`;
+      title = `${tr('The Worldwide Repair Café Movement')} | ${name}`;
       description = clamp(
-        `${name} is one of thousands of Repair Cafés around the world. Explore the global map, see where the movement started, and find a Repair Café near you.`,
+        tr(
+          '{name} is one of thousands of Repair Cafés around the world. Explore the global map, see where the movement started, and find a Repair Café near you.',
+          { name },
+        ),
         300,
       );
       graph.push(
         breadcrumbNode(origin, [
-          { name: 'Home', path: '/' },
-          { name: 'Worldwide', path: '/world' },
+          { name: tr('Home'), path: '/' },
+          { name: tr('Worldwide'), path: '/world' },
         ]),
       );
       break;
     }
     case 'linux': {
-      title = `Linux Repair Cafe | ${name}`;
+      title = `${tr('Linux Repair Cafe')} | ${name}`;
       description = clamp(
-        `Is your computer too old for Windows 11? ${name} can install Linux on it for free, so it keeps working and stays out of the bin. Come to a Linux Repair Cafe session.`,
+        tr(
+          'Is your computer too old for Windows 11? {name} can install Linux on it for free, so it keeps working and stays out of the bin. Come to a Linux Repair Cafe session.',
+          { name },
+        ),
         300,
       );
       graph.push(
         breadcrumbNode(origin, [
-          { name: 'Home', path: '/' },
-          { name: 'Linux Repair Cafe', path: '/linux' },
+          { name: tr('Home'), path: '/' },
+          { name: tr('Linux Repair Cafe'), path: '/linux' },
         ]),
       );
       break;
     }
     case 'about': {
-      title = `About & how we measure | ${name}`;
+      title = `${tr('About & how we measure')} | ${name}`;
       description = clamp(
-        `How ${name} works, and how we work out the figures we publish, including the carbon saved by each repair.`,
+        tr(
+          'How {name} works, and how we work out the figures we publish, including the carbon saved by each repair.',
+          { name },
+        ),
         300,
       );
       graph.push(
         breadcrumbNode(origin, [
-          { name: 'Home', path: '/' },
-          { name: 'About', path: '/about' },
+          { name: tr('Home'), path: '/' },
+          { name: tr('About'), path: '/about' },
         ]),
       );
       break;
     }
     case 'guides': {
-      title = `Repair Guides | ${name}`;
+      title = `${tr('Repair Guides')} | ${name}`;
       description = clamp(
-        `Free step-by-step repair guides for phones, laptops, appliances and more, from iFixit. Search thousands of guides and fix it yourself, or bring it to ${name}.`,
+        tr(
+          'Free step-by-step repair guides for phones, laptops, appliances and more, from iFixit. Search thousands of guides and fix it yourself, or bring it to {name}.',
+          { name },
+        ),
         300,
       );
       graph.push(
         breadcrumbNode(origin, [
-          { name: 'Home', path: '/' },
-          { name: 'Repair Guides', path: '/guides' },
+          { name: tr('Home'), path: '/' },
+          { name: tr('Repair Guides'), path: '/guides' },
         ]),
       );
       break;
     }
     case 'contact': {
-      title = `Contact & Find Us | ${name}`;
+      title = `${tr('Contact & Find Us')} | ${name}`;
       description = clamp(
         venue?.name
-          ? `Get in touch with ${name} and find us at ${venue.name}${venue.postcode ? `, ${venue.postcode}` : ''}. Directions, opening times and how to volunteer.`
-          : `Get in touch with ${name}. Find out where we meet, how to volunteer and how to support your local Repair Café.`,
+          ? tr('Get in touch with {name} and find us at {place}. Directions, opening times and how to volunteer.', {
+              name,
+              place: `${venue.name}${venue.postcode ? `, ${venue.postcode}` : ''}`,
+            })
+          : tr(
+              'Get in touch with {name}. Find out where we meet, how to volunteer and how to support your local Repair Café.',
+              { name },
+            ),
         300,
       );
       graph.push(
         breadcrumbNode(origin, [
-          { name: 'Home', path: '/' },
-          { name: 'Contact', path: '/contact' },
+          { name: tr('Home'), path: '/' },
+          { name: tr('Contact'), path: '/contact' },
         ]),
       );
       break;
@@ -604,15 +655,18 @@ export function buildSeo(opts: BuildSeoOptions): PageSeo {
     case 'team': {
       const repairer = opts.repairer ?? null;
       if (!repairer) {
-        title = `Volunteer Repairer | ${name}`;
-        description = `Meet the volunteers behind ${name}.`;
+        title = `${tr('Volunteer Repairer')} | ${name}`;
+        description = tr('Meet the volunteers behind {name}.', { name });
         noindex = true;
         break;
       }
-      title = `${repairer.displayName} · Volunteer Repairer | ${name}`;
+      title = `${repairer.displayName} · ${tr('Volunteer Repairer')} | ${name}`;
       description = clamp(
         repairer.bio ||
-          `${repairer.displayName} volunteers at ${name}, helping the community repair and reuse the things they own.`,
+          tr('{person} volunteers at {name}, helping the community repair and reuse the things they own.', {
+            person: repairer.displayName,
+            name,
+          }),
         300,
       );
       ogType = 'profile';
@@ -625,8 +679,8 @@ export function buildSeo(opts: BuildSeoOptions): PageSeo {
       }`;
       graph.push(
         breadcrumbNode(origin, [
-          { name: 'Home', path: '/' },
-          { name: 'Our Team', path: '/skills' },
+          { name: tr('Home'), path: '/' },
+          { name: tr('Our Team'), path: '/skills' },
           { name: repairer.displayName, path: `/team/${repairer.id}` },
         ]),
       );

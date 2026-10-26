@@ -14,6 +14,8 @@
 //  up to 4 GB in all. It reads the larger "zip64" layout too, which old Docker
 //  hubs switched to for very big backups.
 // =============================================================================
+// A relative path, not $lib, so the Worker's unit tests can load this file too.
+import { tNow } from '../i18n';
 
 export interface ZipEntry {
   name: string;
@@ -54,7 +56,7 @@ export async function readZipDirectory(blob: Blob): Promise<ZipEntry[]> {
       break;
     }
   }
-  if (eocd < 0) throw new Error('This file is not a zip file.');
+  if (eocd < 0) throw new Error(tNow('This file is not a zip file.'));
 
   let count = u16(tail, eocd + 10);
   let dirSize = u32(tail, eocd + 12);
@@ -78,7 +80,7 @@ export async function readZipDirectory(blob: Blob): Promise<ZipEntry[]> {
   const entries: ZipEntry[] = [];
   let at = 0;
   for (let n = 0; n < count && at + 46 <= dir.length; n++) {
-    if (u32(dir, at) !== 0x02014b50) throw new Error('This zip file is damaged.');
+    if (u32(dir, at) !== 0x02014b50) throw new Error(tNow('This zip file is damaged.'));
     const method = u16(dir, at + 10);
     let compressedSize = u32(dir, at + 20);
     let size = u32(dir, at + 24);
@@ -118,11 +120,11 @@ export async function readZipDirectory(blob: Blob): Promise<ZipEntry[]> {
 /** One file's contents. */
 export async function readZipEntry(blob: Blob, entry: ZipEntry): Promise<Uint8Array> {
   const header = await bytesOf(blob, entry.localHeaderOffset, entry.localHeaderOffset + 30);
-  if (u32(header, 0) !== 0x04034b50) throw new Error(`The zip entry ${entry.name} is damaged.`);
+  if (u32(header, 0) !== 0x04034b50) throw new Error(tNow('The zip entry {name} is damaged.', { name: entry.name }));
   const dataStart = entry.localHeaderOffset + 30 + u16(header, 26) + u16(header, 28);
   const data = blob.slice(dataStart, dataStart + entry.compressedSize);
   if (entry.method === 0) return new Uint8Array(await data.arrayBuffer());
-  if (entry.method !== 8) throw new Error(`${entry.name} is compressed in a way this page cannot read.`);
+  if (entry.method !== 8) throw new Error(tNow('{name} is compressed in a way this page cannot read.', { name: entry.name }));
   const stream = data.stream().pipeThrough(new DecompressionStream('deflate-raw'));
   return new Uint8Array(await new Response(stream).arrayBuffer());
 }
@@ -181,7 +183,7 @@ export class ZipWriter {
     const compressed = options.compress ? await deflateRaw(data) : data;
     const method = options.compress ? 8 : 0;
     if (this.offset + compressed.length > 0xfffffff0) {
-      throw new Error('This backup is larger than 4 GB, which a zip file this page writes cannot hold.');
+      throw new Error(tNow('This backup is larger than 4 GB, which a zip file this page writes cannot hold.'));
     }
 
     const local = new Uint8Array(30 + nameBytes.length);

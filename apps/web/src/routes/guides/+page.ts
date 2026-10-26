@@ -11,7 +11,7 @@ export const load: PageLoad = async ({ fetch, url, parent }) => {
     .then((r) => (r.ok ? r.json() : { guides: [] }))
     .catch(() => ({ guides: [] }));
 
-  const { cafe } = await parent();
+  const { cafe, locale } = await parent();
   const recent = await recentP;
 
   const seo = buildSeo({
@@ -19,6 +19,7 @@ export const load: PageLoad = async ({ fetch, url, parent }) => {
     origin: url.origin,
     pathname: url.pathname,
     cafe,
+    locale,
   });
 
   return { seo, recent: recent?.guides ?? [] };

@@ -75,7 +75,7 @@
         {/if}
         <span class="font-semibold text-slate-900 leading-tight truncate">{$cafe?.name || 'Repair Cafe'}</span>
       </a>
-      <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-5 text-sm" aria-label="Main">
+      <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-5 text-sm" aria-label={$t('Main')}>
         {#each groups as group}
           <div>
             <p class="px-3 mb-1 text-[0.7rem] font-semibold uppercase tracking-wider text-slate-400">{$t(group.title)}</p>
@@ -101,7 +101,7 @@
         <a href="/" class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100"><Globe size={18} class="text-slate-400" /> {$t('View the website')}</a>
         <button type="button" on:click={signOut} class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100"><LogOut size={18} class="text-slate-400" /> {$t('Sign out')}</button>
         {#if admin}
-          <a href="/admin/settings?tab=about" class="block px-3 pt-2 text-xs text-slate-400 hover:text-slate-600" title="Version, licence and how to update">
+          <a href="/admin/settings?tab=about" class="block px-3 pt-2 text-xs text-slate-400 hover:text-slate-600" title={$t('Version, licence and how to update')}>
             Repair Cafe Hub {$cafe?.appVersion ?? ''}
           </a>
         {/if}
@@ -121,7 +121,7 @@
       <button
         type="button"
         class="inline-flex items-center justify-center h-10 w-10 rounded-lg text-slate-700 hover:bg-slate-100"
-        aria-label="Open the menu"
+        aria-label={$t('Open the menu')}
         aria-expanded={drawerOpen}
         on:click={() => (drawerOpen = true)}
       >
@@ -130,17 +130,17 @@
     </div>
 
     {#if drawerOpen}
-      <div class="md:hidden fixed inset-0 z-50 flex no-print" role="dialog" aria-modal="true" aria-label="Menu">
-        <button type="button" class="absolute inset-0 bg-slate-900/50" aria-label="Close the menu" on:click={() => (drawerOpen = false)}></button>
+      <div class="md:hidden fixed inset-0 z-50 flex no-print" role="dialog" aria-modal="true" aria-label={$t('Menu')}>
+        <button type="button" class="absolute inset-0 bg-slate-900/50" aria-label={$t('Close the menu')} on:click={() => (drawerOpen = false)}></button>
         <div class="relative ml-auto w-80 max-w-[85vw] h-full bg-white flex flex-col shadow-xl">
           <div class="flex items-center justify-between px-4 py-3 border-b border-slate-200">
             <div class="min-w-0">
               <p class="font-semibold text-slate-900 truncate">{user.displayName}</p>
               <p class="text-xs text-slate-500">{admin ? $t('Admin') : $t('Repairer')}</p>
             </div>
-            <button type="button" class="h-10 w-10 inline-flex items-center justify-center rounded-lg hover:bg-slate-100" aria-label="Close the menu" on:click={() => (drawerOpen = false)}><X size={22} /></button>
+            <button type="button" class="h-10 w-10 inline-flex items-center justify-center rounded-lg hover:bg-slate-100" aria-label={$t('Close the menu')} on:click={() => (drawerOpen = false)}><X size={22} /></button>
           </div>
-          <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-5" aria-label="Main">
+          <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-5" aria-label={$t('Main')}>
             {#each groups as group}
               <div>
                 <p class="px-3 mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">{$t(group.title)}</p>
@@ -179,7 +179,7 @@
     </div>
 
     <!-- ── Bottom tabs, on a phone ──────────────────────────────────── -->
-    <nav class="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white border-t border-slate-200 grid no-print" style="grid-template-columns: repeat({tabs.length}, minmax(0, 1fr)); padding-bottom: env(safe-area-inset-bottom);" aria-label="Quick links">
+    <nav class="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white border-t border-slate-200 grid no-print" style="grid-template-columns: repeat({tabs.length}, minmax(0, 1fr)); padding-bottom: env(safe-area-inset-bottom);" aria-label={$t('Quick links')}>
       {#each tabs as tab}
         {@const current = isCurrent(tab, pathname)}
         <a href={tab.href} class="flex flex-col items-center gap-0.5 py-2 text-xs {current ? 'text-brand-700 font-semibold' : 'text-slate-500'}" aria-current={current ? 'page' : undefined}>

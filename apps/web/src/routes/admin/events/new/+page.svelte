@@ -3,6 +3,7 @@
   import { goto } from '$app/navigation';
   import { api } from '$lib/api';
   import { cafe } from '$lib/stores/cafe';
+  import { t, tNow } from '$lib/i18n';
 
   // Only asked for by cafes that run Linux sessions. Turned on under Settings,
   // Linux Repair Cafe.
@@ -77,113 +78,113 @@
         goto('/admin/events');
       }
     } catch (err: any) {
-      error = err?.message || 'Could not create event';
+      error = err?.message || tNow('Could not create event');
     } finally {
       busy = false;
     }
   }
 </script>
 
-<h1 class="text-2xl font-bold">Create event</h1>
+<h1 class="text-2xl font-bold">{$t('Create event')}</h1>
 
 <div class="mt-4 flex gap-2">
-  <button class="btn-{mode === 'oneoff' ? 'primary' : 'secondary'}" on:click={() => (mode = 'oneoff')}>One-off</button>
-  <button class="btn-{mode === 'recurring' ? 'primary' : 'secondary'}" on:click={() => (mode = 'recurring')}>Recurring (template)</button>
+  <button class="btn-{mode === 'oneoff' ? 'primary' : 'secondary'}" on:click={() => (mode = 'oneoff')}>{$t('One-off')}</button>
+  <button class="btn-{mode === 'recurring' ? 'primary' : 'secondary'}" on:click={() => (mode = 'recurring')}>{$t('Recurring (template)')}</button>
 </div>
 
 <div class="card p-6 mt-4 max-w-2xl space-y-4">
   {#if mode === 'oneoff'}
     <div>
-      <label class="label" for="n">Name</label>
+      <label class="label" for="n">{$t('Name')}</label>
       <input id="n" class="input" bind:value={oneoff.name} />
     </div>
     <div>
-      <label class="label" for="v">Venue</label>
+      <label class="label" for="v">{$t('Venue')}</label>
       <select id="v" class="input" bind:value={oneoff.venueId}>
         {#each venues as v}<option value={v.id}>{v.name}</option>{/each}
       </select>
     </div>
     <div>
-      <label class="label" for="d">Date</label>
+      <label class="label" for="d">{$t('Date')}</label>
       <input id="d" type="date" class="input" bind:value={oneoff.date} />
     </div>
     <div class="grid grid-cols-2 gap-3">
-      <div><label class="label" for="st">Start</label><input id="st" type="time" class="input" bind:value={oneoff.startTime} /></div>
-      <div><label class="label" for="et">End</label><input id="et" type="time" class="input" bind:value={oneoff.endTime} /></div>
+      <div><label class="label" for="st">{$t('Start')}</label><input id="st" type="time" class="input" bind:value={oneoff.startTime} /></div>
+      <div><label class="label" for="et">{$t('End')}</label><input id="et" type="time" class="input" bind:value={oneoff.endTime} /></div>
     </div>
     <div>
-      <label class="label" for="ds">Description</label>
+      <label class="label" for="ds">{$t('Description')}</label>
       <textarea id="ds" class="input" rows="3" bind:value={oneoff.description}></textarea>
     </div>
-    <label class="flex items-center gap-2"><input type="checkbox" bind:checked={oneoff.isPublished} /> Publish on public calendar</label>
+    <label class="flex items-center gap-2"><input type="checkbox" bind:checked={oneoff.isPublished} /> {$t('Publish on public calendar')}</label>
     {#if linuxEnabled}
       <label class="flex items-start gap-2">
         <input type="checkbox" class="mt-1" bind:checked={oneoff.supportsLinux} />
         <span>
-          Linux help at this session
+          {$t('Linux help at this session')}
           <span class="block text-xs text-slate-500">
-            Says so on your public calendar, and lets you file Linux installs against this session.
+            {$t('Says so on your public calendar, and lets you file Linux installs against this session.')}
           </span>
         </span>
       </label>
     {/if}
   {:else}
     <div>
-      <label class="label" for="tn">Template name</label>
+      <label class="label" for="tn">{$t('Template name')}</label>
       <input id="tn" class="input" bind:value={template.name} />
     </div>
     <div>
-      <label class="label" for="tv">Venue</label>
+      <label class="label" for="tv">{$t('Venue')}</label>
       <select id="tv" class="input" bind:value={template.venueId}>
         {#each venues as v}<option value={v.id}>{v.name}</option>{/each}
       </select>
     </div>
     <div class="grid grid-cols-2 gap-3">
-      <div><label class="label" for="tst">Start</label><input id="tst" type="time" class="input" bind:value={template.startTime} /></div>
-      <div><label class="label" for="tet">End</label><input id="tet" type="time" class="input" bind:value={template.endTime} /></div>
+      <div><label class="label" for="tst">{$t('Start')}</label><input id="tst" type="time" class="input" bind:value={template.startTime} /></div>
+      <div><label class="label" for="tet">{$t('End')}</label><input id="tet" type="time" class="input" bind:value={template.endTime} /></div>
     </div>
     <div>
-      <label class="label" for="freq">Frequency</label>
+      <label class="label" for="freq">{$t('Frequency')}</label>
       <select id="freq" class="input" bind:value={template.frequency}>
-        <option value="weekly">Weekly</option>
-        <option value="biweekly">Every 2 weeks</option>
-        <option value="monthly">Monthly</option>
+        <option value="weekly">{$t('Weekly')}</option>
+        <option value="biweekly">{$t('Every 2 weeks')}</option>
+        <option value="monthly">{$t('Monthly')}</option>
       </select>
     </div>
     <div class="grid grid-cols-2 gap-3">
       <div>
-        <label class="label" for="wd">Day of week</label>
+        <label class="label" for="wd">{$t('Day of week')}</label>
         <select id="wd" class="input" bind:value={template.weekday}>
-          <option value="MO">Monday</option><option value="TU">Tuesday</option><option value="WE">Wednesday</option>
-          <option value="TH">Thursday</option><option value="FR">Friday</option><option value="SA">Saturday</option><option value="SU">Sunday</option>
+          <option value="MO">{$t('Monday')}</option><option value="TU">{$t('Tuesday')}</option><option value="WE">{$t('Wednesday')}</option>
+          <option value="TH">{$t('Thursday')}</option><option value="FR">{$t('Friday')}</option><option value="SA">{$t('Saturday')}</option><option value="SU">{$t('Sunday')}</option>
         </select>
       </div>
       {#if template.frequency === 'monthly'}
         <div>
-          <label class="label" for="pos">Which</label>
+          <label class="label" for="pos">{$t('Which')}</label>
           <select id="pos" class="input" bind:value={template.bySetPos}>
-            <option value={1}>First</option><option value={2}>Second</option><option value={3}>Third</option><option value={4}>Fourth</option><option value={-1}>Last</option>
+            <option value={1}>{$t('First')}</option><option value={2}>{$t('Second')}</option><option value={3}>{$t('Third')}</option><option value={4}>{$t('Fourth')}</option><option value={-1}>{$t('Last')}</option>
           </select>
         </div>
       {/if}
     </div>
     <div>
-      <label class="label" for="td">Description</label>
+      <label class="label" for="td">{$t('Description')}</label>
       <textarea id="td" class="input" rows="3" bind:value={template.description}></textarea>
     </div>
-    <label class="flex items-center gap-2"><input type="checkbox" bind:checked={template.isPublished} /> Publish on public calendar</label>
+    <label class="flex items-center gap-2"><input type="checkbox" bind:checked={template.isPublished} /> {$t('Publish on public calendar')}</label>
     {#if linuxEnabled}
       <label class="flex items-start gap-2">
         <input type="checkbox" class="mt-1" bind:checked={template.supportsLinux} />
         <span>
-          Linux help at every one of these sessions
+          {$t('Linux help at every one of these sessions')}
           <span class="block text-xs text-slate-500">
-            Applies to the dates this template creates. You can still change an individual date later.
+            {$t('Applies to the dates this template creates. You can still change an individual date later.')}
           </span>
         </span>
       </label>
     {/if}
   {/if}
   {#if error}<p class="text-rose-600 text-sm">{error}</p>{/if}
-  <div class="flex justify-end"><button class="btn-primary" on:click={submit} disabled={busy}>Create</button></div>
+  <div class="flex justify-end"><button class="btn-primary" on:click={submit} disabled={busy}>{$t('Create')}</button></div>
 </div>

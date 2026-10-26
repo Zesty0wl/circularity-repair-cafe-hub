@@ -2,6 +2,7 @@
   import { page } from '$app/stores';
   import { onMount } from 'svelte';
   import { api } from '$lib/api';
+  import { t } from '$lib/i18n';
 
   $: id = $page.params.id;
   let detail: any = null;
@@ -13,7 +14,7 @@
   });
 </script>
 
-<svelte:head><title>Print QR</title></svelte:head>
+<svelte:head><title>{$t('Print QR')}</title></svelte:head>
 
 <!-- The white background sits on this wrapper, not on a :global(body) rule.
      A route's CSS stays loaded for the rest of the browsing session, so a
@@ -25,9 +26,9 @@
     <h2 class="text-2xl mt-2">{detail.event.name}</h2>
     <p class="text-lg mt-1">{detail.event.date} · {detail.event.startTime?.slice(0,5)}–{detail.event.endTime?.slice(0,5)} · {detail.venue.name}</p>
     {#if detail.event.qrCodeUrl}
-      <img src={detail.event.qrCodeUrl} alt="QR Code" class="mt-8 w-96 h-96" />
+      <img src={detail.event.qrCodeUrl} alt={$t('QR Code')} class="mt-8 w-96 h-96" />
     {/if}
-    <p class="text-2xl font-semibold mt-6">Scan to check in your item for repair</p>
-    <p class="text-sm text-slate-500 mt-2">Powered by Repair Cafe Hub</p>
+    <p class="text-2xl font-semibold mt-6">{$t('Scan to check in your item for repair')}</p>
+    <p class="text-sm text-slate-500 mt-2">{$t('Powered by Repair Cafe Hub')}</p>
   </div>
 {/if}

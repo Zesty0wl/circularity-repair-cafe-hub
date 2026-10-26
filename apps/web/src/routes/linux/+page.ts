@@ -11,7 +11,7 @@ import type { PageLoad } from './$types';
  * a cafe may well turn this on next month.
  */
 export const load: PageLoad = async ({ fetch, url, parent }) => {
-  const { cafe } = await parent();
+  const { cafe, locale } = await parent();
 
   const res = await fetch('/api/public/linux').catch(() => null);
   if (!res || !res.ok) throw redirect(307, '/');
@@ -28,6 +28,7 @@ export const load: PageLoad = async ({ fetch, url, parent }) => {
     origin: url.origin,
     pathname: url.pathname,
     cafe,
+    locale,
   });
 
   return { ...data, seo };

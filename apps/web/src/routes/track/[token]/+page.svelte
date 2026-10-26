@@ -7,7 +7,7 @@
   import { Wrench, RefreshCw, Clock, CheckCircle2, XCircle, PackageX, Hourglass, Heart, CalendarClock } from 'lucide-svelte';
   import Icon from '@iconify/svelte';
   import { categoryIcon } from '$lib/categoryIcon';
-  import { t, tNow } from '$lib/i18n';
+  import { t, tNow, dateLocale } from '$lib/i18n';
 
   type Status = 'waiting' | 'in_progress' | 'completed' | 'cannot_repair' | 'awaiting_return' | 'returned';
 
@@ -125,14 +125,14 @@
       confirmCancel = null;
       await load();
     } catch (err: any) {
-      cancelError = err?.message || 'Could not cancel this item';
+      cancelError = err?.message || tNow('Could not cancel this item');
     } finally {
       cancelling = false;
     }
   }
 
   function longDate(iso: string): string {
-    return new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+    return new Date(`${iso}T12:00:00Z`).toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
   }
 
   $: openPre = (data?.preRegistrations ?? []).filter((p) => p.status === 'open');
@@ -176,7 +176,7 @@
       <!-- Header -->
       <div class="card p-6 text-center">
         {#if data.cafe.logoUrl}
-          <img src={data.cafe.logoUrl} alt={`${data.cafe.name} logo`} class="h-16 w-16 mx-auto rounded-2xl bg-white object-contain p-2 ring-1 ring-slate-200" />
+          <img src={data.cafe.logoUrl} alt={$t('{name} logo', { name: data.cafe.name })} class="h-16 w-16 mx-auto rounded-2xl bg-white object-contain p-2 ring-1 ring-slate-200" />
         {:else}
           <span class="h-14 w-14 mx-auto rounded-2xl bg-brand-600 text-white flex items-center justify-center"><Wrench size={24} /></span>
         {/if}
@@ -216,7 +216,7 @@
 
       {#if data.event.status === 'cancelled'}
         <div class="mt-3 card p-4 text-sm text-rose-900 bg-rose-50">
-          This session has been cancelled. Please see our events page for other dates.
+          {$t('This session has been cancelled. Please see our events page for other dates.')}
         </div>
       {/if}
 
@@ -225,17 +225,17 @@
         <section class="mt-3 space-y-3">
           {#if openPre.length && data.event.status !== 'cancelled'}
             <div class="card p-4 text-sm text-slate-700">
-              <p class="font-semibold text-slate-900 flex items-center gap-2"><CalendarClock size={16} /> {longDate(data.event.date)}, {data.event.startTime.slice(0, 5)} to {data.event.endTime.slice(0, 5)}</p>
-              <p class="mt-1">Bring your {openPre.length === 1 ? 'item' : 'items'} to {data.venue.name}. When you arrive, scan the QR code at the door, or give your name at the welcome desk. The repair starts when your item is checked in.</p>
+              <p class="font-semibold text-slate-900 flex items-center gap-2"><CalendarClock size={16} /> {longDate(data.event.date)}, {$t('{start} to {end}', { start: data.event.startTime.slice(0, 5), end: data.event.endTime.slice(0, 5) })}</p>
+              <p class="mt-1">{openPre.length === 1 ? $t('Bring your item to {venue}. When you arrive, scan the QR code at the door, or give your name at the welcome desk. The repair starts when your item is checked in.', { venue: data.venue.name }) : $t('Bring your items to {venue}. When you arrive, scan the QR code at the door, or give your name at the welcome desk. The repair starts when your item is checked in.', { venue: data.venue.name })}</p>
             </div>
           {/if}
           {#if cancelError}<p class="text-sm text-rose-700 px-1">{cancelError}</p>{/if}
           {#each data.preRegistrations as pre (pre.id)}
             <div class="card p-5 {pre.status === 'cancelled' ? 'opacity-70' : ''}">
               <div class="flex items-center justify-between gap-2">
-                <span class="text-xs text-slate-500">Pre-registered</span>
+                <span class="text-xs text-slate-500">{$t('Pre-registered')}</span>
                 <span class="badge {pre.status === 'cancelled' ? 'badge-cancelled' : 'badge-scheduled'}">
-                  {pre.status === 'cancelled' ? 'Cancelled' : 'Not checked in yet'}
+                  {pre.status === 'cancelled' ? $t('Cancelled') : $t('Not checked in yet')}
                 </span>
               </div>
               <p class="mt-1 font-semibold text-slate-900 break-words">
@@ -244,17 +244,17 @@
               <p class="mt-1 text-sm text-slate-600 break-words">{pre.faultDescription}</p>
               {#if pre.status === 'open'}
                 {#if pre.repairerFirstName}
-                  <p class="mt-3 text-sm text-slate-700">{pre.repairerFirstName}, one of our repairers, is looking into it before the day.</p>
+                  <p class="mt-3 text-sm text-slate-700">{$t('{name}, one of our repairers, is looking into it before the day.', { name: pre.repairerFirstName })}</p>
                 {/if}
                 {#if data.event.status !== 'cancelled'}
                   {#if confirmCancel === pre.id}
                     <div class="mt-3 flex flex-wrap items-center gap-2">
-                      <span class="text-sm text-slate-700">Cancel this item?</span>
-                      <button class="btn-ghost btn-sm" on:click={() => (confirmCancel = null)}>Keep it</button>
-                      <button class="btn-secondary btn-sm" disabled={cancelling} on:click={() => cancelPreRegistration(pre.id)}>Yes, cancel it</button>
+                      <span class="text-sm text-slate-700">{$t('Cancel this item?')}</span>
+                      <button class="btn-ghost btn-sm" on:click={() => (confirmCancel = null)}>{$t('Keep it')}</button>
+                      <button class="btn-secondary btn-sm" disabled={cancelling} on:click={() => cancelPreRegistration(pre.id)}>{$t('Yes, cancel it')}</button>
                     </div>
                   {:else}
-                    <button class="mt-3 text-sm text-slate-500 underline underline-offset-2" on:click={() => (confirmCancel = pre.id)}>I will not bring this item</button>
+                    <button class="mt-3 text-sm text-slate-500 underline underline-offset-2" on:click={() => (confirmCancel = pre.id)}>{$t('I will not bring this item')}</button>
                   {/if}
                 {/if}
               {/if}

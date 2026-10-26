@@ -5,6 +5,7 @@
   import { cafe } from '$lib/stores/cafe';
   import { LogOut, Wrench, Menu, X, Laptop } from 'lucide-svelte';
   import { api } from '$lib/api';
+  import { t } from '$lib/i18n';
 
   export let variant: 'public' | 'admin' | 'repairer' = 'public';
   export let user: AuthState['user'] | null = null;
@@ -15,7 +16,7 @@
   // it. Admins can rename it, so a cafe that calls it something else in its
   // own town is not stuck with our wording.
   $: linuxEnabled = $cafe?.linuxEnabled === true;
-  $: linuxLabel = $cafe?.linuxPage?.navLabel?.trim() || 'Linux Repair Cafe';
+  $: linuxLabel = $cafe?.linuxPage?.navLabel?.trim() || $t('Linux Repair Cafe');
 
   afterNavigate(() => {
     mobileOpen = false;
@@ -49,13 +50,13 @@
     <!-- Desktop nav -->
     <nav class="hidden md:flex items-center gap-2 text-sm">
       {#if variant === 'public'}
-        <a href="/" class="px-3 py-2 rounded-lg hover:bg-slate-100">Home</a>
-        <a href="/events" class="px-3 py-2 rounded-lg hover:bg-slate-100">Events</a>
-        <a href="/skills" class="px-3 py-2 rounded-lg hover:bg-slate-100 whitespace-nowrap">Skills &amp; Team</a>
-        <a href="/guides" class="px-3 py-2 rounded-lg hover:bg-slate-100 whitespace-nowrap">Repair guides</a>
-        <a href="/world" class="px-3 py-2 rounded-lg hover:bg-slate-100">Worldwide</a>
-        <a href="/about" class="px-3 py-2 rounded-lg hover:bg-slate-100">About</a>
-        <a href="/contact" class="px-3 py-2 rounded-lg hover:bg-slate-100">Contact</a>
+        <a href="/" class="px-3 py-2 rounded-lg hover:bg-slate-100">{$t('Home')}</a>
+        <a href="/events" class="px-3 py-2 rounded-lg hover:bg-slate-100">{$t('Events')}</a>
+        <a href="/skills" class="px-3 py-2 rounded-lg hover:bg-slate-100 whitespace-nowrap">{$t('Skills & Team')}</a>
+        <a href="/guides" class="px-3 py-2 rounded-lg hover:bg-slate-100 whitespace-nowrap">{$t('Repair guides')}</a>
+        <a href="/world" class="px-3 py-2 rounded-lg hover:bg-slate-100">{$t('Worldwide')}</a>
+        <a href="/about" class="px-3 py-2 rounded-lg hover:bg-slate-100">{$t('About')}</a>
+        <a href="/contact" class="px-3 py-2 rounded-lg hover:bg-slate-100">{$t('Contact')}</a>
         {#if linuxEnabled}
           <!-- Its own menu, styled apart from the rest. A Linux Repair Cafe is
                a different offer from a repair session, and a visitor looking
@@ -69,23 +70,23 @@
         {/if}
         {#if $auth}
           {#if $auth.user.role === 'admin' || $auth.user.role === 'super_admin'}
-            <a href="/admin/dashboard" class="btn-primary btn-sm">Admin</a>
+            <a href="/admin/dashboard" class="btn-primary btn-sm">{$t('Admin')}</a>
           {:else}
-            <a href="/repairer" class="btn-primary btn-sm">Repairer</a>
+            <a href="/repairer" class="btn-primary btn-sm">{$t('Repairer')}</a>
           {/if}
         {:else}
-          <a href="/login" class="btn-secondary btn-sm">Sign in</a>
+          <a href="/login" class="btn-secondary btn-sm">{$t('Sign in')}</a>
         {/if}
       {:else if user}
         {#if variant === 'repairer'}
-          <a href="/repairer" class="px-3 py-2 rounded-lg hover:bg-slate-100">Dashboard</a>
-          <a href="/repairer/checkin" class="px-3 py-2 rounded-lg hover:bg-slate-100 whitespace-nowrap">Register a repair</a>
-          <a href="/repairer/photos" class="px-3 py-2 rounded-lg hover:bg-slate-100">Photos</a>
-          <a href="/repairer/profile" class="px-3 py-2 rounded-lg hover:bg-slate-100">My profile</a>
+          <a href="/repairer" class="px-3 py-2 rounded-lg hover:bg-slate-100">{$t('Dashboard')}</a>
+          <a href="/repairer/checkin" class="px-3 py-2 rounded-lg hover:bg-slate-100 whitespace-nowrap">{$t('Register a repair')}</a>
+          <a href="/repairer/photos" class="px-3 py-2 rounded-lg hover:bg-slate-100">{$t('Photos')}</a>
+          <a href="/repairer/profile" class="px-3 py-2 rounded-lg hover:bg-slate-100">{$t('My profile')}</a>
         {/if}
         <span class="text-slate-600">{user.displayName}</span>
         <button class="btn-ghost btn-sm" on:click={logout}>
-          <LogOut size={16} /> <span>Sign out</span>
+          <LogOut size={16} /> <span>{$t('Sign out')}</span>
         </button>
       {/if}
     </nav>
@@ -94,7 +95,7 @@
     <button
       type="button"
       class="md:hidden inline-flex items-center justify-center h-10 w-10 rounded-lg text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-brand-500"
-      aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+      aria-label={mobileOpen ? $t('Close menu') : $t('Open menu')}
       aria-expanded={mobileOpen}
       aria-controls="site-mobile-nav"
       on:click={() => (mobileOpen = !mobileOpen)}
@@ -115,13 +116,13 @@
     >
       <div class="max-w-6xl mx-auto px-4 py-2 flex flex-col">
         {#if variant === 'public'}
-          <a href="/" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">Home</a>
-          <a href="/events" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">Events</a>
-          <a href="/skills" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">Skills &amp; Team</a>
-          <a href="/guides" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">Repair guides</a>
-          <a href="/world" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">Worldwide</a>
-          <a href="/about" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">About</a>
-          <a href="/contact" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">Contact</a>
+          <a href="/" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">{$t('Home')}</a>
+          <a href="/events" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">{$t('Events')}</a>
+          <a href="/skills" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">{$t('Skills & Team')}</a>
+          <a href="/guides" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">{$t('Repair guides')}</a>
+          <a href="/world" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">{$t('Worldwide')}</a>
+          <a href="/about" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">{$t('About')}</a>
+          <a href="/contact" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">{$t('Contact')}</a>
           {#if linuxEnabled}
             <a
               href="/linux"
@@ -133,24 +134,24 @@
           <div class="h-px bg-slate-200 my-2"></div>
           {#if $auth}
             {#if $auth.user.role === 'admin' || $auth.user.role === 'super_admin'}
-              <a href="/admin/dashboard" class="btn-primary !py-3 text-center">Admin</a>
+              <a href="/admin/dashboard" class="btn-primary !py-3 text-center">{$t('Admin')}</a>
             {:else}
-              <a href="/repairer" class="btn-primary !py-3 text-center">Repairer</a>
+              <a href="/repairer" class="btn-primary !py-3 text-center">{$t('Repairer')}</a>
             {/if}
           {:else}
-            <a href="/login" class="btn-secondary !py-3 text-center">Sign in</a>
+            <a href="/login" class="btn-secondary !py-3 text-center">{$t('Sign in')}</a>
           {/if}
         {:else if user}
           {#if variant === 'repairer'}
-            <a href="/repairer" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">Dashboard</a>
-            <a href="/repairer/checkin" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">Register a repair</a>
-            <a href="/repairer/photos" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">Photos</a>
-            <a href="/repairer/profile" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">My profile</a>
+            <a href="/repairer" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">{$t('Dashboard')}</a>
+            <a href="/repairer/checkin" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">{$t('Register a repair')}</a>
+            <a href="/repairer/photos" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">{$t('Photos')}</a>
+            <a href="/repairer/profile" class="px-3 py-3 rounded-lg hover:bg-slate-100 text-slate-800">{$t('My profile')}</a>
             <div class="h-px bg-slate-200 my-2"></div>
           {/if}
-          <div class="px-3 py-3 text-slate-600 text-sm">Signed in as <span class="font-medium text-slate-800">{user.displayName}</span></div>
+          <div class="px-3 py-3 text-slate-600 text-sm">{$t('Signed in as')} <span class="font-medium text-slate-800">{user.displayName}</span></div>
           <button class="btn-ghost !py-3 justify-center" on:click={logout}>
-            <LogOut size={16} /> <span>Sign out</span>
+            <LogOut size={16} /> <span>{$t('Sign out')}</span>
           </button>
         {/if}
       </div>

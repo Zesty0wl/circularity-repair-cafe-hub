@@ -11,6 +11,7 @@
   import { onMount } from 'svelte';
   import { api } from '$lib/api';
   import { ArrowUpCircle, X } from 'lucide-svelte';
+  import { t } from '$lib/i18n';
 
   interface UpdateStatus {
     current: string;
@@ -57,30 +58,29 @@
     <ArrowUpCircle class="shrink-0 mt-0.5 text-brand-700" size={20} />
     <div class="flex-1 text-sm">
       <p class="font-semibold text-brand-900">
-        Version {status.latest} is out. You are running {status.current}.
+        {$t('Version {latest} is out. You are running {current}.', { latest: status.latest ?? '', current: status.current })}
       </p>
       <p class="mt-1 text-brand-800">
-        Updating takes a few minutes and the site stays up the whole time. It is still best
-        done the day before a session, so you can check everything afterwards.
+        {$t('Updating takes a few minutes and the site stays up the whole time. It is still best done the day before a session, so you can check everything afterwards.')}
       </p>
       <p class="mt-2">
         <a
           class="font-medium text-brand-800 underline underline-offset-2 hover:no-underline"
-          href="/admin/settings?tab=about">How to update</a
+          href="/admin/settings?tab=about">{$t('How to update')}</a
         >
-        <span class="text-brand-700"> or read the </span>
+        <span class="text-brand-700">{' '}{$t('or read the')}{' '}</span>
         <a
           class="font-medium text-brand-800 underline underline-offset-2 hover:no-underline"
           href="https://github.com/Zesty0wl/circularity-repair-cafe-hub/blob/main/CHANGELOG.md"
           target="_blank"
-          rel="noopener">list of changes</a
+          rel="noopener">{$t('list of changes')}</a
         >.
       </p>
     </div>
     <button
       class="text-brand-700 hover:text-brand-900 shrink-0"
       on:click={dismiss}
-      aria-label="Hide this until the next version"
+      aria-label={$t('Hide this until the next version')}
     >
       <X size={18} />
     </button>

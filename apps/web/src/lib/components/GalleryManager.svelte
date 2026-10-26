@@ -25,6 +25,7 @@
     Loader2,
   } from 'lucide-svelte';
   import type { ManagedPhoto } from '$lib/gallery';
+  import { t, tNow } from '$lib/i18n';
 
   export let photos: ManagedPhoto[] = [];
   /** Save one photo's description. */
@@ -201,7 +202,7 @@
 
   async function remove(photo: ManagedPhoto) {
     if (!onDelete) return;
-    if (!confirm('Remove this photo? This cannot be undone.')) return;
+    if (!confirm(tNow('Remove this photo? This cannot be undone.'))) return;
     busyId = photo.id;
     try {
       await onDelete(photo);
@@ -220,12 +221,12 @@
 </script>
 
 {#if photos.length === 0}
-  <p class="text-sm text-slate-500">{emptyMessage}</p>
+  <p class="text-sm text-slate-500">{$t(emptyMessage)}</p>
 {:else}
   {#if onReorder}
     <p class="text-xs text-slate-500 mb-3">
-      Drag a photo to change its place. Using a keyboard? Tab to a photo's grip, then press the arrow keys.
-      {#if savingOrder}<span class="text-brand-700">Saving order…</span>{/if}
+      {$t("Drag a photo to change its place. Using a keyboard? Tab to a photo's grip, then press the arrow keys.")}
+      {#if savingOrder}<span class="text-brand-700">{$t('Saving order…')}</span>{/if}
     </p>
   {/if}
 
@@ -245,7 +246,7 @@
           type="button"
           class="block w-full aspect-[4/3] bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
           on:click={() => openEditor(i)}
-          aria-label={photo.caption ? `Edit description: ${photo.caption}` : 'Add a description to this photo'}
+          aria-label={photo.caption ? $t('Edit description: {caption}', { caption: photo.caption }) : $t('Add a description to this photo')}
         >
           <img src={photo.url} alt={photo.caption ?? ''} class="h-full w-full object-cover" loading="lazy" />
         </button>
@@ -256,7 +257,7 @@
             <button
               type="button"
               class="rounded-lg bg-black/45 p-1.5 text-white/90 backdrop-blur-sm cursor-grab hover:bg-black/60 focus:outline-none focus:ring-2 focus:ring-white/70"
-              aria-label={`Move photo ${i + 1} of ${photos.length}. Use the arrow keys.`}
+              aria-label={$t('Move photo {n} of {total}. Use the arrow keys.', { n: i + 1, total: photos.length })}
               on:keydown={(e) => onHandleKey(e, i)}
             >
               <GripVertical size={14} />
@@ -264,14 +265,14 @@
           {/if}
           {#if onToggle && photo.isPublished === false}
             <span class="rounded-lg bg-slate-900/70 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white backdrop-blur-sm">
-              Hidden
+              {$t('Hidden')}
             </span>
           {/if}
           {#if photo.showOnHome}
             <span
               class="rounded-lg bg-amber-500/90 p-1.5 text-white backdrop-blur-sm"
-              title={homeToggleLabel}
-              aria-label={homeToggleLabel}
+              title={$t(homeToggleLabel)}
+              aria-label={$t(homeToggleLabel)}
             >
               <Star size={14} />
             </span>
@@ -283,10 +284,10 @@
             <p class="text-[11px] font-mono text-slate-400 truncate">{photo.jobNumber}{#if photo.categoryName} · {photo.categoryName}{/if}</p>
           {/if}
           <p class="text-xs {photo.caption ? 'text-slate-700' : 'text-slate-400 italic'} line-clamp-2 min-h-[2rem]">
-            {photo.caption || 'No description yet'}
+            {photo.caption || $t('No description yet')}
           </p>
           {#if photo.uploaderName}
-            <p class="mt-1 text-[11px] text-slate-400 truncate">Added by {photo.uploaderName}</p>
+            <p class="mt-1 text-[11px] text-slate-400 truncate">{$t('Added by {name}', { name: photo.uploaderName })}</p>
           {/if}
           <div class="mt-2 flex items-center gap-1">
             <button
@@ -295,14 +296,14 @@
               on:click={() => openEditor(i)}
               disabled={!canEdit(photo)}
             >
-              <Pencil size={13} /> Describe
+              <Pencil size={13} /> {$t('Describe')}
             </button>
             {#if onToggle}
               <button
                 class="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 disabled:opacity-40"
                 type="button"
-                title={photo.isPublished ? 'Hide from the public site' : 'Show on the public site'}
-                aria-label={photo.isPublished ? 'Hide from the public site' : 'Show on the public site'}
+                title={photo.isPublished ? $t('Hide from the public site') : $t('Show on the public site')}
+                aria-label={photo.isPublished ? $t('Hide from the public site') : $t('Show on the public site')}
                 disabled={busyId === photo.id}
                 on:click={() => toggle(photo, { isPublished: !photo.isPublished })}
               >
@@ -317,8 +318,8 @@
               <button
                 class="p-1.5 rounded-lg hover:bg-amber-50 disabled:opacity-40 {photo.showOnHome ? 'text-amber-600' : 'text-slate-400'}"
                 type="button"
-                title={homeToggleLabel}
-                aria-label={homeToggleLabel}
+                title={$t(homeToggleLabel)}
+                aria-label={$t(homeToggleLabel)}
                 aria-pressed={photo.showOnHome === true}
                 disabled={busyId === photo.id}
                 on:click={() => toggle(photo, { showOnHome: !photo.showOnHome })}
@@ -330,8 +331,8 @@
               <button
                 class="ml-auto p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 disabled:opacity-40"
                 type="button"
-                title="Remove"
-                aria-label="Remove photo"
+                title={$t('Remove')}
+                aria-label={$t('Remove photo')}
                 disabled={!canEdit(photo) || busyId === photo.id}
                 on:click={() => remove(photo)}
               >
@@ -351,12 +352,12 @@
     class="fixed inset-0 z-50 bg-slate-900/70 flex items-center justify-center p-0 sm:p-6"
     role="dialog"
     aria-modal="true"
-    aria-label="Photo description"
+    aria-label={$t('Photo description')}
     tabindex="-1"
     on:keydown={onPanelKey}
   >
     <!-- Clicking outside the panel saves and closes it. -->
-    <button type="button" class="absolute inset-0 cursor-default" aria-label="Close" on:click={closeEditor}></button>
+    <button type="button" class="absolute inset-0 cursor-default" aria-label={$t('Close')} on:click={closeEditor}></button>
 
     <div class="relative z-10 bg-white w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-4xl sm:rounded-2xl shadow-xl flex flex-col overflow-hidden">
       <div class="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
@@ -369,7 +370,7 @@
             type="button"
             on:click={() => step(-1)}
             disabled={photos.length < 2}
-            aria-label="Previous photo"
+            aria-label={$t('Previous photo')}
           >
             <ChevronLeft size={18} />
           </button>
@@ -378,7 +379,7 @@
             type="button"
             on:click={() => step(1)}
             disabled={photos.length < 2}
-            aria-label="Next photo"
+            aria-label={$t('Next photo')}
           >
             <ChevronRight size={18} />
           </button>
@@ -386,7 +387,7 @@
             class="p-2 rounded-lg text-slate-600 hover:bg-slate-100 ml-1"
             type="button"
             on:click={closeEditor}
-            aria-label="Close"
+            aria-label={$t('Close')}
           >
             <X size={18} />
           </button>
@@ -400,39 +401,38 @@
 
         <div class="p-5 space-y-4">
           <div>
-            <label class="label" for="photo-caption">Description</label>
+            <label class="label" for="photo-caption">{$t('Description')}</label>
             <textarea
               id="photo-caption"
               bind:this={captionEl}
               class="input"
               rows="4"
               maxlength={MAX_CAPTION}
-              placeholder="For example: Sam fixing a toaster at the March session."
+              placeholder={$t('For example: Sam fixing a toaster at the March session.')}
               bind:value={draftCaption}
             ></textarea>
             <div class="mt-1 flex items-start justify-between gap-3">
               <p class="text-xs text-slate-500">
-                Say what is happening in the photo. People who use a screen reader hear this text instead
-                of seeing the photo, and it shows under the photo on the site.
+                {$t('Say what is happening in the photo. People who use a screen reader hear this text instead of seeing the photo, and it shows under the photo on the site.')}
               </p>
               <span class="text-xs text-slate-400 tabular-nums shrink-0">{draftCaption.length}/{MAX_CAPTION}</span>
             </div>
             <p class="mt-2 text-xs h-4">
               {#if savingCaption}
-                <span class="text-slate-500 inline-flex items-center gap-1"><Loader2 size={12} class="animate-spin" /> Saving…</span>
+                <span class="text-slate-500 inline-flex items-center gap-1"><Loader2 size={12} class="animate-spin" /> {$t('Saving…')}</span>
               {:else if savedAt}
-                <span class="text-emerald-700 inline-flex items-center gap-1"><Check size={12} /> Saved</span>
+                <span class="text-emerald-700 inline-flex items-center gap-1"><Check size={12} /> {$t('Saved')}</span>
               {/if}
             </p>
           </div>
 
           {#if editing.jobNumber}
             <p class="text-xs text-slate-500">
-              From repair {editing.jobNumber}{#if editing.categoryName} · {editing.categoryName}{/if}
+              {$t('From repair {number}', { number: editing.jobNumber })}{#if editing.categoryName} · {editing.categoryName}{/if}
             </p>
           {/if}
           {#if editing.uploaderName}
-            <p class="text-xs text-slate-500">Added by {editing.uploaderName}</p>
+            <p class="text-xs text-slate-500">{$t('Added by {name}', { name: editing.uploaderName })}</p>
           {/if}
 
           {#if onToggle}
@@ -445,8 +445,8 @@
                   on:change={(e) => toggleEditing({ isPublished: e.currentTarget.checked })}
                 />
                 <span>
-                  Show on the public site
-                  <span class="block text-xs text-slate-500">Visitors see this photo on the event's page.</span>
+                  {$t('Show on the public site')}
+                  <span class="block text-xs text-slate-500">{$t("Visitors see this photo on the event's page.")}</span>
                 </span>
               </label>
               <label class="flex items-start gap-3 text-sm text-slate-700 cursor-pointer">
@@ -457,8 +457,8 @@
                   on:change={(e) => toggleEditing({ showOnHome: e.currentTarget.checked })}
                 />
                 <span>
-                  {homeToggleLabel}
-                  <span class="block text-xs text-slate-500">Also adds it to the photo strip on the home page.</span>
+                  {$t(homeToggleLabel)}
+                  <span class="block text-xs text-slate-500">{$t('Also adds it to the photo strip on the home page.')}</span>
                 </span>
               </label>
             </div>
@@ -472,13 +472,13 @@
                 disabled={!canEdit(editing)}
                 on:click={removeEditing}
               >
-                <Trash2 size={14} /> Remove photo
+                <Trash2 size={14} /> {$t('Remove photo')}
               </button>
             {:else}
               <span></span>
             {/if}
             <button class="btn-primary btn-sm" type="button" on:click={closeEditor}>
-              Save and close
+              {$t('Save and close')}
             </button>
           </div>
         </div>

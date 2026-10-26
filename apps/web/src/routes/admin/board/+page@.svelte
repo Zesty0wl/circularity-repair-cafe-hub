@@ -22,6 +22,7 @@
   import { fromAdminBoard, type BoardData } from '$lib/staff/board';
   import { TEXT_SCALES, chime, keepAwake, loadNumber, newlyWaiting, saveNumber, unlockSound } from '$lib/staff/screen';
   import { ArrowLeft, Bell, BellOff, Maximize2, Minimize2, Minus, Plus, Tv, UserPlus, Users } from 'lucide-svelte';
+  import { t, tNow } from '$lib/i18n';
 
   const POLL_MS = 5_000;
 
@@ -56,7 +57,7 @@
       data = next;
       lastError = '';
     } catch (err: any) {
-      lastError = err?.message ?? 'Could not refresh';
+      lastError = err?.message ?? tNow('Could not refresh');
     }
   }
 
@@ -136,33 +137,33 @@
   });
 </script>
 
-<svelte:head><title>Live board</title></svelte:head>
+<svelte:head><title>{$t('Live board')}</title></svelte:head>
 
 {#if ready}
   <!-- svelte-ignore a11y-no-static-element-interactions -->
   <div class="page" class:idle={view === 'display' && !controlsVisible} on:mousemove={showControls} on:touchstart={showControls}>
     {#if view === 'control'}
       <header class="bar">
-        <a href="/admin/dashboard" class="bar-btn" title="Back to the dashboard"><ArrowLeft size={18} /> <span class="hide-sm">Dashboard</span></a>
-        <p class="bar-title">Live board</p>
+        <a href="/admin/dashboard" class="bar-btn" title={$t('Back to the dashboard')}><ArrowLeft size={18} /> <span class="hide-sm">{$t('Dashboard')}</span></a>
+        <p class="bar-title">{$t('Live board')}</p>
         {#if eventIds.length > 1}
-          <select class="bar-select" bind:value={selectedEventId} on:change={load} aria-label="Which session">
-            <option value="">All of today's sessions</option>
+          <select class="bar-select" bind:value={selectedEventId} on:change={load} aria-label={$t('Which session')}>
+            <option value="">{$t("All of today's sessions")}</option>
             {#each eventIds as e}<option value={e.id}>{e.name}</option>{/each}
           </select>
         {/if}
-        <div class="seg" role="group" aria-label="View">
-          <button class:on={view === 'control'} on:click={() => setView('control')}><Users size={16} /> <span class="hide-sm">Admin view</span></button>
-          <button class:on={view !== 'control'} on:click={() => setView('display')}><Tv size={16} /> <span class="hide-sm">Waiting-room view</span></button>
+        <div class="seg" role="group" aria-label={$t('View', undefined, 'noun')}>
+          <button class:on={view === 'control'} on:click={() => setView('control')}><Users size={16} /> <span class="hide-sm">{$t('Admin view')}</span></button>
+          <button class:on={view !== 'control'} on:click={() => setView('display')}><Tv size={16} /> <span class="hide-sm">{$t('Waiting-room view')}</span></button>
         </div>
         <span class="spacer"></span>
-        {#if lastError}<span class="bar-error">Could not refresh</span>{/if}
-        <a href="/repairer/checkin" class="bar-btn"><UserPlus size={18} /> <span class="hide-sm">Check in</span></a>
-        <button class="bar-btn" on:click={toggleSound} title={soundOn ? 'Chime is on for new check-ins' : 'Play a chime when someone checks in'}>
+        {#if lastError}<span class="bar-error">{$t('Could not refresh')}</span>{/if}
+        <a href="/repairer/checkin" class="bar-btn"><UserPlus size={18} /> <span class="hide-sm">{$t('Check in')}</span></a>
+        <button class="bar-btn" on:click={toggleSound} title={soundOn ? $t('Chime is on for new check-ins') : $t('Play a chime when someone checks in')}>
           {#if soundOn}<Bell size={18} />{:else}<BellOff size={18} />{/if}
         </button>
-        <button class="bar-btn" on:click={() => (showScreenLink = true)}><Tv size={18} /> <span class="hide-sm">Show on a screen</span></button>
-        <button class="bar-btn" on:click={toggleFullscreen} title={fullscreen ? 'Leave full screen' : 'Full screen'}>
+        <button class="bar-btn" on:click={() => (showScreenLink = true)}><Tv size={18} /> <span class="hide-sm">{$t('Show on a screen')}</span></button>
+        <button class="bar-btn" on:click={toggleFullscreen} title={fullscreen ? $t('Leave full screen') : $t('Full screen')}>
           {#if fullscreen}<Minimize2 size={18} />{:else}<Maximize2 size={18} />{/if}
         </button>
       </header>
@@ -172,10 +173,10 @@
 
     {#if view === 'display' && controlsVisible}
       <div class="float">
-        <button on:click={() => setView('control')}><ArrowLeft size={16} /> Admin view</button>
-        <button on:click={() => size(-1)} aria-label="Smaller text"><Minus size={16} /></button>
-        <button on:click={() => size(1)} aria-label="Bigger text"><Plus size={16} /></button>
-        <button on:click={toggleFullscreen} aria-label="Full screen">{#if fullscreen}<Minimize2 size={16} />{:else}<Maximize2 size={16} />{/if}</button>
+        <button on:click={() => setView('control')}><ArrowLeft size={16} /> {$t('Admin view')}</button>
+        <button on:click={() => size(-1)} aria-label={$t('Smaller text')}><Minus size={16} /></button>
+        <button on:click={() => size(1)} aria-label={$t('Bigger text')}><Plus size={16} /></button>
+        <button on:click={toggleFullscreen} aria-label={$t('Full screen')}>{#if fullscreen}<Minimize2 size={16} />{:else}<Maximize2 size={16} />{/if}</button>
       </div>
     {/if}
   </div>
@@ -184,7 +185,7 @@
     <ScreenLinkDialog on:close={() => (showScreenLink = false)} />
   {/if}
 {:else}
-  <div class="loading">Loading…</div>
+  <div class="loading">{$t('Loading…')}</div>
 {/if}
 
 <style>

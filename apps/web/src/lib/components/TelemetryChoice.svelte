@@ -7,6 +7,7 @@
    * the building.
    */
   import { ChevronDown, ChevronUp, HeartHandshake } from 'lucide-svelte';
+  import { t } from '$lib/i18n';
 
   /** 'none', 'standard' or 'community'. Bind it. */
   export let level: 'none' | 'standard' | 'community' = 'standard';
@@ -58,12 +59,9 @@
         <HeartHandshake size={20} />
       </span>
       <div>
-        <h2 class="text-lg font-semibold text-slate-900">Help us count what repair cafes achieve</h2>
+        <h2 class="text-lg font-semibold text-slate-900">{$t('Help us count what repair cafes achieve')}</h2>
         <p class="mt-1 text-sm text-slate-600">
-          This project is free, and we have no idea how many cafes use it or how much they have kept
-          out of landfill between them. If you are happy to, your hub can send us a short summary
-          once a day. It lets us show what community repair adds up to, and tells us what to work on
-          next.
+          {$t('This project is free, and we have no idea how many cafes use it or how much they have kept out of landfill between them. If you are happy to, your hub can send us a short summary once a day. It lets us show what community repair adds up to, and tells us what to work on next.')}
         </p>
       </div>
     </div>
@@ -77,10 +75,9 @@
       on:change={(e) => setStandard(e.currentTarget.checked)}
     />
     <span class="text-sm">
-      <span class="font-semibold text-slate-900">Share our numbers</span>
+      <span class="font-semibold text-slate-900">{$t('Share our numbers')}</span>
       <span class="block mt-0.5 text-slate-600">
-        How many repairs we have done, how many sessions we have held, and which version we run.
-        No names, no text anyone has typed, and nothing at all about our visitors or volunteers.
+        {$t('How many repairs we have done, how many sessions we have held, and which version we run. No names, no text anyone has typed, and nothing at all about our visitors or volunteers.')}
       </span>
     </span>
   </label>
@@ -97,10 +94,9 @@
       on:change={(e) => setCommunity(e.currentTarget.checked)}
     />
     <span class="text-sm">
-      <span class="font-semibold text-slate-900">Show us on the community map</span>
+      <span class="font-semibold text-slate-900">{$t('Show us on the community map')}</span>
       <span class="block mt-0.5 text-slate-600">
-        Also share our cafe's name and web address, so we appear on the public map of repair cafes
-        with our numbers beside us. It helps people find us.
+        {$t("Also share our cafe's name and web address, so we appear on the public map of repair cafes with our numbers beside us. It helps people find us.")}
       </span>
     </span>
   </label>
@@ -113,20 +109,19 @@
       aria-expanded={showPayload}
     >
       {#if showPayload}<ChevronUp size={14} />{:else}<ChevronDown size={14} />{/if}
-      See exactly what would be sent
+      {$t('See exactly what would be sent')}
     </button>
     {#if showPayload}
       <pre class="mt-2 max-h-72 overflow-auto rounded-xl bg-slate-900 p-3 text-xs text-slate-100 leading-relaxed">{JSON.stringify(shown, null, 2)}</pre>
       {#if !payload}
         <p class="mt-1 text-xs text-slate-500">
-          An example, because this cafe has no numbers yet. The real thing is the same shape.
+          {$t('An example, because this cafe has no numbers yet. The real thing is the same shape.')}
         </p>
       {/if}
     {/if}
   </div>
 
   <p class="text-xs text-slate-500">
-    You can change this at any time under Settings, and ask us to delete everything we hold about
-    you. Nothing is sent until you say yes.
+    {$t('You can change this at any time under Settings, and ask us to delete everything we hold about you. Nothing is sent until you say yes.')}
   </p>
 </div>

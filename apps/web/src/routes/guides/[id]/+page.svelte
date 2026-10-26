@@ -3,6 +3,7 @@
   import SiteFooter from '$lib/components/SiteFooter.svelte';
   import { ArrowLeft, Clock, Gauge, ExternalLink, Wrench, Package } from 'lucide-svelte';
   import { bulletTone, difficultyTone, type GuideDetail } from '$lib/guides';
+  import { t } from '$lib/i18n';
   import type { PageData } from './$types';
 
   export let data: PageData;
@@ -13,7 +14,7 @@
 
 <article class="max-w-3xl mx-auto px-4 py-10 md:py-14">
   <a href="/guides" class="inline-flex items-center gap-2 text-sm text-slate-600 hover:text-pine">
-    <ArrowLeft size={16} /> All repair guides
+    <ArrowLeft size={16} /> {$t('All repair guides')}
   </a>
 
   <header class="mt-6">
@@ -25,7 +26,7 @@
     <div class="mt-4 flex flex-wrap items-center gap-2 text-xs">
       {#if guide.difficulty}
         <span class="chip ring-1 {difficultyTone(guide.difficulty)}">
-          <Gauge size={13} /> {guide.difficulty}
+          <Gauge size={13} /> {$t(guide.difficulty)}
         </span>
       {/if}
       {#if guide.timeRequired}
@@ -34,7 +35,9 @@
         </span>
       {/if}
       <span class="chip ring-1 bg-slate-100 text-slate-700 ring-slate-200">
-        {guide.steps.length} step{guide.steps.length === 1 ? '' : 's'}
+        {guide.steps.length === 1
+          ? $t('{count} step', { count: guide.steps.length })
+          : $t('{count} steps', { count: guide.steps.length })}
       </span>
     </div>
 
@@ -58,7 +61,7 @@
       {#if guide.tools.length > 0}
         <div class="card p-5">
           <p class="flex items-center gap-2 font-semibold text-pine">
-            <Wrench size={16} /> Tools
+            <Wrench size={16} /> {$t('Tools')}
           </p>
           <ul class="mt-3 space-y-1 text-sm text-slate-700">
             {#each guide.tools as tool}<li>{tool}</li>{/each}
@@ -68,7 +71,7 @@
       {#if guide.parts.length > 0}
         <div class="card p-5">
           <p class="flex items-center gap-2 font-semibold text-pine">
-            <Package size={16} /> Parts
+            <Package size={16} /> {$t('Parts')}
           </p>
           <ul class="mt-3 space-y-1 text-sm text-slate-700">
             {#each guide.parts as part}<li>{part}</li>{/each}
@@ -86,7 +89,7 @@
           <div class="flex items-baseline gap-3">
             <span class="step-number">{i + 1}</span>
             <h2 class="text-xl font-display font-semibold text-pine">
-              {step.title || `Step ${i + 1}`}
+              {step.title || $t('Step {n}', { n: i + 1 })}
             </h2>
           </div>
 
@@ -119,13 +122,13 @@
     </ol>
   {:else}
     <p class="mt-10 text-slate-600">
-      This guide's steps are not available here. You can read the whole thing on iFixit.
+      {$t("This guide's steps are not available here. You can read the whole thing on iFixit.")}
     </p>
   {/if}
 
   {#if guide.conclusion}
     <div class="mt-10 card p-5">
-      <p class="eyebrow">To put it back together</p>
+      <p class="eyebrow">{$t('To put it back together')}</p>
       <p class="mt-2 text-slate-700">{guide.conclusion}</p>
     </div>
   {/if}
@@ -133,17 +136,16 @@
   <!-- ── Credit ─────────────────────────────────────────────────────────── -->
   <footer class="mt-12 border-t border-slate-200 pt-6">
     <a class="btn-primary" href={guide.url} target="_blank" rel="noopener">
-      Open on iFixit <ExternalLink size={16} />
+      {$t('Open on iFixit')} <ExternalLink size={16} />
     </a>
     <p class="mt-4 text-sm text-slate-500">
-      Written by the iFixit community and shared under a
+      {$t('Written by the iFixit community and shared under a')}
       <a
         class="underline underline-offset-2 hover:text-slate-700"
         href="https://creativecommons.org/licenses/by-nc-sa/3.0/"
         target="_blank"
         rel="noopener"
-      >Creative Commons BY-NC-SA licence</a>. Follow it at your own risk, and please
-      unplug anything electrical before you open it.
+      >{$t('Creative Commons BY-NC-SA licence')}</a>. {$t('Follow it at your own risk, and please unplug anything electrical before you open it.')}
     </p>
   </footer>
 </article>

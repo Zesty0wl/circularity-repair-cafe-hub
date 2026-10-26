@@ -10,6 +10,7 @@
   import BackupImport from '$lib/components/BackupImport.svelte';
   import { CheckCircle2 } from 'lucide-svelte';
   import { onMount } from 'svelte';
+  import { t, tNow } from '$lib/i18n';
 
   const TOTAL = 9;
   let step = 1;
@@ -75,11 +76,11 @@
   }
 
   function passwordValid(): string | null {
-    if (admin.password.length < 10) return 'At least 10 characters';
-    if (!/[A-Z]/.test(admin.password)) return 'Needs an uppercase letter';
-    if (!/[a-z]/.test(admin.password)) return 'Needs a lowercase letter';
-    if (!/[0-9]/.test(admin.password)) return 'Needs a number';
-    if (admin.password !== admin.confirm) return 'Passwords do not match';
+    if (admin.password.length < 10) return tNow('At least 10 characters');
+    if (!/[A-Z]/.test(admin.password)) return tNow('Needs an uppercase letter');
+    if (!/[a-z]/.test(admin.password)) return tNow('Needs a lowercase letter');
+    if (!/[0-9]/.test(admin.password)) return tNow('Needs a number');
+    if (admin.password !== admin.confirm) return tNow('Passwords do not match');
     return null;
   }
 
@@ -90,20 +91,20 @@
   function next() {
     error = '';
     if (step === 2) {
-      if (!admin.displayName.trim()) return (error = 'Please enter your name');
-      if (!emailValid()) return (error = 'Please enter a valid email');
+      if (!admin.displayName.trim()) return (error = tNow('Please enter your name'));
+      if (!emailValid()) return (error = tNow('Please enter a valid email'));
       const pe = passwordValid();
       if (pe) return (error = pe);
     }
     if (step === 3) {
-      if (!cafe.name.trim()) return (error = 'Please enter the cafe name');
+      if (!cafe.name.trim()) return (error = tNow('Please enter the cafe name'));
     }
     if (step === 4) {
-      if (!venue.name.trim()) return (error = 'Please enter your venue name');
+      if (!venue.name.trim()) return (error = tNow('Please enter your venue name'));
     }
     if (step === 6) {
-      if (!publicUrl.trim()) return (error = 'Public URL is required');
-      try { new URL(publicUrl); } catch { return (error = 'Please enter a valid URL'); }
+      if (!publicUrl.trim()) return (error = tNow('Public URL is required'));
+      try { new URL(publicUrl); } catch { return (error = tNow('Please enter a valid URL')); }
     }
     step++;
   }
@@ -173,7 +174,7 @@
       await loadCafe();
       goto('/admin/dashboard');
     } catch (err: any) {
-      error = err?.message || 'Setup failed';
+      error = err?.message || tNow('Setup failed');
     } finally {
       busy = false;
     }
@@ -189,113 +190,110 @@
 
     <div class="mt-6 card p-8">
       {#if step === 1 && importing}
-        <h1 class="text-2xl font-semibold">Move from an existing hub</h1>
+        <h1 class="text-2xl font-semibold">{$t('Move from an existing hub')}</h1>
         <p class="mt-3 text-slate-700">
-          Bring everything across from the hub you use now: accounts, sessions, repairs, photos and
-          settings. Your volunteers keep their passwords.
+          {$t('Bring everything across from the hub you use now: accounts, sessions, repairs, photos and settings. Your volunteers keep their passwords.')}
         </p>
         <div class="mt-6">
           <BackupImport mode="setup" on:done={imported} />
         </div>
         <div class="mt-6 flex gap-3">
-          <button class="btn-secondary" on:click={() => (importing = false)}>Back</button>
+          <button class="btn-secondary" on:click={() => (importing = false)}>{$t('Back')}</button>
           {#if $setupCompleted}
-            <button class="btn-primary flex-1" on:click={() => goto('/login')}>Sign in</button>
+            <button class="btn-primary flex-1" on:click={() => goto('/login')}>{$t('Sign in')}</button>
           {/if}
         </div>
       {:else if step === 1}
-        <h1 class="text-2xl font-semibold">Welcome</h1>
-        <p class="mt-3 text-slate-700">This wizard will set up your repair cafe hub. We'll create your admin account, configure your cafe details and home venue, and have you ready in just a few minutes.</p>
-        <button class="btn-primary mt-8 w-full" on:click={next}>Let's get started</button>
+        <h1 class="text-2xl font-semibold">{$t('Welcome')}</h1>
+        <p class="mt-3 text-slate-700">{$t("This wizard will set up your repair cafe hub. We'll create your admin account, configure your cafe details and home venue, and have you ready in just a few minutes.")}</p>
+        <button class="btn-primary mt-8 w-full" on:click={next}>{$t("Let's get started")}</button>
         {#if canImport}
           <div class="mt-6 border-t border-slate-200 pt-6">
-            <p class="text-sm text-slate-700">Already running a hub somewhere else?</p>
-            <button class="btn-secondary mt-3 w-full" on:click={() => (importing = true)}>Move from an existing hub</button>
+            <p class="text-sm text-slate-700">{$t('Already running a hub somewhere else?')}</p>
+            <button class="btn-secondary mt-3 w-full" on:click={() => (importing = true)}>{$t('Move from an existing hub')}</button>
           </div>
         {/if}
       {:else if step === 2}
-        <h1 class="text-2xl font-semibold">Create your admin account</h1>
-        <p class="mt-2 text-slate-600">This account will be the system administrator. You can add more team members later.</p>
+        <h1 class="text-2xl font-semibold">{$t('Create your admin account')}</h1>
+        <p class="mt-2 text-slate-600">{$t('This account will be the system administrator. You can add more team members later.')}</p>
         <div class="mt-6 space-y-4">
           <div>
-            <label class="label" for="dn">Your name</label>
+            <label class="label" for="dn">{$t('Your name')}</label>
             <input id="dn" class="input" bind:value={admin.displayName} autocomplete="name" />
           </div>
           <div>
-            <label class="label" for="em">Email address</label>
+            <label class="label" for="em">{$t('Email address')}</label>
             <input id="em" type="email" class="input" bind:value={admin.email} autocomplete="email" />
           </div>
           <div>
-            <label class="label" for="pw">Password</label>
+            <label class="label" for="pw">{$t('Password')}</label>
             <input id="pw" type="password" class="input" bind:value={admin.password} autocomplete="new-password" />
-            <p class="mt-1 text-xs text-slate-500">Use at least 10 characters, with upper and lower case letters and a number.</p>
+            <p class="mt-1 text-xs text-slate-500">{$t('Use at least 10 characters, with upper and lower case letters and a number.')}</p>
           </div>
           <div>
-            <label class="label" for="cf">Confirm password</label>
+            <label class="label" for="cf">{$t('Confirm password')}</label>
             <input id="cf" type="password" class="input" bind:value={admin.confirm} autocomplete="new-password" />
           </div>
         </div>
       {:else if step === 3}
-        <h1 class="text-2xl font-semibold">Your repair cafe</h1>
+        <h1 class="text-2xl font-semibold">{$t('Your repair cafe')}</h1>
         <div class="mt-6 space-y-4">
           <div>
-            <label class="label" for="cn">Repair cafe name</label>
+            <label class="label" for="cn">{$t('Repair cafe name')}</label>
             <input id="cn" class="input" bind:value={cafe.name} />
           </div>
           <div>
-            <label class="label" for="ct">Tagline (optional)</label>
+            <label class="label" for="ct">{$t('Tagline (optional)')}</label>
             <input id="ct" class="input" maxlength="120" bind:value={cafe.tagline} />
           </div>
           <div>
-            <label class="label" for="ce">Contact email (optional)</label>
+            <label class="label" for="ce">{$t('Contact email (optional)')}</label>
             <input id="ce" type="email" class="input" bind:value={cafe.contactEmail} />
           </div>
           <div>
-            <label class="label" for="cw">Website (optional)</label>
+            <label class="label" for="cw">{$t('Website (optional)')}</label>
             <input id="cw" type="url" class="input" placeholder="https://..." bind:value={cafe.websiteUrl} />
           </div>
           <div>
-            <label class="label" for="cd">About (optional)</label>
+            <label class="label" for="cd">{$t('About (optional)')}</label>
             <textarea id="cd" class="input" rows="4" bind:value={cafe.description}></textarea>
           </div>
         </div>
       {:else if step === 4}
-        <h1 class="text-2xl font-semibold">Your home venue</h1>
-        <p class="mt-2 text-slate-600">Where do you usually hold events?</p>
+        <h1 class="text-2xl font-semibold">{$t('Your home venue')}</h1>
+        <p class="mt-2 text-slate-600">{$t('Where do you usually hold events?')}</p>
         <div class="mt-6 space-y-4">
           <div>
-            <label class="label" for="vn">Venue name</label>
+            <label class="label" for="vn">{$t('Venue name')}</label>
             <input id="vn" class="input" bind:value={venue.name} />
           </div>
           <div>
-            <label class="label" for="va1">Address line 1</label>
+            <label class="label" for="va1">{$t('Address line 1')}</label>
             <input id="va1" class="input" bind:value={venue.addressLine1} />
           </div>
           <div>
-            <label class="label" for="va2">Address line 2 (optional)</label>
+            <label class="label" for="va2">{$t('Address line 2 (optional)')}</label>
             <input id="va2" class="input" bind:value={venue.addressLine2} />
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="label" for="vt">Town / city</label>
+              <label class="label" for="vt">{$t('Town / city')}</label>
               <input id="vt" class="input" bind:value={venue.town} />
             </div>
             <div>
-              <label class="label" for="vp">Postcode</label>
+              <label class="label" for="vp">{$t('Postcode')}</label>
               <input id="vp" class="input" bind:value={venue.postcode} />
             </div>
           </div>
           <div>
-            <label class="label" for="vno">Notes (parking, accessibility, optional)</label>
+            <label class="label" for="vno">{$t('Notes (parking, accessibility, optional)')}</label>
             <textarea id="vno" class="input" rows="3" bind:value={venue.notes}></textarea>
           </div>
         </div>
       {:else if step === 5}
-        <h1 class="text-2xl font-semibold">Find your cafe on repaircafe.org</h1>
+        <h1 class="text-2xl font-semibold">{$t('Find your cafe on repaircafe.org')}</h1>
         <p class="mt-2 text-slate-600">
-          Repair Café International lists Repair Cafés around the world on repaircafe.org. If your cafe is listed,
-          choose it here. Your cafe is then picked out on the Worldwide map, and "Repair Cafes near us" is measured
-          from it. You can change this later.
+          {$t('Repair Café International lists Repair Cafés around the world on repaircafe.org. If your cafe is listed, choose it here. Your cafe is then picked out on the Worldwide map, and "Repair Cafes near us" is measured from it. You can change this later.')}
         </p>
         <div class="mt-6">
           <ListingPicker load={loadListings} bind:selected={listingSlug} bind:available={listingAvailable} />
@@ -303,40 +301,40 @@
         {#if listingAvailable}
           <label class="mt-5 flex items-start gap-3 text-sm text-slate-700">
             <input type="checkbox" class="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600" bind:checked={notListed} disabled={Boolean(listingSlug)} />
-            <span>We're not on repaircafe.org yet</span>
+            <span>{$t("We're not on repaircafe.org yet")}</span>
           </label>
         {/if}
       {:else if step === 6}
-        <h1 class="text-2xl font-semibold">Your public URL</h1>
-        <p class="mt-2 text-slate-600">This is the web address where your hub is hosted. We need this to generate QR codes for your customers.</p>
+        <h1 class="text-2xl font-semibold">{$t('Your public URL')}</h1>
+        <p class="mt-2 text-slate-600">{$t('This is the web address where your hub is hosted. We need this to generate QR codes for your customers.')}</p>
         <div class="mt-6 space-y-3">
           <div>
-            <label class="label" for="pu">Public URL</label>
+            <label class="label" for="pu">{$t('Public URL')}</label>
             <input id="pu" type="url" class="input" bind:value={publicUrl} />
           </div>
           <div class="flex items-center gap-3">
-            <button class="btn-secondary" type="button" on:click={pingUrl} disabled={validating}>{validating ? 'Checking…' : 'Check URL'}</button>
-            {#if urlOk === true}<span class="text-emerald-700 text-sm">✓ Server reachable</span>{/if}
-            {#if urlOk === false}<span class="text-amber-700 text-sm">Could not verify (you can still continue)</span>{/if}
+            <button class="btn-secondary" type="button" on:click={pingUrl} disabled={validating}>{validating ? $t('Checking…') : $t('Check URL')}</button>
+            {#if urlOk === true}<span class="text-emerald-700 text-sm">{$t('✓ Server reachable')}</span>{/if}
+            {#if urlOk === false}<span class="text-amber-700 text-sm">{$t('Could not verify (you can still continue)')}</span>{/if}
           </div>
         </div>
       {:else if step === 7}
-        <h1 class="text-2xl font-semibold">Your branding</h1>
-        <p class="mt-2 text-slate-600">Make the hub yours. You can change any of this later under Admin → Settings, and upload your logo there too.</p>
+        <h1 class="text-2xl font-semibold">{$t('Your branding')}</h1>
+        <p class="mt-2 text-slate-600">{$t('Make the hub yours. You can change any of this later under Admin → Settings, and upload your logo there too.')}</p>
         <div class="mt-6 space-y-5">
           <div>
-            <span class="label">Brand colour</span>
+            <span class="label">{$t('Brand colour')}</span>
             <div class="flex items-center gap-3">
               <input class="h-10 w-16 rounded-lg border border-slate-300 cursor-pointer p-1" type="color" bind:value={brand.primaryColor} />
               <input class="input w-32 font-mono" type="text" maxlength="7" bind:value={brand.primaryColor} />
             </div>
-            <p class="text-xs text-slate-500 mt-1">Used for links, headings and accents. Pick a colour dark enough to read as text.</p>
+            <p class="text-xs text-slate-500 mt-1">{$t('Used for links, headings and accents. Pick a colour dark enough to read as text.')}</p>
           </div>
           <div>
-            <span class="label">Accent / button colour</span>
+            <span class="label">{$t('Accent / button colour')}</span>
             <label class="flex items-center gap-2 text-sm text-slate-700 mb-2">
               <input type="checkbox" class="h-4 w-4 rounded border-slate-300 text-brand-600" bind:checked={brand.accentEnabled} />
-              Use a separate colour for call-to-action buttons
+              {$t('Use a separate colour for call-to-action buttons')}
             </label>
             {#if brand.accentEnabled}
               <div class="flex items-center gap-3">
@@ -344,44 +342,44 @@
                 <input class="input w-32 font-mono" type="text" maxlength="7" bind:value={brand.accentColor} />
               </div>
             {/if}
-            <p class="text-xs text-slate-500 mt-1">Optional. Handy when your brand colour is dark but you want a brighter call-to-action button.</p>
+            <p class="text-xs text-slate-500 mt-1">{$t('Optional. Handy when your brand colour is dark but you want a brighter call-to-action button.')}</p>
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="label" for="shf">Heading font</label>
+              <label class="label" for="shf">{$t('Heading font')}</label>
               <select id="shf" class="input" bind:value={brand.headingFont}>
-                <option value="">Default (Fraunces)</option>
-                {#each FONT_OPTIONS as f}<option value={f.value}>{f.label}</option>{/each}
+                <option value="">{$t('Default (Fraunces)')}</option>
+                {#each FONT_OPTIONS as f}<option value={f.value}>{$t(f.label)}</option>{/each}
               </select>
             </div>
             <div>
-              <label class="label" for="sbf">Body font</label>
+              <label class="label" for="sbf">{$t('Body font')}</label>
               <select id="sbf" class="input" bind:value={brand.bodyFont}>
-                <option value="">Default (Mulish)</option>
-                {#each FONT_OPTIONS as f}<option value={f.value}>{f.label}</option>{/each}
+                <option value="">{$t('Default (Mulish)')}</option>
+                {#each FONT_OPTIONS as f}<option value={f.value}>{$t(f.label)}</option>{/each}
               </select>
             </div>
           </div>
         </div>
       {:else if step === 8}
-        <h1 class="text-2xl font-semibold">One last thing</h1>
-        <p class="mt-2 text-slate-600">Entirely up to you, and easy to change later.</p>
+        <h1 class="text-2xl font-semibold">{$t('One last thing')}</h1>
+        <p class="mt-2 text-slate-600">{$t('Entirely up to you, and easy to change later.')}</p>
         <div class="mt-6">
-          <TelemetryChoice bind:level={telemetryLevel} cafeName={cafe.name || 'Your Repair Café'} />
+          <TelemetryChoice bind:level={telemetryLevel} cafeName={cafe.name || $t('Your Repair Café')} />
         </div>
 
       {:else if step === 9}
-        <h1 class="text-2xl font-semibold">Ready</h1>
-        <p class="mt-2 text-slate-600">Review your setup:</p>
+        <h1 class="text-2xl font-semibold">{$t('Ready')}</h1>
+        <p class="mt-2 text-slate-600">{$t('Review your setup:')}</p>
         <dl class="mt-6 space-y-2 text-sm">
-          <div class="flex justify-between border-b border-slate-100 pb-2"><dt class="text-slate-500">Cafe name</dt><dd class="font-medium">{cafe.name}</dd></div>
-          <div class="flex justify-between border-b border-slate-100 pb-2"><dt class="text-slate-500">Admin email</dt><dd class="font-medium">{admin.email}</dd></div>
-          <div class="flex justify-between border-b border-slate-100 pb-2"><dt class="text-slate-500">Home venue</dt><dd class="font-medium">{venue.name}</dd></div>
-          <div class="flex justify-between border-b border-slate-100 pb-2"><dt class="text-slate-500">repaircafe.org</dt><dd class="font-medium">{listingSlug ? 'Linked' : notListed ? 'Not listed yet' : 'Not chosen'}</dd></div>
-          <div class="flex justify-between border-b border-slate-100 pb-2"><dt class="text-slate-500">Public URL</dt><dd class="font-medium break-all">{publicUrl}</dd></div>
+          <div class="flex justify-between border-b border-slate-100 pb-2"><dt class="text-slate-500">{$t('Cafe name')}</dt><dd class="font-medium">{cafe.name}</dd></div>
+          <div class="flex justify-between border-b border-slate-100 pb-2"><dt class="text-slate-500">{$t('Admin email')}</dt><dd class="font-medium">{admin.email}</dd></div>
+          <div class="flex justify-between border-b border-slate-100 pb-2"><dt class="text-slate-500">{$t('Home venue')}</dt><dd class="font-medium">{venue.name}</dd></div>
+          <div class="flex justify-between border-b border-slate-100 pb-2"><dt class="text-slate-500">repaircafe.org</dt><dd class="font-medium">{listingSlug ? $t('Linked') : notListed ? $t('Not listed yet') : $t('Not chosen')}</dd></div>
+          <div class="flex justify-between border-b border-slate-100 pb-2"><dt class="text-slate-500">{$t('Public URL')}</dt><dd class="font-medium break-all">{publicUrl}</dd></div>
         </dl>
         <button class="btn-primary mt-8 w-full" disabled={busy} on:click={submit}>
-          <CheckCircle2 size={18} /> Complete setup and open my hub
+          <CheckCircle2 size={18} /> {$t('Complete setup and open my hub')}
         </button>
       {/if}
 
@@ -391,11 +389,11 @@
 
       {#if step > 1 && step < 9}
         <div class="mt-8 flex justify-between">
-          <button class="btn-ghost" type="button" on:click={prev}>Back</button>
-          <button class="btn-primary" type="button" on:click={next}>Next</button>
+          <button class="btn-ghost" type="button" on:click={prev}>{$t('Back')}</button>
+          <button class="btn-primary" type="button" on:click={next}>{$t('Next')}</button>
         </div>
       {:else if step === 9}
-        <div class="mt-3"><button class="btn-ghost" type="button" on:click={prev}>Back</button></div>
+        <div class="mt-3"><button class="btn-ghost" type="button" on:click={prev}>{$t('Back')}</button></div>
       {/if}
     </div>
   </div>

@@ -122,7 +122,7 @@
       preItems = [];
       track('checkin', { category: 'Pre-registered', returning: 'yes' });
     } catch (err: any) {
-      error = err?.message || 'Could not check in your items';
+      error = err?.message || tNow('Could not check in your items');
     } finally {
       arriving = false;
     }
@@ -418,35 +418,35 @@
       {#if step === 1 && arrivedJobs}
         <div class="card p-8 text-center">
           <span class="h-16 w-16 mx-auto rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center"><CheckCircle2 size={32} /></span>
-          <h1 class="text-3xl font-bold mt-5">You are checked in</h1>
+          <h1 class="text-3xl font-bold mt-5">{$t('You are checked in')}</h1>
           {#if arrivedJobs.length}
             <ul class="mt-6 space-y-3 text-left">
               {#each arrivedJobs as job (job.id)}
                 <li class="rounded-xl bg-slate-50 ring-1 ring-slate-200 p-4">
                   <p class="text-sm text-slate-600">{job.itemDescription}</p>
-                  <p class="text-sm uppercase tracking-wide text-slate-500 mt-1">Job number</p>
+                  <p class="text-sm uppercase tracking-wide text-slate-500 mt-1">{$t('Job number')}</p>
                   <p class="text-3xl font-extrabold text-brand-700 tracking-wide">{job.jobNumber}</p>
                 </li>
               {/each}
             </ul>
             <p class="mt-5 text-slate-700">
-              {#if arrivedJobs.some((j) => j.status === 'in_progress')}Your repairer knows you are here and will come and find you.{:else}A repairer will come and find you shortly.{/if}
+              {#if arrivedJobs.some((j) => j.status === 'in_progress')}{$t('Your repairer knows you are here and will come and find you.')}{:else}{$t('A repairer will come and find you shortly.')}{/if}
             </p>
-            <p class="mt-1 text-slate-700">Please have a seat and hold on to your item.</p>
+            <p class="mt-1 text-slate-700">{$t('Please have a seat and hold on to your item.')}</p>
           {:else}
-            <p class="mt-3 text-slate-700">Your items were already checked in.</p>
+            <p class="mt-3 text-slate-700">{$t('Your items were already checked in.')}</p>
           {/if}
           {#if trackingUrl}
-            <a href={trackingUrl} target="_blank" rel="noopener" class="btn-primary mt-8 w-full justify-center"><ExternalLink size={18} /> Open my tracker</a>
+            <a href={trackingUrl} target="_blank" rel="noopener" class="btn-primary mt-8 w-full justify-center"><ExternalLink size={18} /> {$t('Open my tracker')}</a>
           {/if}
           <button type="button" class="btn-secondary mt-3 w-full justify-center" on:click={() => { arrivedJobs = null; step = 3; }}>
-            <Plus size={18} /> I have another item
+            <Plus size={18} /> {$t('I have another item')}
           </button>
         </div>
       {:else if step === 1 && preItems.length}
         <div class="card p-8 text-center">
-          <h1 class="text-3xl font-bold">Welcome, {preName}!</h1>
-          <p class="mt-3 text-slate-700 text-lg">You pre-registered {preItems.length === 1 ? 'this item' : 'these items'}:</p>
+          <h1 class="text-3xl font-bold">{$t('Welcome, {name}!', { name: preName })}</h1>
+          <p class="mt-3 text-slate-700 text-lg">{preItems.length === 1 ? $t('You pre-registered this item:') : $t('You pre-registered these items:')}</p>
           <ul class="mt-4 space-y-2 text-left">
             {#each preItems as item (item.id)}
               <li class="rounded-xl bg-slate-50 ring-1 ring-slate-200 px-4 py-3 font-medium text-slate-900">
@@ -456,16 +456,16 @@
           </ul>
           {#if error}<p class="mt-4 text-sm text-rose-600">{error}</p>{/if}
           <button class="btn-primary btn-lg mt-8 w-full" disabled={arriving} on:click={arrive}>
-            {arriving ? 'Checking in…' : preItems.length === 1 ? 'Check in my item' : 'Check in my items'} <ArrowRight size={20} />
+            {arriving ? $t('Checking in…') : preItems.length === 1 ? $t('Check in my item') : $t('Check in my items')} <ArrowRight size={20} />
           </button>
           <button class="block mx-auto mt-6 text-sm text-slate-500 underline" on:click={skipPreRegistered}>
-            I have brought something else
+            {$t('I have brought something else')}
           </button>
         </div>
       {:else if step === 1}
         <div class="card p-8 text-center">
           {#if info.cafe.logoUrl}
-            <img src={info.cafe.logoUrl} alt={`${info.cafe.name} logo`} class="h-16 w-16 mx-auto rounded-2xl bg-white object-contain p-2 ring-1 ring-slate-200" />
+            <img src={info.cafe.logoUrl} alt={$t('{name} logo', { name: info.cafe.name })} class="h-16 w-16 mx-auto rounded-2xl bg-white object-contain p-2 ring-1 ring-slate-200" />
           {:else}
             <span class="h-14 w-14 mx-auto rounded-2xl bg-brand-600 text-white flex items-center justify-center"><Wrench size={24} /></span>
           {/if}

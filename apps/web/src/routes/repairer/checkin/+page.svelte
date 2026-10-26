@@ -80,7 +80,7 @@
       const res = await api<{ jobNumber: string; repairerId: string | null }>(`/api/repairer/pre-registrations/${item.id}/check-in`, { method: 'POST', json: {} });
       arrived = { ...arrived, [item.id]: { jobNumber: res.jobNumber, withRepairer: Boolean(res.repairerId) } };
     } catch (err: any) {
-      expectedError = err?.message ?? 'Could not check that item in';
+      expectedError = err?.message ?? tNow('Could not check that item in');
       await loadExpected();
     } finally {
       expectedBusy = null;
@@ -279,13 +279,13 @@
   {:else}
     {#if expected.length}
       <section class="card p-5 mt-4">
-        <h2 class="text-lg font-semibold flex items-center gap-2"><CalendarClock size={20} /> Pre-registered for today</h2>
-        <p class="mt-1 text-sm text-slate-600">These visitors told us about their item before the session. When one arrives, check their item in here. The repair time starts now.</p>
+        <h2 class="text-lg font-semibold flex items-center gap-2"><CalendarClock size={20} /> {$t('Pre-registered for today')}</h2>
+        <p class="mt-1 text-sm text-slate-600">{$t('These visitors told us about their item before the session. When one arrives, check their item in here. The repair time starts now.')}</p>
         {#if expected.length > 5}
           <label class="relative block mt-3">
-            <span class="sr-only">Search by name or item</span>
+            <span class="sr-only">{$t('Search by name or item')}</span>
             <Search size={16} class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input class="input pl-9" placeholder="Search by name or item" bind:value={expectedSearch} />
+            <input class="input pl-9" placeholder={$t('Search by name or item')} bind:value={expectedSearch} />
           </label>
         {/if}
         {#if expectedError}<p class="mt-3 text-sm text-rose-700">{expectedError}</p>{/if}
@@ -293,25 +293,26 @@
           {#each expectedShown as item (item.id)}
             <li class="py-3 flex flex-wrap items-center justify-between gap-3">
               <div class="min-w-0">
-                <p class="font-medium text-slate-900">{item.customerName ?? 'No name given'}</p>
+                <p class="font-medium text-slate-900">{item.customerName ?? $t('No name given')}</p>
                 <p class="text-sm text-slate-600">
                   {item.itemDescription}{item.itemBrand ? ` · ${item.itemBrand}` : ''}
-                  {#if item.repairerName}<span class="text-slate-500">{` · taken by ${firstName(item.repairerName)}`}</span>{/if}
+                  {#if item.repairerName}<span class="text-slate-500">{` · ${$t('taken by {name}', { name: firstName(item.repairerName) })}`}</span>{/if}
                 </p>
               </div>
               {#if arrived[item.id]}
+                {@const arrivedText = (arrived[item.id].withRepairer ? $t('Job {number}, with its repairer') : $t('Job {number}, in the queue')).split('{number}')}
                 <p class="text-sm text-emerald-800 flex items-center gap-1.5">
                   <CheckCircle2 size={16} />
-                  <span>Job <strong>{arrived[item.id].jobNumber}</strong>{arrived[item.id].withRepairer ? ', with its repairer' : ', in the queue'}</span>
+                  <span>{arrivedText[0]}<strong>{arrived[item.id].jobNumber}</strong>{arrivedText[1] ?? ''}</span>
                 </p>
               {:else}
                 <button class="btn-primary btn-sm" disabled={expectedBusy === item.id} on:click={() => checkInExpected(item)}>
-                  {expectedBusy === item.id ? 'Checking in…' : 'Check in'}
+                  {expectedBusy === item.id ? $t('Checking in…') : $t('Check in')}
                 </button>
               {/if}
             </li>
           {:else}
-            <li class="py-3 text-sm text-slate-500">Nobody matches that search.</li>
+            <li class="py-3 text-sm text-slate-500">{$t('Nobody matches that search.')}</li>
           {/each}
         </ul>
       </section>

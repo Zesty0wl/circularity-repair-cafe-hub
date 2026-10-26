@@ -9,7 +9,7 @@ export const load: PageLoad = async ({ fetch, url, params, parent }) => {
   // People often arrive here from a shared card inviting them to the next
   // session, so the page shows that session and links to its details.
   const eventsP = fetch('/api/public/events').catch(() => null);
-  const { cafe } = await parent();
+  const { cafe, locale } = await parent();
   const res = await resP;
 
   let repairer = null;
@@ -36,6 +36,7 @@ export const load: PageLoad = async ({ fetch, url, params, parent }) => {
     origin: url.origin,
     pathname: url.pathname,
     cafe,
+    locale,
     repairer,
     // Carried by shared links so the card style a volunteer picked in the
     // share menu is the one crawlers draw. buildSeo ignores unknown values.

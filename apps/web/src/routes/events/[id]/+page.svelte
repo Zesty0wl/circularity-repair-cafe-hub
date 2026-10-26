@@ -233,7 +233,7 @@
                 <span class="inline-flex h-6 w-6 items-center justify-center rounded-lg" style={`background:${categoryTint(cat.colour)}`}>
                   <Icon icon={categoryIcon(cat.icon, cat.name)} width="14" height="14" style={`color:${categoryInk(cat.colour)}`} />
                 </span>
-                <span>{cat.name}</span>
+                <span>{$t(cat.name)}</span>
                 <span class="font-semibold tabular-nums text-pine">{cat.count}</span>
               </li>
             {/each}

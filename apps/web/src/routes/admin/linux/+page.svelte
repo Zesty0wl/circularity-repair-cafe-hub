@@ -568,7 +568,7 @@
           <select id="li-co2" class="input" bind:value={form.co2FactorId}>
             <option value="">{$t('Do not work out a figure')}</option>
             {#each factors as f}
-              <option value={f.id}>{f.label}{f.co2eKg ? $t(' ({n} kg to make one)', { n: f.co2eKg.toFixed(0) }) : ''}</option>
+              <option value={f.id}>{$t(f.label)}{f.co2eKg ? $t(' ({n} kg to make one)', { n: f.co2eKg.toFixed(0) }) : ''}</option>
             {/each}
           </select>
           <p class="text-xs text-slate-500 mt-1">

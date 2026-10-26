@@ -11,6 +11,7 @@
   import { categoryIcon } from '$lib/categoryIcon';
   import { loadPreRegistration } from '$lib/preRegistration';
   import { t, tNow } from '$lib/i18n';
+  import { translate } from '@circularity/shared';
 
   $: token = $page.params.token;
 
@@ -211,10 +212,16 @@
     }
   });
 
-  /** The item types under whichever category the visitor tapped. */
+  /**
+   * The item types under whichever category the visitor tapped. Each type
+   * names its category in English. A hub set up in French has French category
+   * names, so a type also belongs to the category with the French name.
+   */
   $: selectedCategoryName = info?.categories.find((c) => c.id === itemCategoryId)?.name ?? null;
   $: itemTypes = selectedCategoryName
-    ? allTypes.filter((t) => t.category === selectedCategoryName)
+    ? allTypes.filter(
+        (t) => t.category === selectedCategoryName || translate('fr', t.category) === selectedCategoryName,
+      )
     : [];
   // Changing the category makes the old choice meaningless.
   $: if (itemCategoryId && co2FactorId && !itemTypes.some((t) => t.id === co2FactorId)) {
@@ -541,7 +548,7 @@
                     <span class="icon-chip" style="background-color: {cat.colour}">
                       <Icon icon={categoryIcon(cat.icon, cat.name)} width="24" height="24" />
                     </span>
-                    <span class="block mt-2 font-medium text-base">{cat.name}</span>
+                    <span class="block mt-2 font-medium text-base">{$t(cat.name)}</span>
                   </button>
                 {/each}
               </div>
@@ -564,7 +571,7 @@
                       class="type-chip {co2FactorId === type.id ? 'is-picked' : ''}"
                       on:click={() => (co2FactorId = co2FactorId === type.id ? null : type.id)}
                     >
-                      {type.label}
+                      {$t(type.label)}
                     </button>
                   {/each}
                 </div>

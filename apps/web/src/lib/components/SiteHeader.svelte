@@ -16,7 +16,7 @@
   // it. Admins can rename it, so a cafe that calls it something else in its
   // own town is not stuck with our wording.
   $: linuxEnabled = $cafe?.linuxEnabled === true;
-  $: linuxLabel = $cafe?.linuxPage?.navLabel?.trim() || $t('Linux Repair Cafe');
+  $: linuxLabel = $t($cafe?.linuxPage?.navLabel?.trim() || 'Linux Repair Cafe');
 
   afterNavigate(() => {
     mobileOpen = false;

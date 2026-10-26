@@ -73,7 +73,7 @@
       <div class="grid grid-cols-2 gap-2">
         {#each categories as c}
           <label class="flex items-center gap-2 text-sm">
-            <input type="checkbox" value={c.id} bind:group={skills} /> {c.name}
+            <input type="checkbox" value={c.id} bind:group={skills} /> {$t(c.name)}
           </label>
         {/each}
       </div>

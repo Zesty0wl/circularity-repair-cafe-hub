@@ -238,7 +238,7 @@
       <label class="label" for="cat">{$t('Category')}</label>
       <select id="cat" class="input" bind:value={form.categoryId}>
         <option value="">{$t('No category')}</option>
-        {#each categories as c}<option value={c.id}>{c.name}</option>{/each}
+        {#each categories as c}<option value={c.id}>{$t(c.name)}</option>{/each}
       </select>
     </div>
     <div><label class="label" for="ft">{$t('Fault')}</label><textarea id="ft" class="input" rows="3" bind:value={form.faultDescription}></textarea></div>

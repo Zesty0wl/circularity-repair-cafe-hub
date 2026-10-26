@@ -132,11 +132,14 @@
     const paragraphs = (body ?? '').split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
     return { items, isList, paragraphs };
   }
-  $: bring = parseBringList(hp.whatToBring?.body ?? '');
+  // The cafe owns this wording. Text still as the hub first wrote it is in the
+  // dictionary, so it shows in the visitor's language. Text the cafe wrote
+  // itself is not, so it shows as it is.
+  $: bring = parseBringList($t(hp.whatToBring?.body ?? ''));
 
   // Split the intro body into paragraphs on blank lines so the first one can
   // be rendered as a larger "lead" and subsequent ones as supporting text.
-  $: introParagraphs = (hp.intro?.body ?? '')
+  $: introParagraphs = $t(hp.intro?.body ?? '')
     .split(/\n\s*\n/)
     .map((p: string) => p.trim())
     .filter(Boolean);
@@ -150,14 +153,13 @@
   // fallback so the card still reads properly if they clear a field.
   $: linuxEnabled = $cafe?.linuxEnabled === true;
   $: linuxCard = $cafe?.linuxPage?.homeCard ?? {};
-  $: linuxHeading = linuxCard.heading?.trim() || $t('We are a Linux Repair Cafe');
-  $: linuxBody =
+  $: linuxHeading = $t(linuxCard.heading?.trim() || 'We are a Linux Repair Cafe');
+  $: linuxBody = $t(
     linuxCard.body?.trim() ||
-    $t(
       'Is your computer too old for Windows 11? We can put Linux on it instead, for free. ' +
         'It keeps working, it keeps getting updates, and it stays out of the bin.',
-    );
-  $: linuxCta = linuxCard.ctaLabel?.trim() || $t('Find out about Linux');
+  );
+  $: linuxCta = $t(linuxCard.ctaLabel?.trim() || 'Find out about Linux');
   // The soonest session where Linux help is on offer, so the card can give a
   // date rather than only an explanation.
   $: nextLinuxEvent = upcomingEvents.find((e) => e.supportsLinux) ?? null;
@@ -225,7 +227,7 @@
     <section class="section">
       <div class="max-w-2xl mx-auto text-center">
         {#if hp.intro?.heading}
-          <h2 class="section-title">{hp.intro.heading}</h2>
+          <h2 class="section-title">{$t(hp.intro.heading)}</h2>
         {/if}
         {#if introParagraphs.length > 0}
           <p class="mt-6 text-xl sm:text-2xl leading-relaxed font-medium text-slate-800 whitespace-pre-line">
@@ -251,8 +253,8 @@
           {#each hp.howItWorks as step, i}
             <div class="relative text-center">
               <div class="w-12 h-12 mx-auto rounded-full bg-brand-600 text-white ring-8 ring-brand-50 flex items-center justify-center text-xl font-bold font-display">{i + 1}</div>
-              <h3 class="mt-4 text-lg font-semibold text-pine">{step.title}</h3>
-              <p class="mt-2 text-slate-600 text-sm leading-relaxed whitespace-pre-line">{step.body}</p>
+              <h3 class="mt-4 text-lg font-semibold text-pine">{$t(step.title ?? '')}</h3>
+              <p class="mt-2 text-slate-600 text-sm leading-relaxed whitespace-pre-line">{$t(step.body ?? '')}</p>
             </div>
           {/each}
         </div>
@@ -372,7 +374,7 @@
   <!-- ────────────────── What to bring ───────────────────────── -->
   {#if hp.whatToBring?.body}
     <section class="section">
-      <SectionHeading eyebrow={$t('Before you come')} title={hp.whatToBring.heading || $t('What to bring')} />
+      <SectionHeading eyebrow={$t('Before you come')} title={$t(hp.whatToBring.heading || 'What to bring')} />
       <div class="mt-10 max-w-3xl mx-auto card p-6 sm:p-10">
         {#if bring.isList}
           <ul class="space-y-4">
@@ -415,7 +417,7 @@
               >
                 <Icon icon={categoryIcon(cat.icon, cat.name)} width="24" height="24" />
               </span>
-              <p class="mt-3 font-medium text-pine">{cat.name}</p>
+              <p class="mt-3 font-medium text-pine">{$t(cat.name)}</p>
               <p class="text-xs text-slate-500">
                 {cat.repairerCount === 1
                   ? $t('{count} volunteer', { count: cat.repairerCount })
@@ -500,12 +502,12 @@
             >
               <summary class="cursor-pointer flex items-center gap-4 px-5 py-4 list-none">
                 <span class="shrink-0 grid place-items-center h-9 w-9 rounded-full bg-brand-100 text-pine font-bold font-display transition-colors group-open:bg-brand-600 group-open:text-white">{i + 1}</span>
-                <span class="flex-1 font-semibold text-pine">{faq.q}</span>
+                <span class="flex-1 font-semibold text-pine">{$t(faq.q ?? '')}</span>
                 <span class="shrink-0 grid place-items-center h-8 w-8 rounded-full bg-slate-100 text-slate-500 transition-transform group-open:rotate-180">
                   <ChevronDown size={18} />
                 </span>
               </summary>
-              <div class="px-5 pb-5 sm:pl-[4.5rem] text-slate-600 leading-relaxed whitespace-pre-line">{faq.a}</div>
+              <div class="px-5 pb-5 sm:pl-[4.5rem] text-slate-600 leading-relaxed whitespace-pre-line">{$t(faq.a ?? '')}</div>
             </details>
           {/each}
         </div>

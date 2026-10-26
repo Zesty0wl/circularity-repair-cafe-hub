@@ -306,7 +306,7 @@
               </div>
               <p class="mt-0.5 text-xs text-slate-500 flex flex-wrap items-center gap-x-2 gap-y-1">
                 <span class="font-mono">{j.jobNumber}</span>
-                {#if j.category}<span class="rounded px-1.5 py-0.5 font-medium" style="background-color: {j.categoryColour}22; color: {j.categoryColour}">{j.category}</span>{/if}
+                {#if j.category}<span class="rounded px-1.5 py-0.5 font-medium" style="background-color: {j.categoryColour}22; color: {j.categoryColour}">{$t(j.category)}</span>{/if}
                 {#if j.itemBrand}<span>{j.itemBrand}</span>{/if}
                 {#if j.customerName}<span>· {firstName(j.customerName)}</span>{/if}
                 <PatBadge needed={j.needsPat} result={j.patResult} />

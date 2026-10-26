@@ -357,7 +357,12 @@ function eventNode(event: SeoEvent, cafe: SeoCafe, origin: string, locale: Local
   return node;
 }
 
-function faqNode(cafe: SeoCafe, origin: string): Node | null {
+/**
+ * The home page questions. A question the hub first wrote is in the dictionary
+ * and is given in the page's language, the same as the page shows it. A
+ * question the cafe wrote itself is given as it is.
+ */
+function faqNode(cafe: SeoCafe, origin: string, locale: Locale): Node | null {
   const faqs = (cafe.homePage?.faqs ?? []).filter((f) => f?.q && f?.a);
   if (!faqs.length) return null;
   return {
@@ -365,13 +370,13 @@ function faqNode(cafe: SeoCafe, origin: string): Node | null {
     '@id': `${origin}/#faq`,
     mainEntity: faqs.map((f) => ({
       '@type': 'Question',
-      name: f.q,
-      acceptedAnswer: { '@type': 'Answer', text: f.a },
+      name: translate(locale, f.q ?? ''),
+      acceptedAnswer: { '@type': 'Answer', text: translate(locale, f.a ?? '') },
     })),
   };
 }
 
-function personNode(repairer: SeoRepairer, cafe: SeoCafe, origin: string): Node {
+function personNode(repairer: SeoRepairer, cafe: SeoCafe, origin: string, locale: Locale): Node {
   void cafe;
   const node: Node = {
     '@type': 'Person',
@@ -386,7 +391,9 @@ function personNode(repairer: SeoRepairer, cafe: SeoCafe, origin: string): Node 
   if (avatar) node.image = avatar;
   const skills = (repairer.skills ?? [])
     .map((s) => (typeof s === 'string' ? s : s?.name))
-    .filter((s): s is string => Boolean(s && s.trim()));
+    .filter((s): s is string => Boolean(s && s.trim()))
+    // Skill names the hub started with are shown in the page's language.
+    .map((s) => translate(locale, s));
   if (skills.length) node.knowsAbout = Array.from(new Set(skills));
   return node;
 }
@@ -485,7 +492,7 @@ export function buildSeo(opts: BuildSeoOptions): PageSeo {
   switch (route) {
     case 'home': {
       for (const event of (opts.events ?? []).slice(0, 12)) graph.push(eventNode(event, cafe, origin, locale));
-      const faq = faqNode(cafe, origin);
+      const faq = faqNode(cafe, origin, locale);
       if (faq) graph.push(faq);
       break;
     }
@@ -543,7 +550,8 @@ export function buildSeo(opts: BuildSeoOptions): PageSeo {
       break;
     }
     case 'skills': {
-      const categories = opts.categories ?? [];
+      // Category names the hub started with are given in the page's language.
+      const categories = (opts.categories ?? []).map((c) => tr(c));
       title = `${tr('What We Repair')} | ${name}`;
       description = clamp(
         categories.length
@@ -684,7 +692,7 @@ export function buildSeo(opts: BuildSeoOptions): PageSeo {
           { name: repairer.displayName, path: `/team/${repairer.id}` },
         ]),
       );
-      graph.push(personNode(repairer, cafe, origin));
+      graph.push(personNode(repairer, cafe, origin, locale));
       break;
     }
   }

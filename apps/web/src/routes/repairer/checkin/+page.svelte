@@ -339,7 +339,7 @@
                 <span class="icon-chip" style="background-color: {cat.colour}">
                   <Icon icon={categoryIcon(cat.icon, cat.name)} width="24" height="24" />
                 </span>
-                <span class="block mt-1.5 font-medium text-sm">{cat.name}</span>
+                <span class="block mt-1.5 font-medium text-sm">{$t(cat.name)}</span>
               </button>
             {/each}
           </div>

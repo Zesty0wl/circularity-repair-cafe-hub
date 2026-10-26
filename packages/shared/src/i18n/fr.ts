@@ -2485,4 +2485,140 @@ export const fr: Record<string, string> = {
     'La carte {cardNumber} est déjà chez un autre visiteur pour cette séance. Choisissez un autre numéro.',
   'Network error while uploading': 'Erreur de réseau pendant l’envoi',
   'Upload cancelled': 'Envoi annulé',
+
+  // ── Starting content (apps/cloudflare/src/db/defaults.ts) ─────────────
+  // A new hub starts with this English text. It is shown in French when it
+  // has not been changed, and a hub set to French is seeded with it.
+  // Skill categories.
+  'Electronics': 'Électronique',
+  'Small appliances': 'Petit électroménager',
+  'Clothing & textiles': 'Vêtements et textiles',
+  'Bicycles': 'Vélos',
+  'Furniture & wood': 'Meubles et bois',
+  'Toys': 'Jouets',
+  'Jewellery': 'Bijoux',
+  'Books & paper': 'Livres et papier',
+  'Other': 'Autre',
+  // Home page.
+  'What & Who': 'Qui sommes-nous ?',
+  'We are a volunteer-powered Repair Cafe designed to help our community repair, reuse, and recycle. Bring along your broken or damaged item (small electronics, clothing, bikes, furniture, toys) and our skilled volunteers will do their best to fix it with you, for free.\n\nIt is also a great place to meet, drink tea, and learn a few repair skills. New volunteer repairers are always welcome.':
+    'Nous sommes un Repair Café animé par des bénévoles, pour aider notre quartier à réparer, réutiliser et recycler. Apportez votre objet cassé ou abîmé (petit appareil électronique, vêtement, vélo, meuble, jouet) et nos bénévoles feront de leur mieux pour le réparer avec vous, gratuitement.\n\nC’est aussi un bon endroit pour se rencontrer, boire un thé et apprendre à réparer. Les nouveaux réparateurs bénévoles sont toujours les bienvenus.',
+  'Bring it along': 'Apportez-le',
+  'Turn up at one of our sessions with your broken item.': 'Venez à l’une de nos séances avec votre objet cassé.',
+  'Check it in': 'Faites-le enregistrer',
+  'A volunteer will sign your item in and add it to the queue.':
+    'Un bénévole enregistre votre objet et l’ajoute à la file de réparation.',
+  'Repair together': 'Réparez ensemble',
+  'Our repairers work with you to diagnose and fix it.':
+    'Nos réparateurs cherchent la panne et la réparent avec vous.',
+  'Take it home': 'Rapportez-le chez vous',
+  'You leave with a working item, fewer things in landfill, and new skills.':
+    'Vous repartez avec un objet qui fonctionne, de nouvelles compétences, et moins de déchets à la décharge.',
+  '• The item you want repaired (and any unusual cables, batteries, or parts)\n• Any tools or attachments specific to it\n• Your patience. Repairs take time, and we work alongside you, not for you':
+    '• L’objet à réparer (et ses câbles, piles ou pièces particulières)\n• Les outils ou accessoires propres à cet objet\n• Votre patience. Une réparation prend du temps, et nous travaillons avec vous, pas à votre place',
+  'How much does it cost?': 'Combien ça coûte ?',
+  'Nothing! Repairs are free. Donations to cover hall hire and consumables are very welcome.':
+    'Rien ! Les réparations sont gratuites. Les dons pour payer la salle et les fournitures sont les bienvenus.',
+  'Will you guarantee the repair?': 'La réparation est-elle garantie ?',
+  "No. We do our best, but repairs are carried out by volunteers and we can't offer a warranty. We'll always be honest about what we can and can't fix.":
+    'Non. Nous faisons de notre mieux, mais les réparations sont faites par des bénévoles et nous ne pouvons pas offrir de garantie. Nous vous dirons toujours honnêtement ce que nous pouvons réparer ou non.',
+  'Can you fix anything?': 'Pouvez-vous tout réparer ?',
+  "We try! Some things are too hazardous (microwaves, anything with a sealed gas system) or genuinely beyond economic repair, but we'll always have a look.":
+    'Nous essayons ! Certains objets sont trop dangereux (les micro-ondes, tout ce qui contient un circuit de gaz fermé) ou coûteraient vraiment trop cher à réparer, mais nous regardons toujours.',
+  // Linux page.
+  'Give your old computer years more life, for free.':
+    'Donnez des années de vie en plus à votre vieil ordinateur, gratuitement.',
+  'What is a Linux Repair Cafe?': 'Qu’est-ce qu’un Repair Café Linux ?',
+  'Microsoft stopped supporting Windows 10 in October 2025. Millions of computers that still work perfectly well are now called too old, and many of them will be thrown away.\n\nThey do not have to be. Linux is a free operating system that runs happily on older machines, and it keeps getting updates for as long as you use it. You can try Linux on one of our computers, ask us anything, and have it installed on your own laptop, free of charge.\n\nThis runs as part of our ordinary repair sessions, at the same place and the same time. Come along with your computer, the same as anybody bringing a broken lamp.\n\nYou can do everything on a Linux computer that you can do on any other one: browse the web, send email, write letters, watch videos, and print.':
+    'Microsoft a arrêté le support de Windows 10 en octobre 2025. Des millions d’ordinateurs qui fonctionnent encore très bien sont maintenant dits trop vieux, et beaucoup vont finir à la poubelle.\n\nIls n’ont pas besoin d’être jetés. Linux est un système d’exploitation gratuit qui fonctionne bien sur les machines anciennes, et il reçoit des mises à jour aussi longtemps que vous l’utilisez. Vous pouvez essayer Linux sur l’un de nos ordinateurs, nous poser toutes vos questions, et le faire installer sur votre propre ordinateur portable, gratuitement.\n\nCela se passe pendant nos séances de réparation habituelles, au même endroit et à la même heure. Venez avec votre ordinateur, comme une personne qui apporte une lampe cassée.\n\nSur un ordinateur Linux, vous pouvez faire tout ce que vous faites sur un autre ordinateur : aller sur Internet, envoyer des e-mails, écrire des lettres, regarder des vidéos et imprimer.',
+  'Come to any session': 'Venez à n’importe quelle séance',
+  'We run Linux help at our normal repair sessions. Try Linux on one of our computers first. There is no need to decide anything on the day.':
+    'Nous proposons l’aide Linux pendant nos séances de réparation habituelles. Essayez d’abord Linux sur l’un de nos ordinateurs. Vous n’avez rien à décider sur place.',
+  'Back up your files': 'Sauvegardez vos fichiers',
+  'Copy your photos and documents to a USB stick or a hard drive before you come. Installing Linux erases the computer.':
+    'Copiez vos photos et vos documents sur une clé USB ou un disque dur avant de venir. L’installation de Linux efface l’ordinateur.',
+  'We install it with you': 'Nous l’installons avec vous',
+  'A volunteer installs Linux on your laptop and sets it up while you watch, so you know what is happening.':
+    'Un bénévole installe et règle Linux sur votre ordinateur portable devant vous, pour que vous compreniez ce qui se passe.',
+  'Take it home and use it': 'Rapportez-le et utilisez-le',
+  'We show you round the desktop, help you find your programs, and tell you where to get help later.':
+    'Nous vous faisons découvrir le bureau, nous vous aidons à trouver vos logiciels, et nous vous disons où trouver de l’aide plus tard.',
+  '• Your laptop or computer, and its power supply\n• A backup of everything you want to keep. Installing Linux erases the whole computer\n• Your wifi password, so we can get the machine online\n• Any passwords you need for email or websites you use\n• Time. An install usually takes about an hour':
+    '• Votre ordinateur portable ou fixe, et son chargeur\n• Une sauvegarde de tout ce que vous voulez garder. L’installation de Linux efface tout l’ordinateur\n• Votre mot de passe wifi, pour que nous puissions connecter la machine à Internet\n• Les mots de passe dont vous avez besoin pour vos e-mails ou les sites que vous utilisez\n• Du temps. Une installation prend en général environ une heure',
+  'Will I lose my files?': 'Vais-je perdre mes fichiers ?',
+  'Yes, unless you copy them somewhere else first. Installing Linux wipes the computer completely. Please back up your photos, documents and anything else you care about before you come. Bring the backup with you and we will help you copy it back afterwards.':
+    'Oui, sauf si vous les copiez ailleurs avant. L’installation de Linux efface complètement l’ordinateur. Sauvegardez vos photos, vos documents et tout ce qui compte pour vous avant de venir. Apportez la sauvegarde et nous vous aiderons à tout recopier ensuite.',
+  'Is Linux free?': 'Linux est-il gratuit ?',
+  'Yes. Linux costs nothing, and so does our help. There is no licence to buy and no subscription. Donations towards the hall and the tea are always welcome.':
+    'Oui. Linux ne coûte rien, et notre aide non plus. Il n’y a pas de licence à acheter ni d’abonnement. Les dons pour la salle et le thé sont toujours les bienvenus.',
+  'Can I still use my usual programs?': 'Puis-je encore utiliser mes logiciels habituels ?',
+  'Most of what people do every day works straight away: the web, email, documents, spreadsheets, photos, music and video. Some Windows-only programs do not run on Linux, and there is usually a free alternative. Tell us what you use and we will check before you commit.':
+    'La plupart des usages de tous les jours fonctionnent tout de suite : Internet, les e-mails, les documents, les tableurs, les photos, la musique et la vidéo. Certains logiciels qui n’existent que pour Windows ne fonctionnent pas sous Linux, et il existe en général une solution gratuite à la place. Dites-nous ce que vous utilisez et nous vérifierons avant que vous vous décidiez.',
+  'Is my computer too old?': 'Mon ordinateur est-il trop vieux ?',
+  'Probably not. Linux runs well on computers that Windows 11 will not accept. Bring it along and we will tell you honestly if it is not worth it.':
+    'Sans doute pas. Linux fonctionne bien sur des ordinateurs que Windows 11 refuse. Apportez-le et nous vous dirons honnêtement si cela ne vaut pas la peine.',
+  'What if I do not like it?': 'Et si je n’aime pas ?',
+  'Try it first. We can run Linux from a USB stick without changing anything on your computer, so you can have a proper look before you decide.':
+    'Essayez d’abord. Nous pouvons lancer Linux depuis une clé USB sans rien changer sur votre ordinateur. Vous pouvez donc bien regarder avant de décider.',
+  'Is this a separate event?': 'Est-ce un événement à part ?',
+  'No. Linux help runs at our normal repair sessions, at the same place and the same time. Check our list of dates, bring your computer along, and ask for the Linux table.':
+    'Non. L’aide Linux a lieu pendant nos séances de réparation habituelles, au même endroit et à la même heure. Regardez nos dates, apportez votre ordinateur et demandez la table Linux.',
+
+  // ── CO2 item types (apps/cloudflare/src/db/co2Factors.ts) ─────────────
+  // Groups. "EEE" means electrical and electronic equipment.
+  'Non-EEE': 'Non électrique',
+  'Kitchen and household items': 'Cuisine et maison',
+  'Electronic gadgets': 'Petits appareils électroniques',
+  'Computers and home office': 'Informatique et bureau',
+  'Home entertainment': 'Image et son',
+  // Item types.
+  'Battery/charger/adapter': 'Batterie, chargeur ou adaptateur',
+  'DSLR / Video Camera': 'Appareil photo reflex / Caméscope',
+  'Desktop computer large (e.g. tower)': 'Ordinateur de bureau (grand, par ex. une tour)',
+  'Desktop computer medium (e.g. all-in-one)': 'Ordinateur de bureau (moyen, par ex. un tout-en-un)',
+  'Desktop computer small (e.g. mini-PC)': 'Ordinateur de bureau (petit, par ex. un mini-PC)',
+  'Digital Compact Camera': 'Appareil photo compact',
+  'Flat screen 15-17"': 'Écran plat 15-17"',
+  'Flat screen 19-21"': 'Écran plat 19-21"',
+  'Flat screen 22-24"': 'Écran plat 22-24"',
+  'Flat screen 25-27"': 'Écran plat 25-27"',
+  'Flat screen 28-30"': 'Écran plat 28-30"',
+  'Flat screen 31-33"': 'Écran plat 31-33"',
+  'Flat screen 34-36"': 'Écran plat 34-36"',
+  'Flat screen 37-38"': 'Écran plat 37-38"',
+  'Flat screen 38-40"': 'Écran plat 38-40"',
+  'Flat screen <15"': 'Écran plat <15"',
+  'Flat screen >40"': 'Écran plat >40"',
+  'Flat screen display 26-30"': 'Téléviseur plat 26-30"',
+  'Flat screen display 32-37"': 'Téléviseur plat 32-37"',
+  'Flat screen display ≥39"': 'Téléviseur plat ≥39"',
+  'Games console': 'Console de jeux',
+  'Handheld entertainment device': 'Appareil multimédia portable',
+  'Hi-Fi integrated': 'Chaîne hi-fi compacte',
+  'Hi-Fi separates': 'Éléments hi-fi séparés',
+  'Laptop large': 'Ordinateur portable (grand)',
+  'Laptop small': 'Ordinateur portable (petit)',
+  'PC Accessory': 'Accessoire informatique',
+  'Paper shredder': 'Destructeur de documents',
+  'Portable radio': 'Radio portable',
+  'Printer/scanner': 'Imprimante ou scanner',
+  'Projector': 'Vidéoprojecteur',
+  'TV and gaming-related accessories': 'Accessoires TV et jeux vidéo',
+  'Tablet': 'Tablette',
+  'Furniture': 'Meuble',
+  'Misc (non-EEE)': 'Divers (non électrique)',
+  'Musical instrument': 'Instrument de musique',
+  'Watch/clock': 'Montre ou horloge',
+  'Aircon/Dehumidifier': 'Climatiseur ou déshumidificateur',
+  'Blender': 'Mixeur',
+  'Coffee Maker': 'Cafetière',
+  'Decorative or safety lights': 'Lumières décoratives ou de sécurité',
+  'Fan': 'Ventilateur',
+  'Hair & Beauty item': 'Appareil de coiffure ou de beauté',
+  'Iron': 'Fer à repasser',
+  'Large home electrical': 'Gros appareil électrique',
+  'Small home electrical': 'Petit appareil électrique',
+  'Small kitchen item': 'Petit appareil de cuisine',
+  'Tool (non-EEE)': 'Outil (non électrique)',
+  'Toy': 'Jouet',
 };

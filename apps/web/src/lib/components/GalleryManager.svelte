@@ -281,7 +281,7 @@
 
         <div class="p-2">
           {#if photo.jobNumber}
-            <p class="text-[11px] font-mono text-slate-400 truncate">{photo.jobNumber}{#if photo.categoryName} · {photo.categoryName}{/if}</p>
+            <p class="text-[11px] font-mono text-slate-400 truncate">{photo.jobNumber}{#if photo.categoryName} · {$t(photo.categoryName)}{/if}</p>
           {/if}
           <p class="text-xs {photo.caption ? 'text-slate-700' : 'text-slate-400 italic'} line-clamp-2 min-h-[2rem]">
             {photo.caption || $t('No description yet')}
@@ -428,7 +428,7 @@
 
           {#if editing.jobNumber}
             <p class="text-xs text-slate-500">
-              {$t('From repair {number}', { number: editing.jobNumber })}{#if editing.categoryName} · {editing.categoryName}{/if}
+              {$t('From repair {number}', { number: editing.jobNumber })}{#if editing.categoryName} · {$t(editing.categoryName)}{/if}
             </p>
           {/if}
           {#if editing.uploaderName}

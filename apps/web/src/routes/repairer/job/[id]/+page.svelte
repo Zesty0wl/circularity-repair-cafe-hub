@@ -265,7 +265,7 @@
             <p class="text-xs text-slate-500 font-mono">{detail.job.jobNumber}</p>
             <h1 class="text-2xl font-bold leading-tight mt-0.5">{detail.job.itemDescription}</h1>
             <p class="text-slate-600 text-sm mt-1">
-              {#if detail.category?.name}<span class="font-medium" style="color: {detail.category.colour}">{detail.category.name}</span>{/if}
+              {#if detail.category?.name}<span class="font-medium" style="color: {detail.category.colour}">{$t(detail.category.name)}</span>{/if}
               {#if detail.job.itemBrand}{detail.category?.name ? ' · ' : ''}{detail.job.itemBrand}{/if}
             </p>
           </div>
@@ -463,9 +463,9 @@
                     <select id="ctype" class="input" bind:value={co2FactorId}>
                       <option value={null}>{$t('Not recorded')}</option>
                       {#each factorGroups as group}
-                        <optgroup label={group.name}>
+                        <optgroup label={$t(group.name)}>
                           {#each group.types as type (type.id)}
-                            <option value={type.id}>{type.label}</option>
+                            <option value={type.id}>{$t(type.label)}</option>
                           {/each}
                         </optgroup>
                       {/each}

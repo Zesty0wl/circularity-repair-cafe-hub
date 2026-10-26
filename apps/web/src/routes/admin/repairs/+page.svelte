@@ -125,7 +125,7 @@
   </select>
   <select class="input" bind:value={filters.categoryId}>
     <option value="">{$t('All categories')}</option>
-    {#each categories as c}<option value={c.id}>{c.name}</option>{/each}
+    {#each categories as c}<option value={c.id}>{$t(c.name)}</option>{/each}
   </select>
   <select class="input" bind:value={filters.status}>
     <option value="">{$t('Any status')}</option>

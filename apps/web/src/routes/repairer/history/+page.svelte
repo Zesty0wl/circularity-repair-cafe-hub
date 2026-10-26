@@ -49,7 +49,7 @@
 <dl class="mt-4 grid grid-cols-3 gap-2 md:gap-3 max-w-2xl">
   <div class="card px-4 py-3"><dt class="text-xs text-slate-500">{$t('Repairs')}</dt><dd class="text-2xl font-bold">{stats?.total ?? '…'}</dd></div>
   <div class="card px-4 py-3"><dt class="text-xs text-slate-500">{$t('Fixed')}</dt><dd class="text-2xl font-bold">{stats ? `${stats.successRate}%` : '…'}</dd></div>
-  <div class="card px-4 py-3"><dt class="text-xs text-slate-500">{$t('You fix most')}</dt><dd class="text-base font-semibold leading-tight mt-1">{stats?.busiestCategory ?? '…'}</dd></div>
+  <div class="card px-4 py-3"><dt class="text-xs text-slate-500">{$t('You fix most')}</dt><dd class="text-base font-semibold leading-tight mt-1">{stats?.busiestCategory ? $t(stats.busiestCategory) : '…'}</dd></div>
 </dl>
 
 {#if error}
@@ -65,7 +65,7 @@
         <a href={`/repairer/job/${r.id}`} class="flex items-center gap-3 px-4 py-3 hover:bg-slate-50">
           <div class="min-w-0 flex-1">
             <p class="font-medium text-slate-900 truncate">{r.itemDescription}</p>
-            <p class="text-xs text-slate-500 truncate"><span class="font-mono">{r.jobNumber}</span> · {day(r.eventDate)}{#if r.category} · {r.category}{/if}</p>
+            <p class="text-xs text-slate-500 truncate"><span class="font-mono">{r.jobNumber}</span> · {day(r.eventDate)}{#if r.category} · {$t(r.category)}{/if}</p>
           </div>
           <span class="badge badge-{r.status} shrink-0">{statusLabel(r.status)}</span>
           <ChevronRight size={16} class="text-slate-400 shrink-0" />

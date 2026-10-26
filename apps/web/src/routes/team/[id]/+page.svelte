@@ -160,7 +160,7 @@
               style="background-color: {s.colour}"
             >
               <Icon icon={categoryIcon(s.icon, s.name)} width="16" height="16" />
-              {s.name}
+              {$t(s.name)}
             </span>
           {/each}
         </div>

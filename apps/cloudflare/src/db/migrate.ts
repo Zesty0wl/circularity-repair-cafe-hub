@@ -17,7 +17,8 @@
 import { CO2_FACTORS } from './co2Factors.js';
 import { matchCo2FactorKey } from './co2Match.js';
 import { DEFAULT_CATEGORIES, DEFAULT_HOME_PAGE, DEFAULT_LINUX_PAGE } from './defaults.js';
-import { bindings } from '../env.js';
+import { translate, type Locale } from '@circularity/shared';
+import { bindings, env } from '../env.js';
 import { APP_VERSION } from '../version.js';
 import m0001 from './migrations/0001_init.js';
 import m0002 from './migrations/0002_display_token.js';
@@ -102,6 +103,23 @@ const SEED_VERSION = `${APP_VERSION}:${fingerprint(
 )}`;
 
 /**
+ * The starting text in the hub's language. The English text is the key in the
+ * dictionary, so each string is looked up as it is. Only strings are changed:
+ * other values (such as `showStats`) stay as they are.
+ */
+function inLanguage<T>(value: T, locale: Locale): T {
+  if (locale === 'en') return value;
+  if (typeof value === 'string') return translate(locale, value) as T;
+  if (Array.isArray(value)) return value.map((item) => inLanguage(item, locale)) as T;
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [key, inLanguage(item, locale)]),
+    ) as T;
+  }
+  return value;
+}
+
+/**
  * Make sure the database holds what a hub needs. Safe to run any number of
  * times. `force` runs it even when the seed version has not changed, which
  * an import does, because it has just replaced every table.
@@ -113,6 +131,12 @@ export async function seed(db: D1Database, options: { force?: boolean } = {}): P
   }
 
   const statements: D1PreparedStatement[] = [];
+
+  // A hub set to French starts with French page text and category names. A hub
+  // set to English, or to follow the browser ('auto'), starts in English. This
+  // only decides what empty values are filled with below, so the text of a hub
+  // that already has its pages and categories never changes.
+  const seedLocale: Locale = env.LANGUAGE === 'fr' ? 'fr' : 'en';
 
   // The single cafe row. Its install id is random and identifies this hub to
   // the telemetry collector and nothing else.
@@ -133,12 +157,12 @@ export async function seed(db: D1Database, options: { force?: boolean } = {}): P
   statements.push(
     db
       .prepare(`UPDATE cafes SET home_page = ? WHERE home_page IS NULL OR home_page = '{}' OR home_page = ''`)
-      .bind(JSON.stringify(DEFAULT_HOME_PAGE)),
+      .bind(JSON.stringify(inLanguage(DEFAULT_HOME_PAGE, seedLocale))),
   );
   statements.push(
     db
       .prepare(`UPDATE cafes SET linux_page = ? WHERE linux_page IS NULL OR linux_page = '{}' OR linux_page = ''`)
-      .bind(JSON.stringify(DEFAULT_LINUX_PAGE)),
+      .bind(JSON.stringify(inLanguage(DEFAULT_LINUX_PAGE, seedLocale))),
   );
 
   const categoryCount = await db.prepare('SELECT COUNT(*) AS n FROM skill_categories').first<{ n: number }>();
@@ -147,12 +171,14 @@ export async function seed(db: D1Database, options: { force?: boolean } = {}): P
       statements.push(
         db
           .prepare('INSERT INTO skill_categories (id, name, icon, colour, sort_order, is_electrical) VALUES (?, ?, ?, ?, ?, ?)')
-          .bind(crypto.randomUUID(), cat.name, cat.icon, cat.colour, order, cat.isElectrical ? 1 : 0),
+          .bind(crypto.randomUUID(), translate(seedLocale, cat.name), cat.icon, cat.colour, order, cat.isElectrical ? 1 : 0),
       );
     });
   }
 
-  // Reference data for the CO2 figure. Updated in place so a corrected number
+  // Reference data for the CO2 figure. It stays in English in every language,
+  // because other code matches on these words. The pages translate it when they
+  // show it. Updated in place so a corrected number
   // reaches existing hubs. `is_active` is left alone because a cafe may have
   // hidden the kinds of thing it never sees.
   CO2_FACTORS.forEach((factor, order) => {

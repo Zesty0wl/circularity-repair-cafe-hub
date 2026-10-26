@@ -158,7 +158,7 @@
             <p class="kicker flex items-center gap-1.5"><CalendarClock size={14} /> {$t('Pre-registered')}</p>
             <h1 class="text-2xl font-bold leading-tight mt-0.5">{pre.itemDescription}</h1>
             <p class="text-slate-600 text-sm mt-1">
-              {#if detail.category}<span class="font-medium" style="color: {detail.category.colour}">{detail.category.name}</span>{/if}
+              {#if detail.category}<span class="font-medium" style="color: {detail.category.colour}">{$t(detail.category.name)}</span>{/if}
               {#if pre.itemBrand}{detail.category ? ' · ' : ''}{pre.itemBrand}{/if}
             </p>
           </div>

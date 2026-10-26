@@ -49,8 +49,11 @@
   let openFaq = -1;
 
   $: cafeName = $cafe?.name ?? 'Repair Café';
-  $: heroHeading = page.hero?.heading?.trim() || $t('Linux Repair Cafe');
-  $: heroTagline = page.hero?.tagline?.trim() || '';
+  // The cafe owns this wording. Text still as the hub first wrote it is in the
+  // dictionary, so it shows in the visitor's language. Text the cafe wrote
+  // itself is not, so it shows as it is.
+  $: heroHeading = $t(page.hero?.heading?.trim() || 'Linux Repair Cafe');
+  $: heroTagline = $t(page.hero?.tagline?.trim() || '');
   $: nextEvent = upcoming[0] ?? null;
   $: homeVenue = upcoming[0]?.venue ?? null;
 
@@ -73,7 +76,7 @@
 
   // The intro reads as one lead paragraph followed by supporting ones, the
   // same as the home page, so the two pages feel like one site.
-  $: introParagraphs = String(page.intro?.body ?? '')
+  $: introParagraphs = $t(String(page.intro?.body ?? ''))
     .split(/\n\s*\n/)
     .map((p) => p.trim())
     .filter(Boolean);
@@ -94,7 +97,7 @@
     const paragraphs = (body ?? '').split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
     return { items, isList, paragraphs };
   }
-  $: bring = parseBringList(String(page.whatToBring?.body ?? ''));
+  $: bring = parseBringList($t(String(page.whatToBring?.body ?? '')));
 
   // ── What we have managed so far ───────────────────────────────────────────
   // Off unless the cafe turns it on, and each figure is dropped while it is
@@ -159,7 +162,7 @@
     <section class="section">
       <div class="max-w-2xl mx-auto text-center">
         {#if page.intro?.heading}
-          <h2 class="section-title">{page.intro.heading}</h2>
+          <h2 class="section-title">{$t(page.intro.heading)}</h2>
         {/if}
         {#if introParagraphs.length > 0}
           <p class="mt-6 text-xl sm:text-2xl leading-relaxed font-medium text-slate-800 whitespace-pre-line">
@@ -183,8 +186,8 @@
           {#each page.howItWorks as step, i}
             <div class="relative text-center">
               <div class="w-12 h-12 mx-auto rounded-full bg-brand-600 text-white ring-8 ring-brand-50 flex items-center justify-center text-xl font-bold font-display">{i + 1}</div>
-              <h3 class="mt-4 text-lg font-semibold text-pine">{step.title}</h3>
-              <p class="mt-2 text-slate-600 text-sm leading-relaxed whitespace-pre-line">{step.body}</p>
+              <h3 class="mt-4 text-lg font-semibold text-pine">{$t(step.title ?? '')}</h3>
+              <p class="mt-2 text-slate-600 text-sm leading-relaxed whitespace-pre-line">{$t(step.body ?? '')}</p>
             </div>
           {/each}
         </div>
@@ -220,7 +223,7 @@
   <!-- ────────────────── What to bring ───────────────────────── -->
   {#if page.whatToBring?.body}
     <section class="section">
-      <SectionHeading eyebrow={$t('Before you come')} title={page.whatToBring.heading || $t('What to bring')} />
+      <SectionHeading eyebrow={$t('Before you come')} title={$t(page.whatToBring.heading || 'What to bring')} />
       <div class="mt-10 max-w-3xl mx-auto card p-6 sm:p-10">
         {#if bring.isList}
           <ul class="space-y-4">
@@ -331,12 +334,12 @@
             >
               <summary class="cursor-pointer flex items-center gap-4 px-5 py-4 list-none">
                 <span class="shrink-0 grid place-items-center h-9 w-9 rounded-full bg-brand-100 text-pine font-bold font-display transition-colors group-open:bg-brand-600 group-open:text-white">{i + 1}</span>
-                <span class="flex-1 font-semibold text-pine">{faq.q}</span>
+                <span class="flex-1 font-semibold text-pine">{$t(faq.q ?? '')}</span>
                 <span class="shrink-0 grid place-items-center h-8 w-8 rounded-full bg-slate-100 text-slate-500 transition-transform group-open:rotate-180">
                   <ChevronDown size={18} />
                 </span>
               </summary>
-              <div class="px-5 pb-5 sm:pl-[4.5rem] text-slate-600 leading-relaxed whitespace-pre-line">{faq.a}</div>
+              <div class="px-5 pb-5 sm:pl-[4.5rem] text-slate-600 leading-relaxed whitespace-pre-line">{$t(faq.a ?? '')}</div>
             </details>
           {/each}
         </div>

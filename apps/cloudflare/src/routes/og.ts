@@ -170,9 +170,14 @@ export async function ogRoutes(app: App): Promise<void> {
       .from(skillCategories)
       .where(eq(skillCategories.isActive, true))
       .orderBy(asc(skillCategories.sortOrder), asc(skillCategories.name));
+    // A category name the hub started with is drawn in the card's language.
+    // A name the cafe typed itself is not in the dictionary, so it stays as it
+    // is. Translating here, before the card's file name is worked out, means a
+    // card is drawn again when the words on it change.
+    const locale = cardLocale();
     const mine = new Set(user.skills ?? []);
-    const skills = cats.filter((c) => mine.has(c.id)).map((c) => c.name);
-    const otherSkills = cats.filter((c) => !mine.has(c.id)).map((c) => c.name);
+    const skills = cats.filter((c) => mine.has(c.id)).map((c) => translate(locale, c.name));
+    const otherSkills = cats.filter((c) => !mine.has(c.id)).map((c) => translate(locale, c.name));
 
     // The next published session, same filter as the public events list.
     const today = new Date().toISOString().slice(0, 10);
@@ -188,7 +193,6 @@ export async function ogRoutes(app: App): Promise<void> {
       .where(and(eq(events.isPublished, true), ne(events.status, 'cancelled'), gte(events.date, today)))
       .orderBy(asc(events.date), asc(events.startTime))
       .limit(1);
-    const locale = cardLocale();
     const event = next
       ? {
           dateLine: translate(locale, '{date}, {start} to {end}', {

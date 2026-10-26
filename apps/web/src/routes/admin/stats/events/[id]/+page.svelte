@@ -213,7 +213,7 @@
                 >
                   <Icon icon={categoryIcon(c.icon ?? '')} width="16" height="16" />
                 </span>
-                <span class="font-medium text-slate-900">{c.name}</span>
+                <span class="font-medium text-slate-900">{$t(c.name)}</span>
               </span>
               <span class="flex items-center gap-3 text-slate-600">
                 <span><strong class="text-slate-900">{c.count}</strong></span>
@@ -260,7 +260,7 @@
                       >
                         <Icon icon={categoryIcon(j.categoryIcon ?? '')} width="10" height="10" />
                       </span>
-                      {j.categoryName}
+                      {$t(j.categoryName)}
                     </span>
                   {:else}
                     <span class="text-slate-400">-</span>

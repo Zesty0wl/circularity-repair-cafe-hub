@@ -45,7 +45,7 @@
   {#if volunteer.skills.length > 0}
     <div class="mt-3 flex flex-wrap gap-1">
       {#each volunteer.skills.slice(0, badgeLimit) as s}
-        <span class="badge bg-slate-100 text-slate-700">{s}</span>
+        <span class="badge bg-slate-100 text-slate-700">{$t(s)}</span>
       {/each}
       {#if volunteer.skills.length > badgeLimit}
         <span class="badge bg-slate-100 text-slate-500">{$t('+{count} more', { count: volunteer.skills.length - badgeLimit })}</span>

@@ -354,7 +354,7 @@
                       <span class="h-6 w-6 rounded-full bg-slate-100 text-xs font-semibold flex items-center justify-center shrink-0">{i + 1}</span>
                       <span class="min-w-0 flex-1">
                         <span class="block text-sm font-medium truncate">{j.itemDescription}</span>
-                        <span class="block text-xs text-slate-500 truncate">{j.jobNumber}{#if j.category} · {j.category}{/if}</span>
+                        <span class="block text-xs text-slate-500 truncate">{j.jobNumber}{#if j.category} · {$t(j.category)}{/if}</span>
                       </span>
                       <span class="text-xs shrink-0 {WAIT_TONE_CLASS[waitTone(m)]}">{formatMinutes(m)}</span>
                     </a>

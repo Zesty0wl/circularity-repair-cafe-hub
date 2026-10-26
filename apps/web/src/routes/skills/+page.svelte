@@ -51,7 +51,7 @@
             <div class="icon-tile mx-auto" style={`background-color: ${categoryTint(cat.colour)}; color: ${categoryInk(cat.colour)}`}>
               <Icon icon={categoryIcon(cat.icon, cat.name)} width="24" height="24" />
             </div>
-            <p class="mt-3 font-medium text-pine">{cat.name}</p>
+            <p class="mt-3 font-medium text-pine">{$t(cat.name)}</p>
             <p class="text-xs text-slate-500">
               {cat.repairerCount === 1
                 ? $t('{count} volunteer', { count: cat.repairerCount })

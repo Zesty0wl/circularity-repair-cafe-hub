@@ -155,7 +155,7 @@
                 <PatBadge needed={item.needsPat} />
               </div>
               <p class="mt-0.5 text-xs text-slate-500 flex flex-wrap items-center gap-x-2 gap-y-1">
-                {#if item.category}<span class="rounded px-1.5 py-0.5 font-medium" style="background-color: {item.category.colour}22; color: {item.category.colour}">{item.category.name}</span>{/if}
+                {#if item.category}<span class="rounded px-1.5 py-0.5 font-medium" style="background-color: {item.category.colour}22; color: {item.category.colour}">{$t(item.category.name)}</span>{/if}
                 {#if item.itemBrand}<span>{item.itemBrand}</span>{/if}
                 {#if item.customerFirstName}<span>· {item.customerFirstName}</span>{/if}
               </p>

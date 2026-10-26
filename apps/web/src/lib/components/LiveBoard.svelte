@@ -180,7 +180,7 @@
                       <span class="item">{j.item}</span>
                       <span class="meta">
                         <span class="num">{j.callNumber}</span>
-                        {#if j.category}<span class="cat" style="--c: {j.categoryColour ?? '#64748b'}">{j.category}</span>{/if}
+                        {#if j.category}<span class="cat" style="--c: {j.categoryColour ?? '#64748b'}">{$t(j.category)}</span>{/if}
                         {#if control && j.customerName}<span>· {j.customerName}</span>{/if}
                       </span>
                     </span>

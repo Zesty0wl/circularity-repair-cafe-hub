@@ -101,3 +101,4 @@ export const env = {
     const value = bindings().LANGUAGE?.trim().toLowerCase();
     return value === 'en' || value === 'fr' ? value : 'auto';
   },
+};

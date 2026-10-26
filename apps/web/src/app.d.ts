@@ -3,7 +3,7 @@ declare global {
   namespace App {
     interface Locals {
       /** The language resolved for this request. See hooks.server.ts. */
-      locale: 'en' | 'fr';
+      locale: import('@circularity/shared').Locale;
     }
   }
 }

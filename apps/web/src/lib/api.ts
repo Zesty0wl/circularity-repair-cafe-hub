@@ -1,5 +1,6 @@
 import { auth } from './stores/auth';
 import { get } from 'svelte/store';
+import { tNow } from './i18n';
 
 export interface ApiError extends Error {
   status: number;
@@ -201,7 +202,9 @@ async function handleResponse<T>(res: Response): Promise<T> {
     } catch {
       errBody = { error: res.statusText };
     }
-    const err: ApiError = Object.assign(new Error(errBody?.error || res.statusText), {
+    // The hub writes its messages in English. Show them in the visitor's
+    // language when the dictionary has them.
+    const err: ApiError = Object.assign(new Error(tNow(errBody?.error || res.statusText)), {
       status: res.status,
       code: errBody?.code,
       details: errBody?.details,

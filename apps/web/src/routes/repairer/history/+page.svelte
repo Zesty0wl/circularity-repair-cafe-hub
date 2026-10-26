@@ -4,6 +4,7 @@
   import { onMount } from 'svelte';
   import { api } from '$lib/api';
   import { statusLabel } from '$lib/staff/queue';
+  import { currentLocale, t, tNow } from '$lib/i18n';
   import { ChevronRight } from 'lucide-svelte';
 
   interface Row {
@@ -27,7 +28,7 @@
       data = await api(`/api/repairer/history?page=${page}&perPage=25`);
       error = '';
     } catch (err: any) {
-      error = err?.message ?? 'Could not load your repairs';
+      error = err?.message ?? tNow('Could not load your repairs');
     }
   }
   onMount(() => {
@@ -36,26 +37,27 @@
   });
 
   function day(iso: string): string {
-    return new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+    const locale = currentLocale() === 'fr' ? 'fr-FR' : 'en-GB';
+    return new Date(`${iso}T12:00:00Z`).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
   }
 </script>
 
-<svelte:head><title>My repairs</title></svelte:head>
+<svelte:head><title>{$t('My repairs')}</title></svelte:head>
 
-<h1 class="text-2xl font-bold">My repairs</h1>
+<h1 class="text-2xl font-bold">{$t('My repairs')}</h1>
 
 <dl class="mt-4 grid grid-cols-3 gap-2 md:gap-3 max-w-2xl">
-  <div class="card px-4 py-3"><dt class="text-xs text-slate-500">Repairs</dt><dd class="text-2xl font-bold">{stats?.total ?? '…'}</dd></div>
-  <div class="card px-4 py-3"><dt class="text-xs text-slate-500">Fixed</dt><dd class="text-2xl font-bold">{stats ? `${stats.successRate}%` : '…'}</dd></div>
-  <div class="card px-4 py-3"><dt class="text-xs text-slate-500">You fix most</dt><dd class="text-base font-semibold leading-tight mt-1">{stats?.busiestCategory ?? '…'}</dd></div>
+  <div class="card px-4 py-3"><dt class="text-xs text-slate-500">{$t('Repairs')}</dt><dd class="text-2xl font-bold">{stats?.total ?? '…'}</dd></div>
+  <div class="card px-4 py-3"><dt class="text-xs text-slate-500">{$t('Fixed')}</dt><dd class="text-2xl font-bold">{stats ? `${stats.successRate}%` : '…'}</dd></div>
+  <div class="card px-4 py-3"><dt class="text-xs text-slate-500">{$t('You fix most')}</dt><dd class="text-base font-semibold leading-tight mt-1">{stats?.busiestCategory ?? '…'}</dd></div>
 </dl>
 
 {#if error}
   <p class="mt-4 text-rose-700">{error}</p>
 {:else if !data}
-  <p class="text-slate-500 mt-4">Loading…</p>
+  <p class="text-slate-500 mt-4">{$t('Loading…')}</p>
 {:else if data.data.length === 0}
-  <div class="card p-6 mt-4 text-slate-600">Nothing yet. The repairs you start will be listed here.</div>
+  <div class="card p-6 mt-4 text-slate-600">{$t('Nothing yet. The repairs you start will be listed here.')}</div>
 {:else}
   <ul class="card mt-4 divide-y divide-slate-100">
     {#each data.data as r}
@@ -73,10 +75,10 @@
   </ul>
   {#if data.meta.totalPages > 1}
     <div class="mt-3 flex items-center justify-between text-sm text-slate-600">
-      <span>Page {data.meta.page} of {data.meta.totalPages}</span>
+      <span>{$t('Page {page} of {total}', { page: data.meta.page, total: data.meta.totalPages })}</span>
       <div class="flex gap-2">
-        <button class="btn-secondary btn-sm" disabled={page <= 1} on:click={() => { page--; load(); }}>Newer</button>
-        <button class="btn-secondary btn-sm" disabled={page >= data.meta.totalPages} on:click={() => { page++; load(); }}>Older</button>
+        <button class="btn-secondary btn-sm" disabled={page <= 1} on:click={() => { page--; load(); }}>{$t('Newer')}</button>
+        <button class="btn-secondary btn-sm" disabled={page >= data.meta.totalPages} on:click={() => { page++; load(); }}>{$t('Older')}</button>
       </div>
     </div>
   {/if}

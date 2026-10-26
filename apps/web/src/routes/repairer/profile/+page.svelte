@@ -4,6 +4,7 @@
   import { api } from '$lib/api';
   import ShareProfile from '$lib/components/ShareProfile.svelte';
   import { ExternalLink, Upload, Trash2, Eye, EyeOff, Save } from 'lucide-svelte';
+  import { t, tNow } from '$lib/i18n';
 
   interface Me {
     id: string;
@@ -41,7 +42,7 @@
         showOnHomePage = me.showOnHomePage;
       }
     } catch (e: any) {
-      error = e?.message ?? 'Could not load your profile';
+      error = e?.message ?? tNow('Could not load your profile');
     } finally {
       loading = false;
     }
@@ -66,7 +67,7 @@
       me = me; // trigger reactivity (the share section watches showOnPublicPage)
       savedAt = Date.now();
     } catch (e: any) {
-      error = e?.message ?? 'Could not save';
+      error = e?.message ?? tNow('Could not save');
     } finally {
       saving = false;
     }
@@ -88,7 +89,7 @@
       me.avatarUrl = r.url;
       me = me; // trigger reactivity
     } catch (err: any) {
-      error = err?.message ?? 'Could not upload photo';
+      error = err?.message ?? tNow('Could not upload photo');
     } finally {
       uploading = false;
       input.value = '';
@@ -97,13 +98,13 @@
 
   async function removeAvatar() {
     if (!me?.avatarUrl) return;
-    if (!confirm('Remove your photo?')) return;
+    if (!confirm(tNow('Remove your photo?'))) return;
     try {
       await api('/api/repairer/me/avatar', { method: 'DELETE' });
       me.avatarUrl = null;
       me = me;
     } catch (e: any) {
-      error = e?.message ?? 'Could not remove photo';
+      error = e?.message ?? tNow('Could not remove photo');
     }
   }
 
@@ -120,23 +121,23 @@
 
 <header class="flex items-start justify-between gap-4 flex-wrap">
   <div>
-    <h1 class="text-2xl font-bold">My profile</h1>
-    <p class="text-slate-600 text-sm">This is what visitors see on the public team page.</p>
+    <h1 class="text-2xl font-bold">{$t('My profile')}</h1>
+    <p class="text-slate-600 text-sm">{$t('This is what visitors see on the public team page.')}</p>
   </div>
   {#if me}
     <a href="/team/{me.id}" target="_blank" rel="noopener" class="btn-secondary btn-sm">
-      <ExternalLink size={14} /> View my public page
+      <ExternalLink size={14} /> {$t('View my public page')}
     </a>
   {/if}
 </header>
 
 {#if loading}
-  <div class="card p-6 mt-4 text-center text-slate-500">Loading…</div>
+  <div class="card p-6 mt-4 text-center text-slate-500">{$t('Loading…')}</div>
 {:else if me}
   <div class="grid md:grid-cols-3 gap-4 mt-4">
     <!-- Avatar -->
     <div class="card p-6 text-center md:col-span-1">
-      <p class="kicker">Photo</p>
+      <p class="kicker">{$t('Photo')}</p>
       <div class="mt-4 flex justify-center">
         {#if me.avatarUrl}
           <img src={me.avatarUrl} alt="" class="h-32 w-32 rounded-2xl object-cover ring-1 ring-slate-200" />
@@ -147,37 +148,37 @@
         {/if}
       </div>
       <label class="btn-primary mt-4 inline-flex cursor-pointer w-full justify-center">
-        <Upload size={16} /> {me.avatarUrl ? 'Change photo' : 'Upload photo'}
+        <Upload size={16} /> {me.avatarUrl ? $t('Change photo') : $t('Upload photo')}
         <input type="file" accept="image/jpeg,image/png,image/webp" class="hidden" on:change={uploadAvatar} disabled={uploading} />
       </label>
       {#if me.avatarUrl}
         <button class="btn-ghost btn-sm mt-2 text-rose-600" on:click={removeAvatar}>
-          <Trash2 size={14} /> Remove photo
+          <Trash2 size={14} /> {$t('Remove photo')}
         </button>
       {/if}
-      {#if uploading}<p class="text-xs text-slate-500 mt-2">Uploading…</p>{/if}
-      <p class="text-xs text-slate-400 mt-3">JPEG, PNG or WebP. Max ~5 MB. Square photos look best.</p>
+      {#if uploading}<p class="text-xs text-slate-500 mt-2">{$t('Uploading…')}</p>{/if}
+      <p class="text-xs text-slate-400 mt-3">{$t('JPEG, PNG or WebP. Max ~5 MB. Square photos look best.')}</p>
     </div>
 
     <!-- Details -->
     <div class="card p-6 md:col-span-2 space-y-4">
       <div>
-        <label class="label" for="dn">Display name</label>
+        <label class="label" for="dn">{$t('Display name')}</label>
         <input id="dn" class="input" maxlength="100" bind:value={displayName} />
-        <p class="text-xs text-slate-500 mt-1">How your name appears on the public team page and the live shop-floor board.</p>
+        <p class="text-xs text-slate-500 mt-1">{$t('How your name appears on the public team page and the live shop-floor board.')}</p>
       </div>
 
       <div>
-        <label class="label" for="bio">About me <span class="font-normal text-slate-500">(optional)</span></label>
+        <label class="label" for="bio">{$t('About me')} <span class="font-normal text-slate-500">{$t('(optional)')}</span></label>
         <textarea
           id="bio"
           class="input"
           rows="6"
           maxlength="2000"
-          placeholder={'A few sentences about you. What you love fixing, how you got into it, anything that makes you human.'}
+          placeholder={$t('A few sentences about you. What you love fixing, how you got into it, anything that makes you human.')}
           bind:value={bio}
         ></textarea>
-        <p class="text-xs text-slate-500 mt-1">{bio.length}/2000 characters</p>
+        <p class="text-xs text-slate-500 mt-1">{$t('{n}/2000 characters', { n: bio.length })}</p>
       </div>
 
       <label class="flex items-start gap-3 cursor-pointer">
@@ -189,10 +190,10 @@
             {:else}
               <EyeOff size={16} class="text-slate-400" />
             {/if}
-            Show me on the public team page
+            {$t('Show me on the public team page')}
           </span>
           <span class="block text-xs text-slate-500 mt-1">
-            When off, your public profile returns "not found" and your card doesn't appear in the team listings.
+            {$t('When off, your public profile returns "not found" and your card doesn\'t appear in the team listings.')}
           </span>
         </span>
       </label>
@@ -206,10 +207,10 @@
             {:else}
               <EyeOff size={16} class="text-slate-400" />
             {/if}
-            Feature me on the home page
+            {$t('Feature me on the home page')}
           </span>
           <span class="block text-xs text-slate-500 mt-1">
-            {#if !showOnPublicPage}Turn on "Show me on the public team page" first.{:else}When off, you still appear on the team listing but not on the home page "Meet our team" strip.{/if}
+            {#if !showOnPublicPage}{$t('Turn on "Show me on the public team page" first.')}{:else}{$t('When off, you still appear on the team listing but not on the home page "Meet our team" strip.')}{/if}
           </span>
         </span>
       </label>
@@ -220,10 +221,10 @@
 
       <div class="flex items-center justify-end gap-3 pt-2">
         {#if savedAt && Date.now() - savedAt < 4000}
-          <span class="text-sm text-emerald-700">Saved ✓</span>
+          <span class="text-sm text-emerald-700">{$t('Saved ✓')}</span>
         {/if}
         <button class="btn-primary" disabled={saving || !displayName.trim()} on:click={save}>
-          <Save size={16} /> {saving ? 'Saving…' : 'Save changes'}
+          <Save size={16} /> {saving ? $t('Saving…') : $t('Save changes')}
         </button>
       </div>
     </div>
@@ -233,23 +234,22 @@
   <div class="card p-6 mt-4">
     <div class="flex flex-wrap items-center justify-between gap-4">
       <div class="max-w-xl">
-        <p class="kicker">Share</p>
+        <p class="kicker">{$t('Share')}</p>
         <p class="mt-2 text-sm text-slate-600">
-          Invite people to the next session with a card made for you. It shows your photo, your
-          name, what you fix, what else people can bring, and when and where the next session is.
+          {$t('Invite people to the next session with a card made for you. It shows your photo, your name, what you fix, what else people can bring, and when and where the next session is.')}
         </p>
       </div>
       {#if me.showOnPublicPage}
         <ShareProfile repairerId={me.id} displayName={me.displayName} />
       {:else}
         <p class="text-sm text-slate-500">
-          Turn on "Show me on the public team page" and save, then you can share your profile.
+          {$t('Turn on "Show me on the public team page" and save, then you can share your profile.')}
         </p>
       {/if}
     </div>
   </div>
 
   <p class="text-xs text-slate-400 mt-6">
-    Your skills, email address and join date are managed by your repair cafe's admin. Ask them if anything needs updating.
+    {$t("Your skills, email address and join date are managed by your repair cafe's admin. Ask them if anything needs updating.")}
   </p>
 {/if}

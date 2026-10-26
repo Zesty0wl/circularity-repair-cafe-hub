@@ -21,6 +21,7 @@
     waitTone,
   } from '$lib/staff/queue';
   import { CheckCircle2, Clock, Hand, Image as ImageIcon, Wrench } from 'lucide-svelte';
+  import { currentLocale, t } from '$lib/i18n';
 
   export let data: BoardData | null;
   export let mode: 'display' | 'control' = 'display';
@@ -115,24 +116,24 @@
         {/if}
       </div>
     </div>
-    <p class="clock" aria-label="Time now">{new Date(now).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</p>
+    <p class="clock" aria-label={$t('Time now')}>{new Date(now).toLocaleTimeString(currentLocale() === 'fr' ? 'fr-FR' : 'en-GB', { hour: '2-digit', minute: '2-digit' })}</p>
   </header>
 
   {#if !data}
-    <div class="empty"><p class="empty-big">Loading…</p></div>
+    <div class="empty"><p class="empty-big">{$t('Loading…')}</p></div>
   {:else if !data.sessions.length}
     <div class="empty">
-      <p class="empty-big">No repair session running right now</p>
-      <p class="empty-sub">The queue appears here as soon as today's session starts.</p>
+      <p class="empty-big">{$t('No repair session running right now')}</p>
+      <p class="empty-sub">{$t("The queue appears here as soon as today's session starts.")}</p>
     </div>
   {:else}
     <main class="columns">
       <!-- ── Being repaired ────────────────────────────────────────── -->
       <section class="col col-working" aria-labelledby="col-working">
-        <h2 id="col-working" class="col-title"><Wrench class="col-icon" /> Being repaired <span class="col-count">{working.length}</span></h2>
+        <h2 id="col-working" class="col-title"><Wrench class="col-icon" /> {$t('Being repaired')} <span class="col-count">{working.length}</span></h2>
         <div class="col-body" bind:clientHeight={workingBoxHeight}>
           {#if working.length === 0}
-            <p class="col-empty">{waiting.length ? 'Our repairers will start on the next item soon.' : 'Nothing on the bench right now.'}</p>
+            <p class="col-empty">{$t(waiting.length ? 'Our repairers will start on the next item soon.' : 'Nothing on the bench right now.')}</p>
           {:else}
             <ul class="cards">
               {#each workingShown as j (j.jobNumber)}
@@ -146,7 +147,7 @@
                       <span class="meta">
                         <span class="num">{j.callNumber}</span>
                         {#if control && j.customerName}<span>· {j.customerName}</span>{/if}
-                        {#if j.repairerName}<span>· with {control ? j.repairerName : j.repairerName.split(' ')[0]}</span>{/if}
+                        {#if j.repairerName}<span>· {$t('with {name}', { name: control ? j.repairerName : j.repairerName.split(' ')[0] })}</span>{/if}
                       </span>
                     </span>
                     <span class="elapsed">{minutesText(minutesBetween(j.acceptedAt ?? j.createdAt, now))}</span>
@@ -156,18 +157,18 @@
             </ul>
           {/if}
         </div>
-        {#if workingPages > 1}<p class="pager">Page {workingPage + 1} of {workingPages}</p>{/if}
+        {#if workingPages > 1}<p class="pager">{$t('Page {page} of {total}', { page: workingPage + 1, total: workingPages })}</p>{/if}
       </section>
 
       <!-- ── Waiting ───────────────────────────────────────────────── -->
       <section class="col col-waiting" aria-labelledby="col-waiting">
-        <h2 id="col-waiting" class="col-title"><Clock class="col-icon" /> Waiting <span class="col-count">{waiting.length}</span></h2>
+        <h2 id="col-waiting" class="col-title"><Clock class="col-icon" /> {$t('Waiting')} <span class="col-count">{waiting.length}</span></h2>
         {#if waiting.length && estimate !== null}
-          <p class="estimate">About <strong>{estimate} minutes</strong> for anyone checking in now</p>
+          <p class="estimate">{$t('About {n} minutes for anyone checking in now', { n: estimate })}</p>
         {/if}
         <div class="col-body" bind:clientHeight={waitingBoxHeight}>
           {#if waiting.length === 0}
-            <p class="col-empty">No queue. Bring your item straight to a table.</p>
+            <p class="col-empty">{$t('No queue. Bring your item straight to a table.')}</p>
           {:else}
             <ol class="rows">
               {#each waitingShown as j, i (j.jobNumber)}
@@ -192,24 +193,24 @@
           {#if !control && !narrow && waiting.length <= waitingPerPage - 5}
             <!-- Room to spare: say what happens next, for anyone just arrived. -->
             <div class="howto">
-              <p class="howto-title">What happens next</p>
+              <p class="howto-title">{$t('What happens next')}</p>
               <ol>
-                <li><strong>Check in</strong> with the QR code, or at the desk.</li>
-                <li><strong>Watch for your number.</strong> Items are seen in the order they arrive.</li>
-                <li><strong>Repair it together.</strong> A volunteer will call you over.</li>
+                <li><strong>{$t('Check in')}</strong> {$t('with the QR code, or at the desk.')}</li>
+                <li><strong>{$t('Watch for your number.')}</strong> {$t('Items are seen in the order they arrive.')}</li>
+                <li><strong>{$t('Repair it together.')}</strong> {$t('A volunteer will call you over.')}</li>
               </ol>
             </div>
           {/if}
         </div>
-        {#if waitingPages > 1}<p class="pager">Page {waitingPage + 1} of {waitingPages} · the list turns by itself</p>{/if}
+        {#if waitingPages > 1}<p class="pager">{$t('Page {page} of {total}', { page: waitingPage + 1, total: waitingPages })} · {$t('the list turns by itself')}</p>{/if}
       </section>
 
       <!-- ── Ready, and how to join ───────────────────────────────── -->
       <section class="col col-side">
         <div class="ready">
-          <h2 class="col-title"><CheckCircle2 class="col-icon" /> Ready to collect</h2>
+          <h2 class="col-title"><CheckCircle2 class="col-icon" /> {$t('Ready to collect')}</h2>
           {#if finished.length === 0}
-            <p class="col-empty">Finished repairs appear here.</p>
+            <p class="col-empty">{$t('Finished repairs appear here.')}</p>
           {:else}
             <ul class="ready-list">
               {#each finished.slice(0, control ? 8 : 5) as j (j.jobNumber)}
@@ -217,7 +218,7 @@
                   <svelte:element this={linkFor(j) ? 'a' : 'div'} href={linkFor(j)} class="ready-inner">
                     <span class="num">{j.callNumber}</span>
                     <span class="ready-item">{j.item}</span>
-                    <span class="ready-status">{#if j.status === 'completed'}<CheckCircle2 /> Fixed{:else}<Hand /> See the desk{/if}</span>
+                    <span class="ready-status">{#if j.status === 'completed'}<CheckCircle2 /> {$t('Fixed')}{:else}<Hand /> {$t('See the desk')}{/if}</span>
                   </svelte:element>
                 </li>
               {/each}
@@ -226,10 +227,10 @@
         </div>
         {#if qr?.qrCodeUrl}
           <div class="qr">
-            <img src={qr.qrCodeUrl} alt="QR code to check in" />
+            <img src={qr.qrCodeUrl} alt={$t('QR code to check in')} />
             <div>
-              <p class="qr-title">Not checked in yet?</p>
-              <p class="qr-sub">Point your phone's camera at the code. It takes a minute, and you keep your place.</p>
+              <p class="qr-title">{$t('Not checked in yet?')}</p>
+              <p class="qr-sub">{$t("Point your phone's camera at the code. It takes a minute, and you keep your place.")}</p>
             </div>
           </div>
         {/if}
@@ -238,10 +239,10 @@
 
     <footer class="bottom">
       <p>
-        Today: <strong>{data.today.checkedIn}</strong> brought in · <strong>{data.today.fixed}</strong> fixed
-        {#if data.today.co2SavedKg}· <strong>{data.today.co2SavedKg} kg</strong> of CO₂ saved{/if}
+        {$t('Today:')} <strong>{data.today.checkedIn}</strong> {$t('brought in')} · <strong>{data.today.fixed}</strong> {$t('fixed')}
+        {#if data.today.co2SavedKg}· <strong>{data.today.co2SavedKg} kg</strong> {$t('of CO₂ saved')}{/if}
       </p>
-      <p class="tagline">Every repair keeps something out of the bin</p>
+      <p class="tagline">{$t('Every repair keeps something out of the bin')}</p>
     </footer>
   {/if}
 </div>

@@ -14,6 +14,7 @@
   import { fromDisplay, type BoardData } from '$lib/staff/board';
   import { TEXT_SCALES, keepAwake, loadNumber, newlyWaiting, saveNumber } from '$lib/staff/screen';
   import { Maximize2, Minimize2, Minus, Plus, WifiOff } from 'lucide-svelte';
+  import { t } from '$lib/i18n';
 
   const POLL_MS = 10_000;
 
@@ -92,7 +93,7 @@
 </script>
 
 <svelte:head>
-  <title>{data?.cafeName ? `${data.cafeName} · queue` : 'Repair queue'}</title>
+  <title>{data?.cafeName ? `${data.cafeName} · ${$t('queue')}` : $t('Repair queue')}</title>
   <meta name="robots" content="noindex" />
 </svelte:head>
 
@@ -100,23 +101,23 @@
 <div class="screen" class:idle={!controlsVisible} on:mousemove={showControls} on:touchstart={showControls}>
   {#if notFound}
     <div class="message">
-      <p class="big">This screen's link no longer works</p>
-      <p>An admin can find the current link on the dashboard, under "Show on a screen".</p>
+      <p class="big">{$t("This screen's link no longer works")}</p>
+      <p>{$t('An admin can find the current link on the dashboard, under "Show on a screen".')}</p>
     </div>
   {:else}
     <LiveBoard {data} mode="display" {fresh} {textScale} />
   {/if}
 
   {#if offline}
-    <p class="offline"><WifiOff size={16} /> Reconnecting… showing the last update</p>
+    <p class="offline"><WifiOff size={16} /> {$t('Reconnecting… showing the last update')}</p>
   {/if}
 
   {#if controlsVisible && !notFound}
     <div class="controls">
-      <button on:click={() => size(-1)} aria-label="Smaller text"><Minus size={18} /></button>
-      <span>Text size</span>
-      <button on:click={() => size(1)} aria-label="Bigger text"><Plus size={18} /></button>
-      <button on:click={toggleFullscreen} aria-label={fullscreen ? 'Leave full screen' : 'Full screen'}>
+      <button on:click={() => size(-1)} aria-label={$t('Smaller text')}><Minus size={18} /></button>
+      <span>{$t('Text size')}</span>
+      <button on:click={() => size(1)} aria-label={$t('Bigger text')}><Plus size={18} /></button>
+      <button on:click={toggleFullscreen} aria-label={fullscreen ? $t('Leave full screen') : $t('Full screen')}>
         {#if fullscreen}<Minimize2 size={18} />{:else}<Maximize2 size={18} />{/if}
       </button>
     </div>

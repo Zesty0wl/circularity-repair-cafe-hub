@@ -17,6 +17,7 @@
   import { cafe } from '$lib/stores/cafe';
   import { homeFor, isAdminRole, isCurrent, navFor, tabsFor } from '$lib/staff/nav';
   import { Globe, LogOut, Menu, ShieldAlert, Wrench, X } from 'lucide-svelte';
+  import { t } from '$lib/i18n';
 
   /** Only admins may see this part of the site. */
   export let requireAdmin = false;
@@ -77,7 +78,7 @@
       <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-5 text-sm" aria-label="Main">
         {#each groups as group}
           <div>
-            <p class="px-3 mb-1 text-[0.7rem] font-semibold uppercase tracking-wider text-slate-400">{group.title}</p>
+            <p class="px-3 mb-1 text-[0.7rem] font-semibold uppercase tracking-wider text-slate-400">{$t(group.title)}</p>
             {#each group.items as item}
               {@const current = isCurrent(item, pathname)}
               <a
@@ -86,7 +87,7 @@
                 aria-current={current ? 'page' : undefined}
               >
                 <svelte:component this={item.icon} size={18} class={current ? 'text-brand-700' : 'text-slate-400'} />
-                {item.label}
+                {$t(item.label)}
               </a>
             {/each}
           </div>
@@ -95,10 +96,10 @@
       <div class="border-t border-slate-200 p-3 text-sm space-y-1">
         <div class="px-3 py-2 min-w-0">
           <p class="font-medium text-slate-900 truncate">{user.displayName}</p>
-          <p class="text-xs text-slate-500">{admin ? (user.role === 'super_admin' ? 'Super admin' : 'Admin') : 'Repairer'}</p>
+          <p class="text-xs text-slate-500">{admin ? (user.role === 'super_admin' ? $t('Super admin') : $t('Admin')) : $t('Repairer')}</p>
         </div>
-        <a href="/" class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100"><Globe size={18} class="text-slate-400" /> View the website</a>
-        <button type="button" on:click={signOut} class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100"><LogOut size={18} class="text-slate-400" /> Sign out</button>
+        <a href="/" class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100"><Globe size={18} class="text-slate-400" /> {$t('View the website')}</a>
+        <button type="button" on:click={signOut} class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100"><LogOut size={18} class="text-slate-400" /> {$t('Sign out')}</button>
         {#if admin}
           <a href="/admin/settings?tab=about" class="block px-3 pt-2 text-xs text-slate-400 hover:text-slate-600" title="Version, licence and how to update">
             Repair Cafe Hub {$cafe?.appVersion ?? ''}
@@ -135,27 +136,27 @@
           <div class="flex items-center justify-between px-4 py-3 border-b border-slate-200">
             <div class="min-w-0">
               <p class="font-semibold text-slate-900 truncate">{user.displayName}</p>
-              <p class="text-xs text-slate-500">{admin ? 'Admin' : 'Repairer'}</p>
+              <p class="text-xs text-slate-500">{admin ? $t('Admin') : $t('Repairer')}</p>
             </div>
             <button type="button" class="h-10 w-10 inline-flex items-center justify-center rounded-lg hover:bg-slate-100" aria-label="Close the menu" on:click={() => (drawerOpen = false)}><X size={22} /></button>
           </div>
           <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-5" aria-label="Main">
             {#each groups as group}
               <div>
-                <p class="px-3 mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">{group.title}</p>
+                <p class="px-3 mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">{$t(group.title)}</p>
                 {#each group.items as item}
                   {@const current = isCurrent(item, pathname)}
                   <a href={item.href} class="flex items-center gap-3 px-3 py-3 rounded-lg {current ? 'bg-brand-50 text-brand-800 font-semibold' : 'text-slate-800 hover:bg-slate-100'}" aria-current={current ? 'page' : undefined}>
                     <svelte:component this={item.icon} size={20} class={current ? 'text-brand-700' : 'text-slate-400'} />
-                    {item.label}
+                    {$t(item.label)}
                   </a>
                 {/each}
               </div>
             {/each}
           </nav>
           <div class="border-t border-slate-200 p-3 space-y-1">
-            <a href="/" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-800 hover:bg-slate-100"><Globe size={20} class="text-slate-400" /> View the website</a>
-            <button type="button" on:click={signOut} class="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-slate-800 hover:bg-slate-100"><LogOut size={20} class="text-slate-400" /> Sign out</button>
+            <a href="/" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-800 hover:bg-slate-100"><Globe size={20} class="text-slate-400" /> {$t('View the website')}</a>
+            <button type="button" on:click={signOut} class="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-slate-800 hover:bg-slate-100"><LogOut size={20} class="text-slate-400" /> {$t('Sign out')}</button>
           </div>
         </div>
       </div>
@@ -169,9 +170,9 @@
         {:else}
           <div class="card p-8 max-w-lg mx-auto text-center mt-8">
             <span class="h-12 w-12 mx-auto rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center"><ShieldAlert size={24} /></span>
-            <h1 class="text-xl font-semibold mt-4">This page is for admins</h1>
-            <p class="mt-2 text-slate-600">You are signed in as a repairer, so this part of the hub is not open to you. Everything you need for the session is in the repair queue.</p>
-            <a href="/repairer" class="btn-primary mt-6">Go to the repair queue</a>
+            <h1 class="text-xl font-semibold mt-4">{$t('This page is for admins')}</h1>
+            <p class="mt-2 text-slate-600">{$t('You are signed in as a repairer, so this part of the hub is not open to you. Everything you need for the session is in the repair queue.')}</p>
+            <a href="/repairer" class="btn-primary mt-6">{$t('Go to the repair queue')}</a>
           </div>
         {/if}
       </main>
@@ -183,11 +184,11 @@
         {@const current = isCurrent(tab, pathname)}
         <a href={tab.href} class="flex flex-col items-center gap-0.5 py-2 text-xs {current ? 'text-brand-700 font-semibold' : 'text-slate-500'}" aria-current={current ? 'page' : undefined}>
           <svelte:component this={tab.icon} size={22} />
-          {tab.label}
+          {$t(tab.label)}
         </a>
       {/each}
     </nav>
   </div>
 {:else}
-  <div class="min-h-screen grid place-items-center bg-slate-100 text-slate-500">Loading…</div>
+  <div class="min-h-screen grid place-items-center bg-slate-100 text-slate-500">{$t('Loading…')}</div>
 {/if}

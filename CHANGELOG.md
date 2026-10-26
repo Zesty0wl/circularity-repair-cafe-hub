@@ -2,6 +2,32 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
+## 1.15.0 (26 October 2026)
+
+### Added
+
+- **The hub is in French.** Every page now comes in English and French: the
+  public website, check-in and tracking for visitors, the volunteer area, the
+  whole admin area and the setup wizard. Page titles for search engines,
+  dates, messages from the hub and the pictures shown when a link is shared
+  are in French too. Thank you to Florian Chazal of the Repair Café in
+  Villeneuve-Loubet, who built the translation system and translated the
+  visitor and volunteer pages (#11).
+- **A new `LANGUAGE` setting.** Leave it out, or set it to `auto`, and each
+  visitor sees the hub in their browser's language, English or French. Set it
+  to `fr` or `en` to always use one language. A cafe in France should choose
+  `fr`, so that link-sharing pictures are in French as well. See "Settings"
+  in [docs/running-your-hub.md](./docs/running-your-hub.md).
+- **French starting content.** A new hub set to `fr` starts with its home
+  page, Linux page and skill categories in French. On any hub, starting text
+  that the cafe has not changed is shown in the visitor's language. Text you
+  wrote yourself is shown as you wrote it.
+
+### Changed
+
+- Nothing changes for an English hub. Every English page reads exactly as
+  before.
+
 ## 1.14.0 (23 October 2026)
 
 ### Added

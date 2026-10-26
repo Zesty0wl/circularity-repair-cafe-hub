@@ -1,5 +1,6 @@
 import { auth } from './stores/auth';
 import { get } from 'svelte/store';
+import { tNow } from './i18n';
 
 export interface ApiError extends Error {
   status: number;
@@ -159,8 +160,8 @@ export async function uploadFile<T = unknown>(
           text: xhr.responseText,
           contentType: xhr.getResponseHeader('content-type') ?? '',
         });
-      xhr.onerror = () => reject(new Error('Network error while uploading'));
-      xhr.onabort = () => reject(new Error('Upload cancelled'));
+      xhr.onerror = () => reject(new Error(tNow('Network error while uploading')));
+      xhr.onabort = () => reject(new Error(tNow('Upload cancelled')));
       const fd = new FormData();
       fd.append(opts.fieldName ?? 'image', file, filename);
       xhr.send(fd);
@@ -201,7 +202,14 @@ async function handleResponse<T>(res: Response): Promise<T> {
     } catch {
       errBody = { error: res.statusText };
     }
-    const err: ApiError = Object.assign(new Error(errBody?.error || res.statusText), {
+    // The hub writes its messages in English. Show them in the visitor's
+    // language when the dictionary has them. A message with a value inside it
+    // also comes as a template with {placeholders} and the values (params).
+    const message =
+      typeof errBody?.template === 'string' && errBody?.params && typeof errBody.params === 'object'
+        ? tNow(errBody.template, errBody.params)
+        : tNow(errBody?.error || res.statusText);
+    const err: ApiError = Object.assign(new Error(message), {
       status: res.status,
       code: errBody?.code,
       details: errBody?.details,

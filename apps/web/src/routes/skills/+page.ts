@@ -10,7 +10,7 @@ export const load: PageLoad = async ({ fetch, url, parent }) => {
     .then((res) => (res.ok ? res.json() : []))
     .catch(() => []);
 
-  const { cafe } = await parent();
+  const { cafe, locale } = await parent();
   const [r, upcoming] = await Promise.all([skillsP, eventsP]);
   const categories = r?.categories ?? [];
   const repairers = r?.repairers ?? [];
@@ -20,6 +20,7 @@ export const load: PageLoad = async ({ fetch, url, parent }) => {
     origin: url.origin,
     pathname: url.pathname,
     cafe,
+    locale,
     categories: categories.map((c: { name: string }) => c.name),
   });
 

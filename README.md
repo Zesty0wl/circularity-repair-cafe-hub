@@ -115,6 +115,10 @@ volunteers and CO2 saved, with every session listed.
   repairs and sessions, but only if you agree, and you see the exact message
   first. It never contains a name, a note or any free text. See
   [docs/proposal-telemetry.md](./docs/proposal-telemetry.md).
+- **English and French.** The whole hub, from the public pages to the admin
+  area, is in both languages. It follows each visitor's browser, or you can
+  fix one language with the `LANGUAGE` setting. The French translation was
+  started by Florian Chazal of the Repair Café in Villeneuve-Loubet.
 - **Privacy by design:** strong password hashing, short-lived sign-in tokens,
   limits on password guessing, strict security headers, and visitors' contact
   details deleted after a period you choose.

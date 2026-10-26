@@ -23,6 +23,13 @@ Rules:
 When you edit existing text, keep the meaning, simplify the wording, and remove
 any em dashes.
 
+## Languages
+
+The hub is in English and French. Wrap every new or changed piece of
+user-facing text in `$t(…)` (or `tNow(…)` outside a component), and add its
+French to `packages/shared/src/i18n/fr.ts`. See "Languages" in
+`docs/how-it-works.md`.
+
 ## Releases
 
 Cafes install whatever is on `main` when they update, and each hub runs on its

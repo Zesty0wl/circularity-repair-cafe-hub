@@ -11,7 +11,7 @@ export const load: PageLoad = async ({ fetch, url, parent }) => {
     .then((res) => (res.ok ? res.json() : []))
     .catch(() => []);
 
-  const { cafe } = await parent();
+  const { cafe, locale } = await parent();
   const [venue, upcoming] = await Promise.all([venueP, eventsP]);
 
   const seo = buildSeo({
@@ -19,6 +19,7 @@ export const load: PageLoad = async ({ fetch, url, parent }) => {
     origin: url.origin,
     pathname: url.pathname,
     cafe,
+    locale,
     venue,
   });
 

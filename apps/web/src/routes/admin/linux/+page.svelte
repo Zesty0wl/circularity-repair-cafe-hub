@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { api, download } from '$lib/api';
+  import { t, tNow, dateLocale } from '$lib/i18n';
   import {
     LINUX_DEVICE_TYPES,
     LINUX_PREVIOUS_OS,
@@ -130,7 +131,7 @@
       installs = list;
       stats = report;
     } catch (err: any) {
-      loadError = err?.message ?? 'Could not load the Linux records';
+      loadError = err?.message ?? tNow('Could not load the Linux records');
     } finally {
       busy = false;
     }
@@ -190,15 +191,15 @@
   async function save() {
     formError = '';
     if (!form.eventId) {
-      formError = 'Choose the session this computer came to.';
+      formError = tNow('Choose the session this computer came to.');
       return;
     }
     if (!form.deviceDescription.trim()) {
-      formError = 'Say what the computer is, for example "Dell Latitude E7450".';
+      formError = tNow('Say what the computer is, for example "Dell Latitude E7450".');
       return;
     }
     if (keepsPersonalDetails && !form.gdprConsent) {
-      formError = 'Confirm the visitor is happy for their details to be stored, or clear the name and contact.';
+      formError = tNow('Confirm the visitor is happy for their details to be stored, or clear the name and contact.');
       return;
     }
     const age = form.deviceAgeYears === '' ? null : Number(form.deviceAgeYears);
@@ -227,14 +228,14 @@
       closeForm();
       await loadAll();
     } catch (err: any) {
-      formError = err?.message ?? 'Could not save this record';
+      formError = err?.message ?? tNow('Could not save this record');
     } finally {
       busy = false;
     }
   }
 
   async function remove(install: Install) {
-    if (!confirm(`Delete the record for "${install.deviceDescription}"? This cannot be undone.`)) return;
+    if (!confirm(tNow('Delete the record for "{name}"? This cannot be undone.', { name: install.deviceDescription }))) return;
     busy = true;
     try {
       await api(`/api/admin/linux/installs/${install.id}`, { method: 'DELETE' });
@@ -248,12 +249,12 @@
     try {
       await download('/api/admin/linux/installs.csv', 'linux-installs.csv');
     } catch (err: any) {
-      loadError = err?.message ?? 'The export could not be downloaded. Please try again.';
+      loadError = err?.message ?? tNow('The export could not be downloaded. Please try again.');
     }
   }
 
   function prettyDate(iso: string): string {
-    return new Date(iso + 'T12:00:00Z').toLocaleDateString('en-GB', {
+    return new Date(iso + 'T12:00:00Z').toLocaleDateString(dateLocale(), {
       day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC',
     });
   }
@@ -267,10 +268,10 @@
 </script>
 
 <div class="flex flex-wrap items-center justify-between gap-3">
-  <h1 class="text-2xl font-bold flex items-center gap-2"><Laptop size={22} class="text-brand-600" /> Linux Repair Cafe</h1>
+  <h1 class="text-2xl font-bold flex items-center gap-2"><Laptop size={22} class="text-brand-600" /> {$t('Linux Repair Cafe')}</h1>
   <div class="flex gap-2">
-    <button class="btn-secondary" on:click={exportCsv}>Export (CSV)</button>
-    <button class="btn-primary" on:click={openNew} disabled={busy}><Plus size={16} /> Record an install</button>
+    <button class="btn-secondary" on:click={exportCsv}>{$t('Export (CSV)')}</button>
+    <button class="btn-primary" on:click={openNew} disabled={busy}><Plus size={16} /> {$t('Record an install')}</button>
   </div>
 </div>
 
@@ -278,19 +279,19 @@
   <div class="card p-6 mt-4 text-sm">
     <p class="text-rose-700 font-medium">{loadError}</p>
     <p class="mt-2 text-slate-600">
-      If you have just switched this feature off, that is why. Turn it back on under
-      <a href="/admin/settings?tab=linux" class="text-brand-700 underline underline-offset-2">Settings</a>.
-      Nothing has been deleted.
+      {$t('If you have just switched this feature off, that is why. Turn it back on under')}
+      <a href="/admin/settings?tab=linux" class="text-brand-700 underline underline-offset-2">{$t('Settings')}</a>.
+      {$t('Nothing has been deleted.')}
     </p>
   </div>
 {:else}
   {#if sessions.length === 0}
     <div class="card p-4 mt-4 bg-amber-50 ring-amber-200 text-sm text-amber-900">
-      <p class="font-semibold">No sessions offer Linux help yet.</p>
+      <p class="font-semibold">{$t('No sessions offer Linux help yet.')}</p>
       <p class="mt-1">
-        Tick <span class="font-medium">Linux help at this session</span> on a session under
-        <a href="/admin/events" class="underline underline-offset-2">Events</a>.
-        Until then there is nowhere to file an install, and visitors cannot see when to come.
+        {$t('Tick')} <span class="font-medium">{$t('Linux help at this session')}</span> {$t('on a session under')}
+        <a href="/admin/events" class="underline underline-offset-2">{$t('Events')}</a>.
+        {$t('Until then there is nowhere to file an install, and visitors cannot see when to come.')}
       </p>
     </div>
   {/if}
@@ -304,7 +305,7 @@
         on:click={() => setRange(r)}
         disabled={busy}
       >
-        {RANGE_LABELS[r]}
+        {$t(RANGE_LABELS[r])}
       </button>
     {/each}
   </div>
@@ -312,34 +313,34 @@
   {#if stats}
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mt-4">
       <div class="card p-4">
-        <div class="flex items-center gap-2 text-slate-500 text-xs"><Laptop size={14} /> Computers seen</div>
+        <div class="flex items-center gap-2 text-slate-500 text-xs"><Laptop size={14} /> {$t('Computers seen')}</div>
         <p class="text-2xl font-bold mt-1">{stats.totals.installCount}</p>
-        <p class="text-xs text-slate-400 mt-0.5">{stats.totals.avgPerSession} avg per session</p>
+        <p class="text-xs text-slate-400 mt-0.5">{$t('{n} avg per session', { n: stats.totals.avgPerSession })}</p>
       </div>
       <div class="card p-4">
-        <div class="flex items-center gap-2 text-slate-500 text-xs"><CheckCircle2 size={14} /> Now on Linux</div>
+        <div class="flex items-center gap-2 text-slate-500 text-xs"><CheckCircle2 size={14} /> {$t('Now on Linux')}</div>
         <p class="text-2xl font-bold mt-1">{stats.totals.installedCount}</p>
-        <p class="text-xs text-slate-400 mt-0.5">{stats.totals.installRate}% of those seen</p>
+        <p class="text-xs text-slate-400 mt-0.5">{$t('{n}% of those seen', { n: stats.totals.installRate })}</p>
       </div>
       <div class="card p-4">
-        <div class="flex items-center gap-2 text-slate-500 text-xs"><Users size={14} /> Advised</div>
+        <div class="flex items-center gap-2 text-slate-500 text-xs"><Users size={14} /> {$t('Advised')}</div>
         <p class="text-2xl font-bold mt-1">{stats.totals.advisedCount}</p>
-        <p class="text-xs text-slate-400 mt-0.5">tried it, or talked it through</p>
+        <p class="text-xs text-slate-400 mt-0.5">{$t('tried it, or talked it through')}</p>
       </div>
       <div class="card p-4">
-        <div class="flex items-center gap-2 text-slate-500 text-xs"><CalendarDays size={14} /> Sessions</div>
+        <div class="flex items-center gap-2 text-slate-500 text-xs"><CalendarDays size={14} /> {$t('Sessions')}</div>
         <p class="text-2xl font-bold mt-1">{stats.totals.sessionCount}</p>
-        <p class="text-xs text-slate-400 mt-0.5">with a computer written up</p>
+        <p class="text-xs text-slate-400 mt-0.5">{$t('with a computer written up')}</p>
       </div>
       <div class="card p-4">
-        <div class="flex items-center gap-2 text-slate-500 text-xs"><Users size={14} /> Volunteers</div>
+        <div class="flex items-center gap-2 text-slate-500 text-xs"><Users size={14} /> {$t('Volunteers')}</div>
         <p class="text-2xl font-bold mt-1">{stats.totals.volunteerCount}</p>
-        <p class="text-xs text-slate-400 mt-0.5">{stats.totals.linuxRepairerCount} marked for Linux</p>
+        <p class="text-xs text-slate-400 mt-0.5">{$t('{n} marked for Linux', { n: stats.totals.linuxRepairerCount })}</p>
       </div>
       <div class="card p-4">
-        <div class="flex items-center gap-2 text-slate-500 text-xs"><Leaf size={14} /> CO₂ saved</div>
+        <div class="flex items-center gap-2 text-slate-500 text-xs"><Leaf size={14} /> {$t('CO₂ saved')}</div>
         <p class="text-2xl font-bold mt-1">{stats.totals.co2SavedKg.toFixed(1)}<span class="text-sm font-normal text-slate-500"> kg</span></p>
-        <p class="text-xs text-slate-400 mt-0.5">from computers kept in use</p>
+        <p class="text-xs text-slate-400 mt-0.5">{$t('from computers kept in use')}</p>
       </div>
     </div>
 
@@ -347,16 +348,16 @@
          and what they went home with. -->
     <div class="grid md:grid-cols-2 gap-4 mt-4">
       <div class="card p-4">
-        <h2 class="text-lg font-semibold">What they ran before</h2>
-        <p class="text-xs text-slate-500 mt-0.5">Windows 10 lost support in October 2025, which is why most machines arrive.</p>
+        <h2 class="text-lg font-semibold">{$t('What they ran before')}</h2>
+        <p class="text-xs text-slate-500 mt-0.5">{$t('Windows 10 lost support in October 2025, which is why most machines arrive.')}</p>
         {#if stats.byPreviousOs.length === 0}
-          <p class="text-sm text-slate-500 mt-3">Nothing recorded in this period.</p>
+          <p class="text-sm text-slate-500 mt-3">{$t('Nothing recorded in this period.')}</p>
         {:else}
           <ul class="mt-3 space-y-2">
             {#each stats.byPreviousOs as row}
               <li>
                 <div class="flex items-baseline justify-between text-sm">
-                  <span class="text-slate-700">{label(OS_LABEL, row.key)}</span>
+                  <span class="text-slate-700">{$t(label(OS_LABEL, row.key))}</span>
                   <span class="font-medium text-slate-900">{row.count}</span>
                 </div>
                 <div class="mt-1 h-1.5 rounded-full bg-slate-100 overflow-hidden">
@@ -369,10 +370,10 @@
       </div>
 
       <div class="card p-4">
-        <h2 class="text-lg font-semibold">Which Linux they went home with</h2>
-        <p class="text-xs text-slate-500 mt-0.5">Counted over the computers that went home running Linux.</p>
+        <h2 class="text-lg font-semibold">{$t('Which Linux they went home with')}</h2>
+        <p class="text-xs text-slate-500 mt-0.5">{$t('Counted over the computers that went home running Linux.')}</p>
         {#if stats.byDistro.length === 0}
-          <p class="text-sm text-slate-500 mt-3">Nothing recorded in this period.</p>
+          <p class="text-sm text-slate-500 mt-3">{$t('Nothing recorded in this period.')}</p>
         {:else}
           <ul class="mt-3 space-y-2">
             {#each stats.byDistro as row}
@@ -391,14 +392,14 @@
       </div>
 
       <div class="card p-4">
-        <h2 class="text-lg font-semibold">How it went</h2>
+        <h2 class="text-lg font-semibold">{$t('How it went')}</h2>
         {#if stats.byOutcome.length === 0}
-          <p class="text-sm text-slate-500 mt-3">Nothing recorded in this period.</p>
+          <p class="text-sm text-slate-500 mt-3">{$t('Nothing recorded in this period.')}</p>
         {:else}
           <ul class="mt-3 space-y-2">
             {#each stats.byOutcome as row}
               <li class="flex items-baseline justify-between text-sm">
-                <span class="text-slate-700">{label(OUTCOME_LABEL, row.key)}</span>
+                <span class="text-slate-700">{$t(label(OUTCOME_LABEL, row.key))}</span>
                 <span class="font-medium text-slate-900">{row.count}</span>
               </li>
             {/each}
@@ -407,16 +408,16 @@
       </div>
 
       <div class="card p-4">
-        <h2 class="text-lg font-semibold">Who did them</h2>
+        <h2 class="text-lg font-semibold">{$t('Who did them')}</h2>
         {#if stats.byVolunteer.length === 0}
-          <p class="text-sm text-slate-500 mt-3">Nothing recorded in this period.</p>
+          <p class="text-sm text-slate-500 mt-3">{$t('Nothing recorded in this period.')}</p>
         {:else}
           <ul class="mt-3 space-y-2">
             {#each stats.byVolunteer as row}
               <li class="flex items-baseline justify-between text-sm">
                 <span class="text-slate-700">{row.displayName}</span>
                 <span class="text-slate-500">
-                  {row.count} <span class="text-emerald-700 font-medium">({row.installedCount} on Linux)</span>
+                  {row.count} <span class="text-emerald-700 font-medium">{$t('({n} on Linux)', { n: row.installedCount })}</span>
                 </span>
               </li>
             {/each}
@@ -429,25 +430,25 @@
   <!-- ── The records ────────────────────────────────────────────────── -->
   <section class="mt-6">
     <div class="flex items-baseline justify-between mb-2">
-      <h2 class="text-lg font-semibold">Every computer written up</h2>
-      <p class="text-xs text-slate-500">{installs.length} record{installs.length === 1 ? '' : 's'}</p>
+      <h2 class="text-lg font-semibold">{$t('Every computer written up')}</h2>
+      <p class="text-xs text-slate-500">{installs.length === 1 ? $t('{count} record', { count: 1 }) : $t('{count} records', { count: installs.length })}</p>
     </div>
     {#if installs.length === 0}
       <div class="card p-6 text-center text-sm text-slate-500">
-        <p>Nothing written up yet.</p>
-        <p class="mt-1">Use <span class="font-medium">Record an install</span> after a session to write up what came in.</p>
+        <p>{$t('Nothing written up yet.')}</p>
+        <p class="mt-1">{$t('Use')} <span class="font-medium">{$t('Record an install')}</span> {$t('after a session to write up what came in.')}</p>
       </div>
     {:else}
       <div class="card overflow-x-auto">
         <table class="w-full text-sm">
           <thead class="bg-slate-50 text-left text-slate-600">
             <tr>
-              <th class="px-3 py-2">Session</th>
-              <th class="px-3 py-2">Computer</th>
-              <th class="px-3 py-2">Was running</th>
+              <th class="px-3 py-2">{$t('Session')}</th>
+              <th class="px-3 py-2">{$t('Computer')}</th>
+              <th class="px-3 py-2">{$t('Was running')}</th>
               <th class="px-3 py-2">Linux</th>
-              <th class="px-3 py-2">Outcome</th>
-              <th class="px-3 py-2">Volunteer</th>
+              <th class="px-3 py-2">{$t('Outcome')}</th>
+              <th class="px-3 py-2">{$t('Volunteer')}</th>
               <th class="px-3 py-2 text-right">CO₂</th>
               <th class="px-3 py-2"></th>
             </tr>
@@ -459,14 +460,14 @@
                 <td class="px-3 py-2">
                   <span class="font-medium text-slate-900">{it.deviceDescription}</span>
                   <span class="block text-xs text-slate-500">
-                    {label(DEVICE_LABEL, it.deviceType)}{#if it.deviceAgeYears}, about {it.deviceAgeYears} years old{/if}
+                    {$t(label(DEVICE_LABEL, it.deviceType))}{#if it.deviceAgeYears}{$t(', about {n} years old', { n: it.deviceAgeYears })}{/if}
                   </span>
                 </td>
-                <td class="px-3 py-2 text-slate-600">{label(OS_LABEL, it.previousOs)}</td>
+                <td class="px-3 py-2 text-slate-600">{$t(label(OS_LABEL, it.previousOs))}</td>
                 <td class="px-3 py-2 text-slate-600">{it.distro || '-'}</td>
                 <td class="px-3 py-2">
                   <span class="inline-block rounded-full px-2 py-0.5 text-xs font-medium ring-1 {outcomeClass(it.outcome)}">
-                    {label(OUTCOME_LABEL, it.outcome)}
+                    {$t(label(OUTCOME_LABEL, it.outcome))}
                   </span>
                 </td>
                 <td class="px-3 py-2 text-slate-600">{it.repairerName ?? '-'}</td>
@@ -474,10 +475,10 @@
                   {it.co2SavingKg === null ? '-' : `${Number(it.co2SavingKg).toFixed(1)} kg`}
                 </td>
                 <td class="px-3 py-2 text-right whitespace-nowrap">
-                  <button class="btn-ghost btn-sm" on:click={() => openEdit(it)} title="Edit" aria-label={`Edit ${it.deviceDescription}`}>
+                  <button class="btn-ghost btn-sm" on:click={() => openEdit(it)} title={$t('Edit')} aria-label={$t('Edit {name}', { name: it.deviceDescription })}>
                     <Pencil size={14} />
                   </button>
-                  <button class="btn-ghost btn-sm text-rose-600" on:click={() => remove(it)} title="Delete" aria-label={`Delete ${it.deviceDescription}`}>
+                  <button class="btn-ghost btn-sm text-rose-600" on:click={() => remove(it)} title={$t('Delete')} aria-label={$t('Delete {name}', { name: it.deviceDescription })}>
                     <Trash2 size={14} />
                   </button>
                 </td>
@@ -496,19 +497,19 @@
     <div class="card max-w-2xl mx-auto my-8 p-6 space-y-4 bg-white">
       <div class="flex items-start justify-between gap-4">
         <div>
-          <h2 class="text-lg font-semibold">{editing ? 'Correct this record' : 'Record an install'}</h2>
+          <h2 class="text-lg font-semibold">{editing ? $t('Correct this record') : $t('Record an install')}</h2>
           <p class="text-xs text-slate-500 mt-0.5">
-            One record per computer. It takes about a minute, and it is what your figures are built from.
+            {$t('One record per computer. It takes about a minute, and it is what your figures are built from.')}
           </p>
         </div>
-        <button class="btn-ghost !px-2" on:click={closeForm} aria-label="Close"><X size={18} /></button>
+        <button class="btn-ghost !px-2" on:click={closeForm} aria-label={$t('Close')}><X size={18} /></button>
       </div>
 
       {#if !editing}
         <div>
-          <label class="label" for="li-event">Which session</label>
+          <label class="label" for="li-event">{$t('Which session')}</label>
           <select id="li-event" class="input" bind:value={form.eventId}>
-            <option value="">Choose a session…</option>
+            <option value="">{$t('Choose a session…')}</option>
             {#each sessions as s}
               <option value={s.id}>{prettyDate(s.date)} · {s.name} · {s.venueName}</option>
             {/each}
@@ -516,79 +517,78 @@
         </div>
       {:else}
         <p class="text-sm text-slate-600">
-          Session: <span class="font-medium text-slate-800">{prettyDate(editing.eventDate)}, {editing.eventName}</span>
+          {$t('Session:')} <span class="font-medium text-slate-800">{prettyDate(editing.eventDate)}, {editing.eventName}</span>
         </p>
       {/if}
 
       <div class="grid sm:grid-cols-2 gap-3">
         <div class="sm:col-span-2">
-          <label class="label" for="li-device">What is the computer</label>
+          <label class="label" for="li-device">{$t('What is the computer')}</label>
           <input id="li-device" class="input" placeholder="Dell Latitude E7450" bind:value={form.deviceDescription} />
-          <p class="text-xs text-slate-500 mt-1">The make and model if you know it. Anything recognisable will do.</p>
+          <p class="text-xs text-slate-500 mt-1">{$t('The make and model if you know it. Anything recognisable will do.')}</p>
         </div>
         <div>
-          <label class="label" for="li-type">Kind of computer</label>
+          <label class="label" for="li-type">{$t('Kind of computer')}</label>
           <select id="li-type" class="input" bind:value={form.deviceType}>
-            {#each LINUX_DEVICE_TYPES as o}<option value={o.value}>{o.label}</option>{/each}
+            {#each LINUX_DEVICE_TYPES as o}<option value={o.value}>{$t(o.label)}</option>{/each}
           </select>
         </div>
         <div>
-          <label class="label" for="li-age">Roughly how old (years)</label>
+          <label class="label" for="li-age">{$t('Roughly how old (years)')}</label>
           <input id="li-age" class="input" type="number" min="0" max="60" placeholder="8" bind:value={form.deviceAgeYears} />
         </div>
         <div>
-          <label class="label" for="li-prev">What it ran before</label>
+          <label class="label" for="li-prev">{$t('What it ran before')}</label>
           <select id="li-prev" class="input" bind:value={form.previousOs}>
-            <option value="">Not recorded</option>
-            {#each LINUX_PREVIOUS_OS as o}<option value={o.value}>{o.label}</option>{/each}
+            <option value="">{$t('Not recorded')}</option>
+            {#each LINUX_PREVIOUS_OS as o}<option value={o.value}>{$t(o.label)}</option>{/each}
           </select>
         </div>
         <div>
-          <label class="label" for="li-distro">Which Linux went on</label>
+          <label class="label" for="li-distro">{$t('Which Linux went on')}</label>
           <input id="li-distro" class="input" placeholder="Linux Mint 22" bind:value={form.distro} />
         </div>
         <div>
-          <label class="label" for="li-outcome">How it went</label>
+          <label class="label" for="li-outcome">{$t('How it went')}</label>
           <select id="li-outcome" class="input" bind:value={form.outcome}>
-            {#each LINUX_OUTCOMES as o}<option value={o.value}>{o.label}</option>{/each}
+            {#each LINUX_OUTCOMES as o}<option value={o.value}>{$t(o.label)}</option>{/each}
           </select>
         </div>
         <div>
-          <label class="label" for="li-repairer">Who did it</label>
+          <label class="label" for="li-repairer">{$t('Who did it')}</label>
           <select id="li-repairer" class="input" bind:value={form.repairerId}>
-            <option value="">Me</option>
+            <option value="">{$t('Me')}</option>
             {#each volunteers as v}
-              <option value={v.id}>{v.displayName}{v.linuxRepairer ? '' : ' (not marked for Linux)'}</option>
+              <option value={v.id}>{v.displayName}{v.linuxRepairer ? '' : $t(' (not marked for Linux)')}</option>
             {/each}
           </select>
         </div>
         <div class="sm:col-span-2">
-          <label class="label" for="li-co2">For the CO₂ figure, this is closest to</label>
+          <label class="label" for="li-co2">{$t('For the CO₂ figure, this is closest to')}</label>
           <select id="li-co2" class="input" bind:value={form.co2FactorId}>
-            <option value="">Do not work out a figure</option>
+            <option value="">{$t('Do not work out a figure')}</option>
             {#each factors as f}
-              <option value={f.id}>{f.label}{f.co2eKg ? ` (${f.co2eKg.toFixed(0)} kg to make one)` : ''}</option>
+              <option value={f.id}>{$t(f.label)}{f.co2eKg ? $t(' ({n} kg to make one)', { n: f.co2eKg.toFixed(0) }) : ''}</option>
             {/each}
           </select>
           <p class="text-xs text-slate-500 mt-1">
-            Worked out the same way as a repair, so this total and your repair total can be added
-            together. Only counted when the computer went home running Linux.
+            {$t('Worked out the same way as a repair, so this total and your repair total can be added together. Only counted when the computer went home running Linux.')}
           </p>
         </div>
       </div>
 
       <details class="rounded-lg border border-slate-200 p-3">
         <summary class="cursor-pointer text-sm font-medium text-slate-700">
-          Visitor details and notes (optional)
+          {$t('Visitor details and notes (optional)')}
         </summary>
         <div class="mt-3 space-y-3">
           <div class="grid sm:grid-cols-2 gap-3">
             <div>
-              <label class="label" for="li-name">Visitor name</label>
+              <label class="label" for="li-name">{$t('Visitor name')}</label>
               <input id="li-name" class="input" bind:value={form.customerName} />
             </div>
             <div>
-              <label class="label" for="li-contact">Contact</label>
+              <label class="label" for="li-contact">{$t('Contact')}</label>
               <input id="li-contact" class="input" bind:value={form.customerContact} />
             </div>
           </div>
@@ -596,17 +596,16 @@
             <label class="flex items-start gap-3 rounded-lg bg-amber-50 ring-1 ring-amber-200 p-3 text-sm">
               <input type="checkbox" class="mt-1 h-4 w-4 rounded border-slate-300 text-brand-600" bind:checked={form.gdprConsent} />
               <span class="text-amber-900">
-                The visitor is happy for us to keep their details.
+                {$t('The visitor is happy for us to keep their details.')}
                 <span class="block text-xs mt-0.5">
-                  Kept for as long as your retention setting says, then removed automatically.
-                  Leave the name and contact blank if you would rather not hold them at all.
+                  {$t('Kept for as long as your retention setting says, then removed automatically. Leave the name and contact blank if you would rather not hold them at all.')}
                 </span>
               </span>
             </label>
           {/if}
           <div>
-            <label class="label" for="li-notes">Notes</label>
-            <textarea id="li-notes" class="input" rows="3" placeholder="Anything worth remembering, for example a program they needed that does not run on Linux." bind:value={form.notes}></textarea>
+            <label class="label" for="li-notes">{$t('Notes')}</label>
+            <textarea id="li-notes" class="input" rows="3" placeholder={$t('Anything worth remembering, for example a program they needed that does not run on Linux.')} bind:value={form.notes}></textarea>
           </div>
         </div>
       </details>
@@ -614,9 +613,9 @@
       {#if formError}<p class="text-sm text-rose-700">{formError}</p>{/if}
 
       <div class="flex justify-end gap-2 pt-2 border-t">
-        <button class="btn-secondary" on:click={closeForm} disabled={busy}>Cancel</button>
+        <button class="btn-secondary" on:click={closeForm} disabled={busy}>{$t('Cancel')}</button>
         <button class="btn-primary" on:click={save} disabled={busy}>
-          {editing ? 'Save changes' : 'Save record'}
+          {editing ? $t('Save changes') : $t('Save record')}
         </button>
       </div>
     </div>

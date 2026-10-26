@@ -2,6 +2,7 @@
   import { track } from '$lib/analytics';
   import { CalendarPlus } from 'lucide-svelte';
   import { downloadICS, type CalEvent } from '$lib/calendar';
+  import { t } from '$lib/i18n';
 
   export let event: CalEvent;
   // link    — inline text action (sits next to e.g. "Get directions")
@@ -12,7 +13,7 @@
   let className = '';
   export { className as class };
 
-  $: label = `Add ${event.name} to your calendar`;
+  $: label = $t('Add {name} to your calendar', { name: event.name });
 
   function add() {
     downloadICS(event);
@@ -25,14 +26,14 @@
     type="button"
     on:click|stopPropagation={add}
     aria-label={label}
-    title="Add to calendar"
+    title={$t('Add to calendar')}
     class="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-white/90 text-brand-700 ring-1 ring-black/5 shadow-sm transition hover:bg-white hover:text-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 {className}"
   >
     <CalendarPlus size={15} />
   </button>
 {:else if variant === 'button'}
   <button type="button" on:click={add} aria-label={label} class="btn-secondary {className}">
-    <CalendarPlus size={16} /> Add to calendar
+    <CalendarPlus size={16} /> {$t('Add to calendar')}
   </button>
 {:else}
   <button
@@ -41,6 +42,6 @@
     aria-label={label}
     class="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 hover:text-brand-800 focus:outline-none focus-visible:underline {className}"
   >
-    <CalendarPlus size={16} class="shrink-0" /> Add to calendar
+    <CalendarPlus size={16} class="shrink-0" /> {$t('Add to calendar')}
   </button>
 {/if}

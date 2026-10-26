@@ -2,6 +2,11 @@
   import { onMount } from 'svelte';
   import { api, download } from '$lib/api';
   import { CalendarDays, Wrench, Users, Leaf, Clock, CheckCircle2 } from 'lucide-svelte';
+  import { t, tNow, dateLocale, currentLocale } from '$lib/i18n';
+
+  // English keeps the browser's own date format, as before. Other languages
+  // use their own format.
+  const dateTag = () => (currentLocale() === 'en' ? undefined : dateLocale());
 
   type Range = '3m' | '6m' | '12m' | 'all';
   type Overview = {
@@ -88,7 +93,7 @@
   }
   function prettyDate(iso: string): string {
     const d = new Date(iso + 'T00:00:00');
-    return d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+    return d.toLocaleDateString(dateTag(), { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
   }
 
   $: byDay = new Map<string, HeatmapDay>(heatmap.map((h) => [h.day, h]));
@@ -115,7 +120,7 @@
       const first = cells[0].date;
       const showMonth = first.getMonth() !== lastMonth && first.getDate() <= 7;
       lastMonth = first.getMonth();
-      cols.push({ cells, monthLabel: showMonth ? first.toLocaleDateString(undefined, { month: 'short' }) : null });
+      cols.push({ cells, monthLabel: showMonth ? first.toLocaleDateString(dateTag(), { month: 'short' }) : null });
       cursor = new Date(cursor);
       cursor.setDate(cursor.getDate() + 7);
     }
@@ -141,10 +146,10 @@
 
   function fmtDuration(min: number): string {
     if (!min || min <= 0) return '-';
-    if (min < 60) return `${min} min`;
+    if (min < 60) return tNow('{n} min', { n: min });
     const h = Math.floor(min / 60);
     const m = min % 60;
-    return m === 0 ? `${h} hr` : `${h} hr ${m} min`;
+    return m === 0 ? tNow('{h} hr', { h }) : tNow('{h} hr {m} min', { h, m });
   }
 
   let exportError = '';
@@ -154,14 +159,14 @@
     try {
       await download('/api/admin/repairs/export.csv', 'repairs.csv');
     } catch (err: any) {
-      exportError = err?.message ?? 'The export could not be downloaded. Please try again.';
+      exportError = err?.message ?? tNow('The export could not be downloaded. Please try again.');
     }
   }
 </script>
 
 <div class="flex flex-wrap items-center justify-between gap-3">
-  <h1 class="text-2xl font-bold">Statistics</h1>
-  <button class="btn-secondary" on:click={exportCsv}>Export raw data (CSV)</button>
+  <h1 class="text-2xl font-bold">{$t('Statistics')}</h1>
+  <button class="btn-secondary" on:click={exportCsv}>{$t('Export raw data (CSV)')}</button>
   {#if exportError}<p class="text-sm text-rose-700">{exportError}</p>{/if}
 </div>
 
@@ -175,7 +180,7 @@
       on:click={() => setRange(r)}
       disabled={busy}
     >
-      {RANGE_LABELS[r]}
+      {$t(RANGE_LABELS[r])}
     </button>
   {/each}
 </div>
@@ -183,38 +188,38 @@
 {#if overview}
   <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mt-4">
     <div class="card p-4">
-      <div class="flex items-center gap-2 text-slate-500 text-xs"><CalendarDays size={14} /> Events</div>
+      <div class="flex items-center gap-2 text-slate-500 text-xs"><CalendarDays size={14} /> {$t('Events')}</div>
       <p class="text-2xl font-bold mt-1">{overview.eventCount}</p>
-      <p class="text-xs text-slate-400 mt-0.5">{overview.avgRepairsPerEvent} avg per event</p>
+      <p class="text-xs text-slate-400 mt-0.5">{$t('{n} avg per event', { n: overview.avgRepairsPerEvent })}</p>
     </div>
     <div class="card p-4">
-      <div class="flex items-center gap-2 text-slate-500 text-xs"><Wrench size={14} /> Items in</div>
+      <div class="flex items-center gap-2 text-slate-500 text-xs"><Wrench size={14} /> {$t('Items in')}</div>
       <p class="text-2xl font-bold mt-1">{overview.repairCount}</p>
       <p class="text-xs text-slate-400 mt-0.5">
-        {overview.completedCount} fixed{#if overview.fixedWeightKg > 0}, weighing {overview.fixedWeightKg.toFixed(1)} kg{/if}
+        {$t('{n} fixed', { n: overview.completedCount })}{#if overview.fixedWeightKg > 0}{$t(', weighing {kg} kg', { kg: overview.fixedWeightKg.toFixed(1) })}{/if}
       </p>
     </div>
     <div class="card p-4">
-      <div class="flex items-center gap-2 text-slate-500 text-xs"><CheckCircle2 size={14} /> Success rate</div>
+      <div class="flex items-center gap-2 text-slate-500 text-xs"><CheckCircle2 size={14} /> {$t('Success rate')}</div>
       <p class="text-2xl font-bold mt-1">{overview.successRate}%</p>
       <p class="text-xs text-slate-400 mt-0.5">
-        {overview.cannotRepairCount} couldn't fix{#if overview.satisfactionRate !== null}, {overview.satisfactionRate}% satisfied{/if}
+        {$t("{n} couldn't fix", { n: overview.cannotRepairCount })}{#if overview.satisfactionRate !== null}, {$t('{pct}% satisfied', { pct: overview.satisfactionRate })}{/if}
       </p>
     </div>
     <div class="card p-4">
-      <div class="flex items-center gap-2 text-slate-500 text-xs"><Users size={14} /> Volunteers</div>
+      <div class="flex items-center gap-2 text-slate-500 text-xs"><Users size={14} /> {$t('Volunteers')}</div>
       <p class="text-2xl font-bold mt-1">{overview.repairerCount}</p>
-      <p class="text-xs text-slate-400 mt-0.5">took on a repair</p>
+      <p class="text-xs text-slate-400 mt-0.5">{$t('took on a repair')}</p>
     </div>
     <div class="card p-4">
-      <div class="flex items-center gap-2 text-slate-500 text-xs"><Clock size={14} /> Avg repair time</div>
+      <div class="flex items-center gap-2 text-slate-500 text-xs"><Clock size={14} /> {$t('Avg repair time')}</div>
       <p class="text-2xl font-bold mt-1">{fmtDuration(overview.avgDurationMin)}</p>
-      <p class="text-xs text-slate-400 mt-0.5">from accept to done</p>
+      <p class="text-xs text-slate-400 mt-0.5">{$t('from accept to done')}</p>
     </div>
     <div class="card p-4">
-      <div class="flex items-center gap-2 text-slate-500 text-xs"><Leaf size={14} /> CO₂ saved</div>
+      <div class="flex items-center gap-2 text-slate-500 text-xs"><Leaf size={14} /> {$t('CO₂ saved')}</div>
       <p class="text-2xl font-bold mt-1">{overview.environmentalSavingKg.toFixed(1)}<span class="text-sm font-normal text-slate-500"> kg</span></p>
-      <p class="text-xs text-slate-400 mt-0.5">est. from completed jobs</p>
+      <p class="text-xs text-slate-400 mt-0.5">{$t('est. from completed jobs')}</p>
     </div>
   </div>
 {/if}
@@ -222,8 +227,8 @@
 <!-- ── Activity heatmap (last 12 months) ───────────────────────────── -->
 <div class="card p-4 mt-4 overflow-x-auto">
   <div class="flex items-baseline justify-between mb-3">
-    <h2 class="text-lg font-semibold">Activity in the last 12 months</h2>
-    <p class="text-xs text-slate-500">{heatmap.length} days with events</p>
+    <h2 class="text-lg font-semibold">{$t('Activity in the last 12 months')}</h2>
+    <p class="text-xs text-slate-500">{$t('{n} days with events', { n: heatmap.length })}</p>
   </div>
   <div class="inline-block min-w-full">
     <!-- Month labels -->
@@ -236,7 +241,7 @@
       <!-- Day-of-week labels (Mon, Wed, Fri) -->
       <div class="flex flex-col mr-1 text-[10px] text-slate-500 select-none" style="gap: 2px;">
         {#each ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] as d, i}
-          <div class="h-3 leading-3">{i % 2 === 0 ? d : ''}</div>
+          <div class="h-3 leading-3">{i % 2 === 0 ? $t(d) : ''}</div>
         {/each}
       </div>
       <div class="flex">
@@ -249,7 +254,12 @@
                 <div
                   class="w-3 h-3 rounded-[2px] {BUCKET_CLASS[bucket(c.day?.repairs ?? 0)]}"
                   title={c.day
-                    ? `${prettyDate(c.day.day)}: ${c.day.events} event${c.day.events === 1 ? '' : 's'}, ${c.day.repairs} repair${c.day.repairs === 1 ? '' : 's'} (${c.day.completed} fixed)`
+                    ? $t('{date}: {events}, {repairs} ({fixed} fixed)', {
+                        date: prettyDate(c.day.day),
+                        events: c.day.events === 1 ? $t('{n} event', { n: c.day.events }) : $t('{n} events', { n: c.day.events }),
+                        repairs: c.day.repairs === 1 ? $t('{n} repair', { n: c.day.repairs }) : $t('{n} repairs', { n: c.day.repairs }),
+                        fixed: c.day.completed,
+                      })
                     : prettyDate(fmtDate(c.date))}
                 ></div>
               {/if}
@@ -260,12 +270,12 @@
     </div>
     <!-- Legend -->
     <div class="flex items-center gap-2 mt-3 text-[11px] text-slate-500">
-      <span>Less</span>
+      <span>{$t('Less')}</span>
       {#each BUCKET_CLASS as cls}
         <div class="w-3 h-3 rounded-[2px] {cls}"></div>
       {/each}
-      <span>More</span>
-      <span class="ml-3">(intensity = repairs that day)</span>
+      <span>{$t('More')}</span>
+      <span class="ml-3">{$t('(intensity = repairs that day)')}</span>
     </div>
   </div>
 </div>
@@ -273,23 +283,23 @@
 <!-- ── Events table ──────────────────────────────────────────────── -->
 <section class="mt-6">
   <div class="flex items-baseline justify-between mb-2">
-    <h2 class="text-lg font-semibold">Events ({RANGE_LABELS[range].toLowerCase()})</h2>
-    <p class="text-xs text-slate-500">{events.length} event{events.length === 1 ? '' : 's'}</p>
+    <h2 class="text-lg font-semibold">{$t('Events ({range})', { range: $t(RANGE_LABELS[range]).toLowerCase() })}</h2>
+    <p class="text-xs text-slate-500">{events.length === 1 ? $t('{n} event', { n: events.length }) : $t('{n} events', { n: events.length })}</p>
   </div>
   {#if events.length === 0}
-    <div class="card p-6 text-center text-sm text-slate-500">No events in this period.</div>
+    <div class="card p-6 text-center text-sm text-slate-500">{$t('No events in this period.')}</div>
   {:else}
     <div class="card overflow-x-auto">
       <table class="w-full text-sm">
         <thead class="bg-slate-50 text-left text-slate-600">
           <tr>
-            <th class="px-3 py-2">Date</th>
-            <th class="px-3 py-2">Event</th>
-            <th class="px-3 py-2">Venue</th>
-            <th class="px-3 py-2 text-right">Items</th>
-            <th class="px-3 py-2 text-right">Fixed</th>
-            <th class="px-3 py-2 text-right">Volunteers</th>
-            <th class="px-3 py-2 text-right">Avg time</th>
+            <th class="px-3 py-2">{$t('Date')}</th>
+            <th class="px-3 py-2">{$t('Event')}</th>
+            <th class="px-3 py-2">{$t('Venue')}</th>
+            <th class="px-3 py-2 text-right">{$t('Items')}</th>
+            <th class="px-3 py-2 text-right">{$t('Fixed')}</th>
+            <th class="px-3 py-2 text-right">{$t('Volunteers')}</th>
+            <th class="px-3 py-2 text-right">{$t('Avg time')}</th>
             <th class="px-3 py-2"></th>
           </tr>
         </thead>
@@ -304,7 +314,7 @@
               <td class="px-3 py-2 text-right">{e.repairerCount}</td>
               <td class="px-3 py-2 text-right text-slate-600">{fmtDuration(e.avgDurationMin)}</td>
               <td class="px-3 py-2 text-right">
-                <a class="btn-ghost btn-sm whitespace-nowrap" href={`/admin/stats/events/${e.id}`}>Details</a>
+                <a class="btn-ghost btn-sm whitespace-nowrap" href={`/admin/stats/events/${e.id}`}>{$t('Details')}</a>
               </td>
             </tr>
           {/each}

@@ -7,13 +7,14 @@ import type { PageLoad } from './$types';
  * render. Only the page copy and its SEO tags are built here.
  */
 export const load: PageLoad = async ({ url, parent }) => {
-  const { cafe } = await parent();
+  const { cafe, locale } = await parent();
 
   const seo = buildSeo({
     route: 'world',
     origin: url.origin,
     pathname: url.pathname,
     cafe,
+    locale,
   });
 
   return { seo };

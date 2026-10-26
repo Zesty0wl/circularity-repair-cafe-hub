@@ -36,6 +36,8 @@ export interface Bindings {
   EVENT_GENERATION_MONTHS?: string;
   /** ISO 3166-1 alpha-3 country code for the ORDS export, e.g. FRA. Optional. */
   ORDS_COUNTRY?: string;
+  /** The language to show: 'auto' (the browser's), 'en' or 'fr'. Optional. */
+  LANGUAGE?: string;
 }
 
 export function bindings(): Bindings {
@@ -93,5 +95,10 @@ export const env = {
   /** The cafe's country for the ORDS export, as a 3-letter ISO code. Empty when unset. */
   get ORDS_COUNTRY(): string {
     return bindings().ORDS_COUNTRY?.trim().toUpperCase() || '';
+  },
+  /** The language to show. 'auto' follows the browser; otherwise 'en' or 'fr'. */
+  get LANGUAGE(): string {
+    const value = bindings().LANGUAGE?.trim().toLowerCase();
+    return value === 'en' || value === 'fr' ? value : 'auto';
   },
 };

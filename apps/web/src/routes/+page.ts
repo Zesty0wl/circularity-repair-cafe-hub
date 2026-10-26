@@ -26,7 +26,7 @@ export const load: PageLoad = async ({ fetch, url, parent }) => {
     .then((r) => (r.ok ? r.json() : { ours: null, cafes: [] }))
     .catch(() => ({ ours: null, cafes: [] }));
 
-  const { cafe } = await parent();
+  const { cafe, locale } = await parent();
   const [upcomingEvents, skills, venue, stats, localCafes] = await Promise.all([
     eventsP,
     skillsP,
@@ -40,6 +40,7 @@ export const load: PageLoad = async ({ fetch, url, parent }) => {
     origin: url.origin,
     pathname: url.pathname,
     cafe,
+    locale,
     events: upcomingEvents,
     venue,
   });

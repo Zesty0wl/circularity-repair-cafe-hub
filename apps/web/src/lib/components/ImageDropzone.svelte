@@ -11,6 +11,7 @@
   import { createEventDispatcher, onDestroy, onMount } from 'svelte';
   import { uploadFile } from '$lib/api';
   import { ImagePlus, Loader2, AlertCircle, Check } from 'lucide-svelte';
+  import { t, tNow } from '$lib/i18n';
 
   /** Where to POST each file. */
   export let endpoint: string;
@@ -140,7 +141,7 @@
           failed++;
           setItem(item.key, {
             status: 'error',
-            error: err?.message ?? 'Upload failed',
+            error: err?.message ?? tNow('Upload failed'),
           });
         }
       }
@@ -220,7 +221,7 @@
        need to be focusable. -->
   <div
     role="group"
-    aria-label={title}
+    aria-label={$t(title)}
     class="rounded-2xl border-2 border-dashed p-6 text-center transition-colors
       {dragging ? 'border-brand-500 bg-brand-50' : 'border-slate-300 bg-slate-50'}
       {disabled ? 'opacity-60' : ''}"
@@ -232,15 +233,15 @@
     <span class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-100 text-brand-700">
       <ImagePlus size={22} />
     </span>
-    <p class="mt-3 font-semibold text-slate-800">{title}</p>
-    <p class="mt-1 text-sm text-slate-600 max-w-md mx-auto">{hint}</p>
+    <p class="mt-3 font-semibold text-slate-800">{$t(title)}</p>
+    <p class="mt-1 text-sm text-slate-600 max-w-md mx-auto">{$t(hint)}</p>
     <button
       class="btn-secondary btn-sm mt-4"
       type="button"
       {disabled}
       on:click={() => fileInput?.click()}
     >
-      Choose photos
+      {$t('Choose photos')}
     </button>
     <input
       bind:this={fileInput}
@@ -278,7 +279,7 @@
               type="button"
               on:click={() => dismiss(item.key)}
             >
-              Dismiss
+              {$t('Dismiss')}
             </button>
             <AlertCircle size={16} class="text-rose-600 shrink-0" />
           {:else}

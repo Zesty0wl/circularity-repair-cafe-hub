@@ -22,6 +22,8 @@ import sveltekit from '../../web/.svelte-kit/cloudflare/_worker.js';
 import { handleApi, isApiPath } from './app.js';
 import { runScheduled } from './scheduled.js';
 import { maybeRunHousekeeping } from './housekeeping.js';
+import { env as settings } from './env.js';
+import { pickLocale, type Locale } from '@circularity/shared';
 
 interface Env {
   [key: string]: unknown;
@@ -69,15 +71,22 @@ function isCacheablePage(request: Request, url: URL): boolean {
   return true;
 }
 
-function pageCacheKey(url: URL): Request {
-  // The query string matters (guide searches, for example), the fragment never
-  // reaches us, and nothing else about the request changes the page.
-  return new Request(`${url.origin}${url.pathname}${url.search}`, { method: 'GET' });
+function pageCacheKey(url: URL, locale: Locale): Request {
+  // The query string matters (guide searches, for example), and so does the
+  // language: with LANGUAGE set to auto, a French browser gets the page in
+  // French, so it needs its own copy. The fragment never reaches us, and
+  // nothing else about the request changes the page.
+  return new Request(`${url.origin}/__${locale}${url.pathname}${url.search}`, { method: 'GET' });
 }
 
-async function cachedPage(url: URL): Promise<Response | null> {
+/** The language the page will be drawn in. hooks.server.ts picks the same. */
+function pageLocale(request: Request): Locale {
+  return pickLocale(request.headers.get('accept-language'), settings.LANGUAGE);
+}
+
+async function cachedPage(url: URL, locale: Locale): Promise<Response | null> {
   try {
-    const hit = await caches.default.match(pageCacheKey(url));
+    const hit = await caches.default.match(pageCacheKey(url, locale));
     if (!hit) return null;
     const res = new Response(hit.body, hit);
     // The browser should still check back each time, as for a fresh page.
@@ -89,14 +98,14 @@ async function cachedPage(url: URL): Promise<Response | null> {
   }
 }
 
-function keepPage(url: URL, response: Response, ctx: ExecutionContext): void {
+function keepPage(url: URL, locale: Locale, response: Response, ctx: ExecutionContext): void {
   if (response.status !== 200) return;
   if (!(response.headers.get('content-type') ?? '').includes('text/html')) return;
   if (response.headers.has('set-cookie')) return;
   try {
     const copy = new Response(response.clone().body, response);
     copy.headers.set('Cache-Control', `public, max-age=${PAGE_CACHE_SECONDS}`);
-    ctx.waitUntil(caches.default.put(pageCacheKey(url), copy).catch(() => {}));
+    ctx.waitUntil(caches.default.put(pageCacheKey(url, locale), copy).catch(() => {}));
   } catch {
     // Not worth failing a page over.
   }
@@ -121,8 +130,9 @@ export default {
       return withSecurityHeaders(await handleApi(request));
     }
     const cacheable = isCacheablePage(request, url);
+    const locale = pageLocale(request);
     if (cacheable) {
-      const hit = await cachedPage(url);
+      const hit = await cachedPage(url, locale);
       if (hit) return withSecurityHeaders(hit);
     }
     const response = await svelte.fetch!(
@@ -130,7 +140,7 @@ export default {
       { ...env, HUB_API: (inner: Request) => handleApi(inner) },
       ctx,
     );
-    if (cacheable) keepPage(url, response, ctx);
+    if (cacheable) keepPage(url, locale, response, ctx);
     return withSecurityHeaders(response);
   },
 

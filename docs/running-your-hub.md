@@ -29,6 +29,7 @@ again.
 | Name | What it does | If you leave it out |
 | --- | --- | --- |
 | `TZ` | Where your cafe is, so "today", session dates and reports are right. Use a name from [this list](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones), such as `Europe/Dublin` or `America/Toronto`. | `Europe/London` |
+| `LANGUAGE` | The language the hub is shown in: `en` (English), `fr` (French), or `auto`, which follows each visitor's browser. A cafe in France should choose `fr`, so that the pictures shown when a link is shared are in French too. Set it before you open a new hub for the first time, and its home page and skill categories start in French. | `auto` |
 | `TELEMETRY_DISABLED` | Set to `true` to rule out sharing numbers with the project, whatever an admin chooses in Settings. | `false` |
 | `UPDATE_CHECK_DISABLED` | Set to `true` to stop the hub asking GitHub whether a new version is out. | `false` |
 | `MAX_UPLOAD_SIZE_MB` | The largest photo, in megabytes, the hub accepts. | `10` |

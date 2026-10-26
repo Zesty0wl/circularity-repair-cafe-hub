@@ -16,6 +16,7 @@
   import PatBadge from '$lib/components/PatBadge.svelte';
   import { WAIT_TONE_CLASS, firstName, minutesBetween, sessionTimes, statusLabel, waitTone, formatAgo, formatDuration } from '$lib/staff/queue';
   import { CalendarClock, Camera, CheckCircle2, ChevronRight, Clock, RefreshCw, UserPlus, Wrench, X } from 'lucide-svelte';
+  import { currentLocale, dateLocale, t, tNow } from '$lib/i18n';
 
   interface Job {
     id: string;
@@ -78,7 +79,7 @@
       }
     } catch (err: any) {
       // Keep showing what we had. A hall's wifi drops now and then.
-      loadError = err?.message ?? 'Could not refresh the queue';
+      loadError = err?.message ?? tNow('Could not refresh the queue');
     }
   }
 
@@ -143,7 +144,7 @@
       await api(`/api/repairer/jobs/${job.id}/accept`, { method: 'PATCH', json: {} });
       goto(`/repairer/job/${job.id}`);
     } catch (err: any) {
-      actionError = err?.message ?? 'Could not start that repair';
+      actionError = err?.message ?? tNow('Could not start that repair');
       await load();
     } finally {
       busyId = null;
@@ -156,7 +157,8 @@
   }
 
   function longDate(iso: string): string {
-    return new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+    const locale = currentLocale() === 'fr' ? 'fr-FR' : 'en-GB';
+    return new Date(`${iso}T12:00:00Z`).toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
   }
 
   const OUTCOME_WORDS: Record<string, string> = {
@@ -166,69 +168,69 @@
   };
 </script>
 
-<svelte:head><title>Repair queue</title></svelte:head>
+<svelte:head><title>{$t('Repair queue')}</title></svelte:head>
 
 {#if done}
   <div class="mb-4 rounded-xl bg-emerald-50 ring-1 ring-emerald-200 px-4 py-3 flex items-start gap-3 text-emerald-900">
     <CheckCircle2 size={20} class="shrink-0 mt-0.5" />
-    <p class="flex-1 text-sm"><strong>{done}</strong> {OUTCOME_WORDS[doneOutcome ?? ''] ?? 'saved.'}{#if waiting.length} The next item is waiting below.{/if}</p>
-    <button class="p-1 rounded-md hover:bg-emerald-100" aria-label="Hide this message" on:click={dismissDone}><X size={16} /></button>
+    <p class="flex-1 text-sm"><strong>{done}</strong> {$t(OUTCOME_WORDS[doneOutcome ?? ''] ?? 'saved.')}{#if waiting.length} {$t('The next item is waiting below.')}{/if}</p>
+    <button class="p-1 rounded-md hover:bg-emerald-100" aria-label={$t('Hide this message')} on:click={dismissDone}><X size={16} /></button>
   </div>
 {/if}
 
 {#if !data}
-  <p class="text-slate-500">{loadError || 'Loading the queue…'}</p>
+  <p class="text-slate-500">{loadError || $t('Loading the queue…')}</p>
 {:else if !data.event}
   <!-- ── No session running ───────────────────────────────────────── -->
   <section class="card p-6 md:p-8 max-w-2xl">
-    <p class="kicker">Repair queue</p>
-    <h1 class="text-2xl font-bold mt-1">No session is running</h1>
-    <p class="mt-2 text-slate-600">The queue opens when an admin starts a session. It updates by itself, so you can leave this page open.</p>
+    <p class="kicker">{$t('Repair queue')}</p>
+    <h1 class="text-2xl font-bold mt-1">{$t('No session is running')}</h1>
+    <p class="mt-2 text-slate-600">{$t('The queue opens when an admin starts a session. It updates by itself, so you can leave this page open.')}</p>
     {#if nextSession}
       <div class="mt-5 rounded-xl bg-slate-50 ring-1 ring-slate-200 p-4">
-        <p class="text-sm text-slate-500">Next session</p>
+        <p class="text-sm text-slate-500">{$t('Next session')}</p>
         <p class="font-semibold text-slate-900">{longDate(nextSession.date)}, {sessionTimes(nextSession.startTime, nextSession.endTime)}</p>
         <p class="text-sm text-slate-600">{nextSession.name} · {nextSession.venue.name}</p>
       </div>
     {/if}
     <div class="mt-6 grid sm:grid-cols-2 gap-3">
       {#if $cafe?.preRegistrationEnabled}
-        <a href="/repairer/pre-registered" class="btn-primary sm:col-span-2"><CalendarClock size={18} /> Look at pre-registered items</a>
+        <a href="/repairer/pre-registered" class="btn-primary sm:col-span-2"><CalendarClock size={18} /> {$t('Look at pre-registered items')}</a>
       {/if}
-      <a href="/repairer/photos" class="btn-secondary"><Camera size={18} /> Add photos of a session</a>
-      <a href="/repairer/history" class="btn-secondary"><Wrench size={18} /> My repairs</a>
+      <a href="/repairer/photos" class="btn-secondary"><Camera size={18} /> {$t('Add photos of a session')}</a>
+      <a href="/repairer/history" class="btn-secondary"><Wrench size={18} /> {$t('My repairs')}</a>
     </div>
   </section>
 {:else}
   <!-- ── The session ──────────────────────────────────────────────── -->
   <header class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
     <div class="min-w-0">
-      <p class="kicker flex items-center gap-2"><span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span> Session running</p>
+      <p class="kicker flex items-center gap-2"><span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span> {$t('Session running')}</p>
       <h1 class="text-2xl md:text-3xl font-bold mt-1 truncate">{data.event.name}</h1>
       <p class="text-slate-600 text-sm">{data.event.venueName} · {sessionTimes(data.event.startTime, data.event.endTime)}</p>
     </div>
     <div class="flex gap-2 shrink-0">
-      <a href="/repairer/checkin" class="btn-primary"><UserPlus size={18} /> Check in a visitor</a>
+      <a href="/repairer/checkin" class="btn-primary"><UserPlus size={18} /> {$t('Check in a visitor')}</a>
     </div>
   </header>
 
   <dl class="mt-5 grid grid-cols-3 gap-2 md:gap-3">
     <div class="card px-4 py-3">
-      <dt class="text-xs text-slate-500 flex items-center gap-1.5"><span class="status-dot status-dot-waiting"></span> Waiting</dt>
+      <dt class="text-xs text-slate-500 flex items-center gap-1.5"><span class="status-dot status-dot-waiting"></span> {$t('Waiting')}</dt>
       <dd class="text-2xl md:text-3xl font-bold text-slate-900">{waiting.length}</dd>
     </div>
     <div class="card px-4 py-3">
-      <dt class="text-xs text-slate-500 flex items-center gap-1.5"><span class="status-dot status-dot-in_progress"></span> Being repaired</dt>
+      <dt class="text-xs text-slate-500 flex items-center gap-1.5"><span class="status-dot status-dot-in_progress"></span> {$t('Being repaired')}</dt>
       <dd class="text-2xl md:text-3xl font-bold text-slate-900">{beingRepaired.length}</dd>
     </div>
     <div class="card px-4 py-3">
-      <dt class="text-xs text-slate-500 flex items-center gap-1.5"><span class="status-dot status-dot-completed"></span> Fixed today</dt>
+      <dt class="text-xs text-slate-500 flex items-center gap-1.5"><span class="status-dot status-dot-completed"></span> {$t('Fixed today')}</dt>
       <dd class="text-2xl md:text-3xl font-bold text-slate-900">{fixedCount}</dd>
     </div>
   </dl>
 
   {#if loadError}
-    <p class="mt-3 text-sm text-amber-800 flex items-center gap-2"><RefreshCw size={14} /> Could not refresh just now. Trying again shortly.</p>
+    <p class="mt-3 text-sm text-amber-800 flex items-center gap-2"><RefreshCw size={14} /> {$t('Could not refresh just now. Trying again shortly.')}</p>
   {/if}
   {#if actionError}
     <p class="mt-3 text-sm text-rose-700">{actionError}</p>
@@ -237,17 +239,17 @@
   <!-- ── Your repairs ─────────────────────────────────────────────── -->
   {#if mine.length}
     <section class="mt-6">
-      <h2 class="text-lg font-semibold mb-2">You are working on</h2>
+      <h2 class="text-lg font-semibold mb-2">{$t('You are working on')}</h2>
       <div class="grid md:grid-cols-2 gap-3">
         {#each mine as j (j.id)}
           <a href={`/repairer/job/${j.id}`} class="card-link p-4 ring-2 ring-blue-200 flex items-center gap-4">
             <span class="h-11 w-11 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center shrink-0"><Wrench size={20} /></span>
             <div class="min-w-0 flex-1">
               <p class="font-semibold text-slate-900 truncate">{j.itemDescription}</p>
-              <p class="text-sm text-slate-600 truncate">{j.jobNumber}{#if j.customerName} · {firstName(j.customerName)}{/if} · started {formatAgo(minutesBetween(j.acceptedAt ?? j.createdAt, now))}</p>
+              <p class="text-sm text-slate-600 truncate">{j.jobNumber}{#if j.customerName} · {firstName(j.customerName)}{/if} · {$t('started {ago}', { ago: formatAgo(minutesBetween(j.acceptedAt ?? j.createdAt, now)) })}</p>
               {#if j.needsPat || j.patResult}<p class="mt-1"><PatBadge needed={j.needsPat} result={j.patResult} /></p>{/if}
             </div>
-            <span class="text-sm font-semibold text-brand-700 flex items-center gap-1 shrink-0">Carry on <ChevronRight size={16} /></span>
+            <span class="text-sm font-semibold text-brand-700 flex items-center gap-1 shrink-0">{$t('Carry on')} <ChevronRight size={16} /></span>
           </a>
         {/each}
       </div>
@@ -258,21 +260,21 @@
   <section class="mt-6">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div class="flex gap-1 rounded-xl bg-slate-200/70 p-1 overflow-x-auto max-w-full" role="tablist">
-        {#each tabs as t}
+        {#each tabs as tabItem}
           <button
             role="tab"
-            aria-selected={tab === t.key}
-            class="px-3 py-1.5 rounded-lg text-sm whitespace-nowrap {tab === t.key ? 'bg-white shadow-sm font-semibold text-slate-900' : 'text-slate-600 hover:text-slate-900'}"
-            on:click={() => (tab = t.key)}
+            aria-selected={tab === tabItem.key}
+            class="px-3 py-1.5 rounded-lg text-sm whitespace-nowrap {tab === tabItem.key ? 'bg-white shadow-sm font-semibold text-slate-900' : 'text-slate-600 hover:text-slate-900'}"
+            on:click={() => (tab = tabItem.key)}
           >
-            {t.label} <span class="ml-1 text-xs rounded-full px-1.5 py-0.5 {tab === t.key ? 'bg-slate-100' : 'bg-white/60'}">{t.count}</span>
+            {$t(tabItem.label)} <span class="ml-1 text-xs rounded-full px-1.5 py-0.5 {tab === tabItem.key ? 'bg-slate-100' : 'bg-white/60'}">{tabItem.count}</span>
           </button>
         {/each}
       </div>
       {#if tab === 'waiting' && mySkills.length}
         <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
           <input type="checkbox" class="h-4 w-4 rounded border-slate-300 text-brand-600" checked={onlyMine} on:change={(e) => setOnlyMine(e.currentTarget.checked)} />
-          Only things I fix
+          {$t('Only things I fix')}
         </label>
       {/if}
     </div>
@@ -280,13 +282,13 @@
     {#if shown.length === 0}
       <div class="card mt-3 p-6 text-center text-slate-500">
         {#if tab === 'waiting'}
-          {onlyMine && waiting.length ? 'Nothing waiting that matches your skills. Untick "Only things I fix" to see everything.' : 'Nobody is waiting. Time for a cup of tea.'}
+          {$t(onlyMine && waiting.length ? 'Nothing waiting that matches your skills. Untick "Only things I fix" to see everything.' : 'Nobody is waiting. Time for a cup of tea.')}
         {:else if tab === 'in_progress'}
-          Nothing is being repaired right now.
+          {$t('Nothing is being repaired right now.')}
         {:else if tab === 'awaiting_return'}
-          Nothing is waiting for a part.
+          {$t('Nothing is waiting for a part.')}
         {:else}
-          Nothing has been finished yet today.
+          {$t('Nothing has been finished yet today.')}
         {/if}
       </div>
     {:else}
@@ -295,7 +297,7 @@
           {@const waited = minutesBetween(j.createdAt, now)}
           <li class="card p-4 flex gap-4">
             {#if tab === 'waiting'}
-              <span class="h-9 w-9 shrink-0 rounded-full {i === 0 && !onlyMine ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'} flex items-center justify-center font-bold text-sm" title="Place in the queue">{i + 1}</span>
+              <span class="h-9 w-9 shrink-0 rounded-full {i === 0 && !onlyMine ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'} flex items-center justify-center font-bold text-sm" title={$t('Place in the queue')}>{i + 1}</span>
             {/if}
             <div class="min-w-0 flex-1">
               <div class="flex items-start justify-between gap-2">
@@ -304,7 +306,7 @@
               </div>
               <p class="mt-0.5 text-xs text-slate-500 flex flex-wrap items-center gap-x-2 gap-y-1">
                 <span class="font-mono">{j.jobNumber}</span>
-                {#if j.category}<span class="rounded px-1.5 py-0.5 font-medium" style="background-color: {j.categoryColour}22; color: {j.categoryColour}">{j.category}</span>{/if}
+                {#if j.category}<span class="rounded px-1.5 py-0.5 font-medium" style="background-color: {j.categoryColour}22; color: {j.categoryColour}">{$t(j.category)}</span>{/if}
                 {#if j.itemBrand}<span>{j.itemBrand}</span>{/if}
                 {#if j.customerName}<span>· {firstName(j.customerName)}</span>{/if}
                 <PatBadge needed={j.needsPat} result={j.patResult} />
@@ -313,28 +315,28 @@
               <div class="mt-3 flex flex-wrap items-center justify-between gap-2">
                 <p class="text-sm flex items-center gap-1.5 {tab === 'waiting' ? WAIT_TONE_CLASS[waitTone(waited)] : 'text-slate-500'}">
                   <Clock size={14} />
-                  {#if tab === 'waiting'}Waiting {formatDuration(waited)}
-                  {:else if tab === 'in_progress'}{j.repairerId === myId ? 'With you' : `With ${firstName(j.repairerName) || 'someone'}`} · {formatDuration(minutesBetween(j.acceptedAt ?? j.createdAt, now))}
+                  {#if tab === 'waiting'}{$t('Waiting {duration}', { duration: formatDuration(waited) })}
+                  {:else if tab === 'in_progress'}{$t('{who} · {duration}', { who: j.repairerId === myId ? $t('With you') : $t('With {name}', { name: firstName(j.repairerName) || $t('someone') }), duration: formatDuration(minutesBetween(j.acceptedAt ?? j.createdAt, now)) })}
                   {:else if j.repairerName}{firstName(j.repairerName)}
-                  {:else}Checked in at {new Date(j.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}{/if}
+                  {:else}{$t('Checked in at {time}', { time: new Date(j.createdAt).toLocaleTimeString(dateLocale(), { hour: '2-digit', minute: '2-digit' }) })}{/if}
                 </p>
                 <div class="flex gap-2">
                   {#if j.status === 'waiting'}
-                    <button class="btn-primary btn-sm" disabled={busyId === j.id} on:click={() => start(j)}>{busyId === j.id ? 'Starting…' : 'Start this repair'}</button>
+                    <button class="btn-primary btn-sm" disabled={busyId === j.id} on:click={() => start(j)}>{busyId === j.id ? $t('Starting…') : $t('Start this repair')}</button>
                   {:else if j.status === 'awaiting_return'}
-                    <button class="btn-primary btn-sm" disabled={busyId === j.id} on:click={() => start(j)}>They are back: carry on</button>
+                    <button class="btn-primary btn-sm" disabled={busyId === j.id} on:click={() => start(j)}>{$t('They are back: carry on')}</button>
                   {:else if j.status === 'in_progress' && j.repairerId === myId}
-                    <a href={`/repairer/job/${j.id}`} class="btn-primary btn-sm">Carry on</a>
+                    <a href={`/repairer/job/${j.id}`} class="btn-primary btn-sm">{$t('Carry on')}</a>
                   {:else if j.status === 'in_progress'}
                     {#if confirmTakeOver === j.id}
-                      <button class="btn-ghost btn-sm" on:click={() => (confirmTakeOver = null)}>Cancel</button>
-                      <button class="btn-primary btn-sm" disabled={busyId === j.id} on:click={() => start(j)}>Yes, take it over</button>
+                      <button class="btn-ghost btn-sm" on:click={() => (confirmTakeOver = null)}>{$t('Cancel')}</button>
+                      <button class="btn-primary btn-sm" disabled={busyId === j.id} on:click={() => start(j)}>{$t('Yes, take it over')}</button>
                     {:else}
-                      <a href={`/repairer/job/${j.id}`} class="btn-secondary btn-sm">View</a>
-                      <button class="btn-secondary btn-sm" on:click={() => (confirmTakeOver = j.id)}>Take over</button>
+                      <a href={`/repairer/job/${j.id}`} class="btn-secondary btn-sm">{$t('View')}</a>
+                      <button class="btn-secondary btn-sm" on:click={() => (confirmTakeOver = j.id)}>{$t('Take over')}</button>
                     {/if}
                   {:else}
-                    <a href={`/repairer/job/${j.id}`} class="btn-secondary btn-sm">View</a>
+                    <a href={`/repairer/job/${j.id}`} class="btn-secondary btn-sm">{$t('View')}</a>
                   {/if}
                 </div>
               </div>
@@ -346,6 +348,6 @@
   </section>
 
   <p class="mt-6 text-sm text-slate-500 flex flex-wrap gap-x-4 gap-y-2">
-    <a href="/repairer/photos" class="inline-flex items-center gap-1.5 hover:text-slate-800"><Camera size={16} /> Add photos of this session</a>
+    <a href="/repairer/photos" class="inline-flex items-center gap-1.5 hover:text-slate-800"><Camera size={16} /> {$t('Add photos of this session')}</a>
   </p>
 {/if}

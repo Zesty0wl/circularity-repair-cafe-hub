@@ -17,6 +17,7 @@
   import type * as MapLibre from 'maplibre-gl';
   import type { LocalCafe } from '$lib/localCafes';
   import { MAP_STYLES, hideHillShading, loadMapLibre } from '$lib/mapStyle';
+  import { t, tNow } from '$lib/i18n';
 
   export let cafes: LocalCafe[] = [];
   /** Our own cafe, drawn differently so it is clearly the middle of the group. */
@@ -102,7 +103,7 @@
 
     // Added last, so it sits on top of any pin it overlaps.
     if (ours) {
-      const el = pinElement('★', `${ours.name} (that is us)`, true, false);
+      const el = pinElement('★', tNow('{name} (that is us)', { name: ours.name }), true, false);
       markers.push(new ml.Marker({ element: el }).setLngLat([ours.lng, ours.lat]).addTo(map));
     }
   }
@@ -180,7 +181,7 @@
   <div bind:this={container} class="local-map h-full w-full" aria-hidden="true"></div>
   {#if !shown || failed}
     <div class="absolute inset-0 flex items-center justify-center bg-slate-100 text-sm text-slate-500">
-      {failed ? 'The map could not be loaded. The list below has every cafe.' : 'Loading the map…'}
+      {failed ? $t('The map could not be loaded. The list below has every cafe.') : $t('Loading the map…')}
     </div>
   {/if}
 </div>

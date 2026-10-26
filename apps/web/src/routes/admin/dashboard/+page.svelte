@@ -13,6 +13,8 @@
   import { onMount } from 'svelte';
   import { api } from '$lib/api';
   import { formatDistanceToNowStrict } from 'date-fns';
+  import { fr as frDates } from 'date-fns/locale';
+  import { t, tNow, dateLocale, locale } from '$lib/i18n';
   import { cafe, loadCafe } from '$lib/stores/cafe';
   import TelemetryChoice from '$lib/components/TelemetryChoice.svelte';
   import ListingPicker, { type ListingAnswer } from '$lib/components/ListingPicker.svelte';
@@ -86,15 +88,15 @@
         return;
       }
       if (action === 'link') {
-        listingDone = 'Linked. Your cafe is now picked out on the Worldwide map.';
+        listingDone = tNow('Linked. Your cafe is now picked out on the Worldwide map.');
         // The public pages read the listing from the cafe profile.
         await loadCafe();
       } else {
-        listingDone = 'Thank you. We will not ask again. You can link a listing later under Settings, Cafe profile.';
+        listingDone = tNow('Thank you. We will not ask again. You can link a listing later under Settings, Cafe profile.');
       }
       setTimeout(() => (askListing = false), 3000);
     } catch (err: any) {
-      listingError = err?.message ?? 'That did not save. Please try again.';
+      listingError = err?.message ?? tNow('That did not save. Please try again.');
     } finally {
       listingBusy = false;
     }
@@ -121,7 +123,7 @@
     telemetryBusy = true;
     try {
       await api('/api/admin/telemetry', { method: 'PATCH', json: { level: telemetryLevel } });
-      telemetryDone = telemetryLevel === 'none' ? 'Nothing will be sent.' : 'Thank you, that really helps.';
+      telemetryDone = telemetryLevel === 'none' ? tNow('Nothing will be sent.') : tNow('Thank you, that really helps.');
       setTimeout(() => (askTelemetry = false), 2200);
     } finally {
       telemetryBusy = false;
@@ -139,7 +141,7 @@
       loadError = '';
       now = Date.now();
     } catch (err: any) {
-      loadError = err?.message ?? 'Could not load the dashboard';
+      loadError = err?.message ?? tNow('Could not load the dashboard');
     }
   }
 
@@ -177,10 +179,10 @@
   }
 
   function longDate(iso: string): string {
-    return new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+    return new Date(`${iso}T12:00:00Z`).toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
   }
   function shortDate(iso: string): string {
-    return new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+    return new Date(`${iso}T12:00:00Z`).toLocaleDateString(dateLocale(), { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
   }
   function isToday(iso: string): boolean {
     const d = new Date();
@@ -212,32 +214,30 @@
   $: nextPlanned = !data?.activeEvent && !todayPlanned ? data?.upcomingEvents?.[0] ?? null : null;
 </script>
 
-<svelte:head><title>Dashboard</title></svelte:head>
+<svelte:head><title>{$t('Dashboard')}</title></svelte:head>
 
 <div class="flex flex-wrap items-end justify-between gap-3 mb-5">
   <div>
-    <h1 class="text-2xl font-bold">Dashboard</h1>
-    <p class="text-sm text-slate-500">{new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+    <h1 class="text-2xl font-bold">{$t('Dashboard')}</h1>
+    <p class="text-sm text-slate-500">{new Date().toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long' })}</p>
   </div>
   <div class="flex flex-wrap gap-2">
-    <a href="/admin/events/new" class="btn-secondary btn-sm"><CalendarPlus size={16} /> Plan a session</a>
+    <a href="/admin/events/new" class="btn-secondary btn-sm"><CalendarPlus size={16} /> {$t('Plan a session')}</a>
   </div>
 </div>
 
 {#if askListing}
   <!-- Quiet by design, like the card below: part of the page, not a dialog. -->
   <section class="card p-5 mb-5 ring-brand-200 bg-brand-50/40 relative">
-    <button class="absolute top-3 right-3 p-1.5 rounded-lg text-slate-400 hover:bg-white hover:text-slate-700" type="button" aria-label="Not now" on:click={() => answerListing('not_now')}>
+    <button class="absolute top-3 right-3 p-1.5 rounded-lg text-slate-400 hover:bg-white hover:text-slate-700" type="button" aria-label={$t('Not now')} on:click={() => answerListing('not_now')}>
       <X size={16} />
     </button>
     {#if listingDone}
       <p class="text-sm text-emerald-800 font-medium">{listingDone}</p>
     {:else}
-      <h2 class="font-semibold text-slate-900 pr-8">Is your cafe on repaircafe.org?</h2>
+      <h2 class="font-semibold text-slate-900 pr-8">{$t('Is your cafe on repaircafe.org?')}</h2>
       <p class="mt-1 text-sm text-slate-600 max-w-2xl">
-        Link your cafe's page on repaircafe.org. Your cafe is then picked out on the Worldwide map, and "Repair Cafes
-        near us" is measured from it. If you share your numbers on the community map, it also puts your pin in the
-        right place.
+        {$t('Link your cafe\'s page on repaircafe.org. Your cafe is then picked out on the Worldwide map, and "Repair Cafes near us" is measured from it. If you share your numbers on the community map, it also puts your pin in the right place.')}
       </p>
       <div class="mt-4 max-w-2xl">
         <ListingPicker load={loadListings} bind:selected={listingSlug} />
@@ -245,12 +245,12 @@
       {#if listingError}<p class="mt-3 text-sm text-rose-700">{listingError}</p>{/if}
       <div class="mt-4 flex flex-wrap gap-2">
         <button class="btn-primary btn-sm" type="button" disabled={listingBusy || !listingSlug} on:click={() => answerListing('link')}>
-          This is us
+          {$t('This is us')}
         </button>
         <button class="btn-secondary btn-sm" type="button" disabled={listingBusy} on:click={() => answerListing('not_listed')}>
-          We're not listed
+          {$t("We're not listed")}
         </button>
-        <button class="btn-ghost btn-sm" type="button" disabled={listingBusy} on:click={() => answerListing('not_now')}>Not now</button>
+        <button class="btn-ghost btn-sm" type="button" disabled={listingBusy} on:click={() => answerListing('not_now')}>{$t('Not now')}</button>
       </div>
     {/if}
   </section>
@@ -259,25 +259,25 @@
 {#if askTelemetry}
   <!-- Quiet by design: a card in the flow of the page, not a dialog over it. -->
   <section class="card p-5 mb-5 ring-brand-200 bg-brand-50/40 relative">
-    <button class="absolute top-3 right-3 p-1.5 rounded-lg text-slate-400 hover:bg-white hover:text-slate-700" type="button" aria-label="Not now" on:click={dismissTelemetry}>
+    <button class="absolute top-3 right-3 p-1.5 rounded-lg text-slate-400 hover:bg-white hover:text-slate-700" type="button" aria-label={$t('Not now')} on:click={dismissTelemetry}>
       <X size={16} />
     </button>
     {#if telemetryDone}
       <p class="text-sm text-emerald-800 font-medium">{telemetryDone}</p>
     {:else}
-      <TelemetryChoice bind:level={telemetryLevel} cafeName={$cafe?.name ?? 'Your Repair Café'} />
+      <TelemetryChoice bind:level={telemetryLevel} cafeName={$cafe?.name ?? $t('Your Repair Café')} />
       <div class="mt-4 flex flex-wrap gap-2">
         <button class="btn-primary btn-sm" type="button" disabled={telemetryBusy} on:click={saveTelemetry}>
-          {telemetryLevel === 'none' ? 'Save' : 'Yes, share our numbers'}
+          {telemetryLevel === 'none' ? $t('Save') : $t('Yes, share our numbers')}
         </button>
-        <button class="btn-ghost btn-sm" type="button" on:click={dismissTelemetry}>Not now</button>
+        <button class="btn-ghost btn-sm" type="button" on:click={dismissTelemetry}>{$t('Not now')}</button>
       </div>
     {/if}
   </section>
 {/if}
 
 {#if !data}
-  <p class="text-slate-500">{loadError || 'Loading…'}</p>
+  <p class="text-slate-500">{loadError || $t('Loading…')}</p>
 {:else}
   <div class="grid lg:grid-cols-3 gap-5 items-start">
     <!-- ── Left: today ───────────────────────────────────────────── -->
@@ -286,11 +286,11 @@
         <section class="card p-5 md:p-6">
           <div class="flex flex-wrap items-start justify-between gap-3">
             <div class="min-w-0">
-              <p class="kicker flex items-center gap-2"><span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span> Session running</p>
+              <p class="kicker flex items-center gap-2"><span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span> {$t('Session running')}</p>
               <h2 class="text-xl md:text-2xl font-semibold mt-1">{data.activeEvent.name}</h2>
               <p class="text-sm text-slate-600">{data.activeEvent.venueName} · {sessionTimes(data.activeEvent.startTime, data.activeEvent.endTime)}</p>
             </div>
-            <a href={`/admin/events/${data.activeEvent.id}`} class="text-sm text-brand-700 hover:underline">Session details</a>
+            <a href={`/admin/events/${data.activeEvent.id}`} class="text-sm text-brand-700 hover:underline">{$t('Session details')}</a>
           </div>
 
           <!-- The day so far, as one bar. -->
@@ -300,43 +300,43 @@
             {/each}
           </div>
           <dl class="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div><dt class="text-xs text-slate-500 flex items-center gap-1.5"><span class="status-dot status-dot-waiting"></span> Waiting</dt><dd class="text-2xl font-bold">{waiting.length}</dd></div>
-            <div><dt class="text-xs text-slate-500 flex items-center gap-1.5"><span class="status-dot status-dot-in_progress"></span> Being repaired</dt><dd class="text-2xl font-bold">{inProgress.length}</dd></div>
-            <div><dt class="text-xs text-slate-500 flex items-center gap-1.5"><span class="status-dot status-dot-completed"></span> Fixed</dt><dd class="text-2xl font-bold">{fixed.length}</dd></div>
-            <div><dt class="text-xs text-slate-500 flex items-center gap-1.5"><span class="status-dot status-dot-cannot_repair"></span> Could not fix</dt><dd class="text-2xl font-bold">{notFixed.length}</dd></div>
+            <div><dt class="text-xs text-slate-500 flex items-center gap-1.5"><span class="status-dot status-dot-waiting"></span> {$t('Waiting')}</dt><dd class="text-2xl font-bold">{waiting.length}</dd></div>
+            <div><dt class="text-xs text-slate-500 flex items-center gap-1.5"><span class="status-dot status-dot-in_progress"></span> {$t('Being repaired')}</dt><dd class="text-2xl font-bold">{inProgress.length}</dd></div>
+            <div><dt class="text-xs text-slate-500 flex items-center gap-1.5"><span class="status-dot status-dot-completed"></span> {$t('Fixed')}</dt><dd class="text-2xl font-bold">{fixed.length}</dd></div>
+            <div><dt class="text-xs text-slate-500 flex items-center gap-1.5"><span class="status-dot status-dot-cannot_repair"></span> {$t('Could not fix')}</dt><dd class="text-2xl font-bold">{notFixed.length}</dd></div>
           </dl>
           {#if typicalWait !== null || typicalRepair !== null}
             <p class="mt-3 text-sm text-slate-600">
-              {#if typicalWait !== null}People wait about <strong>{formatDuration(typicalWait)}</strong> to be seen.{/if}
-              {#if typicalRepair !== null} A repair takes about <strong>{formatDuration(typicalRepair)}</strong>.{/if}
+              {#if typicalWait !== null}{$t('People wait about')} <strong>{formatDuration(typicalWait)}</strong> {$t('to be seen.')}{/if}
+              {#if typicalRepair !== null} {$t('A repair takes about')} <strong>{formatDuration(typicalRepair)}</strong>.{/if}
             </p>
           {/if}
 
           <div class="mt-5 flex flex-wrap gap-2">
-            <a href="/repairer/checkin" class="btn-primary btn-sm"><UserPlus size={16} /> Check in a visitor</a>
-            <a href="/admin/board" class="btn-secondary btn-sm"><MonitorPlay size={16} /> Live board</a>
-            <button class="btn-secondary btn-sm" on:click={() => (showScreenLink = true)}><Tv size={16} /> Show on a screen</button>
+            <a href="/repairer/checkin" class="btn-primary btn-sm"><UserPlus size={16} /> {$t('Check in a visitor')}</a>
+            <a href="/admin/board" class="btn-secondary btn-sm"><MonitorPlay size={16} /> {$t('Live board')}</a>
+            <button class="btn-secondary btn-sm" on:click={() => (showScreenLink = true)}><Tv size={16} /> {$t('Show on a screen')}</button>
             {#if confirmEnd}
               <span class="inline-flex items-center gap-2 text-sm">
-                <span class="text-slate-700">{waiting.length + inProgress.length ? `${waiting.length + inProgress.length} still open. End anyway?` : 'End the session?'}</span>
-                <button class="btn-ghost btn-sm" on:click={() => (confirmEnd = false)}>No</button>
-                <button class="btn-danger btn-sm" disabled={busy} on:click={() => endSession(data.activeEvent.id)}>Yes, end it</button>
+                <span class="text-slate-700">{waiting.length + inProgress.length ? $t('{n} still open. End anyway?', { n: waiting.length + inProgress.length }) : $t('End the session?')}</span>
+                <button class="btn-ghost btn-sm" on:click={() => (confirmEnd = false)}>{$t('No')}</button>
+                <button class="btn-danger btn-sm" disabled={busy} on:click={() => endSession(data.activeEvent.id)}>{$t('Yes, end it')}</button>
               </span>
             {:else}
-              <button class="btn-danger-outline btn-sm ml-auto" on:click={() => (confirmEnd = true)}><Square size={14} /> End session</button>
+              <button class="btn-danger-outline btn-sm ml-auto" on:click={() => (confirmEnd = true)}><Square size={14} /> {$t('End session')}</button>
             {/if}
           </div>
         </section>
 
         {#if overdue.length || (waiting.length && !inProgress.length)}
           <section class="rounded-2xl bg-amber-50 ring-1 ring-amber-200 p-4 md:p-5">
-            <h2 class="font-semibold text-amber-900 flex items-center gap-2"><AlertTriangle size={18} /> Needs a look</h2>
+            <h2 class="font-semibold text-amber-900 flex items-center gap-2"><AlertTriangle size={18} /> {$t('Needs a look')}</h2>
             <ul class="mt-2 space-y-1 text-sm text-amber-900">
               {#if waiting.length && !inProgress.length}
-                <li>{waiting.length} waiting and nobody repairing. Is everyone on a break?</li>
+                <li>{$t('{n} waiting and nobody repairing. Is everyone on a break?', { n: waiting.length })}</li>
               {/if}
               {#each overdue as j}
-                <li><a class="underline underline-offset-2" href={`/admin/repairs/${j.id}`}>{j.itemDescription}</a> ({j.jobNumber}) has waited {formatDuration(minutesBetween(j.createdAt, now))}.</li>
+                <li><a class="underline underline-offset-2" href={`/admin/repairs/${j.id}`}>{j.itemDescription}</a> {$t('({number}) has waited {duration}.', { number: j.jobNumber, duration: formatDuration(minutesBetween(j.createdAt, now)) })}</li>
               {/each}
             </ul>
           </section>
@@ -344,7 +344,7 @@
 
         <div class="grid md:grid-cols-2 gap-5">
           <section class="card">
-            <h2 class="px-4 pt-4 pb-2 font-semibold flex items-center justify-between">Waiting next <span class="text-sm font-normal text-slate-500">{waiting.length}</span></h2>
+            <h2 class="px-4 pt-4 pb-2 font-semibold flex items-center justify-between">{$t('Waiting next')} <span class="text-sm font-normal text-slate-500">{waiting.length}</span></h2>
             {#if waiting.length}
               <ol class="divide-y divide-slate-100">
                 {#each waiting.slice(0, 6) as j, i}
@@ -354,21 +354,21 @@
                       <span class="h-6 w-6 rounded-full bg-slate-100 text-xs font-semibold flex items-center justify-center shrink-0">{i + 1}</span>
                       <span class="min-w-0 flex-1">
                         <span class="block text-sm font-medium truncate">{j.itemDescription}</span>
-                        <span class="block text-xs text-slate-500 truncate">{j.jobNumber}{#if j.category} · {j.category}{/if}</span>
+                        <span class="block text-xs text-slate-500 truncate">{j.jobNumber}{#if j.category} · {$t(j.category)}{/if}</span>
                       </span>
                       <span class="text-xs shrink-0 {WAIT_TONE_CLASS[waitTone(m)]}">{formatMinutes(m)}</span>
                     </a>
                   </li>
                 {/each}
               </ol>
-              {#if waiting.length > 6}<p class="px-4 py-2 text-xs text-slate-500">and {waiting.length - 6} more</p>{/if}
+              {#if waiting.length > 6}<p class="px-4 py-2 text-xs text-slate-500">{$t('and {n} more', { n: waiting.length - 6 })}</p>{/if}
             {:else}
-              <p class="px-4 pb-4 text-sm text-slate-500">Nobody is waiting.</p>
+              <p class="px-4 pb-4 text-sm text-slate-500">{$t('Nobody is waiting.')}</p>
             {/if}
           </section>
 
           <section class="card">
-            <h2 class="px-4 pt-4 pb-2 font-semibold flex items-center justify-between">Being repaired <span class="text-sm font-normal text-slate-500">{inProgress.length}</span></h2>
+            <h2 class="px-4 pt-4 pb-2 font-semibold flex items-center justify-between">{$t('Being repaired')} <span class="text-sm font-normal text-slate-500">{inProgress.length}</span></h2>
             {#if inProgress.length}
               <ul class="divide-y divide-slate-100">
                 {#each inProgress as j}
@@ -377,7 +377,7 @@
                       <span class="h-8 w-8 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold flex items-center justify-center shrink-0" title={j.repairerName ?? ''}>{(j.repairerName ?? '?').split(/\s+/).map((p) => p[0]).slice(0, 2).join('')}</span>
                       <span class="min-w-0 flex-1">
                         <span class="block text-sm font-medium truncate">{j.itemDescription}</span>
-                        <span class="block text-xs text-slate-500 truncate">{firstName(j.repairerName) || 'Someone'} · {j.jobNumber}</span>
+                        <span class="block text-xs text-slate-500 truncate">{firstName(j.repairerName) || $t('Someone')} · {j.jobNumber}</span>
                       </span>
                       <span class="text-xs text-slate-500 shrink-0">{formatMinutes(minutesBetween(j.acceptedAt ?? j.createdAt, now))}</span>
                     </a>
@@ -385,44 +385,44 @@
                 {/each}
               </ul>
             {:else}
-              <p class="px-4 pb-4 text-sm text-slate-500">Nothing is being repaired.</p>
+              <p class="px-4 pb-4 text-sm text-slate-500">{$t('Nothing is being repaired.')}</p>
             {/if}
           </section>
         </div>
       {:else if todayPlanned}
         <section class="card p-6 ring-2 ring-brand-200">
-          <p class="kicker text-brand-700">Today</p>
+          <p class="kicker text-brand-700">{$t('Today')}</p>
           <h2 class="text-xl md:text-2xl font-semibold mt-1">{todayPlanned.name}</h2>
           <p class="text-sm text-slate-600">{todayPlanned.venueName} · {sessionTimes(todayPlanned.startTime, todayPlanned.endTime)}</p>
-          <p class="mt-3 text-slate-700">Start the session when the doors open. Visitors can check in, and repairers see the queue.</p>
+          <p class="mt-3 text-slate-700">{$t('Start the session when the doors open. Visitors can check in, and repairers see the queue.')}</p>
           <div class="mt-4 flex flex-wrap gap-2">
-            <button class="btn-primary" disabled={busy} on:click={() => start(todayPlanned.id)}><Play size={18} /> Start the session</button>
-            <button class="btn-secondary" on:click={() => (showScreenLink = true)}><Tv size={18} /> Show on a screen</button>
+            <button class="btn-primary" disabled={busy} on:click={() => start(todayPlanned.id)}><Play size={18} /> {$t('Start the session')}</button>
+            <button class="btn-secondary" on:click={() => (showScreenLink = true)}><Tv size={18} /> {$t('Show on a screen')}</button>
           </div>
         </section>
       {:else if nextPlanned}
         <section class="card p-6">
-          <p class="kicker">Next session</p>
+          <p class="kicker">{$t('Next session')}</p>
           <h2 class="text-xl md:text-2xl font-semibold mt-1">{longDate(nextPlanned.date)}</h2>
           <p class="text-sm text-slate-600">{nextPlanned.name} · {nextPlanned.venueName} · {sessionTimes(nextPlanned.startTime, nextPlanned.endTime)}</p>
           {#if !nextPlanned.isPublished}
-            <p class="mt-3 text-sm text-amber-800">This session is not on the website yet. <a class="underline" href={`/admin/events/${nextPlanned.id}`}>Publish it</a> so people know to come.</p>
+            <p class="mt-3 text-sm text-amber-800">{$t('This session is not on the website yet.')} <a class="underline" href={`/admin/events/${nextPlanned.id}`}>{$t('Publish it')}</a> {$t('so people know to come.')}</p>
           {/if}
           <div class="mt-4 flex flex-wrap gap-2">
-            <a href={`/admin/events/${nextPlanned.id}`} class="btn-secondary btn-sm">Session details</a>
-            <button class="btn-ghost btn-sm" disabled={busy} on:click={() => start(nextPlanned.id)}>Start it now instead</button>
+            <a href={`/admin/events/${nextPlanned.id}`} class="btn-secondary btn-sm">{$t('Session details')}</a>
+            <button class="btn-ghost btn-sm" disabled={busy} on:click={() => start(nextPlanned.id)}>{$t('Start it now instead')}</button>
           </div>
         </section>
       {:else}
         <section class="card p-6">
-          <h2 class="text-xl font-semibold">No sessions planned</h2>
-          <p class="mt-2 text-slate-600">Plan your next session so it appears on the website and visitors can check in on the day.</p>
-          <a href="/admin/events/new" class="btn-primary mt-4"><CalendarPlus size={18} /> Plan a session</a>
+          <h2 class="text-xl font-semibold">{$t('No sessions planned')}</h2>
+          <p class="mt-2 text-slate-600">{$t('Plan your next session so it appears on the website and visitors can check in on the day.')}</p>
+          <a href="/admin/events/new" class="btn-primary mt-4"><CalendarPlus size={18} /> {$t('Plan a session')}</a>
         </section>
       {/if}
 
       <section class="card">
-        <h2 class="px-4 pt-4 pb-2 font-semibold">Recent activity</h2>
+        <h2 class="px-4 pt-4 pb-2 font-semibold">{$t('Recent activity')}</h2>
         <ul class="divide-y divide-slate-100">
           {#each data.recentActivity as a}
             {@const d = describeActivity(a)}
@@ -433,11 +433,11 @@
                 {#if link}<a href={link} class="hover:underline">{d.rest}</a>{:else}{d.rest}{/if}
               </span>
               <span class="text-slate-400 text-xs whitespace-nowrap shrink-0" title={new Date(a.createdAt).toLocaleString()}>
-                {formatDistanceToNowStrict(new Date(a.createdAt), { addSuffix: true })}
+                {formatDistanceToNowStrict(new Date(a.createdAt), { addSuffix: true, locale: $locale === 'fr' ? frDates : undefined })}
               </span>
             </li>
           {:else}
-            <li class="px-4 py-3 text-sm text-slate-500">Nothing yet.</li>
+            <li class="px-4 py-3 text-sm text-slate-500">{$t('Nothing yet.')}</li>
           {/each}
         </ul>
       </section>
@@ -447,8 +447,8 @@
     <aside class="space-y-5">
       <section class="card">
         <div class="px-4 pt-4 pb-2 flex items-center justify-between">
-          <h2 class="font-semibold">Coming up</h2>
-          <a href="/admin/events" class="text-sm text-brand-700 hover:underline">All events</a>
+          <h2 class="font-semibold">{$t('Coming up')}</h2>
+          <a href="/admin/events" class="text-sm text-brand-700 hover:underline">{$t('All events')}</a>
         </div>
         {#if data.upcomingEvents?.length}
           <ul class="divide-y divide-slate-100">
@@ -463,21 +463,21 @@
                     <span class="block text-sm font-medium truncate">{e.name}</span>
                     <span class="block text-xs text-slate-500 truncate">{shortDate(e.date).split(' ').slice(2).join(' ')} · {sessionTimes(e.startTime, e.endTime)}</span>
                   </span>
-                  {#if !e.isPublished}<span class="badge badge-scheduled shrink-0">Draft</span>{/if}
+                  {#if !e.isPublished}<span class="badge badge-scheduled shrink-0">{$t('Draft')}</span>{/if}
                   <ChevronRight size={16} class="text-slate-300 shrink-0" />
                 </a>
               </li>
             {/each}
           </ul>
         {:else}
-          <p class="px-4 pb-4 text-sm text-slate-500">Nothing planned. <a class="underline" href="/admin/events/new">Plan a session</a>.</p>
+          <p class="px-4 pb-4 text-sm text-slate-500">{$t('Nothing planned.')} <a class="underline" href="/admin/events/new">{$t('Plan a session')}</a>.</p>
         {/if}
       </section>
 
       {#if data.awaitingReturn?.length}
         <section class="card">
-          <h2 class="px-4 pt-4 pb-1 font-semibold flex items-center gap-2"><Package size={18} class="text-violet-600" /> Coming back with a part</h2>
-          <p class="px-4 text-xs text-slate-500">Paused until the visitor returns. They stay here until someone finishes them.</p>
+          <h2 class="px-4 pt-4 pb-1 font-semibold flex items-center gap-2"><Package size={18} class="text-violet-600" /> {$t('Coming back with a part')}</h2>
+          <p class="px-4 text-xs text-slate-500">{$t('Paused until the visitor returns. They stay here until someone finishes them.')}</p>
           <ul class="mt-2 divide-y divide-slate-100">
             {#each data.awaitingReturn as j}
               <li>
@@ -492,14 +492,14 @@
       {/if}
 
       <section class="card p-4">
-        <h2 class="font-semibold">Since you started</h2>
+        <h2 class="font-semibold">{$t('Since you started')}</h2>
         <dl class="mt-3 grid grid-cols-2 gap-3">
-          <div><dt class="text-xs text-slate-500">Repairs</dt><dd class="text-xl font-bold">{data.stats.totalRepairs}</dd></div>
-          <div><dt class="text-xs text-slate-500">Sessions</dt><dd class="text-xl font-bold">{data.stats.totalEvents}</dd></div>
-          <div><dt class="text-xs text-slate-500">CO₂ saved</dt><dd class="text-xl font-bold">{Math.round(Number(data.stats.totalSavingsKg))}<span class="text-sm font-medium"> kg</span></dd></div>
-          <div><dt class="text-xs text-slate-500">Volunteers</dt><dd class="text-xl font-bold">{data.stats.activeRepairers}</dd></div>
+          <div><dt class="text-xs text-slate-500">{$t('Repairs')}</dt><dd class="text-xl font-bold">{data.stats.totalRepairs}</dd></div>
+          <div><dt class="text-xs text-slate-500">{$t('Sessions')}</dt><dd class="text-xl font-bold">{data.stats.totalEvents}</dd></div>
+          <div><dt class="text-xs text-slate-500">{$t('CO₂ saved')}</dt><dd class="text-xl font-bold">{Math.round(Number(data.stats.totalSavingsKg))}<span class="text-sm font-medium"> kg</span></dd></div>
+          <div><dt class="text-xs text-slate-500">{$t('Volunteers')}</dt><dd class="text-xl font-bold">{data.stats.activeRepairers}</dd></div>
         </dl>
-        <a href="/admin/stats" class="mt-3 inline-block text-sm text-brand-700 hover:underline">All the statistics</a>
+        <a href="/admin/stats" class="mt-3 inline-block text-sm text-brand-700 hover:underline">{$t('All the statistics')}</a>
       </section>
     </aside>
   </div>

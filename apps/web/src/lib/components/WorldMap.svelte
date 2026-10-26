@@ -27,6 +27,7 @@
     type NetworkCafe,
   } from '$lib/repairCafeNetwork';
   import { MAP_STYLES, hideHillShading, loadMapLibre } from '$lib/mapStyle';
+  import { t, tNow } from '$lib/i18n';
 
   export let cafes: NetworkCafe[] = [];
   /** This cafe's own entry, drawn larger and never folded into a group. */
@@ -103,7 +104,7 @@
     const size = Math.round(Math.min(46, 26 + 9 * Math.log10(count)));
     const el = document.createElement('div');
     el.className = 'world-pin';
-    el.title = `${count} Repair Cafés here. Click to zoom in.`;
+    el.title = tNow('{count} Repair Cafés here. Click to zoom in.', { count });
     el.style.cssText =
       `display:flex;align-items:center;justify-content:center;` +
       `width:${size}px;height:${size}px;border-radius:9999px;` +
@@ -164,7 +165,7 @@
     const mine = ours;
     if (!mine || !map || !ml) return;
     const chosen = sameCafe(mine, selected);
-    const el = dotElement(`${mine.name} (that is us)`, chosen ? 22 : 18, MINE, '#ffffff', 3, chosen, true);
+    const el = dotElement(tNow('{name} (that is us)', { name: mine.name }), chosen ? 22 : 18, MINE, '#ffffff', 3, chosen, true);
     el.classList.add('world-pin-ours');
     oursMarker = addMarker(el, mine.lng, mine.lat, () => dispatch('select', mine));
   }
@@ -279,12 +280,12 @@
   class="world-stage"
   bind:this={container}
   role="img"
-  aria-label="A map showing Repair Cafes around the world. The same cafes are listed beside it."
+  aria-label={$t('A map showing Repair Cafes around the world. The same cafes are listed beside it.')}
 ></div>
 
 {#if failed}
   <p class="world-fallback">
-    The map could not load in this browser. You can still search the list beside it.
+    {$t('The map could not load in this browser. You can still search the list beside it.')}
   </p>
 {/if}
 

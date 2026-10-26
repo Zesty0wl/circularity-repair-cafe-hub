@@ -7,6 +7,7 @@
   import { Wrench, RefreshCw, Clock, CheckCircle2, XCircle, PackageX, Hourglass, Heart, CalendarClock } from 'lucide-svelte';
   import Icon from '@iconify/svelte';
   import { categoryIcon } from '$lib/categoryIcon';
+  import { t, tNow, dateLocale } from '$lib/i18n';
 
   type Status = 'waiting' | 'in_progress' | 'completed' | 'cannot_repair' | 'awaiting_return' | 'returned';
 
@@ -63,7 +64,7 @@
       lastUpdated = new Date();
     } catch (err: any) {
       // Only surface the error if we never had data — keep stale data on transient failures.
-      if (!data) loadError = err?.message || 'Could not load your tracker';
+      if (!data) loadError = err?.message || tNow('Could not load your tracker');
     } finally {
       busy = false;
     }
@@ -102,12 +103,12 @@
 
   function statusLabel(s: Status): string {
     switch (s) {
-      case 'waiting': return 'Waiting for a repairer';
-      case 'in_progress': return 'Being repaired now';
-      case 'completed': return 'Fixed!';
-      case 'cannot_repair': return "Couldn't be fixed";
-      case 'awaiting_return': return 'Waiting for your next visit';
-      case 'returned': return 'Returned to you';
+      case 'waiting': return tNow('Waiting for a repairer');
+      case 'in_progress': return tNow('Being repaired now');
+      case 'completed': return tNow('Fixed!');
+      case 'cannot_repair': return tNow("Couldn't be fixed");
+      case 'awaiting_return': return tNow('Waiting for your next visit');
+      case 'returned': return tNow('Returned to you');
     }
   }
 
@@ -124,14 +125,14 @@
       confirmCancel = null;
       await load();
     } catch (err: any) {
-      cancelError = err?.message || 'Could not cancel this item';
+      cancelError = err?.message || tNow('Could not cancel this item');
     } finally {
       cancelling = false;
     }
   }
 
   function longDate(iso: string): string {
-    return new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+    return new Date(`${iso}T12:00:00Z`).toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
   }
 
   $: openPre = (data?.preRegistrations ?? []).filter((p) => p.status === 'open');
@@ -141,12 +142,12 @@
     const then = new Date(iso).getTime();
     const diff = Date.now() - then;
     const mins = Math.floor(diff / 60_000);
-    if (mins < 1) return 'just now';
-    if (mins < 60) return `${mins} min ago`;
+    if (mins < 1) return tNow('just now');
+    if (mins < 60) return tNow('{mins} min ago', { mins });
     const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs} hr ago`;
+    if (hrs < 24) return tNow('{hrs} hr ago', { hrs });
     const days = Math.floor(hrs / 24);
-    return `${days} day${days === 1 ? '' : 's'} ago`;
+    return tNow(days === 1 ? '{days} day ago' : '{days} days ago', { days });
   }
 
   function formatUpdated(d: Date | null): string {
@@ -156,7 +157,7 @@
 </script>
 
 <svelte:head>
-  <title>Track my repair</title>
+  <title>{$t('Track my repair')}</title>
   <meta name="robots" content="noindex" />
 </svelte:head>
 
@@ -164,23 +165,23 @@
   <div class="max-w-md mx-auto px-4 py-8">
     {#if loadError && !data}
       <div class="card p-6 text-center">
-        <h1 class="text-2xl font-semibold">Sorry</h1>
+        <h1 class="text-2xl font-semibold">{$t('Sorry')}</h1>
         <p class="mt-3 text-slate-700">{loadError}</p>
-        <p class="mt-2 text-sm text-slate-500">This tracking link may be incorrect or has expired.</p>
-        <a class="btn-primary mt-6" href="/events">See our events</a>
+        <p class="mt-2 text-sm text-slate-500">{$t('This tracking link may be incorrect or has expired.')}</p>
+        <a class="btn-primary mt-6" href="/events">{$t('See our events')}</a>
       </div>
     {:else if !data}
-      <div class="card p-6 text-center text-slate-500">Loading…</div>
+      <div class="card p-6 text-center text-slate-500">{$t('Loading…')}</div>
     {:else}
       <!-- Header -->
       <div class="card p-6 text-center">
         {#if data.cafe.logoUrl}
-          <img src={data.cafe.logoUrl} alt={`${data.cafe.name} logo`} class="h-16 w-16 mx-auto rounded-2xl bg-white object-contain p-2 ring-1 ring-slate-200" />
+          <img src={data.cafe.logoUrl} alt={$t('{name} logo', { name: data.cafe.name })} class="h-16 w-16 mx-auto rounded-2xl bg-white object-contain p-2 ring-1 ring-slate-200" />
         {:else}
           <span class="h-14 w-14 mx-auto rounded-2xl bg-brand-600 text-white flex items-center justify-center"><Wrench size={24} /></span>
         {/if}
         <h1 class="text-2xl font-semibold mt-4">
-          {#if data.customerName}{data.customerName}'s repairs{:else}Your repairs{/if}
+          {#if data.customerName}{$t("{name}'s repairs", { name: data.customerName })}{:else}{$t('Your repairs')}{/if}
         </h1>
         <p class="mt-1 text-sm text-slate-600">{data.event.name} · {data.venue.name}</p>
       </div>
@@ -188,10 +189,10 @@
       <!-- Refresh strip -->
       <div class="mt-4 flex items-center justify-between text-xs text-slate-500 px-1">
         <span>
-          {#if lastUpdated}Updated {formatUpdated(lastUpdated)} · auto-refreshes{:else}&nbsp;{/if}
+          {#if lastUpdated}{$t('Updated {time} · auto-refreshes', { time: formatUpdated(lastUpdated) })}{:else}&nbsp;{/if}
         </span>
         <button class="btn-ghost !px-2 !py-1 text-xs" on:click={load} disabled={busy}>
-          <RefreshCw size={14} class={busy ? 'animate-spin' : ''} /> Refresh
+          <RefreshCw size={14} class={busy ? 'animate-spin' : ''} /> {$t('Refresh')}
         </button>
       </div>
 
@@ -206,16 +207,16 @@
         >
           <Heart size={20} class="fill-rose-500 text-rose-500 shrink-0" />
           <span class="text-sm leading-tight flex-1">
-            <strong class="block">Enjoying the repair cafe?</strong>
-            A small donation helps us keep going.
+            <strong class="block">{$t('Enjoying the repair cafe?')}</strong>
+            {$t('A small donation helps us keep going.')}
           </span>
-          <span class="text-sm font-semibold text-rose-700 whitespace-nowrap">Donate →</span>
+          <span class="text-sm font-semibold text-rose-700 whitespace-nowrap">{$t('Donate →')}</span>
         </a>
       {/if}
 
       {#if data.event.status === 'cancelled'}
         <div class="mt-3 card p-4 text-sm text-rose-900 bg-rose-50">
-          This session has been cancelled. Please see our events page for other dates.
+          {$t('This session has been cancelled. Please see our events page for other dates.')}
         </div>
       {/if}
 
@@ -224,17 +225,17 @@
         <section class="mt-3 space-y-3">
           {#if openPre.length && data.event.status !== 'cancelled'}
             <div class="card p-4 text-sm text-slate-700">
-              <p class="font-semibold text-slate-900 flex items-center gap-2"><CalendarClock size={16} /> {longDate(data.event.date)}, {data.event.startTime.slice(0, 5)} to {data.event.endTime.slice(0, 5)}</p>
-              <p class="mt-1">Bring your {openPre.length === 1 ? 'item' : 'items'} to {data.venue.name}. When you arrive, scan the QR code at the door, or give your name at the welcome desk. The repair starts when your item is checked in.</p>
+              <p class="font-semibold text-slate-900 flex items-center gap-2"><CalendarClock size={16} /> {longDate(data.event.date)}, {$t('{start} to {end}', { start: data.event.startTime.slice(0, 5), end: data.event.endTime.slice(0, 5) })}</p>
+              <p class="mt-1">{openPre.length === 1 ? $t('Bring your item to {venue}. When you arrive, scan the QR code at the door, or give your name at the welcome desk. The repair starts when your item is checked in.', { venue: data.venue.name }) : $t('Bring your items to {venue}. When you arrive, scan the QR code at the door, or give your name at the welcome desk. The repair starts when your item is checked in.', { venue: data.venue.name })}</p>
             </div>
           {/if}
           {#if cancelError}<p class="text-sm text-rose-700 px-1">{cancelError}</p>{/if}
           {#each data.preRegistrations as pre (pre.id)}
             <div class="card p-5 {pre.status === 'cancelled' ? 'opacity-70' : ''}">
               <div class="flex items-center justify-between gap-2">
-                <span class="text-xs text-slate-500">Pre-registered</span>
+                <span class="text-xs text-slate-500">{$t('Pre-registered')}</span>
                 <span class="badge {pre.status === 'cancelled' ? 'badge-cancelled' : 'badge-scheduled'}">
-                  {pre.status === 'cancelled' ? 'Cancelled' : 'Not checked in yet'}
+                  {pre.status === 'cancelled' ? $t('Cancelled') : $t('Not checked in yet')}
                 </span>
               </div>
               <p class="mt-1 font-semibold text-slate-900 break-words">
@@ -243,17 +244,17 @@
               <p class="mt-1 text-sm text-slate-600 break-words">{pre.faultDescription}</p>
               {#if pre.status === 'open'}
                 {#if pre.repairerFirstName}
-                  <p class="mt-3 text-sm text-slate-700">{pre.repairerFirstName}, one of our repairers, is looking into it before the day.</p>
+                  <p class="mt-3 text-sm text-slate-700">{$t('{name}, one of our repairers, is looking into it before the day.', { name: pre.repairerFirstName })}</p>
                 {/if}
                 {#if data.event.status !== 'cancelled'}
                   {#if confirmCancel === pre.id}
                     <div class="mt-3 flex flex-wrap items-center gap-2">
-                      <span class="text-sm text-slate-700">Cancel this item?</span>
-                      <button class="btn-ghost btn-sm" on:click={() => (confirmCancel = null)}>Keep it</button>
-                      <button class="btn-secondary btn-sm" disabled={cancelling} on:click={() => cancelPreRegistration(pre.id)}>Yes, cancel it</button>
+                      <span class="text-sm text-slate-700">{$t('Cancel this item?')}</span>
+                      <button class="btn-ghost btn-sm" on:click={() => (confirmCancel = null)}>{$t('Keep it')}</button>
+                      <button class="btn-secondary btn-sm" disabled={cancelling} on:click={() => cancelPreRegistration(pre.id)}>{$t('Yes, cancel it')}</button>
                     </div>
                   {:else}
-                    <button class="mt-3 text-sm text-slate-500 underline underline-offset-2" on:click={() => (confirmCancel = pre.id)}>I will not bring this item</button>
+                    <button class="mt-3 text-sm text-slate-500 underline underline-offset-2" on:click={() => (confirmCancel = pre.id)}>{$t('I will not bring this item')}</button>
                   {/if}
                 {/if}
               {/if}
@@ -273,7 +274,7 @@
                 <a href={job.photoUrl} target="_blank" rel="noopener" class="shrink-0">
                   <img
                     src={job.photoUrl}
-                    alt={`Photo of ${job.itemDescription}`}
+                    alt={$t('Photo of {item}', { item: job.itemDescription })}
                     class="w-16 h-16 rounded-xl object-cover ring-1 ring-slate-200 bg-slate-100"
                     loading="lazy"
                   />
@@ -303,18 +304,18 @@
                 <p class="mt-1 text-sm text-slate-600 break-words">{job.faultDescription}</p>
 
                 <div class="mt-3 text-xs text-slate-500 space-y-0.5">
-                  <p>Checked in {timeAgo(job.createdAt)}</p>
+                  <p>{$t('Checked in {time}', { time: timeAgo(job.createdAt) })}</p>
                   {#if job.acceptedAt && !isDone}
-                    <p>Picked up by {job.repairerFirstName ?? 'a repairer'} {timeAgo(job.acceptedAt)}</p>
+                    <p>{$t('Picked up by {repairer} {time}', { repairer: job.repairerFirstName ?? $t('a repairer'), time: timeAgo(job.acceptedAt) })}</p>
                   {/if}
                   {#if job.completedAt}
-                    <p>Finished {timeAgo(job.completedAt)}{#if job.repairerFirstName} by {job.repairerFirstName}{/if}</p>
+                    <p>{$t('Finished {time}', { time: timeAgo(job.completedAt) })}{#if job.repairerFirstName} {$t('by {repairer}', { repairer: job.repairerFirstName })}{/if}</p>
                   {/if}
                 </div>
 
                 {#if isDone && job.outcomeNotes}
                   <div class="mt-3 rounded-lg bg-slate-50 ring-1 ring-slate-200 p-3 text-sm text-slate-700 whitespace-pre-wrap break-words">
-                    <span class="font-medium text-slate-900">From your repairer:</span>
+                    <span class="font-medium text-slate-900">{$t('From your repairer:')}</span>
                     {job.outcomeNotes}
                   </div>
                 {/if}
@@ -325,10 +326,10 @@
       </div>
 
       <p class="mt-8 text-center text-sm text-slate-500">
-        Keep this page open while you wait. It updates automatically.
+        {$t('Keep this page open while you wait. It updates automatically.')}
       </p>
       <p class="mt-2 text-center text-xs text-slate-400">
-        Bookmark this link to check back on your repairs later.
+        {$t('Bookmark this link to check back on your repairs later.')}
       </p>
     {/if}
   </div>

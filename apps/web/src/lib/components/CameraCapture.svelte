@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Camera, RefreshCw, Check, X } from 'lucide-svelte';
   import { createEventDispatcher, onDestroy } from 'svelte';
+  import { t, tNow } from '$lib/i18n';
 
   export let maxLongestEdge = 1200;
   export let quality = 0.8;
@@ -26,7 +27,7 @@
     // The in-page camera requires a secure context (HTTPS or localhost).
     // If we're not in one, skip the attempt and tell the user.
     if (typeof window !== 'undefined' && window.isSecureContext === false) {
-      errorMsg = 'In-page camera needs a secure (HTTPS) connection. Use the "Take a photo" button above instead.';
+      errorMsg = tNow('In-page camera needs a secure (HTTPS) connection. Use the "Take a photo" button above instead.');
       supportsCamera = false;
       return;
     }
@@ -47,11 +48,11 @@
     } catch (err: any) {
       const name = err?.name ?? '';
       if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
-        errorMsg = 'Camera permission was denied. Use the "Take a photo" button above instead.';
+        errorMsg = tNow('Camera permission was denied. Use the "Take a photo" button above instead.');
       } else if (name === 'NotFoundError' || name === 'OverconstrainedError') {
-        errorMsg = 'No camera was found on this device. Use the "Take a photo" button above instead.';
+        errorMsg = tNow('No camera was found on this device. Use the "Take a photo" button above instead.');
       } else {
-        errorMsg = 'Could not start the camera preview. Use the "Take a photo" button above instead.';
+        errorMsg = tNow('Could not start the camera preview. Use the "Take a photo" button above instead.');
       }
       supportsCamera = false;
     }
@@ -59,7 +60,7 @@
 
   function stop() {
     if (stream) {
-      stream.getTracks().forEach((t) => t.stop());
+      stream.getTracks().forEach((track) => track.stop());
       stream = null;
     }
     active = false;
@@ -105,8 +106,8 @@
   }
 
   async function onFile(e: Event) {
-    const t = e.target as HTMLInputElement;
-    const f = t.files?.[0];
+    const input = e.target as HTMLInputElement;
+    const f = input.files?.[0];
     if (!f) return;
     const url = URL.createObjectURL(f);
     // Re-encode through canvas to enforce size/quality
@@ -136,15 +137,15 @@
 
 <div class="card p-4">
   {#if previewUrl}
-    <img src={previewUrl} alt="Preview" class="w-full rounded-lg max-h-96 object-contain bg-slate-100" />
+    <img src={previewUrl} alt={$t('Preview')} class="w-full rounded-lg max-h-96 object-contain bg-slate-100" />
     <div class="flex gap-3 mt-4 justify-end">
-      <button class="btn-secondary" type="button" on:click={retake}><RefreshCw size={18} /> Retake</button>
-      <button class="btn-primary" type="button" on:click={confirm}><Check size={18} /> Use this photo</button>
+      <button class="btn-secondary" type="button" on:click={retake}><RefreshCw size={18} /> {$t('Retake')}</button>
+      <button class="btn-primary" type="button" on:click={confirm}><Check size={18} /> {$t('Use this photo')}</button>
     </div>
   {:else if active}
     <video bind:this={videoEl} class="w-full rounded-lg bg-black aspect-[4/3] object-cover" muted playsinline></video>
     <div class="flex justify-center mt-4">
-      <button class="btn-primary btn-lg rounded-full !p-6" type="button" on:click={capture} aria-label="Take photo">
+      <button class="btn-primary btn-lg rounded-full !p-6" type="button" on:click={capture} aria-label={$t('Take photo')}>
         <Camera size={32} />
       </button>
     </div>
@@ -155,7 +156,7 @@
         type="button"
         on:click={() => fileInput?.click()}
       >
-        <Camera size={20} /> Take a photo
+        <Camera size={20} /> {$t('Take a photo')}
       </button>
       <input
         bind:this={fileInput}
@@ -170,11 +171,11 @@
         type="button"
         on:click={() => { if (fileInput) { fileInput.removeAttribute('capture'); fileInput.click(); fileInput.setAttribute('capture', 'environment'); } }}
       >
-        Choose from gallery instead
+        {$t('Choose from gallery instead')}
       </button>
       {#if supportsCamera}
         <button class="btn-secondary w-full text-sm" type="button" on:click={start}>
-          Use in-page camera preview
+          {$t('Use in-page camera preview')}
         </button>
       {/if}
       {#if errorMsg}<p class="text-sm text-amber-700">{errorMsg}</p>{/if}

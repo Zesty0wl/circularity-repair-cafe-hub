@@ -13,6 +13,13 @@
   import BackupImport from '$lib/components/BackupImport.svelte';
   import { downloadBackup as buildBackupInBrowser, saveBlob, type TransferProgress } from '$lib/backup/transfer';
   import { prepareImage } from '$lib/imagePrep';
+  import { t, tNow, dateLocale } from '$lib/i18n';
+
+  // Split a translated sentence at its {placeholders}, so a link or a piece of
+  // code can sit inside it: 'Go to {link}.' gives ['Go to ', '{link}', '.'].
+  function pieces(text: string): string[] {
+    return text.split(/(\{\w+\})/).filter((p) => p !== '');
+  }
 
   let cafe: any = null;
   let busy = false;
@@ -118,7 +125,7 @@
       telemetryPayload = preview?.payload ?? null;
       telemetryErr = '';
     } catch (err: any) {
-      telemetryErr = err?.message ?? 'Could not read the telemetry settings';
+      telemetryErr = err?.message ?? tNow('Could not read the telemetry settings');
     } finally {
       telemetryLoaded = true;
     }
@@ -131,23 +138,23 @@
         method: 'PATCH', json: { level: telemetryLevel },
       });
       telemetryMsg = telemetryLevel === 'none'
-        ? 'Saved. Nothing more will be sent.'
-        : res.sent ? 'Saved and sent. Thank you.' : 'Saved. We could not reach the collector just now, so it will try again later.';
+        ? tNow('Saved. Nothing more will be sent.')
+        : res.sent ? tNow('Saved and sent. Thank you.') : tNow('Saved. We could not reach the collector just now, so it will try again later.');
       await loadTelemetry();
     } catch (err: any) {
-      telemetryErr = err?.message ?? 'Could not save';
+      telemetryErr = err?.message ?? tNow('Could not save');
     } finally { busy = false; }
   }
 
   async function forgetTelemetry() {
-    if (!confirm('Ask the project to delete everything it holds about this cafe, and stop sending?')) return;
+    if (!confirm(tNow('Ask the project to delete everything it holds about this cafe, and stop sending?'))) return;
     busy = true; telemetryMsg = ''; telemetryErr = '';
     try {
       await api('/api/admin/telemetry/forget', { method: 'POST', json: {} });
-      telemetryMsg = 'Deleted. Nothing more will be sent.';
+      telemetryMsg = tNow('Deleted. Nothing more will be sent.');
       await loadTelemetry();
     } catch (err: any) {
-      telemetryErr = err?.message ?? 'Could not reach the collector';
+      telemetryErr = err?.message ?? tNow('Could not reach the collector');
     } finally { busy = false; }
   }
 
@@ -184,7 +191,7 @@
       localError = '';
       localLoadedOnce = true;
     } catch (err: any) {
-      localError = err?.message ?? 'Could not reach the Repair Café directory';
+      localError = err?.message ?? tNow('Could not reach the Repair Café directory');
     } finally {
       localLoading = false;
     }
@@ -217,7 +224,7 @@
       localSaved = true;
       await loadCafe();
     } catch (err: any) {
-      localError = err?.message ?? 'Could not save your choices';
+      localError = err?.message ?? tNow('Could not save your choices');
     } finally {
       busy = false;
     }
@@ -412,7 +419,7 @@
       await loadCafe();
       await load();
     } catch (err) {
-      seoError = (err as Error).message || 'Your changes could not be saved. Please try again.';
+      seoError = (err as Error).message || tNow('Your changes could not be saved. Please try again.');
     } finally { busy = false; }
   }
 
@@ -435,9 +442,9 @@
   }
 
   async function purgePii() {
-    if (!confirm('Purge expired customer PII now? This cannot be undone.')) return;
+    if (!confirm(tNow('Purge expired customer PII now? This cannot be undone.'))) return;
     const res = await api<{ purged: number }>('/api/admin/repairs/purge-expired-pii', { method: 'POST', json: {} });
-    alert(`Purged PII from ${res.purged} jobs.`);
+    alert(tNow('Purged PII from {count} jobs.', { count: res.purged }));
   }
 
   async function loadBackupInfo() {
@@ -445,7 +452,7 @@
     try {
       backupInfo = await api('/api/admin/backup/info');
     } catch (err: any) {
-      backupDownloadError = err?.message ?? 'Failed to load backup info';
+      backupDownloadError = err?.message ?? tNow('Failed to load backup info');
     }
   }
 
@@ -461,7 +468,7 @@
       );
       saveBlob(blob, filename);
     } catch (err: any) {
-      backupDownloadError = err?.message ?? 'Backup failed';
+      backupDownloadError = err?.message ?? tNow('Backup failed');
     } finally {
       backupBusy = false;
       backupProgress = null;
@@ -473,50 +480,49 @@
   }
 </script>
 
-<h1 class="text-2xl font-bold">Settings</h1>
+<h1 class="text-2xl font-bold">{$t('Settings')}</h1>
 
 <div class="mt-3 flex gap-2 flex-wrap">
   {#each [['profile','Cafe profile'],['home','Home page'],['linux','Linux Repair Cafe'],['gallery','Gallery'],['local','Local cafes'],['preferences','Check-in & preferences'],['seo','SEO & analytics'],['gdpr','GDPR'],['telemetry','Sharing our numbers'], ...(isSuperAdmin ? [['backup','Backup & restore']] : []),['about','About']] as [key, label]}
-    <button class="btn-{tab === key ? 'primary' : 'secondary'} btn-sm" on:click={() => (tab = key as Tab)}>{label}</button>
+    <button class="btn-{tab === key ? 'primary' : 'secondary'} btn-sm" on:click={() => (tab = key as Tab)}>{$t(label)}</button>
   {/each}
-  <a href="/admin/settings/users" class="btn-secondary btn-sm">Users…</a>
+  <a href="/admin/settings/users" class="btn-secondary btn-sm">{$t('Users…')}</a>
 </div>
 
 {#if cafe}
   {#if tab === 'profile'}
     <div class="card p-6 mt-4 max-w-2xl space-y-4">
-      <div><label class="label" for="cn">Cafe name</label><input id="cn" class="input" bind:value={cafe.name} /></div>
-      <div><label class="label" for="tg">Tagline</label><input id="tg" class="input" bind:value={cafe.tagline} /></div>
-      <div><label class="label" for="de">Short description</label><textarea id="de" class="input" rows="3" bind:value={cafe.description}></textarea><p class="text-xs text-slate-500 mt-1">Appears under the hero. For longer copy, use the Home page tab.</p></div>
+      <div><label class="label" for="cn">{$t('Cafe name')}</label><input id="cn" class="input" bind:value={cafe.name} /></div>
+      <div><label class="label" for="tg">{$t('Tagline')}</label><input id="tg" class="input" bind:value={cafe.tagline} /></div>
+      <div><label class="label" for="de">{$t('Short description')}</label><textarea id="de" class="input" rows="3" bind:value={cafe.description}></textarea><p class="text-xs text-slate-500 mt-1">{$t('Appears under the hero. For longer copy, use the Home page tab.')}</p></div>
       <div class="grid sm:grid-cols-2 gap-3">
-        <div><label class="label" for="em">Contact email</label><input id="em" class="input" type="email" bind:value={cafe.contactEmail} /></div>
-        <div><label class="label" for="ph">Phone</label><input id="ph" class="input" bind:value={cafe.contactPhone} /></div>
+        <div><label class="label" for="em">{$t('Contact email')}</label><input id="em" class="input" type="email" bind:value={cafe.contactEmail} /></div>
+        <div><label class="label" for="ph">{$t('Phone')}</label><input id="ph" class="input" bind:value={cafe.contactPhone} /></div>
       </div>
-      <div><label class="label" for="pu">Public URL</label><input id="pu" class="input" bind:value={cafe.publicUrl} /><p class="text-xs text-slate-500 mt-1">Used in QR codes and public links. Must match your reverse-proxy domain.</p></div>
+      <div><label class="label" for="pu">{$t('Public URL')}</label><input id="pu" class="input" bind:value={cafe.publicUrl} /><p class="text-xs text-slate-500 mt-1">{$t('Used in QR codes and public links. Must match your reverse-proxy domain.')}</p></div>
       <div>
-        <label class="label" for="du">Donate link <span class="font-normal text-slate-500">(optional)</span></label>
+        <label class="label" for="du">{$t('Donate link')} <span class="font-normal text-slate-500">{$t('(optional)')}</span></label>
         <input id="du" class="input" type="url" placeholder="https://www.justgiving.com/…" bind:value={cafe.donateUrl} />
-        <p class="text-xs text-slate-500 mt-1">Shown to guests after they check in and on their live tracker. Leave blank to hide.</p>
+        <p class="text-xs text-slate-500 mt-1">{$t('Shown to guests after they check in and on their live tracker. Leave blank to hide.')}</p>
       </div>
       <div>
-        <label class="label" for="rc">Your page on repaircafe.org <span class="font-normal text-slate-500">(optional)</span></label>
+        <label class="label" for="rc">{$t('Your page on repaircafe.org')} <span class="font-normal text-slate-500">{$t('(optional)')}</span></label>
         <input id="rc" class="input" placeholder="https://www.repaircafe.org/cafe/your-cafe" bind:value={cafe.repaircafeSlug} />
         <p class="text-xs text-slate-500 mt-1">
-          Paste the address of your cafe's page on repaircafe.org. We use it to highlight you on the
-          <a href="/world" class="text-brand-700 underline underline-offset-2" target="_blank" rel="noopener">world map</a>.
-          Leave blank if you are not listed yet.
+          {$t("Paste the address of your cafe's page on repaircafe.org. We use it to highlight you on the")}
+          <a href="/world" class="text-brand-700 underline underline-offset-2" target="_blank" rel="noopener">{$t('world map')}</a>.
+          {$t('Leave blank if you are not listed yet.')}
         </p>
       </div>
       <div>
-        <label class="label" for="oc">Country code <span class="font-normal text-slate-500">(optional)</span></label>
+        <label class="label" for="oc">{$t('Country code')} <span class="font-normal text-slate-500">{$t('(optional)')}</span></label>
         <input id="oc" class="input w-32 uppercase" maxlength="3" placeholder="GBR" bind:value={cafe.ordsCountry} />
         <p class="text-xs text-slate-500 mt-1">
-          The 3-letter code for your country, such as GBR, FRA or NLD. It goes in the Open Repair export on the
-          Repairs page.
+          {$t('The 3-letter code for your country, such as GBR, FRA or NLD. It goes in the Open Repair export on the Repairs page.')}
         </p>
       </div>
       <div>
-        <label class="label" for="pc">Primary colour</label>
+        <label class="label" for="pc">{$t('Primary colour')}</label>
         <div class="flex items-center gap-3">
           <input
             id="pc"
@@ -533,15 +539,15 @@
             value={primaryColorInput}
             on:change={(e) => (primaryColorInput = normaliseHex((e.currentTarget as HTMLInputElement).value))}
           />
-          <button type="button" class="btn-ghost btn-sm" on:click={() => (primaryColorInput = DEFAULT_PRIMARY)}>Reset</button>
+          <button type="button" class="btn-ghost btn-sm" on:click={() => (primaryColorInput = DEFAULT_PRIMARY)}>{$t('Reset')}</button>
         </div>
-        <p class="text-xs text-slate-500 mt-1">Used for links, headings, focus states and text accents across your site. Leave at the Circularity default teal, or set your cafe's own colour. Stored as #rrggbb hex.</p>
+        <p class="text-xs text-slate-500 mt-1">{$t("Used for links, headings, focus states and text accents across your site. Leave at the Circularity default teal, or set your cafe's own colour. Stored as #rrggbb hex.")}</p>
       </div>
       <div>
-        <span class="label">Accent / button colour</span>
+        <span class="label">{$t('Accent / button colour')}</span>
         <label class="flex items-center gap-2 text-sm text-slate-700 mb-2">
           <input type="checkbox" class="h-4 w-4 rounded border-slate-300 text-brand-600" bind:checked={accentEnabled} />
-          Use a separate colour for call-to-action buttons
+          {$t('Use a separate colour for call-to-action buttons')}
         </label>
         {#if accentEnabled}
           <div class="flex items-center gap-3">
@@ -562,21 +568,21 @@
             />
           </div>
         {/if}
-        <p class="text-xs text-slate-500 mt-1">Buttons use this colour instead of the brand colour. Useful when your brand colour is dark (best for text) but you want a brighter call-to-action. Keep button labels bold and 16px+ for contrast.</p>
+        <p class="text-xs text-slate-500 mt-1">{$t('Buttons use this colour instead of the brand colour. Useful when your brand colour is dark (best for text) but you want a brighter call-to-action. Keep button labels bold and 16px+ for contrast.')}</p>
       </div>
       <div class="grid sm:grid-cols-2 gap-3">
         <div>
-          <label class="label" for="hf">Heading font</label>
+          <label class="label" for="hf">{$t('Heading font')}</label>
           <select id="hf" class="input" bind:value={headingFontInput}>
-            <option value="">Default (Fraunces)</option>
-            {#each FONT_OPTIONS as f}<option value={f.value}>{f.label}</option>{/each}
+            <option value="">{$t('Default (Fraunces)')}</option>
+            {#each FONT_OPTIONS as f}<option value={f.value}>{$t(f.label)}</option>{/each}
           </select>
         </div>
         <div>
-          <label class="label" for="bf">Body font</label>
+          <label class="label" for="bf">{$t('Body font')}</label>
           <select id="bf" class="input" bind:value={bodyFontInput}>
-            <option value="">Default (Mulish)</option>
-            {#each FONT_OPTIONS as f}<option value={f.value}>{f.label}</option>{/each}
+            <option value="">{$t('Default (Mulish)')}</option>
+            {#each FONT_OPTIONS as f}<option value={f.value}>{$t(f.label)}</option>{/each}
           </select>
         </div>
       </div>
@@ -588,108 +594,106 @@
 
       <div class="grid sm:grid-cols-2 gap-3 pt-2">
         <div>
-          <span class="label">Logo</span>
-          {#if cafe.logoUrl}<img src={cafe.logoUrl} alt="logo" class="h-16 mb-2 bg-slate-100 rounded-lg p-1" />{/if}
+          <span class="label">{$t('Logo')}</span>
+          {#if cafe.logoUrl}<img src={cafe.logoUrl} alt={$t('logo')} class="h-16 mb-2 bg-slate-100 rounded-lg p-1" />{/if}
           <input type="file" accept="image/png,image/jpeg,image/webp" bind:files={logoFile} on:change={() => uploadAsset('logo', logoFile)} />
-          <p class="text-xs text-slate-500 mt-1">Square works best. Shown in the header and on the home page hero.</p>
+          <p class="text-xs text-slate-500 mt-1">{$t('Square works best. Shown in the header and on the home page hero.')}</p>
         </div>
         <div>
-          <span class="label">Banner</span>
-          {#if cafe.bannerUrl}<img src={cafe.bannerUrl} alt="banner" class="h-16 mb-2 rounded-lg object-cover" />{/if}
+          <span class="label">{$t('Banner')}</span>
+          {#if cafe.bannerUrl}<img src={cafe.bannerUrl} alt={$t('banner')} class="h-16 mb-2 rounded-lg object-cover" />{/if}
           <input type="file" accept="image/png,image/jpeg,image/webp" bind:files={bannerFile} on:change={() => uploadAsset('banner', bannerFile)} />
-          <p class="text-xs text-slate-500 mt-1">Wide image (~1600×600). Used as the home-page hero background.</p>
+          <p class="text-xs text-slate-500 mt-1">{$t('Wide image (~1600×600). Used as the home-page hero background.')}</p>
         </div>
       </div>
 
-      <div class="flex justify-end pt-2"><button class="btn-primary" on:click={save} disabled={busy}>Save changes</button></div>
+      <div class="flex justify-end pt-2"><button class="btn-primary" on:click={save} disabled={busy}>{$t('Save changes')}</button></div>
     </div>
   {/if}
 
   {#if tab === 'home'}
     <div class="card p-6 mt-4 max-w-2xl space-y-6">
-      <p class="text-sm text-slate-600">All sections are optional. Leave anything blank to hide it from the home page.</p>
+      <p class="text-sm text-slate-600">{$t('All sections are optional. Leave anything blank to hide it from the home page.')}</p>
 
       <section>
-        <h2 class="text-lg font-semibold">Our numbers</h2>
+        <h2 class="text-lg font-semibold">{$t('Our numbers')}</h2>
         <p class="text-xs text-slate-500 mt-0.5">
-          Show what your cafe has achieved: repairs done, waste kept out of landfill, and how many volunteers help.
+          {$t('Show what your cafe has achieved: repairs done, waste kept out of landfill, and how many volunteers help.')}
         </p>
         <label class="mt-3 flex items-start gap-3 cursor-pointer">
           <input type="checkbox" class="mt-1 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" bind:checked={showStats} />
           <span class="text-sm text-slate-700">
-            Show our numbers on the home page
+            {$t('Show our numbers on the home page')}
             <span class="block text-xs text-slate-500">
-              Figures come from your own records and update on their own. Numbers that are still zero stay hidden,
-              so a new cafe never shows an empty row.
+              {$t('Figures come from your own records and update on their own. Numbers that are still zero stay hidden, so a new cafe never shows an empty row.')}
             </span>
           </span>
         </label>
         <label class="mt-3 flex items-start gap-3 cursor-pointer">
           <input type="checkbox" class="mt-1 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" bind:checked={showEventStats} />
           <span class="text-sm text-slate-700">
-            Show what happened at each past session
+            {$t('Show what happened at each past session')}
             <span class="block text-xs text-slate-500">
-              Adds a short summary to every past event's page: how many items came in, how many went home
-              working, and what kinds of thing they were. No visitor names or item details are shown.
+              {$t("Adds a short summary to every past event's page: how many items came in, how many went home working, and what kinds of thing they were. No visitor names or item details are shown.")}
             </span>
           </span>
         </label>
       </section>
 
       <section>
-        <h2 class="text-lg font-semibold">Intro / About section</h2>
-        <p class="text-xs text-slate-500 mt-0.5">Like the “What &amp; Who” paragraph at the top of your page.</p>
+        <h2 class="text-lg font-semibold">{$t('Intro / About section')}</h2>
+        <p class="text-xs text-slate-500 mt-0.5">{$t('Like the “What & Who” paragraph at the top of your page.')}</p>
         <div class="mt-2 space-y-2">
-          <input class="input" placeholder="Heading (e.g. What & Who)" bind:value={intro.heading} />
-          <textarea class="input" rows="6" placeholder="Body text. Blank lines start a new paragraph." bind:value={intro.body}></textarea>
+          <input class="input" placeholder={$t('Heading (e.g. What & Who)')} bind:value={intro.heading} />
+          <textarea class="input" rows="6" placeholder={$t('Body text. Blank lines start a new paragraph.')} bind:value={intro.body}></textarea>
         </div>
       </section>
 
       <section>
-        <h2 class="text-lg font-semibold">How it works</h2>
-        <p class="text-xs text-slate-500 mt-0.5">Numbered steps that show customers what to expect.</p>
+        <h2 class="text-lg font-semibold">{$t('How it works')}</h2>
+        <p class="text-xs text-slate-500 mt-0.5">{$t('Numbered steps that show customers what to expect.')}</p>
         <div class="mt-2 space-y-3">
           {#each howItWorks as step, i}
             <div class="border border-slate-200 rounded-lg p-3 space-y-2">
               <div class="flex items-center gap-2">
                 <span class="text-xs font-mono text-slate-400 w-6">{i + 1}</span>
-                <input class="input flex-1" placeholder="Step title" bind:value={step.title} />
-                <button class="p-2 rounded-lg text-rose-600 hover:bg-rose-50" type="button" on:click={() => howItWorks = howItWorks.filter((_, k) => k !== i)} title="Remove" aria-label="Remove step"><Trash2 size={16} /></button>
+                <input class="input flex-1" placeholder={$t('Step title')} bind:value={step.title} />
+                <button class="p-2 rounded-lg text-rose-600 hover:bg-rose-50" type="button" on:click={() => howItWorks = howItWorks.filter((_, k) => k !== i)} title={$t('Remove')} aria-label={$t('Remove step')}><Trash2 size={16} /></button>
               </div>
-              <textarea class="input" rows="2" placeholder="Short description" bind:value={step.body}></textarea>
+              <textarea class="input" rows="2" placeholder={$t('Short description')} bind:value={step.body}></textarea>
             </div>
           {/each}
-          <button class="btn-secondary btn-sm" type="button" on:click={() => howItWorks = [...howItWorks, { title: '', body: '' }]}><Plus size={14} /> Add step</button>
+          <button class="btn-secondary btn-sm" type="button" on:click={() => howItWorks = [...howItWorks, { title: '', body: '' }]}><Plus size={14} /> {$t('Add step')}</button>
         </div>
       </section>
 
       <section>
-        <h2 class="text-lg font-semibold">What to bring</h2>
-        <p class="text-xs text-slate-500 mt-0.5">Customer guidance. Bullet points work well (start each line with “• ”).</p>
+        <h2 class="text-lg font-semibold">{$t('What to bring')}</h2>
+        <p class="text-xs text-slate-500 mt-0.5">{$t('Customer guidance. Bullet points work well (start each line with “• ”).')}</p>
         <div class="mt-2 space-y-2">
-          <input class="input" placeholder="Heading (e.g. What to bring)" bind:value={whatToBring.heading} />
-          <textarea class="input" rows="5" placeholder="One line per bullet." bind:value={whatToBring.body}></textarea>
+          <input class="input" placeholder={$t('Heading (e.g. What to bring)')} bind:value={whatToBring.heading} />
+          <textarea class="input" rows="5" placeholder={$t('One line per bullet.')} bind:value={whatToBring.body}></textarea>
         </div>
       </section>
 
       <section>
-        <h2 class="text-lg font-semibold">FAQs</h2>
+        <h2 class="text-lg font-semibold">{$t('FAQs')}</h2>
         <div class="mt-2 space-y-3">
           {#each faqs as faq, i}
             <div class="border border-slate-200 rounded-lg p-3 space-y-2">
               <div class="flex items-center gap-2">
-                <input class="input flex-1" placeholder="Question" bind:value={faq.q} />
-                <button class="p-2 rounded-lg text-rose-600 hover:bg-rose-50" type="button" on:click={() => faqs = faqs.filter((_, k) => k !== i)} title="Remove" aria-label="Remove FAQ"><Trash2 size={16} /></button>
+                <input class="input flex-1" placeholder={$t('Question')} bind:value={faq.q} />
+                <button class="p-2 rounded-lg text-rose-600 hover:bg-rose-50" type="button" on:click={() => faqs = faqs.filter((_, k) => k !== i)} title={$t('Remove')} aria-label={$t('Remove FAQ')}><Trash2 size={16} /></button>
               </div>
-              <textarea class="input" rows="2" placeholder="Answer" bind:value={faq.a}></textarea>
+              <textarea class="input" rows="2" placeholder={$t('Answer')} bind:value={faq.a}></textarea>
             </div>
           {/each}
-          <button class="btn-secondary btn-sm" type="button" on:click={() => faqs = [...faqs, { q: '', a: '' }]}><Plus size={14} /> Add FAQ</button>
+          <button class="btn-secondary btn-sm" type="button" on:click={() => faqs = [...faqs, { q: '', a: '' }]}><Plus size={14} /> {$t('Add FAQ')}</button>
         </div>
       </section>
 
       <div class="flex justify-end pt-2 border-t">
-        <button class="btn-primary" on:click={saveHome} disabled={busy}>Save home page</button>
+        <button class="btn-primary" on:click={saveHome} disabled={busy}>{$t('Save home page')}</button>
       </div>
     </div>
   {/if}
@@ -697,18 +701,15 @@
   {#if tab === 'linux'}
     <div class="card p-6 mt-4 max-w-2xl space-y-6">
       <section>
-        <h2 class="text-lg font-semibold">Linux Repair Cafe</h2>
+        <h2 class="text-lg font-semibold">{$t('Linux Repair Cafe')}</h2>
         <p class="text-sm text-slate-600 mt-1">
-          A Linux Repair Cafe helps people move an ageing computer to Linux instead of throwing it
-          away. Microsoft stopped supporting Windows 10 in October 2025, so a lot of working
-          computers are being called too old. Linux keeps them going, and it is free.
+          {$t('A Linux Repair Cafe helps people move an ageing computer to Linux instead of throwing it away. Microsoft stopped supporting Windows 10 in October 2025, so a lot of working computers are being called too old. Linux keeps them going, and it is free.')}
         </p>
         <p class="text-sm text-slate-600 mt-2">
-          This is an extra you offer at your normal sessions, not a separate event. You tick the
-          sessions where Linux help is available, and most cafes tick all of them.
+          {$t('This is an extra you offer at your normal sessions, not a separate event. You tick the sessions where Linux help is available, and most cafes tick all of them.')}
         </p>
         <p class="text-sm text-slate-600 mt-2">
-          Read about the movement at
+          {$t('Read about the movement at')}
           <a
             href="https://www.repaircafe.org/en/linux-repair-cafe/"
             target="_blank"
@@ -724,32 +725,26 @@
             bind:checked={linuxEnabled}
           />
           <span class="text-sm text-slate-700">
-            <span class="font-semibold text-slate-800">We are a Linux Repair Cafe</span>
+            <span class="font-semibold text-slate-800">{$t('We are a Linux Repair Cafe')}</span>
             <span class="block text-xs text-slate-500 mt-0.5">
-              Adds a Linux Repair Cafe menu item to your site, a page explaining what it is, and a
-              card about it on your home page. It also adds a Linux section to your admin area for
-              recording installs. Leave this off if you do not offer Linux help.
+              {$t('Adds a Linux Repair Cafe menu item to your site, a page explaining what it is, and a card about it on your home page. It also adds a Linux section to your admin area for recording installs. Leave this off if you do not offer Linux help.')}
             </span>
           </span>
         </label>
 
         {#if !linuxEnabled}
           <p class="mt-3 text-xs text-slate-500">
-            Everything below is saved either way. You can write your page first, then switch it on
-            when you are ready.
+            {$t('Everything below is saved either way. You can write your page first, then switch it on when you are ready.')}
           </p>
         {:else}
           <div class="mt-3 rounded-xl bg-emerald-50 ring-1 ring-emerald-200 p-3 text-sm text-emerald-900">
-            <p class="font-semibold">Two more things to do.</p>
+            <p class="font-semibold">{$t('Two more things to do.')}</p>
             <ol class="list-decimal ml-5 mt-1 space-y-0.5">
               <li>
-                Tick <span class="font-medium">Linux help at this session</span> on the sessions
-                where you offer it, under <a href="/admin/events" class="underline underline-offset-2">Events</a>.
+                {#each pieces($t('Tick {option} on the sessions where you offer it, under {events}.')) as p}{#if p === '{option}'}<span class="font-medium">{$t('Linux help at this session')}</span>{:else if p === '{events}'}<a href="/admin/events" class="underline underline-offset-2">{$t('Events')}</a>{:else}{p}{/if}{/each}
               </li>
               <li>
-                Mark your Linux volunteers under
-                <a href="/admin/repairers" class="underline underline-offset-2">Repairers</a>,
-                so visitors can see who will help them.
+                {#each pieces($t('Mark your Linux volunteers under {repairers}, so visitors can see who will help them.')) as p}{#if p === '{repairers}'}<a href="/admin/repairers" class="underline underline-offset-2">{$t('Repairers')}</a>{:else}{p}{/if}{/each}
               </li>
             </ol>
           </div>
@@ -757,107 +752,104 @@
       </section>
 
       <section class="pt-2 border-t">
-        <h2 class="text-lg font-semibold">Menu item</h2>
-        <p class="text-xs text-slate-500 mt-0.5">What the menu item on your site is called.</p>
-        <input class="input mt-2" placeholder="Linux Repair Cafe" bind:value={linuxNavLabel} />
+        <h2 class="text-lg font-semibold">{$t('Menu item')}</h2>
+        <p class="text-xs text-slate-500 mt-0.5">{$t('What the menu item on your site is called.')}</p>
+        <input class="input mt-2" placeholder={$t('Linux Repair Cafe')} bind:value={linuxNavLabel} />
       </section>
 
       <section class="pt-2 border-t">
-        <h2 class="text-lg font-semibold">Top of the page</h2>
+        <h2 class="text-lg font-semibold">{$t('Top of the page')}</h2>
         <div class="mt-2 space-y-2">
-          <input class="input" placeholder="Heading (e.g. Linux Repair Cafe)" bind:value={linuxHero.heading} />
-          <input class="input" placeholder="One line under it (e.g. Give your old computer years more life, for free.)" bind:value={linuxHero.tagline} />
+          <input class="input" placeholder={$t('Heading (e.g. Linux Repair Cafe)')} bind:value={linuxHero.heading} />
+          <input class="input" placeholder={$t('One line under it (e.g. Give your old computer years more life, for free.)')} bind:value={linuxHero.tagline} />
         </div>
       </section>
 
       <section class="pt-2 border-t">
-        <h2 class="text-lg font-semibold">Card on your home page</h2>
+        <h2 class="text-lg font-semibold">{$t('Card on your home page')}</h2>
         <p class="text-xs text-slate-500 mt-0.5">
-          A short explanation on your home page that links to the Linux page. This is what most
-          visitors will read first, so keep it plain.
+          {$t('A short explanation on your home page that links to the Linux page. This is what most visitors will read first, so keep it plain.')}
         </p>
         <div class="mt-2 space-y-2">
-          <input class="input" placeholder="Heading (e.g. We are a Linux Repair Cafe)" bind:value={linuxHomeCard.heading} />
-          <textarea class="input" rows="3" placeholder="A sentence or two explaining what it is." bind:value={linuxHomeCard.body}></textarea>
-          <input class="input" placeholder="Button label (e.g. Find out about Linux)" bind:value={linuxHomeCard.ctaLabel} />
+          <input class="input" placeholder={$t('Heading (e.g. We are a Linux Repair Cafe)')} bind:value={linuxHomeCard.heading} />
+          <textarea class="input" rows="3" placeholder={$t('A sentence or two explaining what it is.')} bind:value={linuxHomeCard.body}></textarea>
+          <input class="input" placeholder={$t('Button label (e.g. Find out about Linux)')} bind:value={linuxHomeCard.ctaLabel} />
         </div>
       </section>
 
       <section class="pt-2 border-t">
-        <h2 class="text-lg font-semibold">What a Linux Repair Cafe is</h2>
-        <p class="text-xs text-slate-500 mt-0.5">The opening explanation on the Linux page.</p>
+        <h2 class="text-lg font-semibold">{$t('What a Linux Repair Cafe is')}</h2>
+        <p class="text-xs text-slate-500 mt-0.5">{$t('The opening explanation on the Linux page.')}</p>
         <div class="mt-2 space-y-2">
-          <input class="input" placeholder="Heading (e.g. What is a Linux Repair Cafe?)" bind:value={linuxIntro.heading} />
-          <textarea class="input" rows="8" placeholder="Body text. Blank lines start a new paragraph." bind:value={linuxIntro.body}></textarea>
+          <input class="input" placeholder={$t('Heading (e.g. What is a Linux Repair Cafe?)')} bind:value={linuxIntro.heading} />
+          <textarea class="input" rows="8" placeholder={$t('Body text. Blank lines start a new paragraph.')} bind:value={linuxIntro.body}></textarea>
         </div>
       </section>
 
       <section class="pt-2 border-t">
-        <h2 class="text-lg font-semibold">How it works</h2>
-        <p class="text-xs text-slate-500 mt-0.5">Numbered steps that show visitors what to expect.</p>
+        <h2 class="text-lg font-semibold">{$t('How it works')}</h2>
+        <p class="text-xs text-slate-500 mt-0.5">{$t('Numbered steps that show visitors what to expect.')}</p>
         <div class="mt-2 space-y-3">
           {#each linuxHowItWorks as step, i}
             <div class="border border-slate-200 rounded-lg p-3 space-y-2">
               <div class="flex items-center gap-2">
                 <span class="text-xs font-mono text-slate-400 w-6">{i + 1}</span>
-                <input class="input flex-1" placeholder="Step title" bind:value={step.title} />
-                <button class="p-2 rounded-lg text-rose-600 hover:bg-rose-50" type="button" on:click={() => linuxHowItWorks = linuxHowItWorks.filter((_, k) => k !== i)} title="Remove" aria-label="Remove step"><Trash2 size={16} /></button>
+                <input class="input flex-1" placeholder={$t('Step title')} bind:value={step.title} />
+                <button class="p-2 rounded-lg text-rose-600 hover:bg-rose-50" type="button" on:click={() => linuxHowItWorks = linuxHowItWorks.filter((_, k) => k !== i)} title={$t('Remove')} aria-label={$t('Remove step')}><Trash2 size={16} /></button>
               </div>
-              <textarea class="input" rows="2" placeholder="Short description" bind:value={step.body}></textarea>
+              <textarea class="input" rows="2" placeholder={$t('Short description')} bind:value={step.body}></textarea>
             </div>
           {/each}
-          <button class="btn-secondary btn-sm" type="button" on:click={() => linuxHowItWorks = [...linuxHowItWorks, { title: '', body: '' }]}><Plus size={14} /> Add step</button>
+          <button class="btn-secondary btn-sm" type="button" on:click={() => linuxHowItWorks = [...linuxHowItWorks, { title: '', body: '' }]}><Plus size={14} /> {$t('Add step')}</button>
         </div>
       </section>
 
       <section class="pt-2 border-t">
-        <h2 class="text-lg font-semibold">What to bring</h2>
+        <h2 class="text-lg font-semibold">{$t('What to bring')}</h2>
         <p class="text-xs text-slate-500 mt-0.5">
-          Bullet points work well (start each line with “• ”). Please keep the reminder about
-          backing up files: installing Linux erases the whole computer.
+          {$t('Bullet points work well (start each line with “• ”). Please keep the reminder about backing up files: installing Linux erases the whole computer.')}
         </p>
         <div class="mt-2 space-y-2">
-          <input class="input" placeholder="Heading (e.g. What to bring)" bind:value={linuxWhatToBring.heading} />
-          <textarea class="input" rows="6" placeholder="One line per bullet." bind:value={linuxWhatToBring.body}></textarea>
+          <input class="input" placeholder={$t('Heading (e.g. What to bring)')} bind:value={linuxWhatToBring.heading} />
+          <textarea class="input" rows="6" placeholder={$t('One line per bullet.')} bind:value={linuxWhatToBring.body}></textarea>
         </div>
       </section>
 
       <section class="pt-2 border-t">
-        <h2 class="text-lg font-semibold">FAQs</h2>
+        <h2 class="text-lg font-semibold">{$t('FAQs')}</h2>
         <div class="mt-2 space-y-3">
           {#each linuxFaqs as faq, i}
             <div class="border border-slate-200 rounded-lg p-3 space-y-2">
               <div class="flex items-center gap-2">
-                <input class="input flex-1" placeholder="Question" bind:value={faq.q} />
-                <button class="p-2 rounded-lg text-rose-600 hover:bg-rose-50" type="button" on:click={() => linuxFaqs = linuxFaqs.filter((_, k) => k !== i)} title="Remove" aria-label="Remove FAQ"><Trash2 size={16} /></button>
+                <input class="input flex-1" placeholder={$t('Question')} bind:value={faq.q} />
+                <button class="p-2 rounded-lg text-rose-600 hover:bg-rose-50" type="button" on:click={() => linuxFaqs = linuxFaqs.filter((_, k) => k !== i)} title={$t('Remove')} aria-label={$t('Remove FAQ')}><Trash2 size={16} /></button>
               </div>
-              <textarea class="input" rows="2" placeholder="Answer" bind:value={faq.a}></textarea>
+              <textarea class="input" rows="2" placeholder={$t('Answer')} bind:value={faq.a}></textarea>
             </div>
           {/each}
-          <button class="btn-secondary btn-sm" type="button" on:click={() => linuxFaqs = [...linuxFaqs, { q: '', a: '' }]}><Plus size={14} /> Add FAQ</button>
+          <button class="btn-secondary btn-sm" type="button" on:click={() => linuxFaqs = [...linuxFaqs, { q: '', a: '' }]}><Plus size={14} /> {$t('Add FAQ')}</button>
         </div>
       </section>
 
       <section class="pt-2 border-t">
-        <h2 class="text-lg font-semibold">Our numbers</h2>
+        <h2 class="text-lg font-semibold">{$t('Our numbers')}</h2>
         <label class="mt-2 flex items-start gap-3 cursor-pointer">
           <input type="checkbox" class="mt-1 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" bind:checked={linuxShowStats} />
           <span class="text-sm text-slate-700">
-            Show how many computers we have saved
+            {$t('Show how many computers we have saved')}
             <span class="block text-xs text-slate-500">
-              Counted from the installs your volunteers write up. Figures that are still zero stay
-              hidden, so a cafe that has just started never shows an empty row.
+              {$t('Counted from the installs your volunteers write up. Figures that are still zero stay hidden, so a cafe that has just started never shows an empty row.')}
             </span>
           </span>
         </label>
       </section>
 
       <div class="flex items-center justify-end gap-3 pt-2 border-t">
-        {#if linuxSaved}<span class="text-sm text-emerald-700">Saved</span>{/if}
+        {#if linuxSaved}<span class="text-sm text-emerald-700">{$t('Saved')}</span>{/if}
         {#if linuxEnabled}
-          <a href="/linux" target="_blank" rel="noopener" class="btn-secondary">Preview the page</a>
+          <a href="/linux" target="_blank" rel="noopener" class="btn-secondary">{$t('Preview the page')}</a>
         {/if}
-        <button class="btn-primary" on:click={saveLinux} disabled={busy}>Save Linux settings</button>
+        <button class="btn-primary" on:click={saveLinux} disabled={busy}>{$t('Save Linux settings')}</button>
       </div>
     </div>
   {/if}
@@ -865,24 +857,22 @@
   {#if tab === 'gallery'}
     <div class="card p-6 mt-4 max-w-4xl space-y-6">
       <div>
-        <h2 class="text-lg font-semibold">Photo gallery</h2>
+        <h2 class="text-lg font-semibold">{$t('Photo gallery')}</h2>
         <p class="text-sm text-slate-600 mt-1">
-          These photos fill the gallery on your home page. Volunteers can also add photos to each
-          session under <a href="/admin/events" class="text-brand-700 underline underline-offset-2">Events</a>,
-          and you can star any of those to bring them in here too.
+          {#each pieces($t('These photos fill the gallery on your home page. Volunteers can also add photos to each session under {events}, and you can star any of those to bring them in here too.')) as p}{#if p === '{events}'}<a href="/admin/events" class="text-brand-700 underline underline-offset-2">{$t('Events')}</a>{:else}{p}{/if}{/each}
         </p>
       </div>
 
       <ImageDropzone
         endpoint="/api/admin/gallery"
-        title="Add photos to the gallery"
-        hint="Drag photos here, paste one from your clipboard, or browse your device. JPEG, PNG or WebP."
+        title={$t('Add photos to the gallery')}
+        hint={$t('Drag photos here, paste one from your clipboard, or browse your device. JPEG, PNG or WebP.')}
         on:done={onGalleryUploaded}
       />
 
       <div>
         <h3 class="text-base font-semibold mb-2">
-          Photos in the gallery
+          {$t('Photos in the gallery')}
           {#if gallery.length > 0}<span class="font-normal text-slate-500">({gallery.length})</span>{/if}
         </h3>
         <GalleryManager
@@ -890,7 +880,7 @@
           onSaveCaption={saveGalleryCaption}
           onDelete={deleteGalleryPhoto}
           onReorder={reorderGallery}
-          emptyMessage="No photos yet. Add a few to fill the gallery on your home page."
+          emptyMessage={$t('No photos yet. Add a few to fill the gallery on your home page.')}
         />
       </div>
     </div>
@@ -899,38 +889,33 @@
   {#if tab === 'local'}
     <div class="card p-6 mt-4 max-w-3xl space-y-5">
       <div>
-        <h2 class="text-lg font-semibold">Repair Cafes near us</h2>
+        <h2 class="text-lg font-semibold">{$t('Repair Cafes near us')}</h2>
         <p class="text-sm text-slate-600 mt-1">
-          Pick up to {localMax} nearby Repair Cafes you know and want to support. They show as a small
-          map and list on your home page, so a visitor you cannot help can find someone who can.
-          Names, addresses and pins come from repaircafe.org, so they stay right on their own.
+          {$t('Pick up to {max} nearby Repair Cafes you know and want to support. They show as a small map and list on your home page, so a visitor you cannot help can find someone who can. Names, addresses and pins come from repaircafe.org, so they stay right on their own.', { max: localMax })}
         </p>
       </div>
 
       {#if !localAnchor && localLoadedOnce}
         <div class="rounded-xl bg-amber-50 ring-1 ring-amber-200 p-3 text-sm text-amber-900">
-          <p class="font-semibold">We do not know where you are yet.</p>
+          <p class="font-semibold">{$t('We do not know where you are yet.')}</p>
           <p class="mt-1">
-            Add your own page on repaircafe.org under
-            <button class="underline underline-offset-2 font-medium" type="button" on:click={() => (tab = 'profile')}>Cafe profile</button>,
-            and this list will start with your closest neighbours. Until then you can still search by
-            name or town.
+            {#each pieces($t('Add your own page on repaircafe.org under {profile}, and this list will start with your closest neighbours. Until then you can still search by name or town.')) as p}{#if p === '{profile}'}<button class="underline underline-offset-2 font-medium" type="button" on:click={() => (tab = 'profile')}>{$t('Cafe profile')}</button>{:else}{p}{/if}{/each}
           </p>
         </div>
       {/if}
 
       <div>
-        <label class="label" for="local-search">Search by name or town</label>
+        <label class="label" for="local-search">{$t('Search by name or town')}</label>
         <input
           id="local-search"
           class="input"
           type="search"
-          placeholder={localAnchor ? 'Leave blank to see your closest cafes' : 'For example: Sheffield'}
+          placeholder={localAnchor ? $t('Leave blank to see your closest cafes') : $t('For example: Sheffield')}
           bind:value={localQuery}
           on:input={onLocalSearch}
         />
         {#if localAnchor}
-          <p class="text-xs text-slate-500 mt-1">Distances are measured from {localAnchor.name}, in a straight line.</p>
+          <p class="text-xs text-slate-500 mt-1">{$t('Distances are measured from {name}, in a straight line.', { name: localAnchor.name })}</p>
         {/if}
       </div>
 
@@ -941,10 +926,10 @@
       <!-- What is ticked, kept in view even when a search hides it. -->
       <div>
         <h3 class="text-base font-semibold">
-          Chosen <span class="font-normal text-slate-500">({localSelected.length} of {localMax})</span>
+          {$t('Chosen')} <span class="font-normal text-slate-500">({$t('{n} of {total}', { n: localSelected.length, total: localMax })})</span>
         </h3>
         {#if localChosen.length === 0}
-          <p class="text-sm text-slate-500 mt-1">None yet. Tick a cafe below to add it.</p>
+          <p class="text-sm text-slate-500 mt-1">{$t('None yet. Tick a cafe below to add it.')}</p>
         {:else}
           <ul class="mt-2 flex flex-wrap gap-2">
             {#each localChosen as cafe (cafe.slug)}
@@ -956,7 +941,7 @@
                 <button
                   class="p-1 rounded-full text-slate-500 hover:bg-white hover:text-rose-700"
                   type="button"
-                  aria-label={`Remove ${cafe.name}`}
+                  aria-label={$t('Remove {name}', { name: cafe.name })}
                   on:click={() => toggleLocalCafe(cafe, false)}
                 >
                   <Trash2 size={13} />
@@ -969,13 +954,13 @@
 
       <div>
         <h3 class="text-base font-semibold">
-          {localQuery.trim() ? 'Search results' : 'Closest to you'}
+          {localQuery.trim() ? $t('Search results') : $t('Closest to you')}
         </h3>
         {#if localLoading}
-          <p class="text-sm text-slate-500 mt-2">Looking…</p>
+          <p class="text-sm text-slate-500 mt-2">{$t('Looking…')}</p>
         {:else if localResults.length === 0}
           <p class="text-sm text-slate-500 mt-2">
-            {localQuery.trim() ? 'No cafes match that. Try a town name.' : 'No cafes to show.'}
+            {localQuery.trim() ? $t('No cafes match that. Try a town name.') : $t('No cafes to show.')}
           </p>
         {:else}
           <ul class="mt-2 divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden">
@@ -988,7 +973,7 @@
                   class="mt-1 h-4 w-4 rounded border-slate-300 text-brand-600 disabled:opacity-40"
                   checked={isOn}
                   disabled={isFull}
-                  aria-label={`Show ${cafe.name} on our home page`}
+                  aria-label={$t('Show {name} on our home page', { name: cafe.name })}
                   on:change={(e) => toggleLocalCafe(cafe, e.currentTarget.checked)}
                 />
                 <div class="min-w-0 flex-1">
@@ -1001,10 +986,10 @@
                       <span class="text-slate-500">{formatDistance(cafe.distanceKm)}</span>
                     {/if}
                     {#if repairCafeOrgUrl(cafe.slug)}
-                      <a href={repairCafeOrgUrl(cafe.slug)} target="_blank" rel="noopener" class="text-brand-700 underline underline-offset-2">Their page on repaircafe.org</a>
+                      <a href={repairCafeOrgUrl(cafe.slug)} target="_blank" rel="noopener" class="text-brand-700 underline underline-offset-2">{$t('Their page on repaircafe.org')}</a>
                     {/if}
                     {#if cafe.website}
-                      <a href={cafe.website} target="_blank" rel="noopener" class="text-brand-700 underline underline-offset-2">Their own website</a>
+                      <a href={cafe.website} target="_blank" rel="noopener" class="text-brand-700 underline underline-offset-2">{$t('Their own website')}</a>
                     {/if}
                   </p>
                 </div>
@@ -1013,15 +998,15 @@
           </ul>
           {#if localSelected.length >= localMax}
             <p class="text-xs text-amber-800 mt-2">
-              That is {localMax}, the most we show. Remove one to add another.
+              {$t('That is {max}, the most we show. Remove one to add another.', { max: localMax })}
             </p>
           {/if}
         {/if}
       </div>
 
       <div class="flex items-center justify-end gap-3 pt-2 border-t">
-        {#if localSaved}<span class="text-sm text-emerald-700">Saved</span>{/if}
-        <button class="btn-primary" on:click={saveLocalCafes} disabled={busy}>Save local cafes</button>
+        {#if localSaved}<span class="text-sm text-emerald-700">{$t('Saved')}</span>{/if}
+        <button class="btn-primary" on:click={saveLocalCafes} disabled={busy}>{$t('Save local cafes')}</button>
       </div>
     </div>
   {/if}
@@ -1030,10 +1015,9 @@
     <div class="card p-6 mt-4 max-w-3xl space-y-5">
       {#if telemetry?.disabledByEnv}
         <div class="rounded-xl bg-slate-100 ring-1 ring-slate-200 p-3 text-sm text-slate-700">
-          <p class="font-semibold">Switched off for this whole install.</p>
+          <p class="font-semibold">{$t('Switched off for this whole install.')}</p>
           <p class="mt-1">
-            <code>TELEMETRY_DISABLED=true</code> is set, so nothing is sent whatever is chosen here.
-            Whoever runs this server decided that.
+            {#each pieces($t('{setting} is set, so nothing is sent whatever is chosen here. Whoever runs this server decided that.')) as p}{#if p === '{setting}'}<code>TELEMETRY_DISABLED=true</code>{:else}{p}{/if}{/each}
           </p>
         </div>
       {/if}
@@ -1042,10 +1026,10 @@
 
       {#if telemetry?.lastSentAt}
         <p class="text-xs text-slate-500">
-          Last sent {new Date(telemetry.lastSentAt).toLocaleString('en-GB')}.
+          {$t('Last sent {date}.', { date: new Date(telemetry.lastSentAt).toLocaleString(dateLocale()) })}
         </p>
       {:else}
-        <p class="text-xs text-slate-500">Nothing has been sent yet.</p>
+        <p class="text-xs text-slate-500">{$t('Nothing has been sent yet.')}</p>
       {/if}
 
       <!-- Whether the project could check us. Without this, a cafe whose
@@ -1054,23 +1038,17 @@
       {#if telemetry && telemetry.level !== 'none' && telemetry.lastSentAt}
         {#if telemetry.verified === true}
           <div class="rounded-xl bg-emerald-50 ring-1 ring-emerald-200 p-3 text-sm text-emerald-900">
-            <p class="font-semibold">Your numbers are counted.</p>
+            <p class="font-semibold">{$t('Your numbers are counted.')}</p>
             <p class="mt-1">
-              The project checked your public site and found this hub, so your figures are included
-              in the community totals.
+              {$t('The project checked your public site and found this hub, so your figures are included in the community totals.')}
             </p>
           </div>
         {:else if telemetry.verified === false}
           <div class="rounded-xl bg-amber-50 ring-1 ring-amber-200 p-3 text-sm text-amber-900">
-            <p class="font-semibold">Your numbers are not being counted yet.</p>
-            <p class="mt-1">{telemetry.verifyReason ?? 'The project could not check your site.'}</p>
+            <p class="font-semibold">{$t('Your numbers are not being counted yet.')}</p>
+            <p class="mt-1">{telemetry.verifyReason ?? $t('The project could not check your site.')}</p>
             <p class="mt-1">
-              Your public web address is
-              <code class="bg-white/70 rounded px-1">{cafe?.publicUrl || 'not set'}</code>.
-              It has to be the address visitors use, over https, and reachable from outside your
-              network. Change it under
-              <button class="underline underline-offset-2 font-medium" type="button" on:click={() => (tab = 'profile')}>Cafe profile</button>,
-              then press Save here to try again.
+              {#each pieces($t('Your public web address is {address}. It has to be the address visitors use, over https, and reachable from outside your network. Change it under {profile}, then press Save here to try again.')) as p}{#if p === '{address}'}<code class="bg-white/70 rounded px-1">{cafe?.publicUrl || $t('not set')}</code>{:else if p === '{profile}'}<button class="underline underline-offset-2 font-medium" type="button" on:click={() => (tab = 'profile')}>{$t('Cafe profile')}</button>{:else}{p}{/if}{/each}
             </p>
           </div>
         {/if}
@@ -1081,148 +1059,134 @@
 
       <div class="flex flex-wrap items-center justify-between gap-2 pt-3 border-t">
         <button class="btn-ghost btn-sm text-rose-700" type="button" disabled={busy} on:click={forgetTelemetry}>
-          Delete everything you hold about us
+          {$t('Delete everything you hold about us')}
         </button>
-        <button class="btn-primary" type="button" disabled={busy} on:click={saveTelemetry}>Save</button>
+        <button class="btn-primary" type="button" disabled={busy} on:click={saveTelemetry}>{$t('Save')}</button>
       </div>
     </div>
   {/if}
 
   {#if tab === 'preferences'}
     <div class="card p-6 mt-4 max-w-2xl space-y-4">
-      <label class="flex items-center gap-3"><input type="checkbox" bind:checked={cafe.allowSkipPhoto} /> Allow customers to skip the &quot;before&quot; photo step</label>
-      <label class="flex items-center gap-3"><input type="checkbox" bind:checked={cafe.enableContactField} /> Show optional contact (phone/email) field on check-in</label>
+      <label class="flex items-center gap-3"><input type="checkbox" bind:checked={cafe.allowSkipPhoto} /> {$t('Allow customers to skip the "before" photo step')}</label>
+      <label class="flex items-center gap-3"><input type="checkbox" bind:checked={cafe.enableContactField} /> {$t('Show optional contact (phone/email) field on check-in')}</label>
       <div>
-        <label class="label" for="rd">Data retention period (days)</label>
+        <label class="label" for="rd">{$t('Data retention period (days)')}</label>
         <input id="rd" class="input w-32" type="number" min="30" max="3650" bind:value={cafe.dataRetentionDays} />
-        <p class="text-xs text-slate-500 mt-1">Customer PII (name, contact) is purged this many days after the event.</p>
+        <p class="text-xs text-slate-500 mt-1">{$t('Customer PII (name, contact) is purged this many days after the event.')}</p>
       </div>
 
       <section class="pt-4 border-t border-slate-200 space-y-2">
-        <h2 class="text-lg font-semibold">PAT testing</h2>
+        <h2 class="text-lg font-semibold">{$t('PAT testing')}</h2>
         <label class="flex items-start gap-3">
           <input type="checkbox" class="mt-1" bind:checked={cafe.patTestingEnabled} />
-          <span>Ask repairers for a PAT test on electrical items</span>
+          <span>{$t('Ask repairers for a PAT test on electrical items')}</span>
         </label>
         <p class="text-sm text-slate-600">
-          When this is on, electrical items have a "PAT test" label in the repair queue. Before a repairer can mark an
-          electrical item as fixed, they must record the result: passed, failed or not needed. The hub saves the result,
-          the time and the name of the repairer. An item that failed cannot be marked as fixed.
+          {$t('When this is on, electrical items have a "PAT test" label in the repair queue. Before a repairer can mark an electrical item as fixed, they must record the result: passed, failed or not needed. The hub saves the result, the time and the name of the repairer. An item that failed cannot be marked as fixed.')}
         </p>
         <p class="text-sm text-slate-600">
-          To choose which kinds of item are electrical, go to <a class="underline" href="/admin/skills">Skills</a>.
-          A repairer can also change this for a single item.
+          {#each pieces($t('To choose which kinds of item are electrical, go to {skills}.')) as p}{#if p === '{skills}'}<a class="underline" href="/admin/skills">{$t('Skills')}</a>{:else}{p}{/if}{/each}
+          {$t('A repairer can also change this for a single item.')}
         </p>
       </section>
 
       <section class="pt-4 border-t border-slate-200 space-y-2">
-        <h2 class="text-lg font-semibold">Pre-registration</h2>
+        <h2 class="text-lg font-semibold">{$t('Pre-registration')}</h2>
         <label class="flex items-start gap-3">
           <input type="checkbox" class="mt-1" bind:checked={cafe.preRegistrationEnabled} />
-          <span>Let visitors pre-register their items before a session</span>
+          <span>{$t('Let visitors pre-register their items before a session')}</span>
         </label>
         <p class="text-sm text-slate-600">
-          When this is on, each upcoming published session has a "Pre-register your item" button on its page. Repairers
-          see the items under "Pre-registered items". They can take an item and make notes before the day, for example
-          to find a manual or a diagram.
+          {$t('When this is on, each upcoming published session has a "Pre-register your item" button on its page. Repairers see the items under "Pre-registered items". They can take an item and make notes before the day, for example to find a manual or a diagram.')}
         </p>
         <p class="text-sm text-slate-600">
-          The repair does not start until the item is checked in on the day. The visitor can check in by scanning the
-          QR code, or a volunteer can do it on the "Check in a visitor" page. The repair time starts at check-in.
+          {$t('The repair does not start until the item is checked in on the day. The visitor can check in by scanning the QR code, or a volunteer can do it on the "Check in a visitor" page. The repair time starts at check-in.')}
         </p>
       </section>
 
       <section class="pt-4 border-t border-slate-200 space-y-2">
-        <h2 class="text-lg font-semibold">Extra questions at check-in</h2>
+        <h2 class="text-lg font-semibold">{$t('Extra questions at check-in')}</h2>
         <label class="flex items-start gap-3">
           <input type="checkbox" class="mt-1" bind:checked={cafe.weighItemsEnabled} />
-          <span>Ask for the item's weight</span>
+          <span>{$t("Ask for the item's weight")}</span>
         </label>
         <label class="flex items-start gap-3">
           <input type="checkbox" class="mt-1" bind:checked={cafe.askFirstVisitEnabled} />
-          <span>Ask whether this is the visitor's first visit</span>
+          <span>{$t("Ask whether this is the visitor's first visit")}</span>
         </label>
         <p class="text-sm text-slate-600">
-          Each question appears on the visitor's check-in form and on the "Check in a visitor" page. Both are optional,
-          so nobody has to answer. The weight helps you report how much was kept out of the bin: the Statistics page
-          shows the total weight of the items that were fixed. Both answers are in the repairs export.
+          {$t(`Each question appears on the visitor's check-in form and on the "Check in a visitor" page. Both are optional, so nobody has to answer. The weight helps you report how much was kept out of the bin: the Statistics page shows the total weight of the items that were fixed. Both answers are in the repairs export.`)}
         </p>
       </section>
 
       <section class="pt-4 border-t border-slate-200 space-y-2">
-        <h2 class="text-lg font-semibold">Question at the exit</h2>
+        <h2 class="text-lg font-semibold">{$t('Question at the exit')}</h2>
         <label class="flex items-start gap-3">
           <input type="checkbox" class="mt-1" bind:checked={cafe.askSatisfactionEnabled} />
-          <span>Ask visitors if they are satisfied when they collect their item</span>
+          <span>{$t('Ask visitors if they are satisfied when they collect their item')}</span>
         </label>
         <p class="text-sm text-slate-600">
-          When this is on, a finished repair's page has two buttons, "Satisfied" and "Not satisfied", and a box for a
-          comment. Any volunteer can record the answer, so the person at the door does not have to be the repairer. The
-          Statistics page shows the share of visitors who were satisfied. A comment is removed with the visitor's other
-          personal details at the end of the data retention period.
+          {$t(`When this is on, a finished repair's page has two buttons, "Satisfied" and "Not satisfied", and a box for a comment. Any volunteer can record the answer, so the person at the door does not have to be the repairer. The Statistics page shows the share of visitors who were satisfied. A comment is removed with the visitor's other personal details at the end of the data retention period.`)}
         </p>
       </section>
 
       <section class="pt-4 border-t border-slate-200 space-y-2">
-        <h2 class="text-lg font-semibold">Numbered cards</h2>
+        <h2 class="text-lg font-semibold">{$t('Numbered cards')}</h2>
         <label class="flex items-start gap-3">
           <input type="checkbox" class="mt-1" bind:checked={cafe.cardNumbersEnabled} />
-          <span>Give each visitor a numbered card at check-in</span>
+          <span>{$t('Give each visitor a numbered card at check-in')}</span>
         </label>
         <p class="text-sm text-slate-600">
-          Some cafes keep a set of numbered cards, from 1 to 50 or fewer. A volunteer hands one to each visitor and
-          uses the number to call them. When this is on, the "Check in a visitor" page asks which card was handed
-          out, and the waiting-room screen shows the card number instead of the job number. A number is free again
-          once the item is collected, so the same cards can be used all session.
+          {$t('Some cafes keep a set of numbered cards, from 1 to 50 or fewer. A volunteer hands one to each visitor and uses the number to call them. When this is on, the "Check in a visitor" page asks which card was handed out, and the waiting-room screen shows the card number instead of the job number. A number is free again once the item is collected, so the same cards can be used all session.')}
         </p>
       </section>
 
-      <div class="flex justify-end"><button class="btn-primary" on:click={savePrefs} disabled={busy}>Save preferences</button></div>
+      <div class="flex justify-end"><button class="btn-primary" on:click={savePrefs} disabled={busy}>{$t('Save preferences')}</button></div>
     </div>
   {/if}
 
   {#if tab === 'seo'}
     <div class="card p-6 mt-4 max-w-2xl space-y-6">
       <section class="space-y-3">
-        <h2 class="text-lg font-semibold">Search engine listing</h2>
-        <p class="text-xs text-slate-500 -mt-1">How your home page appears in Google results and on social shares.</p>
+        <h2 class="text-lg font-semibold">{$t('Search engine listing')}</h2>
+        <p class="text-xs text-slate-500 -mt-1">{$t('How your home page appears in Google results and on social shares.')}</p>
         <div>
-          <label class="label" for="st">Page title</label>
+          <label class="label" for="st">{$t('Page title')}</label>
           <input id="st" class="input" maxlength="70" bind:value={cafe.seoTitle} placeholder={cafe.tagline ? `${cafe.name}: ${cafe.tagline}` : cafe.name} />
-          <p class="text-xs text-slate-500 mt-1">Leave blank to auto-generate from cafe name + tagline. ~60 chars works best.</p>
+          <p class="text-xs text-slate-500 mt-1">{$t('Leave blank to auto-generate from cafe name + tagline. ~60 chars works best.')}</p>
         </div>
         <div>
-          <label class="label" for="sd">Meta description</label>
+          <label class="label" for="sd">{$t('Meta description')}</label>
           <textarea id="sd" class="input" rows="3" maxlength="200" bind:value={cafe.seoDescription} placeholder={cafe.description ?? ''}></textarea>
-          <p class="text-xs text-slate-500 mt-1">Leave blank to use the short description. ~150 chars works best.</p>
+          <p class="text-xs text-slate-500 mt-1">{$t('Leave blank to use the short description. ~150 chars works best.')}</p>
         </div>
       </section>
 
       <section class="space-y-3 pt-2 border-t">
-        <h2 class="text-lg font-semibold">Icons &amp; share image</h2>
+        <h2 class="text-lg font-semibold">{$t('Icons & share image')}</h2>
         <div class="grid sm:grid-cols-2 gap-4">
           <div>
-            <span class="label">Favicon</span>
-            {#if cafe.faviconUrl}<img src={cafe.faviconUrl} alt="favicon" class="h-12 w-12 mb-2 bg-slate-100 rounded-lg p-1 object-contain" />{/if}
+            <span class="label">{$t('Favicon')}</span>
+            {#if cafe.faviconUrl}<img src={cafe.faviconUrl} alt={$t('favicon')} class="h-12 w-12 mb-2 bg-slate-100 rounded-lg p-1 object-contain" />{/if}
             <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" bind:files={faviconFile} on:change={() => uploadAsset('favicon', faviconFile)} />
-            <p class="text-xs text-slate-500 mt-1">Square, 32–256px. Shown in browser tabs.</p>
+            <p class="text-xs text-slate-500 mt-1">{$t('Square, 32–256px. Shown in browser tabs.')}</p>
           </div>
           <div>
-            <span class="label">Social share image (Open Graph)</span>
-            {#if cafe.ogImageUrl}<img src={cafe.ogImageUrl} alt="How your site looks when someone shares it" class="h-16 mb-2 rounded-lg object-cover" />{/if}
+            <span class="label">{$t('Social share image (Open Graph)')}</span>
+            {#if cafe.ogImageUrl}<img src={cafe.ogImageUrl} alt={$t('How your site looks when someone shares it')} class="h-16 mb-2 rounded-lg object-cover" />{/if}
             <input type="file" accept="image/png,image/jpeg,image/webp" bind:files={ogFile} on:change={() => uploadAsset('og', ogFile)} />
-            <p class="text-xs text-slate-500 mt-1">~1200×630 works best. Falls back to your banner if blank.</p>
+            <p class="text-xs text-slate-500 mt-1">{$t('~1200×630 works best. Falls back to your banner if blank.')}</p>
           </div>
         </div>
       </section>
 
       <section class="space-y-3 pt-2 border-t">
-        <h2 class="text-lg font-semibold">Analytics <span class="text-xs text-slate-400 font-normal">(optional)</span></h2>
+        <h2 class="text-lg font-semibold">{$t('Analytics')} <span class="text-xs text-slate-400 font-normal">{$t('(optional)')}</span></h2>
         <p class="text-xs text-slate-500 -mt-1">
-          Count your visitors with a privacy-friendly service. Both choices set no cookies, so you do not need a
-          cookie banner. Only one service can run at a time.
+          {$t('Count your visitors with a privacy-friendly service. Both choices set no cookies, so you do not need a cookie banner. Only one service can run at a time.')}
         </p>
-        <div class="grid sm:grid-cols-3 gap-2" role="radiogroup" aria-label="Analytics service">
+        <div class="grid sm:grid-cols-3 gap-2" role="radiogroup" aria-label={$t('Analytics service')}>
           {#each [['none', 'None', 'No analytics.'], ['plausible', 'Plausible', 'plausible.io, or your own copy.'], ['qwa', 'Quick Web Analytics', 'Cookie-free, with events.']] as [key, label, hint]}
             <label
               class="flex items-start gap-2 rounded-xl border p-3 cursor-pointer {analyticsProvider === key ? 'border-brand-500 bg-brand-50' : 'border-slate-200 hover:bg-slate-50'}"
@@ -1236,8 +1200,8 @@
                 on:change={() => chooseAnalytics(key as AnalyticsProvider)}
               />
               <span class="text-sm text-slate-700">
-                <span class="font-semibold">{label}</span>
-                <span class="block text-xs text-slate-500">{hint}</span>
+                <span class="font-semibold">{$t(label)}</span>
+                <span class="block text-xs text-slate-500">{$t(hint)}</span>
               </span>
             </label>
           {/each}
@@ -1245,41 +1209,38 @@
 
         {#if analyticsProvider === 'plausible'}
           <div>
-            <label class="label" for="pd">Site domain</label>
+            <label class="label" for="pd">{$t('Site domain')}</label>
             <input id="pd" class="input" bind:value={cafe.plausibleDomain} placeholder="repaircafe.example.org" />
-            <p class="text-xs text-slate-500 mt-1">The domain you registered in Plausible.</p>
+            <p class="text-xs text-slate-500 mt-1">{$t('The domain you registered in Plausible.')}</p>
           </div>
           <div>
-            <label class="label" for="ps">Script URL</label>
+            <label class="label" for="ps">{$t('Script URL')}</label>
             <input id="ps" class="input" bind:value={cafe.plausibleSrc} placeholder="https://plausible.io/js/script.js" />
             <p class="text-xs text-slate-500 mt-1">
-              Use <code>https://plausible.io/js/script.js</code> for managed Plausible, or the same path on
-              your own server. Plausible also offers a per-site script whose address looks like
-              <code>/js/pa-XXXX.js</code>. Either works here.
+              {#each pieces($t('Use {managed} for managed Plausible, or the same path on your own server. Plausible also offers a per-site script whose address looks like {perSite}. Either works here.')) as p}{#if p === '{managed}'}<code>https://plausible.io/js/script.js</code>{:else if p === '{perSite}'}<code>/js/pa-XXXX.js</code>{:else}{p}{/if}{/each}
             </p>
           </div>
         {/if}
 
         {#if analyticsProvider === 'qwa'}
           <div>
-            <label class="label" for="qd">Site domain</label>
+            <label class="label" for="qd">{$t('Site domain')}</label>
             <input id="qd" class="input" bind:value={cafe.qwaSite} placeholder="repaircafe.example.org" />
             <p class="text-xs text-slate-500 mt-1">
-              The site name you added in your QWA dashboard. It is the <code>data-site</code> value in the
-              tag QWA gives you.
+              {#each pieces($t('The site name you added in your QWA dashboard. It is the {attribute} value in the tag QWA gives you.')) as p}{#if p === '{attribute}'}<code>data-site</code>{:else}{p}{/if}{/each}
             </p>
           </div>
           <div>
-            <label class="label" for="qs">Script URL</label>
+            <label class="label" for="qs">{$t('Script URL')}</label>
             <input id="qs" class="input" bind:value={cafe.qwaSrc} placeholder="https://analytics.example.org/t.js" />
             <p class="text-xs text-slate-500 mt-1">
-              The <code>src</code> address in the tag QWA gives you. It ends in <code>/t.js</code>.
+              {#each pieces($t('The {attribute} address in the tag QWA gives you. It ends in {file}.')) as p}{#if p === '{attribute}'}<code>src</code>{:else if p === '{file}'}<code>/t.js</code>{:else}{p}{/if}{/each}
             </p>
           </div>
           <fieldset class="space-y-2">
-            <legend class="label">Events to count</legend>
+            <legend class="label">{$t('Events to count')}</legend>
             <p class="text-xs text-slate-500 -mt-1">
-              As well as page views, QWA can count these actions. No names or contact details are sent.
+              {$t('As well as page views, QWA can count these actions. No names or contact details are sent.')}
             </p>
             {#each QWA_EVENTS as event}
               <label class="flex items-start gap-3 cursor-pointer">
@@ -1290,8 +1251,8 @@
                   bind:group={qwaEvents}
                 />
                 <span class="text-sm text-slate-700">
-                  {event.label}
-                  <span class="block text-xs text-slate-500">{event.help} Shows in QWA as "{event.name}".</span>
+                  {$t(event.label)}
+                  <span class="block text-xs text-slate-500">{$t(event.help)} {$t('Shows in QWA as "{name}".', { name: event.name })}</span>
                 </span>
               </label>
             {/each}
@@ -1300,46 +1261,46 @@
       </section>
 
       <div class="flex items-center justify-end gap-3 pt-2 border-t">
-        {#if seoSaved}<span class="text-sm text-brand-700">Saved.</span>{/if}
+        {#if seoSaved}<span class="text-sm text-brand-700">{$t('Saved.')}</span>{/if}
         {#if seoError}<span class="text-sm text-red-700">{seoError}</span>{/if}
-        <button class="btn-primary" on:click={saveSeo} disabled={busy}>Save SEO &amp; analytics</button>
+        <button class="btn-primary" on:click={saveSeo} disabled={busy}>{$t('Save SEO & analytics')}</button>
       </div>
     </div>
   {/if}
 
   {#if tab === 'gdpr'}
     <div class="card p-6 mt-4 max-w-2xl space-y-3">
-      <h2 class="text-lg font-semibold">Data retention</h2>
-      <p class="text-sm text-slate-600">Customer-personal data is automatically purged after the configured retention period. You can also trigger an immediate purge of expired data.</p>
-      <button class="btn-danger" on:click={purgePii}>Purge expired PII now</button>
+      <h2 class="text-lg font-semibold">{$t('Data retention')}</h2>
+      <p class="text-sm text-slate-600">{$t('Customer-personal data is automatically purged after the configured retention period. You can also trigger an immediate purge of expired data.')}</p>
+      <button class="btn-danger" on:click={purgePii}>{$t('Purge expired PII now')}</button>
     </div>
   {/if}
 
   {#if tab === 'backup' && isSuperAdmin}
     <div class="mt-4 max-w-2xl space-y-4">
       <div class="card p-6 space-y-3">
-        <h2 class="text-lg font-semibold flex items-center gap-2"><Download class="w-4 h-4" /> Download a backup</h2>
-        <p class="text-sm text-slate-600">Creates a zip containing the entire database (all tables including audit log) plus every uploaded photo and branding asset. Keep this somewhere safe. Anyone with the file can restore your cafe's data.</p>
-        <p class="text-sm text-slate-600">The same file moves your hub to another Cloudflare account. See <a class="text-brand-700 hover:underline" href="https://github.com/Zesty0wl/circularity-repair-cafe-hub/blob/main/docs/backups-and-moving.md" target="_blank" rel="noopener">backups and moving a hub</a>.</p>
+        <h2 class="text-lg font-semibold flex items-center gap-2"><Download class="w-4 h-4" /> {$t('Download a backup')}</h2>
+        <p class="text-sm text-slate-600">{$t("Creates a zip containing the entire database (all tables including audit log) plus every uploaded photo and branding asset. Keep this somewhere safe. Anyone with the file can restore your cafe's data.")}</p>
+        <p class="text-sm text-slate-600">{#each pieces($t('The same file moves your hub to another Cloudflare account. See {link}.')) as p}{#if p === '{link}'}<a class="text-brand-700 hover:underline" href="https://github.com/Zesty0wl/circularity-repair-cafe-hub/blob/main/docs/backups-and-moving.md" target="_blank" rel="noopener">{$t('backups and moving a hub')}</a>{:else}{p}{/if}{/each}</p>
         {#if backupInfo}
-          <p class="text-xs text-slate-500">App version <span class="font-mono">{backupInfo.appVersion}</span> · backup format v{backupInfo.backupFormatVersion}</p>
+          <p class="text-xs text-slate-500">{#each pieces($t('App version {version} · backup format v{format}', { format: backupInfo.backupFormatVersion })) as p}{#if p === '{version}'}<span class="font-mono">{backupInfo.appVersion}</span>{:else}{p}{/if}{/each}</p>
         {/if}
         {#if backupDownloadError}
           <p class="text-sm text-rose-700">{backupDownloadError}</p>
         {/if}
         <button class="btn-primary inline-flex items-center gap-2" on:click={downloadBackup} disabled={backupBusy}>
           <Download class="w-4 h-4" />
-          {backupBusy ? 'Preparing backup…' : 'Download backup zip'}
+          {backupBusy ? $t('Preparing backup…') : $t('Download backup zip')}
         </button>
         {#if backupProgress}
-          <p class="text-sm text-slate-700">{backupProgress.message} ({backupProgress.done} of {backupProgress.total})</p>
+          <p class="text-sm text-slate-700">{backupProgress.message} ({$t('{n} of {total}', { n: backupProgress.done, total: backupProgress.total })})</p>
         {/if}
-        <p class="text-xs text-slate-500">This browser builds the backup, so keep this page open until the download starts. Big cafes with lots of photos may take a few minutes.</p>
+        <p class="text-xs text-slate-500">{$t('This browser builds the backup, so keep this page open until the download starts. Big cafes with lots of photos may take a few minutes.')}</p>
       </div>
 
       <div class="card p-6 space-y-3 ring-rose-200">
-        <h2 class="text-lg font-semibold text-rose-800 flex items-center gap-2"><AlertTriangle class="w-4 h-4" /> Restore from a backup</h2>
-        <p class="text-sm text-slate-600">Restore a backup from this hub, or from an old Docker hub you are moving away from.</p>
+        <h2 class="text-lg font-semibold text-rose-800 flex items-center gap-2"><AlertTriangle class="w-4 h-4" /> {$t('Restore from a backup')}</h2>
+        <p class="text-sm text-slate-600">{$t('Restore a backup from this hub, or from an old Docker hub you are moving away from.')}</p>
         <BackupImport
           mode="admin"
           confirmPhrase={backupInfo?.confirmPhrase ?? 'WIPE AND RESTORE'}
@@ -1355,27 +1316,24 @@
   {#if tab === 'about'}
     <div class="card p-6 mt-4 max-w-2xl text-sm space-y-2">
       <p><strong>Repair Cafe Hub</strong></p>
-      <p>Free, open-source software for grass-roots repair cafes, running on Cloudflare.</p>
-      <p>Source: <a class="text-brand-700 hover:underline" href="https://github.com/Zesty0wl/circularity-repair-cafe-hub" target="_blank" rel="noopener">github.com/Zesty0wl/circularity-repair-cafe-hub</a></p>
-      <p>Released under the MIT licence.</p>
+      <p>{$t('Free, open-source software for grass-roots repair cafes, running on Cloudflare.')}</p>
+      <p>{$t('Source:')} <a class="text-brand-700 hover:underline" href="https://github.com/Zesty0wl/circularity-repair-cafe-hub" target="_blank" rel="noopener">github.com/Zesty0wl/circularity-repair-cafe-hub</a></p>
+      <p>{$t('Released under the MIT licence.')}</p>
     </div>
 
     <div class="card p-6 mt-4 max-w-2xl text-sm space-y-3">
-      <h2 class="font-semibold text-base">Updating</h2>
+      <h2 class="font-semibold text-base">{$t('Updating')}</h2>
       <p class="text-slate-700">
-        This hub runs on Cloudflare, so there is no machine to log in to. On the computer you set
-        it up from, open a terminal in the project folder and run:
+        {$t('This hub runs on Cloudflare, so there is no machine to log in to. On the computer you set it up from, open a terminal in the project folder and run:')}
       </p>
       <pre class="bg-slate-900 text-slate-100 rounded-lg p-3 overflow-x-auto text-xs leading-relaxed"><code>git pull
 pnpm install
 pnpm cf:deploy</code></pre>
       <p class="text-slate-700">
-        The site stays up while it updates. Database changes are applied by themselves on the
-        first visit after the update.
+        {$t('The site stays up while it updates. Database changes are applied by themselves on the first visit after the update.')}
       </p>
       <p class="text-slate-600">
-        The full guide is in
-        <a class="text-brand-700 hover:underline" href="https://github.com/Zesty0wl/circularity-repair-cafe-hub/blob/main/docs/running-your-hub.md#updating" target="_blank" rel="noopener">docs/running-your-hub.md</a>.
+        {#each pieces($t('The full guide is in {link}.')) as p}{#if p === '{link}'}<a class="text-brand-700 hover:underline" href="https://github.com/Zesty0wl/circularity-repair-cafe-hub/blob/main/docs/running-your-hub.md#updating" target="_blank" rel="noopener">docs/running-your-hub.md</a>{:else}{p}{/if}{/each}
       </p>
     </div>
   {/if}

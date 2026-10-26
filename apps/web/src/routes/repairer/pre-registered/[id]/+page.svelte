@@ -10,6 +10,7 @@
   import PatBadge from '$lib/components/PatBadge.svelte';
   import { firstName, sessionTimes } from '$lib/staff/queue';
   import { ArrowLeft, CalendarClock, CheckCircle2, User } from 'lucide-svelte';
+  import { t, tNow, dateLocale } from '$lib/i18n';
 
   interface Detail {
     preRegistration: {
@@ -61,7 +62,7 @@
       notes = savedNotes = detail.preRegistration.researchNotes ?? '';
       loadError = '';
     } catch (err: any) {
-      loadError = err?.status === 404 ? 'We could not find this item. It may have been removed, or pre-registration is switched off.' : err?.message ?? 'Could not load this item';
+      loadError = err?.status === 404 ? tNow('We could not find this item. It may have been removed, or pre-registration is switched off.') : err?.message ?? tNow('Could not load this item');
     }
   }
   onMount(load);
@@ -80,18 +81,18 @@
     }
   }
 
-  const take = () => run(() => api(`/api/repairer/pre-registrations/${id}/claim`, { method: 'PATCH', json: {} }), 'Could not take this item');
-  const giveBack = () => run(() => api(`/api/repairer/pre-registrations/${id}/release`, { method: 'PATCH', json: {} }), 'Could not give this item back');
+  const take = () => run(() => api(`/api/repairer/pre-registrations/${id}/claim`, { method: 'PATCH', json: {} }), tNow('Could not take this item'));
+  const giveBack = () => run(() => api(`/api/repairer/pre-registrations/${id}/release`, { method: 'PATCH', json: {} }), tNow('Could not give this item back'));
 
   async function saveNotes() {
     saved = false;
-    await run(() => api(`/api/repairer/pre-registrations/${id}/notes`, { method: 'PATCH', json: { researchNotes: notes } }), 'Could not save your notes');
+    await run(() => api(`/api/repairer/pre-registrations/${id}/notes`, { method: 'PATCH', json: { researchNotes: notes } }), tNow('Could not save your notes'));
     if (!error) saved = true;
   }
 
   // Say whether this one item is electrical, whatever its category says.
   const setElectrical = (value: boolean) =>
-    run(() => api(`/api/repairer/pre-registrations/${id}/electrical`, { method: 'PATCH', json: { isElectrical: value } }), 'Could not save that change');
+    run(() => api(`/api/repairer/pre-registrations/${id}/electrical`, { method: 'PATCH', json: { isElectrical: value } }), tNow('Could not save that change'));
 
   async function checkIn() {
     busy = true;
@@ -99,7 +100,7 @@
     try {
       checkedIn = await api<{ id: string; jobNumber: string }>(`/api/repairer/pre-registrations/${id}/check-in`, { method: 'POST', json: {} });
     } catch (err: any) {
-      error = err?.message ?? 'Could not check this item in';
+      error = err?.message ?? tNow('Could not check this item in');
     } finally {
       busy = false;
     }
@@ -112,40 +113,40 @@
       await api(`/api/repairer/pre-registrations/${id}/cancel`, { method: 'PATCH', json: {} });
       goto('/repairer/pre-registered');
     } catch (err: any) {
-      error = err?.message ?? 'Could not cancel this item';
+      error = err?.message ?? tNow('Could not cancel this item');
     } finally {
       busy = false;
     }
   }
 
   function longDate(iso: string): string {
-    return new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+    return new Date(`${iso}T12:00:00Z`).toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
   }
 </script>
 
-<svelte:head><title>{pre?.itemDescription ?? 'Pre-registered item'}</title></svelte:head>
+<svelte:head><title>{pre?.itemDescription ?? $t('Pre-registered item')}</title></svelte:head>
 
-<a href="/repairer/pre-registered" class="inline-flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900 mb-3"><ArrowLeft size={16} /> Pre-registered items</a>
+<a href="/repairer/pre-registered" class="inline-flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900 mb-3"><ArrowLeft size={16} /> {$t('Pre-registered items')}</a>
 
 {#if loadError}
   <div class="card p-6 max-w-lg">
-    <h1 class="text-xl font-semibold">Something went wrong</h1>
+    <h1 class="text-xl font-semibold">{$t('Something went wrong')}</h1>
     <p class="mt-2 text-slate-600">{loadError}</p>
-    <a href="/repairer/pre-registered" class="btn-primary mt-4">Back to the list</a>
+    <a href="/repairer/pre-registered" class="btn-primary mt-4">{$t('Back to the list')}</a>
   </div>
 {:else if !detail || !pre}
-  <p class="text-slate-500">Loading…</p>
+  <p class="text-slate-500">{$t('Loading…')}</p>
 {:else if checkedIn}
   <div class="card p-8 text-center max-w-lg">
     <span class="h-16 w-16 mx-auto rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center"><CheckCircle2 size={32} /></span>
-    <h1 class="text-2xl font-bold mt-5">Checked in</h1>
-    <p class="mt-2 text-slate-700">The repair has started.</p>
-    <p class="mt-5 text-sm uppercase tracking-wide text-slate-500">Job number</p>
+    <h1 class="text-2xl font-bold mt-5">{$t('Checked in')}</h1>
+    <p class="mt-2 text-slate-700">{$t('The repair has started.')}</p>
+    <p class="mt-5 text-sm uppercase tracking-wide text-slate-500">{$t('Job number')}</p>
     <p class="text-4xl font-extrabold text-brand-700 mt-1 tracking-wide">{checkedIn.jobNumber}</p>
-    <p class="mt-4 text-slate-600">Write this number on the item's tag.</p>
+    <p class="mt-4 text-slate-600">{$t('Write this number on the item\'s tag.')}</p>
     <div class="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
-      <a href={`/repairer/job/${checkedIn.id}`} class="btn-primary">Open the repair</a>
-      <a href="/repairer" class="btn-secondary">Back to the queue</a>
+      <a href={`/repairer/job/${checkedIn.id}`} class="btn-primary">{$t('Open the repair')}</a>
+      <a href="/repairer" class="btn-secondary">{$t('Back to the queue')}</a>
     </div>
   </div>
 {:else}
@@ -154,10 +155,10 @@
       <header class="card p-5">
         <div class="flex items-start justify-between gap-3">
           <div class="min-w-0">
-            <p class="kicker flex items-center gap-1.5"><CalendarClock size={14} /> Pre-registered</p>
+            <p class="kicker flex items-center gap-1.5"><CalendarClock size={14} /> {$t('Pre-registered')}</p>
             <h1 class="text-2xl font-bold leading-tight mt-0.5">{pre.itemDescription}</h1>
             <p class="text-slate-600 text-sm mt-1">
-              {#if detail.category}<span class="font-medium" style="color: {detail.category.colour}">{detail.category.name}</span>{/if}
+              {#if detail.category}<span class="font-medium" style="color: {detail.category.colour}">{$t(detail.category.name)}</span>{/if}
               {#if pre.itemBrand}{detail.category ? ' · ' : ''}{pre.itemBrand}{/if}
             </p>
           </div>
@@ -167,38 +168,37 @@
           <div class="flex gap-2 items-start">
             <User size={16} class="text-slate-400 mt-0.5 shrink-0" />
             <div>
-              <dt class="text-slate-500">Visitor</dt>
-              <dd class="text-slate-900">{pre.customerName ?? 'Not given'}{#if pre.customerContact}<span class="block text-slate-600">{pre.customerContact}</span>{/if}</dd>
+              <dt class="text-slate-500">{$t('Visitor')}</dt>
+              <dd class="text-slate-900">{pre.customerName ?? $t('Not given')}{#if pre.customerContact}<span class="block text-slate-600">{pre.customerContact}</span>{/if}</dd>
             </div>
           </div>
           <div>
-            <dt class="text-slate-500">Session</dt>
+            <dt class="text-slate-500">{$t('Session')}</dt>
             <dd class="text-slate-900">{longDate(detail.event.date)}, {sessionTimes(detail.event.startTime, detail.event.endTime)}<span class="block text-slate-600">{detail.event.name} · {detail.event.venueName}</span></dd>
           </div>
         </dl>
       </header>
 
       <section class="card p-5">
-        <h2 class="font-semibold">What is wrong</h2>
+        <h2 class="font-semibold">{$t('What is wrong')}</h2>
         <p class="mt-2 text-slate-700 whitespace-pre-line">{pre.faultDescription}</p>
       </section>
 
       <section class="card p-5">
-        <h2 class="font-semibold">Your notes</h2>
+        <h2 class="font-semibold">{$t('Your notes')}</h2>
         <p class="mt-1 text-sm text-slate-600">
-          Write down what you find out: the model, a link to the manual or a diagram, parts to bring. Whoever repairs the
-          item on the day will see these notes. The visitor does not.
+          {$t('Write down what you find out: the model, a link to the manual or a diagram, parts to bring. Whoever repairs the item on the day will see these notes. The visitor does not.')}
         </p>
         {#if canWrite && isOpen}
           <textarea class="input mt-3" rows="8" maxlength="4000" bind:value={notes} on:input={() => (saved = false)}></textarea>
           <div class="mt-3 flex items-center justify-end gap-3">
-            {#if saved && !notesChanged}<span class="text-sm text-emerald-700">Saved</span>{/if}
-            <button class="btn-primary btn-sm" disabled={busy || !notesChanged} on:click={saveNotes}>Save notes</button>
+            {#if saved && !notesChanged}<span class="text-sm text-emerald-700">{$t('Saved')}</span>{/if}
+            <button class="btn-primary btn-sm" disabled={busy || !notesChanged} on:click={saveNotes}>{$t('Save notes')}</button>
           </div>
         {:else if pre.researchNotes}
           <p class="mt-3 text-slate-700 whitespace-pre-line">{pre.researchNotes}</p>
         {:else}
-          <p class="mt-3 text-sm text-slate-500">{isOpen ? 'Take this item to add notes.' : 'No notes.'}</p>
+          <p class="mt-3 text-sm text-slate-500">{isOpen ? $t('Take this item to add notes.') : $t('No notes.')}</p>
         {/if}
       </section>
     </div>
@@ -206,39 +206,39 @@
     <div class="lg:col-span-2 space-y-4 lg:sticky lg:top-6">
       {#if pre.status === 'checked_in'}
         <section class="card p-5">
-          <h2 class="font-semibold">Checked in</h2>
-          <p class="mt-1 text-sm text-slate-600">This item has arrived and is now a repair.</p>
-          {#if pre.repairJobId}<a href={`/repairer/job/${pre.repairJobId}`} class="btn-primary w-full mt-4">Open the repair</a>{/if}
+          <h2 class="font-semibold">{$t('Checked in')}</h2>
+          <p class="mt-1 text-sm text-slate-600">{$t('This item has arrived and is now a repair.')}</p>
+          {#if pre.repairJobId}<a href={`/repairer/job/${pre.repairJobId}`} class="btn-primary w-full mt-4">{$t('Open the repair')}</a>{/if}
         </section>
       {:else if pre.status === 'cancelled'}
         <section class="card p-5">
-          <h2 class="font-semibold">Cancelled</h2>
-          <p class="mt-1 text-sm text-slate-600">The visitor or an admin called this item off.</p>
+          <h2 class="font-semibold">{$t('Cancelled')}</h2>
+          <p class="mt-1 text-sm text-slate-600">{$t('The visitor or an admin called this item off.')}</p>
         </section>
       {:else}
         <section class="card p-5">
           {#if isMine}
-            <h2 class="font-semibold">You have taken this item</h2>
-            <p class="mt-1 text-sm text-slate-600">When the visitor arrives and the item is checked in, it comes straight to you and the repair time starts.</p>
-            <button class="mt-4 text-sm text-slate-500 hover:text-slate-800 underline underline-offset-2" disabled={busy} on:click={giveBack}>Give it back for someone else to take</button>
+            <h2 class="font-semibold">{$t('You have taken this item')}</h2>
+            <p class="mt-1 text-sm text-slate-600">{$t('When the visitor arrives and the item is checked in, it comes straight to you and the repair time starts.')}</p>
+            <button class="mt-4 text-sm text-slate-500 hover:text-slate-800 underline underline-offset-2" disabled={busy} on:click={giveBack}>{$t('Give it back for someone else to take')}</button>
           {:else if detail.repairer}
-            <h2 class="font-semibold">{firstName(detail.repairer.displayName)} has taken this item</h2>
-            <p class="mt-1 text-sm text-slate-600">Take it over if they have handed it to you.</p>
+            <h2 class="font-semibold">{$t('{name} has taken this item', { name: firstName(detail.repairer.displayName) })}</h2>
+            <p class="mt-1 text-sm text-slate-600">{$t('Take it over if they have handed it to you.')}</p>
             {#if confirmTakeOver}
               <div class="mt-4 grid grid-cols-2 gap-2">
-                <button class="btn-ghost" on:click={() => (confirmTakeOver = false)}>Cancel</button>
-                <button class="btn-primary" disabled={busy} on:click={take}>Yes, take it over</button>
+                <button class="btn-ghost" on:click={() => (confirmTakeOver = false)}>{$t('Cancel')}</button>
+                <button class="btn-primary" disabled={busy} on:click={take}>{$t('Yes, take it over')}</button>
               </div>
             {:else}
-              <button class="btn-secondary w-full mt-4" on:click={() => (confirmTakeOver = true)}>Take over this item</button>
+              <button class="btn-secondary w-full mt-4" on:click={() => (confirmTakeOver = true)}>{$t('Take over this item')}</button>
             {/if}
             {#if isAdmin}
-              <button class="mt-3 block text-sm text-slate-500 hover:text-slate-800 underline underline-offset-2" disabled={busy} on:click={giveBack}>Give it back for anyone to take</button>
+              <button class="mt-3 block text-sm text-slate-500 hover:text-slate-800 underline underline-offset-2" disabled={busy} on:click={giveBack}>{$t('Give it back for anyone to take')}</button>
             {/if}
           {:else}
-            <h2 class="font-semibold">Nobody has taken this item</h2>
-            <p class="mt-1 text-sm text-slate-600">Take it to look into it before the day. When it is checked in, it comes straight to you.</p>
-            <button class="btn-primary w-full mt-4" disabled={busy} on:click={take}>{busy ? 'Taking…' : 'Take this item'}</button>
+            <h2 class="font-semibold">{$t('Nobody has taken this item')}</h2>
+            <p class="mt-1 text-sm text-slate-600">{$t('Take it to look into it before the day. When it is checked in, it comes straight to you.')}</p>
+            <button class="btn-primary w-full mt-4" disabled={busy} on:click={take}>{busy ? $t('Taking…') : $t('Take this item')}</button>
           {/if}
         </section>
 
@@ -253,11 +253,11 @@
                 on:change={(e) => setElectrical(e.currentTarget.checked)}
               />
               <span>
-                <span class="font-medium text-slate-900">This is an electrical item</span>
+                <span class="font-medium text-slate-900">{$t('This is an electrical item')}</span>
                 <span class="block text-xs text-slate-500">
-                  {#if detail.pat.itemIsElectrical === null}Set from its category.{:else}Changed for this item.{/if}
-                  Electrical items need a PAT test.
-                  {#if !canWrite}Take this item to change this.{/if}
+                  {#if detail.pat.itemIsElectrical === null}{$t('Set from its category.')}{:else}{$t('Changed for this item.')}{/if}
+                  {$t('Electrical items need a PAT test.')}
+                  {#if !canWrite}{$t('Take this item to change this.')}{/if}
                 </span>
               </span>
             </label>
@@ -266,22 +266,22 @@
 
         {#if running}
           <section class="card p-5">
-            <h2 class="font-semibold">Has the visitor arrived?</h2>
-            <p class="mt-1 text-sm text-slate-600">Check the item in to start the repair.</p>
-            <button class="btn-primary w-full mt-4" disabled={busy} on:click={checkIn}>Check in this item</button>
+            <h2 class="font-semibold">{$t('Has the visitor arrived?')}</h2>
+            <p class="mt-1 text-sm text-slate-600">{$t('Check the item in to start the repair.')}</p>
+            <button class="btn-primary w-full mt-4" disabled={busy} on:click={checkIn}>{$t('Check in this item')}</button>
           </section>
         {/if}
 
         {#if isAdmin}
           <section class="card p-5">
             {#if confirmCancel}
-              <p class="text-sm text-slate-700">Cancel this item? The visitor will see it is cancelled on their tracking page.</p>
+              <p class="text-sm text-slate-700">{$t('Cancel this item? The visitor will see it is cancelled on their tracking page.')}</p>
               <div class="mt-3 grid grid-cols-2 gap-2">
-                <button class="btn-ghost btn-sm" on:click={() => (confirmCancel = false)}>Keep it</button>
-                <button class="btn-secondary btn-sm" disabled={busy} on:click={cancel}>Cancel the item</button>
+                <button class="btn-ghost btn-sm" on:click={() => (confirmCancel = false)}>{$t('Keep it')}</button>
+                <button class="btn-secondary btn-sm" disabled={busy} on:click={cancel}>{$t('Cancel the item')}</button>
               </div>
             {:else}
-              <button class="text-sm text-slate-500 hover:text-slate-800 underline underline-offset-2" on:click={() => (confirmCancel = true)}>Cancel this item (for example, a duplicate)</button>
+              <button class="text-sm text-slate-500 hover:text-slate-800 underline underline-offset-2" on:click={() => (confirmCancel = true)}>{$t('Cancel this item (for example, a duplicate)')}</button>
             {/if}
           </section>
         {/if}

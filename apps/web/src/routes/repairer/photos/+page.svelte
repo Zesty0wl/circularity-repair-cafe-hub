@@ -13,6 +13,7 @@
   import GalleryManager from '$lib/components/GalleryManager.svelte';
   import type { ManagedPhoto } from '$lib/gallery';
   import { CalendarDays, Camera, Info } from 'lucide-svelte';
+  import { currentLocale, t, tNow } from '$lib/i18n';
 
   interface EventRow {
     id: string;
@@ -43,7 +44,7 @@
       selectedId = active?.id ?? events[0]?.id ?? '';
       if (selectedId) await loadPhotos();
     } catch (err: any) {
-      error = err?.message ?? 'Could not load your sessions';
+      error = err?.message ?? tNow('Could not load your sessions');
     } finally {
       loadingEvents = false;
     }
@@ -57,7 +58,7 @@
       photos = res.photos ?? [];
       error = '';
     } catch (err: any) {
-      error = err?.message ?? 'Could not load the photos for this session';
+      error = err?.message ?? tNow('Could not load the photos for this session');
       photos = [];
     } finally {
       loadingPhotos = false;
@@ -90,41 +91,41 @@
   }
 
   function eventLabel(e: EventRow): string {
-    const d = new Date(e.date + 'T12:00:00Z').toLocaleDateString('en-GB', {
+    const locale = currentLocale() === 'fr' ? 'fr-FR' : 'en-GB';
+    const d = new Date(e.date + 'T12:00:00Z').toLocaleDateString(locale, {
       weekday: 'short',
       day: 'numeric',
       month: 'short',
       year: 'numeric',
       timeZone: 'UTC',
     });
-    const suffix = e.status === 'active' ? ' · on now' : '';
+    const suffix = e.status === 'active' ? tNow(' · on now') : '';
     return `${d} · ${e.name}${suffix}`;
   }
 </script>
 
-<h1 class="text-2xl font-bold">Session photos</h1>
+<h1 class="text-2xl font-bold">{$t('Session photos')}</h1>
 <p class="mt-1 text-slate-600">
-  Add photos of a session so the website shows what we actually do. Photos of the room, the team at
-  work, or a repair in progress all work well.
+  {$t('Add photos of a session so the website shows what we actually do. Photos of the room, the team at work, or a repair in progress all work well.')}
 </p>
 
 {#if loadingEvents}
-  <p class="mt-6 text-slate-500">Loading…</p>
+  <p class="mt-6 text-slate-500">{$t('Loading…')}</p>
 {:else if events.length === 0}
   <div class="card p-6 mt-6 text-center">
     <span class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-100 text-brand-700">
       <CalendarDays size={22} />
     </span>
-    <h2 class="mt-3 text-lg font-semibold">No sessions yet</h2>
-    <p class="mt-1 text-slate-600 text-sm">Once a session has been set up you can add photos to it here.</p>
+    <h2 class="mt-3 text-lg font-semibold">{$t('No sessions yet')}</h2>
+    <p class="mt-1 text-slate-600 text-sm">{$t('Once a session has been set up you can add photos to it here.')}</p>
   </div>
 {:else}
   <div class="card p-5 mt-6 space-y-4">
     <div>
-      <label class="label" for="event-pick">Which session?</label>
+      <label class="label" for="event-pick">{$t('Which session?')}</label>
       <select id="event-pick" class="input" value={selectedId} on:change={onPick}>
         {#each events as e}
-          <option value={e.id}>{eventLabel(e)}{e.photoCount > 0 ? ` (${e.photoCount} photo${e.photoCount === 1 ? '' : 's'})` : ''}</option>
+          <option value={e.id}>{eventLabel(e)}{e.photoCount > 0 ? ` (${$t('{n} photos', { n: e.photoCount })})` : ''}</option>
         {/each}
       </select>
       {#if selected}
@@ -137,23 +138,22 @@
     <div class="rounded-xl bg-brand-50 ring-1 ring-brand-100 p-3 flex gap-2.5 text-sm text-slate-700">
       <Info size={16} class="text-brand-700 shrink-0 mt-0.5" />
       <p>
-        Please ask before you photograph anyone, and avoid names, addresses or anything else personal
-        in shot. An admin can hide a photo at any time.
+        {$t('Please ask before you photograph anyone, and avoid names, addresses or anything else personal in shot. An admin can hide a photo at any time.')}
       </p>
     </div>
 
     <ImageDropzone
       endpoint={`/api/event-gallery/${selectedId}`}
       disabled={!selectedId}
-      title="Add photos"
-      hint="Take a photo, choose one from your device, or drag photos in from a folder."
+      title={$t('Add photos')}
+      hint={$t('Take a photo, choose one from your device, or drag photos in from a folder.')}
       on:done={afterUpload}
     />
   </div>
 
   <section class="mt-6">
     <h2 class="text-lg font-semibold flex items-center gap-2">
-      <Camera size={18} class="text-clay" /> Photos of this session
+      <Camera size={18} class="text-clay" /> {$t('Photos of this session')}
       {#if photos.length > 0}<span class="font-normal text-slate-500 text-base">({photos.length})</span>{/if}
     </h2>
     {#if error}
@@ -161,14 +161,14 @@
     {/if}
     <div class="mt-3">
       {#if loadingPhotos}
-        <p class="text-slate-500 text-sm">Loading…</p>
+        <p class="text-slate-500 text-sm">{$t('Loading…')}</p>
       {:else}
         <GalleryManager
           bind:photos
           onSaveCaption={saveCaption}
           onDelete={removePhoto}
           {canEdit}
-          emptyMessage="No photos for this session yet. Yours will show up here."
+          emptyMessage={$t('No photos for this session yet. Yours will show up here.')}
         />
       {/if}
     </div>

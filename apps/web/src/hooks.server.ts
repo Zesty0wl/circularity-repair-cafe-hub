@@ -1,5 +1,19 @@
-import type { HandleFetch } from '@sveltejs/kit';
+import type { Handle, HandleFetch } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
+import { pickLocale } from '@circularity/shared';
+
+// Pick the language for each request (see pickLocale) and put it on
+// <html lang>, which tells screen readers and search engines what the page is
+// in. The value is also handed to the app (see routes/+layout.server.ts). The
+// Worker picks the same language for its copy of public pages, so a cached
+// page is only handed to visitors who would get the same language.
+export const handle: Handle = async ({ event, resolve }) => {
+  const locale = pickLocale(event.request.headers.get('accept-language'), env.LANGUAGE);
+  event.locals.locale = locale;
+  return resolve(event, {
+    transformPageChunk: ({ html }) => html.replace('<html lang="en"', `<html lang="${locale}"`),
+  });
+};
 
 // The whole site runs under the strict Content Security Policy set in
 // svelte.config.js, with no exceptions. There used to be one, for the 3D globe

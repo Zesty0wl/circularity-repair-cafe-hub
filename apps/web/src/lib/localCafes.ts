@@ -7,6 +7,8 @@
  * the directory rather than copied and left to go stale.
  */
 
+import { dateLocale, tNow } from '$lib/i18n';
+
 export interface LocalCafe {
   name: string;
   lat: number;
@@ -32,6 +34,10 @@ export function repairCafeOrgUrl(slug: string | null | undefined): string | null
 /** "12 km away", or "800 m away" when it is close enough to walk. */
 export function formatDistance(km: number | null | undefined): string | null {
   if (km === null || km === undefined || !Number.isFinite(km)) return null;
-  if (km < 1) return `${Math.round(km * 1000)} m away`;
-  return `${km < 10 ? km.toFixed(1) : Math.round(km)} km away`;
+  if (km < 1) return tNow('{distance} away', { distance: `${Math.round(km * 1000)} m` });
+  const value =
+    km < 10
+      ? km.toLocaleString(dateLocale(), { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+      : String(Math.round(km));
+  return tNow('{distance} away', { distance: `${value} km` });
 }

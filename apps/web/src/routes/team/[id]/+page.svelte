@@ -5,6 +5,7 @@
   import Icon from '@iconify/svelte';
   import { categoryIcon } from '$lib/categoryIcon';
   import { ArrowLeft, ArrowRight, Wrench, Calendar, MapPin } from 'lucide-svelte';
+  import { t, dateLocale } from '$lib/i18n';
   import type { PageData } from './$types';
 
   interface Skill { id: string; name: string; colour: string; icon: string }
@@ -34,9 +35,9 @@
   function dateParts(d: string) {
     const dt = new Date(`${d}T12:00:00Z`);
     return {
-      monthShort: dt.toLocaleDateString('en-GB', { month: 'short', timeZone: 'UTC' }),
-      day: dt.toLocaleDateString('en-GB', { day: 'numeric', timeZone: 'UTC' }),
-      full: dt.toLocaleDateString('en-GB', {
+      monthShort: dt.toLocaleDateString(dateLocale(), { month: 'short', timeZone: 'UTC' }),
+      day: dt.toLocaleDateString(dateLocale(), { day: 'numeric', timeZone: 'UTC' }),
+      full: dt.toLocaleDateString(dateLocale(), {
         weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC',
       }),
     };
@@ -44,7 +45,7 @@
 
   function joinedDisplay(d: string | null): string {
     if (!d) return '';
-    return new Date(d).toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+    return new Date(d).toLocaleDateString(dateLocale(), { month: 'long', year: 'numeric', timeZone: 'UTC' });
   }
   function initials(name: string): string {
     return name
@@ -61,16 +62,16 @@
 
 <main class="max-w-3xl mx-auto px-4 py-8 md:py-12 space-y-6">
   <a href="/skills" class="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-brand-700">
-    <ArrowLeft size={16} /> Back to the team
+    <ArrowLeft size={16} /> {$t('Back to the team')}
   </a>
 
   {#if loading}
-    <div class="card p-8 text-center text-slate-500">Loading…</div>
+    <div class="card p-8 text-center text-slate-500">{$t('Loading…')}</div>
   {:else if notFound || !repairer}
     <div class="card p-8 text-center">
-      <h1 class="text-2xl font-semibold">Volunteer not found</h1>
-      <p class="mt-2 text-slate-600">This volunteer may have left the team or hidden their profile.</p>
-      <a href="/skills" class="btn-primary mt-4 inline-flex">See our team</a>
+      <h1 class="text-2xl font-semibold">{$t('Volunteer not found')}</h1>
+      <p class="mt-2 text-slate-600">{$t('This volunteer may have left the team or hidden their profile.')}</p>
+      <a href="/skills" class="btn-primary mt-4 inline-flex">{$t('See our team')}</a>
     </div>
   {:else}
     <!-- Hero -->
@@ -89,15 +90,18 @@
         </div>
       {/if}
       <div class="min-w-0 flex-1">
-        <p class="eyebrow">Volunteer repairer</p>
+        <p class="eyebrow">{$t('Volunteer repairer')}</p>
         <h1 class="mt-1 text-3xl sm:text-4xl font-bold tracking-tight">{repairer.displayName}</h1>
         <div class="mt-3 flex flex-wrap justify-center sm:justify-start gap-x-5 gap-y-2 text-sm text-slate-600">
           {#if repairer.joinDate}
-            <span class="inline-flex items-center gap-1.5"><Calendar size={14} /> Joined {joinedDisplay(repairer.joinDate)}</span>
+            <span class="inline-flex items-center gap-1.5"><Calendar size={14} /> {$t('Joined {date}', { date: joinedDisplay(repairer.joinDate) })}</span>
           {/if}
           {#if repairer.repairCount > 0}
             <span class="inline-flex items-center gap-1.5">
-              <Wrench size={14} /> {repairer.repairCount} repair{repairer.repairCount === 1 ? '' : 's'} logged
+              <Wrench size={14} />
+              {repairer.repairCount === 1
+                ? $t('{count} repair logged', { count: repairer.repairCount })
+                : $t('{count} repairs logged', { count: repairer.repairCount })}
             </span>
           {/if}
         </div>
@@ -115,14 +119,14 @@
       <a
         href="/events/{nextEvent.id}"
         class="card-link p-5 sm:p-6 flex items-center gap-5"
-        aria-label={`Next session, ${p.full}, view details and directions`}
+        aria-label={$t('Next session, {date}, view details and directions', { date: p.full })}
       >
         <div class="shrink-0 w-16 overflow-hidden rounded-xl bg-brand-600 text-white text-center">
           <div class="bg-black/15 text-[11px] font-bold uppercase tracking-wider py-1">{p.monthShort}</div>
           <div class="text-2xl font-bold font-display leading-none py-2">{p.day}</div>
         </div>
         <div class="min-w-0 flex-1">
-          <p class="kicker">Next session</p>
+          <p class="kicker">{$t('Next session')}</p>
           <p class="mt-1 text-lg font-semibold text-pine">
             {p.full}, {nextEvent.startTime.slice(0, 5)}–{nextEvent.endTime.slice(0, 5)}
           </p>
@@ -131,7 +135,7 @@
             <span class="truncate">{nextEvent.venue.name}{#if nextEvent.venue.postcode}, {nextEvent.venue.postcode}{/if}</span>
           </p>
           <p class="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-brand-700">
-            See details and directions <ArrowRight size={14} />
+            {$t('See details and directions')} <ArrowRight size={14} />
           </p>
         </div>
       </a>
@@ -140,7 +144,7 @@
     <!-- Bio -->
     {#if repairer.bio}
       <section class="card p-6 sm:p-8">
-        <h2 class="kicker">About</h2>
+        <h2 class="kicker">{$t('About')}</h2>
         <p class="mt-3 text-lg leading-relaxed text-slate-700 whitespace-pre-line">{repairer.bio}</p>
       </section>
     {/if}
@@ -148,7 +152,7 @@
     <!-- Skills -->
     {#if repairer.skills.length > 0}
       <section class="card p-6 sm:p-8">
-        <h2 class="kicker">Specialises in</h2>
+        <h2 class="kicker">{$t('Specialises in')}</h2>
         <div class="mt-4 flex flex-wrap gap-3">
           {#each repairer.skills as s}
             <span
@@ -156,7 +160,7 @@
               style="background-color: {s.colour}"
             >
               <Icon icon={categoryIcon(s.icon, s.name)} width="16" height="16" />
-              {s.name}
+              {$t(s.name)}
             </span>
           {/each}
         </div>

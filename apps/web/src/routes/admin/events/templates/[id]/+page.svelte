@@ -5,6 +5,7 @@
   import { api } from '$lib/api';
   import { describeRecurrence } from '$lib/recurrence';
   import { cafe } from '$lib/stores/cafe';
+  import { t, tNow } from '$lib/i18n';
 
   const id = $page.params.id;
 
@@ -47,7 +48,7 @@
       venues = vs;
       const t = tpls.find((x) => x.id === id);
       if (!t) {
-        error = 'That repeating event no longer exists.';
+        error = tNow('That repeating event no longer exists.');
         return;
       }
       const rule = t.recurrenceRule ?? {};
@@ -64,7 +65,7 @@
         supportsLinux: Boolean(t.supportsLinux),
       };
     } catch (err: any) {
-      error = err?.message || 'Could not load that repeating event';
+      error = err?.message || tNow('Could not load that repeating event');
     } finally {
       loading = false;
     }
@@ -94,7 +95,7 @@
       });
       goto('/admin/events');
     } catch (err: any) {
-      error = err?.message || 'Could not save';
+      error = err?.message || tNow('Could not save');
     } finally {
       busy = false;
     }
@@ -102,11 +103,11 @@
 </script>
 
 <div class="max-w-2xl">
-  <a href="/admin/events" class="text-sm text-brand-700 hover:underline">← Back to events</a>
-  <h1 class="text-2xl font-bold mt-2">Edit repeating event</h1>
+  <a href="/admin/events" class="text-sm text-brand-700 hover:underline">← {$t('Back to events')}</a>
+  <h1 class="text-2xl font-bold mt-2">{$t('Edit repeating event')}</h1>
 
   {#if loading}
-    <p class="mt-6 text-slate-500">Loading…</p>
+    <p class="mt-6 text-slate-500">{$t('Loading…')}</p>
   {:else}
     {#if error}
       <p class="mt-4 rounded-lg bg-red-50 text-red-800 px-4 py-2 text-sm">{error}</p>
@@ -114,12 +115,12 @@
 
     <div class="card p-6 mt-4 space-y-4">
       <div>
-        <label class="label" for="name">Name</label>
+        <label class="label" for="name">{$t('Name')}</label>
         <input id="name" class="input" bind:value={form.name} />
       </div>
 
       <div>
-        <label class="label" for="venue">Venue</label>
+        <label class="label" for="venue">{$t('Venue')}</label>
         <select id="venue" class="input" bind:value={form.venueId}>
           {#each venues as v}<option value={v.id}>{v.name}</option>{/each}
         </select>
@@ -127,46 +128,46 @@
 
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="label" for="start">Starts</label>
+          <label class="label" for="start">{$t('Starts')}</label>
           <input id="start" type="time" class="input" bind:value={form.startTime} />
         </div>
         <div>
-          <label class="label" for="end">Ends</label>
+          <label class="label" for="end">{$t('Ends')}</label>
           <input id="end" type="time" class="input" bind:value={form.endTime} />
         </div>
       </div>
 
       <div>
-        <label class="label" for="freq">How often</label>
+        <label class="label" for="freq">{$t('How often')}</label>
         <select id="freq" class="input" bind:value={form.frequency}>
-          <option value="weekly">Every week</option>
-          <option value="biweekly">Every other week</option>
-          <option value="monthly">Once a month</option>
+          <option value="weekly">{$t('Every week')}</option>
+          <option value="biweekly">{$t('Every other week')}</option>
+          <option value="monthly">{$t('Once a month')}</option>
         </select>
       </div>
 
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="label" for="day">Day</label>
+          <label class="label" for="day">{$t('Day')}</label>
           <select id="day" class="input" bind:value={form.weekday}>
-            <option value="MO">Monday</option>
-            <option value="TU">Tuesday</option>
-            <option value="WE">Wednesday</option>
-            <option value="TH">Thursday</option>
-            <option value="FR">Friday</option>
-            <option value="SA">Saturday</option>
-            <option value="SU">Sunday</option>
+            <option value="MO">{$t('Monday')}</option>
+            <option value="TU">{$t('Tuesday')}</option>
+            <option value="WE">{$t('Wednesday')}</option>
+            <option value="TH">{$t('Thursday')}</option>
+            <option value="FR">{$t('Friday')}</option>
+            <option value="SA">{$t('Saturday')}</option>
+            <option value="SU">{$t('Sunday')}</option>
           </select>
         </div>
         {#if form.frequency === 'monthly'}
           <div>
-            <label class="label" for="pos">Which one</label>
+            <label class="label" for="pos">{$t('Which one')}</label>
             <select id="pos" class="input" bind:value={form.bySetPos}>
-              <option value={1}>First</option>
-              <option value={2}>Second</option>
-              <option value={3}>Third</option>
-              <option value={4}>Fourth</option>
-              <option value={-1}>Last</option>
+              <option value={1}>{$t('First')}</option>
+              <option value={2}>{$t('Second')}</option>
+              <option value={3}>{$t('Third')}</option>
+              <option value={4}>{$t('Fourth')}</option>
+              <option value={-1}>{$t('Last')}</option>
             </select>
           </div>
         {/if}
@@ -174,51 +175,46 @@
 
       {#if rulePreview}
         <p class="text-sm text-slate-600 bg-slate-50 rounded-lg px-3 py-2">
-          This will run: <strong>{rulePreview}</strong>, {form.startTime} to {form.endTime}.
+          {$t('This will run:')} <strong>{rulePreview}</strong>, {$t('{start} to {end}', { start: form.startTime, end: form.endTime })}.
         </p>
       {/if}
 
       <div>
-        <label class="label" for="desc">Description</label>
+        <label class="label" for="desc">{$t('Description')}</label>
         <textarea id="desc" class="input" rows="3" bind:value={form.description}></textarea>
       </div>
 
       <label class="flex items-center gap-2 text-sm">
         <input type="checkbox" bind:checked={form.isPublished} />
-        Show these sessions on the public site
+        {$t('Show these sessions on the public site')}
       </label>
 
       {#if $cafe?.linuxEnabled}
         <label class="flex items-start gap-2 text-sm">
           <input type="checkbox" class="mt-1" bind:checked={form.supportsLinux} />
           <span>
-            Linux help at every one of these sessions
+            {$t('Linux help at every one of these sessions')}
             <span class="block text-xs text-slate-500">
-              Applies to dates this template creates from now on. Sessions already on the calendar
-              keep what they have, unless you rebuild them below.
+              {$t('Applies to dates this template creates from now on. Sessions already on the calendar keep what they have, unless you rebuild them below.')}
             </span>
           </span>
         </label>
       {/if}
 
       <div class="border-t border-slate-200 pt-4">
-        <p class="label">Sessions already on the calendar</p>
+        <p class="label">{$t('Sessions already on the calendar')}</p>
         <label class="flex items-start gap-2 text-sm mb-2">
           <input type="radio" bind:group={regenerate} value="none" class="mt-1" />
           <span>
-            <strong>Leave them alone.</strong> Use this when you are correcting the name
-            or description. Nothing on the calendar moves.
+            <strong>{$t('Leave them alone.')}</strong> {$t('Use this when you are correcting the name or description. Nothing on the calendar moves.')}
           </span>
         </label>
         <label class="flex items-start gap-2 text-sm">
           <input type="radio" bind:group={regenerate} value="all_future" class="mt-1" />
           <span>
-            <strong>Rebuild the future ones.</strong> Use this when you have changed the
-            day or the time. Sessions that have already happened are never touched.
+            <strong>{$t('Rebuild the future ones.')}</strong> {$t('Use this when you have changed the day or the time. Sessions that have already happened are never touched.')}
             <span class="block text-xs text-slate-500 mt-0.5">
-              A session that already has repairs or Linux installs recorded against it is
-              kept, not rebuilt. It keeps its date, its check-in link and its QR poster,
-              and picks up your changes.
+              {$t('A session that already has repairs or Linux installs recorded against it is kept, not rebuilt. It keeps its date, its check-in link and its QR poster, and picks up your changes.')}
             </span>
           </span>
         </label>
@@ -230,9 +226,9 @@
 
       <div class="flex gap-3 pt-2">
         <button class="btn-primary" on:click={save} disabled={busy || !form.name || !form.venueId}>
-          {busy ? 'Saving…' : 'Save changes'}
+          {busy ? $t('Saving…') : $t('Save changes')}
         </button>
-        <a href="/admin/events" class="btn-secondary">Cancel</a>
+        <a href="/admin/events" class="btn-secondary">{$t('Cancel')}</a>
       </div>
     </div>
   {/if}

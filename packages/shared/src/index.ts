@@ -5,3 +5,4 @@ export * from './pwa.js';
 export * from './backup.js';
 export * from './analytics.js';
 export * from './repairTime.js';
+export * from './i18n/index.js';

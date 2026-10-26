@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { api, download } from '$lib/api';
+  import { t, tNow } from '$lib/i18n';
 
   let categories: any[] = [];
   let users: any[] = [];
@@ -52,7 +53,7 @@
     try {
       await download(path, filename);
     } catch (err: any) {
-      exportError = err?.message ?? 'The export could not be downloaded. Please try again.';
+      exportError = err?.message ?? tNow('The export could not be downloaded. Please try again.');
     }
   }
 
@@ -90,7 +91,7 @@
       row.repairerName = userId ? (assignable.find((u) => u.id === userId)?.displayName ?? null) : null;
       data = data; // trigger reactivity
     } catch (e: any) {
-      alert(e?.message ?? 'Could not reassign repair');
+      alert(e?.message ?? tNow('Could not reassign repair'));
     } finally {
       savingRowId = null;
     }
@@ -98,47 +99,47 @@
 </script>
 
 <div class="flex justify-between items-center gap-2">
-  <h1 class="text-2xl font-bold">Repairs</h1>
+  <h1 class="text-2xl font-bold">{$t('Repairs')}</h1>
   <div class="flex gap-2">
-    <a href="/repairer/checkin" class="btn-primary">Add a repair</a>
-    <button class="btn-secondary" on:click={exportCsv}>Export CSV</button>
+    <a href="/repairer/checkin" class="btn-primary">{$t('Add a repair')}</a>
+    <button class="btn-secondary" on:click={exportCsv}>{$t('Export CSV')}</button>
     <button
       class="btn-secondary"
       on:click={exportOrds}
-      title="Every finished repair, in the format the Open Repair Alliance uses"
-    >Open Repair export</button>
+      title={$t('Every finished repair, in the format the Open Repair Alliance uses')}
+    >{$t('Open Repair export')}</button>
   </div>
 </div>
 
 {#if exportError}<p class="mt-3 text-sm text-rose-700">{exportError}</p>{/if}
 
 <div class="card p-4 mt-4 grid sm:grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-  <input class="input" placeholder="Search…" bind:value={filters.search} />
+  <input class="input" placeholder={$t('Search…')} bind:value={filters.search} />
   <select class="input" bind:value={filters.eventId}>
-    <option value="">All events</option>
+    <option value="">{$t('All events')}</option>
     {#each events as e}<option value={e.id}>{e.date} {e.name}</option>{/each}
   </select>
   <select class="input" bind:value={filters.repairerId}>
-    <option value="">All repairers</option>
+    <option value="">{$t('All repairers')}</option>
     {#each users as u}<option value={u.id}>{u.displayName}</option>{/each}
   </select>
   <select class="input" bind:value={filters.categoryId}>
-    <option value="">All categories</option>
-    {#each categories as c}<option value={c.id}>{c.name}</option>{/each}
+    <option value="">{$t('All categories')}</option>
+    {#each categories as c}<option value={c.id}>{$t(c.name)}</option>{/each}
   </select>
   <select class="input" bind:value={filters.status}>
-    <option value="">Any status</option>
-    <option value="waiting">Waiting</option>
-    <option value="in_progress">In progress</option>
-    <option value="completed">Completed</option>
-    <option value="cannot_repair">Cannot repair</option>
-    <option value="awaiting_return">Awaiting return</option>
+    <option value="">{$t('Any status')}</option>
+    <option value="waiting">{$t('Waiting')}</option>
+    <option value="in_progress">{$t('In progress')}</option>
+    <option value="completed">{$t('Completed')}</option>
+    <option value="cannot_repair">{$t('Cannot repair')}</option>
+    <option value="awaiting_return">{$t('Awaiting return')}</option>
   </select>
   <input class="input" type="date" bind:value={filters.from} />
   <input class="input" type="date" bind:value={filters.to} />
   <div class="flex gap-2">
-    <button class="btn-primary flex-1" on:click={() => { pageNum = 1; load(); }}>Apply</button>
-    <button class="btn-ghost" on:click={reset}>Reset</button>
+    <button class="btn-primary flex-1" on:click={() => { pageNum = 1; load(); }}>{$t('Apply')}</button>
+    <button class="btn-ghost" on:click={reset}>{$t('Reset')}</button>
   </div>
 </div>
 
@@ -147,12 +148,12 @@
     <table class="w-full text-sm">
       <thead class="bg-slate-50 text-left text-slate-600">
         <tr>
-          <th class="px-3 py-2">Date</th>
-          <th class="px-3 py-2">Job</th>
-          <th class="px-3 py-2">Item</th>
-          <th class="px-3 py-2">Customer</th>
-          <th class="px-3 py-2">Repairer</th>
-          <th class="px-3 py-2">Outcome</th>
+          <th class="px-3 py-2">{$t('Date')}</th>
+          <th class="px-3 py-2">{$t('Job')}</th>
+          <th class="px-3 py-2">{$t('Item')}</th>
+          <th class="px-3 py-2">{$t('Customer')}</th>
+          <th class="px-3 py-2">{$t('Repairer')}</th>
+          <th class="px-3 py-2">{$t('Outcome')}</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-slate-100">
@@ -168,27 +169,27 @@
                 disabled={savingRowId === r.id}
                 value={r.repairerId ?? ''}
                 on:change={(e) => assignRow(r, (e.currentTarget as HTMLSelectElement).value)}
-                title="Assign this repair to a repairer"
+                title={$t('Assign this repair to a repairer')}
               >
-                <option value="">Unassigned</option>
+                <option value="">{$t('Unassigned')}</option>
                 {#each assignable as u}
                   <option value={u.id}>{u.displayName}</option>
                 {/each}
               </select>
             </td>
-            <td class="px-3 py-2"><span class="badge badge-{r.status}">{r.status.replace('_',' ')}</span></td>
+            <td class="px-3 py-2"><span class="badge badge-{r.status}">{$t(r.status.replace('_',' '))}</span></td>
           </tr>
         {:else}
-          <tr><td colspan="6" class="px-3 py-6 text-center text-slate-500">No matching repairs</td></tr>
+          <tr><td colspan="6" class="px-3 py-6 text-center text-slate-500">{$t('No matching repairs')}</td></tr>
         {/each}
       </tbody>
     </table>
   </div>
   <div class="mt-3 flex items-center justify-between text-sm text-slate-600">
-    <span>{data.meta.total} repairs · page {data.meta.page} of {data.meta.totalPages}</span>
+    <span>{$t('{total} repairs · page {page} of {pages}', { total: data.meta.total, page: data.meta.page, pages: data.meta.totalPages })}</span>
     <div class="flex gap-2">
-      <button class="btn-ghost" disabled={pageNum <= 1} on:click={() => { pageNum--; load(); }}>Prev</button>
-      <button class="btn-ghost" disabled={pageNum >= data.meta.totalPages} on:click={() => { pageNum++; load(); }}>Next</button>
+      <button class="btn-ghost" disabled={pageNum <= 1} on:click={() => { pageNum--; load(); }}>{$t('Prev')}</button>
+      <button class="btn-ghost" disabled={pageNum >= data.meta.totalPages} on:click={() => { pageNum++; load(); }}>{$t('Next')}</button>
     </div>
   </div>
 {/if}

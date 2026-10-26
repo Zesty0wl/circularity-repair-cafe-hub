@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { api } from '$lib/api';
+  import { t, tNow } from '$lib/i18n';
 
   interface Venue {
     id?: string;
@@ -82,20 +83,20 @@
   }
 
   async function del(v: Venue) {
-    if (v.isHomeVenue) return alert('Cannot delete the home venue');
-    if (!confirm(`Delete "${v.name}"?`)) return;
+    if (v.isHomeVenue) return alert(tNow('Cannot delete the home venue'));
+    if (!confirm(tNow('Delete "{name}"?', { name: v.name }))) return;
     try {
       await api(`/api/admin/venues/${v.id}`, { method: 'DELETE' });
       await load();
     } catch (e: any) {
-      alert(e?.message || 'Could not delete');
+      alert(e?.message || tNow('Could not delete'));
     }
   }
 </script>
 
 <div class="flex justify-between items-center">
-  <h1 class="text-2xl font-bold">Venues</h1>
-  <button class="btn-primary" on:click={startNew}>Add venue</button>
+  <h1 class="text-2xl font-bold">{$t('Venues')}</h1>
+  <button class="btn-primary" on:click={startNew}>{$t('Add venue')}</button>
 </div>
 
 <ul class="card mt-4 divide-y divide-slate-100">
@@ -104,21 +105,21 @@
       <div class="min-w-0">
         <p class="font-semibold">
           {v.name}
-          {#if v.isHomeVenue}<span class="badge bg-amber-100 text-amber-800 ml-2">Home</span>{/if}
-          {#if !v.isActive}<span class="badge bg-slate-100 text-slate-600 ml-2">Inactive</span>{/if}
+          {#if v.isHomeVenue}<span class="badge bg-amber-100 text-amber-800 ml-2">{$t('Home')}</span>{/if}
+          {#if !v.isActive}<span class="badge bg-slate-100 text-slate-600 ml-2">{$t('Inactive')}</span>{/if}
         </p>
         <p class="text-sm text-slate-600 truncate">
           {[v.address, v.postcode].filter(Boolean).join(', ') || '-'}
         </p>
       </div>
       <div class="flex gap-2 shrink-0">
-        <button class="btn-ghost btn-sm" on:click={() => startEdit(v)}>Edit</button>
-        <button class="btn-ghost btn-sm text-rose-600" on:click={() => del(v)}>Delete</button>
+        <button class="btn-ghost btn-sm" on:click={() => startEdit(v)}>{$t('Edit')}</button>
+        <button class="btn-ghost btn-sm text-rose-600" on:click={() => del(v)}>{$t('Delete')}</button>
       </div>
     </li>
   {/each}
   {#if venues.length === 0}
-    <li class="px-4 py-6 text-center text-slate-500 text-sm">No venues yet. Add one to get started.</li>
+    <li class="px-4 py-6 text-center text-slate-500 text-sm">{$t('No venues yet. Add one to get started.')}</li>
   {/if}
 </ul>
 
@@ -126,110 +127,109 @@
   <div class="fixed inset-0 bg-slate-900/50 z-50 overflow-y-auto">
     <div class="min-h-full flex items-start sm:items-center justify-center p-4">
       <div class="modal-panel max-w-2xl my-8 space-y-4">
-        <h2 class="text-lg font-semibold">{editing.id ? 'Edit venue' : 'New venue'}</h2>
+        <h2 class="text-lg font-semibold">{editing.id ? $t('Edit venue') : $t('New venue')}</h2>
 
       <div>
-        <label class="label" for="vn">Venue name</label>
+        <label class="label" for="vn">{$t('Venue name')}</label>
         <input id="vn" class="input" maxlength="200" bind:value={editing.name} />
       </div>
 
       <div class="grid sm:grid-cols-3 gap-3">
         <div class="sm:col-span-2">
-          <label class="label" for="va">Address</label>
+          <label class="label" for="va">{$t('Address')}</label>
           <textarea
             id="va"
             class="input"
             rows="3"
             maxlength="500"
-            placeholder="Street, town"
+            placeholder={$t('Street, town')}
             bind:value={editing.address}
           ></textarea>
-          <p class="text-xs text-slate-500 mt-1">Free-form. Use line breaks for street and town.</p>
+          <p class="text-xs text-slate-500 mt-1">{$t('Free-form. Use line breaks for street and town.')}</p>
         </div>
         <div>
-          <label class="label" for="vp">Postcode</label>
+          <label class="label" for="vp">{$t('Postcode')}</label>
           <input id="vp" class="input" maxlength="20" bind:value={editing.postcode} />
         </div>
       </div>
 
       <div class="grid sm:grid-cols-2 gap-3">
         <div>
-          <label class="label" for="vw">what3words <span class="font-normal text-slate-500">(precise location)</span></label>
+          <label class="label" for="vw">what3words <span class="font-normal text-slate-500">{$t('(precise location)')}</span></label>
           <input id="vw" class="input" maxlength="100" placeholder="filled.count.soap" bind:value={editing.what3words} />
         </div>
         <div>
-          <label class="label" for="vm">Map URL <span class="font-normal text-slate-500">(optional)</span></label>
+          <label class="label" for="vm">{$t('Map URL')} <span class="font-normal text-slate-500">{$t('(optional)')}</span></label>
           <input id="vm" class="input" placeholder="https://www.google.com/maps/embed?pb=..." bind:value={editing.mapUrl} />
           <p class="text-xs text-slate-500 mt-1">
-            Paste an <strong>embed</strong> URL to show a map on the Contact page.
-            In Google Maps: <em>Share &rarr; Embed a map &rarr; Copy HTML</em>, then paste only the
-            <code>src="…"</code> value (starts with <code>https://www.google.com/maps/embed?pb=</code>).
-            A regular share link (e.g. <code>maps.app.goo.gl/…</code>) will show as a clickable
-            "View on map" button instead.
+            {$t('Paste an')} <strong>{$t('embed')}</strong> {$t('URL to show a map on the Contact page.')}
+            {$t('In Google Maps:')} <em>{$t('Share → Embed a map → Copy HTML')}</em>{$t(', then paste only the')}
+            <code>src="…"</code> {$t('value (starts with')} <code>https://www.google.com/maps/embed?pb=</code>).
+            {$t('A regular share link (e.g.')} <code>maps.app.goo.gl/…</code>{$t(') will show as a clickable "View on map" button instead.')}
           </p>
         </div>
       </div>
 
       <div>
-        <label class="label" for="vd">How to find us</label>
+        <label class="label" for="vd">{$t('How to find us')}</label>
         <textarea
           id="vd"
           class="input"
           rows="4"
           maxlength="2000"
-          placeholder={'e.g. "Use the side entrance off Main Street; we\'re in the upstairs hall. Follow the signs."'}
+          placeholder={$t('e.g. "Use the side entrance off Main Street; we\'re in the upstairs hall. Follow the signs."')}
           bind:value={editing.directions}
         ></textarea>
       </div>
 
       <div>
-        <label class="label" for="vk">Parking &amp; transport</label>
+        <label class="label" for="vk">{$t('Parking & transport')}</label>
         <textarea
           id="vk"
           class="input"
           rows="3"
           maxlength="1000"
-          placeholder={'e.g. "Free on-street parking on adjacent roads. Bus stops 12, 14 outside. Bike racks at the rear."'}
+          placeholder={$t('e.g. "Free on-street parking on adjacent roads. Bus stops 12, 14 outside. Bike racks at the rear."')}
           bind:value={editing.parkingInfo}
         ></textarea>
       </div>
 
       <div>
-        <label class="label" for="vac">Accessibility</label>
+        <label class="label" for="vac">{$t('Accessibility')}</label>
         <textarea
           id="vac"
           class="input"
           rows="3"
           maxlength="1000"
-          placeholder={'e.g. "Step-free entrance. Accessible WC on ground floor. Hearing loop available."'}
+          placeholder={$t('e.g. "Step-free entrance. Accessible WC on ground floor. Hearing loop available."')}
           bind:value={editing.accessibilityInfo}
         ></textarea>
       </div>
 
       <div>
-        <label class="label" for="vn2">Good-to-know notes <span class="font-normal text-slate-500">(optional)</span></label>
+        <label class="label" for="vn2">{$t('Good-to-know notes')} <span class="font-normal text-slate-500">{$t('(optional)')}</span></label>
         <textarea
           id="vn2"
           class="input"
           rows="2"
           maxlength="1000"
-          placeholder="Any other useful info for visitors"
+          placeholder={$t('Any other useful info for visitors')}
           bind:value={editing.notes}
         ></textarea>
       </div>
 
       <div class="flex flex-wrap gap-4 pt-1">
         <label class="flex items-center gap-2">
-          <input type="checkbox" bind:checked={editing.isHomeVenue} /> Home venue (shown on public Contact page)
+          <input type="checkbox" bind:checked={editing.isHomeVenue} /> {$t('Home venue (shown on public Contact page)')}
         </label>
         <label class="flex items-center gap-2">
-          <input type="checkbox" bind:checked={editing.isActive} /> Active
+          <input type="checkbox" bind:checked={editing.isActive} /> {$t('Active')}
         </label>
       </div>
 
       <div class="flex justify-end gap-2 pt-2">
-        <button class="btn-ghost" on:click={() => (editing = null)}>Cancel</button>
-        <button class="btn-primary" on:click={save}>Save</button>
+        <button class="btn-ghost" on:click={() => (editing = null)}>{$t('Cancel')}</button>
+        <button class="btn-primary" on:click={save}>{$t('Save')}</button>
       </div>
     </div>
     </div>

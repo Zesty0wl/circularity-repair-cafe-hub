@@ -9,6 +9,7 @@
   import Icon from '@iconify/svelte';
   import { Wrench } from 'lucide-svelte';
   import { categoryIcon, categoryTint, categoryInk } from '$lib/categoryIcon';
+  import { t } from '$lib/i18n';
   import type { PageData } from './$types';
 
   interface SkillCategory { id: string; name: string; icon: string; colour: string; repairerCount: number }
@@ -31,9 +32,9 @@
 
 <main>
   <PageHeader
-    eyebrow="Skills &amp; team"
-    title="What we repair"
-    lede="Meet our volunteers and see the kinds of items they can help you fix."
+    eyebrow={$t('Skills & team')}
+    title={$t('What we repair')}
+    lede={$t('Meet our volunteers and see the kinds of items they can help you fix.')}
   >
     <Wrench size={22} slot="icon" />
   </PageHeader>
@@ -50,8 +51,12 @@
             <div class="icon-tile mx-auto" style={`background-color: ${categoryTint(cat.colour)}; color: ${categoryInk(cat.colour)}`}>
               <Icon icon={categoryIcon(cat.icon, cat.name)} width="24" height="24" />
             </div>
-            <p class="mt-3 font-medium text-pine">{cat.name}</p>
-            <p class="text-xs text-slate-500">{cat.repairerCount} volunteer{cat.repairerCount === 1 ? '' : 's'}</p>
+            <p class="mt-3 font-medium text-pine">{$t(cat.name)}</p>
+            <p class="text-xs text-slate-500">
+              {cat.repairerCount === 1
+                ? $t('{count} volunteer', { count: cat.repairerCount })
+                : $t('{count} volunteers', { count: cat.repairerCount })}
+            </p>
           </div>
         {/each}
       </div>
@@ -62,12 +67,12 @@
   <section class="band">
     <div class="section">
       <SectionHeading
-        eyebrow="The people who fix things"
-        title="Our volunteers"
-        lede="Our repairers are volunteers. They give their time, their tools and their know-how."
+        eyebrow={$t('The people who fix things')}
+        title={$t('Our volunteers')}
+        lede={$t('Our repairers are volunteers. They give their time, their tools and their know-how.')}
       />
       {#if repairers.length === 0}
-        <p class="mt-8 text-center text-slate-500">Our team will appear here once volunteers join.</p>
+        <p class="mt-8 text-center text-slate-500">{$t('Our team will appear here once volunteers join.')}</p>
       {:else}
         <div class="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {#each repairers as r}
@@ -82,8 +87,8 @@
     event={nextEvent}
     venue={nextEvent?.venue ?? null}
     image={ctaImage}
-    heading="Want to join us?"
-    body="We always welcome new repairers, and you do not need to be an expert. Come to a session and say hello."
+    heading={$t('Want to join us?')}
+    body={$t('We always welcome new repairers, and you do not need to be an expert. Come to a session and say hello.')}
   />
 </main>
 

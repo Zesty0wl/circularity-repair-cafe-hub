@@ -18,7 +18,7 @@
 //  Cards are kept in R2 under a hash of everything they are made from, the
 //  same way the section cards in ogImage.ts are.
 // =============================================================================
-import type { ShareCardStyle } from '@circularity/shared';
+import { translate, type Locale, type ShareCardStyle } from '@circularity/shared';
 import { sha256Hex } from '../lib/crypto.js';
 import { sniffImage, MIME_FOR } from '../lib/images.js';
 import { dataUrl, svgToPng } from '../lib/render.js';
@@ -51,6 +51,8 @@ export interface RepairerCardData {
   /** The next session, already put into words. Null when none is planned. */
   event: { dateLine: string; venueLine: string } | null;
   brand: CardBranding;
+  /** The language to write the card's own words in. English when not given. */
+  locale?: Locale;
 }
 
 /**
@@ -63,12 +65,15 @@ export function avatarDiskPath(stored: string | null | undefined): string | null
 }
 
 /** "a, b and c", or "a, b, c and more" when the list was cut short. */
-function listWords(items: string[], max: number): string {
+function listWords(items: string[], max: number, locale: Locale): string {
   const shown = items.slice(0, max).map((s) => s.trim()).filter(Boolean);
   if (!shown.length) return '';
-  if (items.length > max) return `${shown.join(', ')} and more`;
+  if (items.length > max) return translate(locale, '{list} and more', { list: shown.join(', ') });
   if (shown.length === 1) return shown[0]!;
-  return `${shown.slice(0, -1).join(', ')} and ${shown[shown.length - 1]}`;
+  return translate(locale, '{list} and {last}', {
+    list: shown.slice(0, -1).join(', '),
+    last: shown[shown.length - 1]!,
+  });
 }
 
 /**
@@ -76,9 +81,9 @@ function listWords(items: string[], max: number): string {
  * joining them with another "and" would blur where one ends and the next
  * starts. Dots keep each one whole.
  */
-function dotList(items: string[], max: number): string {
-  const shown = items.slice(0, max).map((s) => s.trim()).filter(Boolean);
-  return shown.join(' · ') + (items.length > max ? ' and more' : '');
+function dotList(items: string[], max: number, locale: Locale): string {
+  const shown = items.slice(0, max).map((s) => s.trim()).filter(Boolean).join(' · ');
+  return items.length > max ? translate(locale, '{list} and more', { list: shown }) : shown;
 }
 
 /**
@@ -131,20 +136,27 @@ interface CardText {
   footEyebrow: string;
   footLine1: string;
   footLine2: string;
+  /** The small words at the right of the footer band. */
+  tagline: string;
   monogram: string;
 }
 
 function cardText(data: RepairerCardData): CardText {
+  const locale = data.locale ?? 'en';
   return {
     eyebrow: data.brand.cafeName.toUpperCase(),
     nameLines: (chars, lines) => wrap(data.displayName, chars, lines),
-    fixes: data.skills.length ? `Fixes: ${dotList(data.skills, 4)}` : 'Volunteer repairer',
+    fixes: data.skills.length
+      ? translate(locale, 'Fixes: {skills}', { skills: dotList(data.skills, 4, locale) })
+      : translate(locale, 'Volunteer repairer'),
     bring: data.otherSkills.length
-      ? `You can also bring ${listWords(data.otherSkills, 5)}`
+      ? translate(locale, 'You can also bring {things}', { things: listWords(data.otherSkills, 5, locale) })
       : '',
-    footEyebrow: data.event ? 'NEXT SESSION' : 'REPAIR SESSIONS',
-    footLine1: data.event ? data.event.dateLine : 'New dates are announced soon',
+    // The small line is shown in capitals, so translate the words, then raise them.
+    footEyebrow: (data.event ? translate(locale, 'Next session') : translate(locale, 'Repair sessions')).toUpperCase(),
+    footLine1: data.event ? data.event.dateLine : translate(locale, 'New dates are announced soon'),
     footLine2: data.event?.venueLine ?? '',
+    tagline: translate(locale, 'Free community repairs'),
     monogram: initials(data.displayName),
   };
 }
@@ -185,7 +197,7 @@ function footer(opts: {
       : ''
   }
   <text x="${OG_WIDTH - 84}" y="${bandTop + 86}" font-family="${FONT}" font-size="22"
-        fill="${opts.mutedFill}" opacity="${mutedOpacity}" text-anchor="end">Free community repairs</text>`;
+        fill="${opts.mutedFill}" opacity="${mutedOpacity}" text-anchor="end">${escapeXml(text.tagline)}</text>`;
 }
 
 function svg(body: string): string {
@@ -376,8 +388,12 @@ const RENDER_VERSION = 2;
 
 /** Everything the card is drawn from, so any change produces a new file. */
 async function cardHash(data: RepairerCardData, style: ShareCardStyle): Promise<string> {
+  // The card's own words change with the language, but they are not in the
+  // data, so a language other than English gets its own name. English keeps
+  // the name it always had, so its cards are not drawn again.
+  const locale = data.locale ?? 'en';
   const key = [
-    `repairer-v${RENDER_VERSION}`,
+    locale === 'en' ? `repairer-v${RENDER_VERSION}` : `repairer-v${RENDER_VERSION}-${locale}`,
     style,
     data.displayName,
     data.avatarPath ?? '',

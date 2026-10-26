@@ -30,10 +30,17 @@ export async function cardInUse(eventId: string, cardNumber: number, exceptJobId
   return clash.length > 0;
 }
 
-/** The reply when a card number is already taken. */
+const CARD_IN_USE = 'Card {cardNumber} is already with another visitor in this session. Choose a different number.';
+
+/**
+ * The reply when a card number is already taken. `template` and `params` let
+ * the website show the message in the visitor's language (see lib/api.ts).
+ */
 export function cardInUseError(cardNumber: number) {
   return {
-    error: `Card ${cardNumber} is already with another visitor in this session. Choose a different number.`,
+    error: CARD_IN_USE.replace('{cardNumber}', String(cardNumber)),
     code: 'checkin/card_in_use',
+    template: CARD_IN_USE,
+    params: { cardNumber },
   };
 }

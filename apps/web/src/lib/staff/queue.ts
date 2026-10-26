@@ -7,10 +7,12 @@
 // =============================================================================
 
 import { isBenchTime } from '@circularity/shared';
+import { dateLocale, tNow } from '$lib/i18n';
 
 export type RepairStatus = 'waiting' | 'in_progress' | 'completed' | 'cannot_repair' | 'awaiting_return' | 'returned';
 
-/** Plain words for each status, as visitors and volunteers would say them. */
+/** Plain words for each status, as visitors and volunteers would say them.
+ *  These are the English source strings; statusLabel() translates them. */
 export const STATUS_LABEL: Record<RepairStatus, string> = {
   waiting: 'Waiting',
   in_progress: 'Being repaired',
@@ -21,7 +23,7 @@ export const STATUS_LABEL: Record<RepairStatus, string> = {
 };
 
 export function statusLabel(status: string): string {
-  return STATUS_LABEL[status as RepairStatus] ?? status.replace(/_/g, ' ');
+  return tNow(STATUS_LABEL[status as RepairStatus] ?? status.replace(/_/g, ' '));
 }
 
 /** Whole minutes from one moment to another (now, unless given). */
@@ -33,11 +35,11 @@ export function minutesBetween(from: string | Date | null | undefined, to: numbe
 
 /** "Just now", "8 min", "1 hr 5 min". */
 export function formatMinutes(minutes: number): string {
-  if (minutes < 1) return 'Just now';
-  if (minutes < 60) return `${minutes} min`;
+  if (minutes < 1) return tNow('Just now');
+  if (minutes < 60) return tNow('{n} min', { n: minutes });
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
-  return m ? `${h} hr ${m} min` : `${h} hr`;
+  return m ? tNow('{h} hr {m} min', { h, m }) : tNow('{h} hr', { h });
 }
 
 /**
@@ -45,12 +47,12 @@ export function formatMinutes(minutes: number): string {
  * Unlike formatMinutes() it never says "just now", which reads oddly there.
  */
 export function formatDuration(minutes: number): string {
-  return minutes < 1 ? 'under a minute' : formatMinutes(minutes);
+  return minutes < 1 ? tNow('under a minute') : formatMinutes(minutes);
 }
 
 /** How long ago something happened: "just now", or "20 min ago". */
 export function formatAgo(minutes: number): string {
-  return minutes < 1 ? 'just now' : `${formatMinutes(minutes)} ago`;
+  return minutes < 1 ? tNow('just now') : tNow('{duration} ago', { duration: formatMinutes(minutes) });
 }
 
 /** How worried to be about a wait: fine, getting long, or too long. */
@@ -69,13 +71,13 @@ export const WAIT_TONE_CLASS: Record<ReturnType<typeof waitTone>, string> = {
 /** A clock time, "14:05", in the visitor's own time zone. */
 export function clockTime(ts: string | null | undefined): string {
   if (!ts) return '';
-  return new Date(ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  return new Date(ts).toLocaleTimeString(dateLocale(), { hour: '2-digit', minute: '2-digit' });
 }
 
 /** "10:00 to 13:00" from Postgres-style times. */
 export function sessionTimes(start: string | null | undefined, end: string | null | undefined): string {
   if (!start || !end) return '';
-  return `${start.slice(0, 5)} to ${end.slice(0, 5)}`;
+  return tNow('{start} to {end}', { start: start.slice(0, 5), end: end.slice(0, 5) });
 }
 
 /** First name only, for anything a visitor or the room might see. */

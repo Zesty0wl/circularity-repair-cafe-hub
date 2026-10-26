@@ -4,6 +4,7 @@
   import { describeRecurrence, describeTimes } from '$lib/recurrence';
   import { Pencil, Trash2, Laptop } from 'lucide-svelte';
   import { cafe } from '$lib/stores/cafe';
+  import { t, tNow } from '$lib/i18n';
 
   let events: any[] = [];
   let templates: any[] = [];
@@ -32,10 +33,11 @@
     // sets their link to null instead. Worth saying so, because "delete the
     // repeating event" sounds like it takes the history with it.
     const ok = confirm(
-      `Stop repeating "${t.name}"?\n\n` +
-        'Sessions it has already created stay exactly as they are, including ' +
-        'their repairs. They just stop being linked to this pattern, and no ' +
-        'new ones will be added.',
+      tNow('Stop repeating "{name}"?', { name: t.name }) +
+        '\n\n' +
+        tNow(
+          'Sessions it has already created stay exactly as they are, including their repairs. They just stop being linked to this pattern, and no new ones will be added.',
+        ),
     );
     if (!ok) return;
     busyId = t.id;
@@ -44,7 +46,7 @@
       await api(`/api/admin/event-templates/${t.id}`, { method: 'DELETE' });
       await load();
     } catch (err: any) {
-      error = err?.message || 'Could not delete that repeating event';
+      error = err?.message || tNow('Could not delete that repeating event');
     } finally {
       busyId = '';
     }
@@ -52,8 +54,8 @@
 </script>
 
 <div class="flex items-center justify-between">
-  <h1 class="text-2xl font-bold">Events</h1>
-  <a href="/admin/events/new" class="btn-primary">Create event</a>
+  <h1 class="text-2xl font-bold">{$t('Events')}</h1>
+  <a href="/admin/events/new" class="btn-primary">{$t('Create event')}</a>
 </div>
 
 {#if error}
@@ -62,35 +64,35 @@
 
 {#if templates.length > 0}
   <section class="mt-6">
-    <h2 class="text-lg font-semibold mb-2">Repeating events</h2>
+    <h2 class="text-lg font-semibold mb-2">{$t('Repeating events')}</h2>
     <ul class="card divide-y divide-slate-100">
-      {#each templates as t}
+      {#each templates as tpl}
         <li class="px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
           <div class="min-w-0">
-            <p class="font-semibold">{t.name}</p>
+            <p class="font-semibold">{tpl.name}</p>
             <p class="text-xs text-slate-500">
-              {describeRecurrence(t.recurrenceRule) ?? 'Repeats'}
-              {#if describeTimes(t.startTime, t.endTime)}
-                · {describeTimes(t.startTime, t.endTime)}
+              {describeRecurrence(tpl.recurrenceRule) ?? $t('Repeats')}
+              {#if describeTimes(tpl.startTime, tpl.endTime)}
+                · {describeTimes(tpl.startTime, tpl.endTime)}
               {/if}
-              {#if t.venueName}· {t.venueName}{/if}
+              {#if tpl.venueName}· {tpl.venueName}{/if}
             </p>
           </div>
           <div class="flex items-center gap-2 shrink-0">
             <span
-              class="badge {t.isPublished
+              class="badge {tpl.isPublished
                 ? 'bg-emerald-100 text-emerald-800'
-                : 'bg-slate-100 text-slate-700'}">{t.isPublished ? 'Published' : 'Draft'}</span
+                : 'bg-slate-100 text-slate-700'}">{tpl.isPublished ? $t('Published') : $t('Draft')}</span
             >
-            <a href={`/admin/events/templates/${t.id}`} class="btn-secondary btn-xs">
-              <Pencil size={14} /> Edit
+            <a href={`/admin/events/templates/${tpl.id}`} class="btn-secondary btn-xs">
+              <Pencil size={14} /> {$t('Edit')}
             </a>
             <button
               class="btn-danger-outline btn-xs"
-              disabled={busyId === t.id}
-              on:click={() => removeTemplate(t)}
+              disabled={busyId === tpl.id}
+              on:click={() => removeTemplate(tpl)}
             >
-              <Trash2 size={14} /> Delete
+              <Trash2 size={14} /> {$t('Delete')}
             </button>
           </div>
         </li>
@@ -100,17 +102,17 @@
 {/if}
 
 <section class="mt-6">
-  <h2 class="text-lg font-semibold mb-2">All events</h2>
+  <h2 class="text-lg font-semibold mb-2">{$t('All events')}</h2>
   <div class="overflow-x-auto card">
     <table class="w-full text-sm">
       <thead class="bg-slate-50 text-left text-slate-600">
         <tr>
-          <th class="px-3 py-2">Date</th>
-          <th class="px-3 py-2">Name</th>
-          <th class="px-3 py-2">Venue</th>
-          <th class="px-3 py-2">Status</th>
-          <th class="px-3 py-2">Published</th>
-          <th class="px-3 py-2">Jobs</th>
+          <th class="px-3 py-2">{$t('Date')}</th>
+          <th class="px-3 py-2">{$t('Name')}</th>
+          <th class="px-3 py-2">{$t('Venue')}</th>
+          <th class="px-3 py-2">{$t('Status')}</th>
+          <th class="px-3 py-2">{$t('Published')}</th>
+          <th class="px-3 py-2">{$t('Jobs')}</th>
           <th class="px-3 py-2"></th>
         </tr>
       </thead>
@@ -127,20 +129,20 @@
               {/if}
             </td>
             <td class="px-3 py-1.5">{e.venueName}</td>
-            <td class="px-3 py-1.5"><span class="badge badge-{e.status}">{e.status}</span></td>
-            <td class="px-3 py-1.5"><button class="badge {e.isPublished ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'}" on:click={() => publish(e, !e.isPublished)}>{e.isPublished ? 'Yes' : 'No'}</button></td>
+            <td class="px-3 py-1.5"><span class="badge badge-{e.status}">{$t(e.status)}</span></td>
+            <td class="px-3 py-1.5"><button class="badge {e.isPublished ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'}" on:click={() => publish(e, !e.isPublished)}>{e.isPublished ? $t('Yes') : $t('No')}</button></td>
             <td class="px-3 py-1.5">{e.jobCount}</td>
             <td class="px-3 py-1.5 text-right">
               <!-- btn-xs, not btn-sm. A btn-sm here is 36px tall inside a cell
                    of text, which made every row with an Activate button half
                    as tall again as the rest of the table. -->
               {#if e.status === 'scheduled'}
-                <button class="btn-secondary btn-xs" on:click={() => activate(e.id)}>Activate</button>
+                <button class="btn-secondary btn-xs" on:click={() => activate(e.id)}>{$t('Activate')}</button>
               {/if}
             </td>
           </tr>
         {:else}
-          <tr><td colspan="7" class="px-3 py-6 text-center text-slate-500">No events yet</td></tr>
+          <tr><td colspan="7" class="px-3 py-6 text-center text-slate-500">{$t('No events yet')}</td></tr>
         {/each}
       </tbody>
     </table>

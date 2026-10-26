@@ -8,6 +8,7 @@
   import { categoryIcon, categoryTint, categoryInk } from '$lib/categoryIcon';
   import type { GalleryPhoto } from '$lib/gallery';
   import { ArrowLeft, Clock, MapPin, ArrowUpRight, CalendarX2, Camera, BarChart3, Laptop, ClipboardList } from 'lucide-svelte';
+  import { t, dateLocale } from '$lib/i18n';
   import type { PageData } from './$types';
 
   interface Venue {
@@ -59,17 +60,17 @@
     ...(!stats
       ? []
       : [
-          { value: String(stats.repairCount), label: stats.repairCount === 1 ? 'Item brought in' : 'Items brought in', show: stats.repairCount > 0 },
-          { value: String(stats.completedCount), label: 'Went home working', show: stats.completedCount > 0 },
-          { value: `${stats.successRate}%`, label: 'Fixed on the day', show: stats.successRate > 0 },
-          { value: String(stats.volunteerCount), label: stats.volunteerCount === 1 ? 'Volunteer repairer' : 'Volunteer repairers', show: stats.volunteerCount > 0 },
-          { value: `${stats.co2SavedKg} kg`, label: 'CO₂ saved', show: stats.co2SavedKg > 0 },
+          { value: String(stats.repairCount), label: stats.repairCount === 1 ? $t('Item brought in') : $t('Items brought in'), show: stats.repairCount > 0 },
+          { value: String(stats.completedCount), label: $t('Went home working'), show: stats.completedCount > 0 },
+          { value: `${stats.successRate}%`, label: $t('Fixed on the day'), show: stats.successRate > 0 },
+          { value: String(stats.volunteerCount), label: stats.volunteerCount === 1 ? $t('Volunteer repairer') : $t('Volunteer repairers'), show: stats.volunteerCount > 0 },
+          { value: `${stats.co2SavedKg} kg`, label: $t('CO₂ saved'), show: stats.co2SavedKg > 0 },
         ]),
     ...(!linuxStats
       ? []
       : [
-          { value: String(linuxStats.installedCount), label: linuxStats.installedCount === 1 ? 'Computer moved to Linux' : 'Computers moved to Linux', show: linuxStats.installedCount > 0 },
-          { value: String(linuxStats.advisedCount), label: 'Advised about Linux', show: linuxStats.advisedCount > 0 },
+          { value: String(linuxStats.installedCount), label: linuxStats.installedCount === 1 ? $t('Computer moved to Linux') : $t('Computers moved to Linux'), show: linuxStats.installedCount > 0 },
+          { value: String(linuxStats.advisedCount), label: $t('Advised about Linux'), show: linuxStats.advisedCount > 0 },
         ]),
   ].filter((t) => t.show);
 
@@ -78,12 +79,12 @@
   function dateParts(d: string) {
     const dt = new Date(d + 'T12:00:00Z');
     return {
-      day: dt.toLocaleDateString('en-GB', { day: 'numeric', timeZone: 'UTC' }),
-      monthShort: dt.toLocaleDateString('en-GB', { month: 'short', timeZone: 'UTC' }),
+      day: dt.toLocaleDateString(dateLocale(), { day: 'numeric', timeZone: 'UTC' }),
+      monthShort: dt.toLocaleDateString(dateLocale(), { month: 'short', timeZone: 'UTC' }),
     };
   }
   function fullDate(d: string): string {
-    return new Date(d + 'T12:00:00Z').toLocaleDateString('en-GB', {
+    return new Date(d + 'T12:00:00Z').toLocaleDateString(dateLocale(), {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
@@ -105,7 +106,7 @@
 
 <main class="max-w-3xl mx-auto px-4 py-8 md:py-12 space-y-6">
   <a href="/events" class="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-brand-700">
-    <ArrowLeft size={16} /> Back to all events
+    <ArrowLeft size={16} /> {$t('Back to all events')}
   </a>
 
   {#if notFound || !event}
@@ -113,9 +114,9 @@
       <span class="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-brand-100 text-pine">
         <CalendarX2 size={22} />
       </span>
-      <h1 class="mt-4 text-pine">Event not found</h1>
-      <p class="mt-2 text-slate-600">This event may have been removed or is no longer published.</p>
-      <a href="/events" class="btn-primary mt-4 inline-flex">See upcoming events</a>
+      <h1 class="mt-4 text-pine">{$t('Event not found')}</h1>
+      <p class="mt-2 text-slate-600">{$t('This event may have been removed or is no longer published.')}</p>
+      <a href="/events" class="btn-primary mt-4 inline-flex">{$t('See upcoming events')}</a>
     </div>
   {:else}
     {@const p = dateParts(event.date)}
@@ -123,7 +124,7 @@
       <!-- Header band -->
       <div class="relative bg-gradient-to-br from-brand-700 to-brand-500 text-white p-6 sm:p-8">
         {#if isPast}
-          <span class="inline-block mb-2 rounded-full bg-white/15 ring-1 ring-white/20 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5">Past event</span>
+          <span class="inline-block mb-2 rounded-full bg-white/15 ring-1 ring-white/20 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5">{$t('Past event')}</span>
         {/if}
         <div class="flex items-center gap-4">
           <div class="shrink-0 w-16 rounded-2xl bg-white/15 ring-1 ring-white/20 text-center py-2">
@@ -148,10 +149,9 @@
           >
             <Laptop size={20} class="shrink-0 mt-0.5 text-brand-700" />
             <span class="min-w-0">
-              <span class="block font-semibold text-pine">Linux help at this session</span>
+              <span class="block font-semibold text-pine">{$t('Linux help at this session')}</span>
               <span class="block mt-0.5 text-sm text-slate-600">
-                Bring an old computer and we can put Linux on it, free of charge. Back up your
-                files first. Read what to expect.
+                {$t('Bring an old computer and we can put Linux on it, free of charge. Back up your files first. Read what to expect.')}
               </span>
             </span>
           </a>
@@ -182,24 +182,24 @@
             <div class="flex items-start gap-3">
               <ClipboardList size={20} class="shrink-0 mt-0.5 text-brand-700" />
               <div>
-                <p class="font-semibold text-pine">Bringing something to fix?</p>
-                <p class="mt-0.5 text-sm text-slate-600">Pre-register your item. Our repairers can then prepare before the day.</p>
+                <p class="font-semibold text-pine">{$t('Bringing something to fix?')}</p>
+                <p class="mt-0.5 text-sm text-slate-600">{$t('Pre-register your item. Our repairers can then prepare before the day.')}</p>
               </div>
             </div>
-            <a href={`/pre-register/${event.id}`} class="btn-primary mt-3 sm:mt-0 shrink-0 w-full sm:w-auto">Pre-register your item</a>
+            <a href={`/pre-register/${event.id}`} class="btn-primary mt-3 sm:mt-0 shrink-0 w-full sm:w-auto">{$t('Pre-register your item')}</a>
           </div>
         {/if}
 
         {#if !isPast}
           <div class="flex flex-col sm:flex-row gap-2 pt-2">
             <a href={mapsUrl(event.venue)} target="_blank" rel="noopener" class="btn-secondary flex-1" on:click={() => track('directions', { kind: 'directions' })}>
-              <MapPin size={16} /> Get directions <ArrowUpRight size={14} />
+              <MapPin size={16} /> {$t('Get directions')} <ArrowUpRight size={14} />
             </a>
             <AddToCalendar {event} variant="button" class="flex-1" />
           </div>
         {:else}
           <div class="pt-2">
-            <a href="/events" class="btn-primary inline-flex">See upcoming events</a>
+            <a href="/events" class="btn-primary inline-flex">{$t('See upcoming events')}</a>
           </div>
         {/if}
       </div>
@@ -209,7 +209,7 @@
     {#if statTiles.length > 0}
       <section class="card p-6 sm:p-8">
         <h2 class="text-xl font-semibold font-display text-pine flex items-center gap-2">
-          <BarChart3 size={20} class="text-clay shrink-0" /> What happened at this session
+          <BarChart3 size={20} class="text-clay shrink-0" /> {$t('What happened at this session')}
         </h2>
         <dl class="mt-5 flex flex-wrap gap-3">
           {#each statTiles as tile}
@@ -224,7 +224,7 @@
         </dl>
 
         {#if stats && stats.categories.length > 0}
-          <h3 class="mt-6 text-base font-semibold text-slate-800">What we worked on</h3>
+          <h3 class="mt-6 text-base font-semibold text-slate-800">{$t('What we worked on')}</h3>
           <ul class="mt-3 flex flex-wrap gap-2">
             {#each stats.categories as cat}
               <li
@@ -233,7 +233,7 @@
                 <span class="inline-flex h-6 w-6 items-center justify-center rounded-lg" style={`background:${categoryTint(cat.colour)}`}>
                   <Icon icon={categoryIcon(cat.icon, cat.name)} width="14" height="14" style={`color:${categoryInk(cat.colour)}`} />
                 </span>
-                <span>{cat.name}</span>
+                <span>{$t(cat.name)}</span>
                 <span class="font-semibold tabular-nums text-pine">{cat.count}</span>
               </li>
             {/each}
@@ -242,12 +242,13 @@
 
         {#if stats && stats.awaitingReturnCount > 0}
           <p class="mt-4 text-sm text-slate-600">
-            {stats.awaitingReturnCount}
-            {stats.awaitingReturnCount === 1 ? 'item is' : 'items are'} waiting for a part and will be finished at a later session.
+            {stats.awaitingReturnCount === 1
+              ? $t('{count} item is waiting for a part and will be finished at a later session.', { count: stats.awaitingReturnCount })
+              : $t('{count} items are waiting for a part and will be finished at a later session.', { count: stats.awaitingReturnCount })}
           </p>
         {/if}
         <p class="mt-4 text-xs text-slate-500">
-          Figures come from our own records. We never show visitor names or contact details.
+          {$t('Figures come from our own records. We never show visitor names or contact details.')}
         </p>
       </section>
     {/if}
@@ -256,10 +257,10 @@
     {#if gallery.length > 0}
       <section>
         <h2 class="text-xl font-semibold font-display text-pine flex items-center gap-2">
-          <Camera size={20} class="text-clay shrink-0" /> Photos from the day
+          <Camera size={20} class="text-clay shrink-0" /> {$t('Photos from the day')}
         </h2>
         <div class="mt-4">
-          <PhotoGrid photos={gallery} fallbackAlt={`Photo from ${event.name}`} />
+          <PhotoGrid photos={gallery} fallbackAlt={$t('Photo from {name}', { name: event.name })} />
         </div>
       </section>
     {/if}

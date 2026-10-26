@@ -3,6 +3,7 @@
   // electrical item). Nothing at all for an item that does not need one and
   // has no result, so a cafe that does not do PAT tests never sees it.
   import { Zap } from 'lucide-svelte';
+  import { t } from '$lib/i18n';
 
   /** The item needs a PAT test. */
   export let needed = false;
@@ -22,9 +23,9 @@
 </script>
 
 {#if result && LABEL[result]}
-  <span class="badge {TONE[result]}"><Zap size={12} /> {LABEL[result]}</span>
+  <span class="badge {TONE[result]}"><Zap size={12} /> {$t(LABEL[result])}</span>
 {:else if needed}
-  <span class="badge bg-amber-100 text-amber-900" title="This is an electrical item. Record a PAT test before you mark it as fixed.">
-    <Zap size={12} /> PAT test needed
+  <span class="badge bg-amber-100 text-amber-900" title={$t('This is an electrical item. Record a PAT test before you mark it as fixed.')}>
+    <Zap size={12} /> {$t('PAT test needed')}
   </span>
 {/if}

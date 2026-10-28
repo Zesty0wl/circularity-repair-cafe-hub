@@ -24,6 +24,7 @@ Only the Python standard library is used, so it runs anywhere Python 3.9 does.
 from __future__ import annotations
 
 import argparse
+import http.client
 import json
 import os
 import random
@@ -162,18 +163,29 @@ class Api:
             headers["Content-Type"] = "application/json"
         if self.token:
             headers["Authorization"] = f"Bearer {self.token}"
-        req = urllib.request.Request(self.base + path, data=data, headers=headers, method=method)
-        try:
-            with urllib.request.urlopen(req, timeout=30) as r:
-                raw = r.read()
-                return json.loads(raw) if raw else None
-        except urllib.error.HTTPError as e:
-            detail = e.read().decode(errors="replace")[:400]
-            if e.code in expect:
-                return None
-            raise SystemExit(f"\n  {method} {path} failed: HTTP {e.code}\n  {detail}\n")
-        except Exception as e:
-            raise SystemExit(f"\n  {method} {path} failed: {e}\n")
+        # Three tries: a reset sends hundreds of requests, and now and then the
+        # connection drops or Cloudflare cannot reach the Worker for a moment.
+        # A retried post may add the same demo item twice, which does no harm.
+        for attempt in (1, 2, 3):
+            req = urllib.request.Request(self.base + path, data=data, headers=headers, method=method)
+            try:
+                with urllib.request.urlopen(req, timeout=30) as r:
+                    raw = r.read()
+                    return json.loads(raw) if raw else None
+            except urllib.error.HTTPError as e:
+                detail = e.read().decode(errors="replace")[:400]
+                if e.code in expect:
+                    return None
+                problem = f"HTTP {e.code}\n  {detail}"
+                if e.code not in (502, 503, 504):
+                    break
+            except (urllib.error.URLError, http.client.HTTPException, OSError) as e:
+                problem = str(e) or type(e).__name__
+            except Exception as e:
+                raise SystemExit(f"\n  {method} {path} failed: {e}\n")
+            if attempt < 3:
+                time.sleep(2 * attempt)
+        raise SystemExit(f"\n  {method} {path} failed: {problem}\n")
 
     def get(self, p, **k):
         return self.call("GET", p, **k)

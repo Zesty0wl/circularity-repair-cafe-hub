@@ -8,6 +8,7 @@
   import AddToCalendar from '$lib/components/AddToCalendar.svelte';
   import { Clock, MapPin, CalendarDays, CalendarX2, History, ChevronRight, Camera, Laptop } from 'lucide-svelte';
   import type { PageData } from './$types';
+  import { t, dateLocale } from '$lib/i18n';
 
   interface Venue { name: string; address: string | null; postcode: string | null }
   interface PublicEvent {
@@ -42,27 +43,26 @@
 
   // Split a date into the pieces a calendar tile needs (day number, short
   // month, weekday name) using the visitor's locale.
-  function dateParts(d: string) {
+  $: dateParts = (d: string) => {
     const dt = new Date(d + 'T12:00:00Z');
     return {
-      day: dt.toLocaleDateString('en-GB', { day: 'numeric', timeZone: 'UTC' }),
-      monthShort: dt.toLocaleDateString('en-GB', { month: 'short', timeZone: 'UTC' }),
-      weekdayLong: dt.toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'UTC' }),
-      monthLong: dt.toLocaleDateString('en-GB', { month: 'long', timeZone: 'UTC' }),
-      year: dt.toLocaleDateString('en-GB', { year: 'numeric', timeZone: 'UTC' }),
+      day: dt.toLocaleDateString($dateLocale, { day: 'numeric', timeZone: 'UTC' }),
+      monthShort: dt.toLocaleDateString($dateLocale, { month: 'short', timeZone: 'UTC' }),
+      weekdayLong: dt.toLocaleDateString($dateLocale, { weekday: 'long', timeZone: 'UTC' }),
+      monthLong: dt.toLocaleDateString($dateLocale, { month: 'long', timeZone: 'UTC' }),
+      year: dt.toLocaleDateString($dateLocale, { year: 'numeric', timeZone: 'UTC' }),
     };
-  }
+  };
 
   // Full, human-friendly date for screen readers and labels.
-  function fullDate(d: string): string {
-    return new Date(d + 'T12:00:00Z').toLocaleDateString('en-GB', {
+  $: fullDate = (d: string): string =>
+    new Date(d + 'T12:00:00Z').toLocaleDateString($dateLocale, {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
       year: 'numeric',
       timeZone: 'UTC',
     });
-  }
 
   // Keep a postcode on one line: a break in the middle of it looks wrong.
   function noWrap(s: string): string {
@@ -88,9 +88,9 @@
 
 <main>
   <PageHeader
-    eyebrow="What's on"
-    title="Upcoming events"
-    lede="Bring an item to repair. We'll do our best to fix it together."
+    eyebrow={$t("What's on")}
+    title={$t('Upcoming events')}
+    lede={$t("Bring an item to repair. We'll do our best to fix it together.")}
   >
     <CalendarDays size={22} slot="icon" />
     {#if uniformVenue}
@@ -108,9 +108,9 @@
         <span class="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-brand-100 text-pine">
           <CalendarX2 size={22} />
         </span>
-        <h3 class="mt-4 text-pine">No events scheduled just yet</h3>
-        <p class="mt-2 text-slate-600">We're planning the next session. Check back soon, or get in touch to be the first to know.</p>
-        <a href="/contact" class="btn-secondary mt-6">Contact us</a>
+        <h3 class="mt-4 text-pine">{$t('No events scheduled just yet')}</h3>
+        <p class="mt-2 text-slate-600">{$t("We're planning the next session. Check back soon, or get in touch to be the first to know.")}</p>
+        <a href="/contact" class="btn-secondary mt-6">{$t('Contact us')}</a>
       </div>
     {:else}
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -121,7 +121,7 @@
                button beside it stays a separate control. -->
           <div class="card group relative flex h-full items-center gap-4 overflow-hidden p-4 transition-shadow hover:ring-brand-400">
             {#if i === 0}
-              <span class="absolute top-0 right-0 rounded-tr-2xl rounded-bl-xl bg-accent-600 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">Next</span>
+              <span class="absolute top-0 right-0 rounded-tr-2xl rounded-bl-xl bg-accent-600 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">{$t('Next')}</span>
             {/if}
             <!-- Date tile, flat and in one colour so a column of them reads
                  as a set (the home page tiles use the same treatment). -->
@@ -133,7 +133,7 @@
               <!-- Lead with whatever actually differs between rows. -->
               <a
                 href={`/events/${evt.id}`}
-                aria-label={`${evt.name}, ${fullDate(evt.date)}, view details`}
+                aria-label={$t('{name}, {date}, view details', { name: evt.name, date: fullDate(evt.date) })}
                 class="font-semibold text-pine block truncate after:absolute after:inset-0 focus:outline-none focus-visible:underline"
               >
                 {#if uniformName}{p.weekdayLong} {p.day} {p.monthLong}{:else}{evt.name}{/if}
@@ -150,7 +150,7 @@
                 <!-- Said plainly on the listing, so somebody with an old
                      computer knows before they set out. -->
                 <p class="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-800 ring-1 ring-brand-200">
-                  <Laptop size={12} class="shrink-0" /> Linux help too
+                  <Laptop size={12} class="shrink-0" /> {$t('Linux help too')}
                 </p>
               {/if}
             </div>
@@ -170,14 +170,14 @@
       {#if !showPast}
         <div class="text-center">
           <button class="btn-secondary" type="button" on:click={loadPast}>
-            <History size={16} /> Show past events
+            <History size={16} /> {$t('Show past events')}
           </button>
         </div>
       {:else}
-        <h2 class="text-pine flex items-center gap-2"><History size={20} class="text-clay" /> Past events</h2>
-        <p class="mt-2 text-slate-600">See how each session went, and the photos our volunteers took.</p>
+        <h2 class="text-pine flex items-center gap-2"><History size={20} class="text-clay" /> {$t('Past events')}</h2>
+        <p class="mt-2 text-slate-600">{$t('See how each session went, and the photos our volunteers took.')}</p>
         {#if past.length === 0}
-          <p class="mt-3 text-slate-500">No past events to show.</p>
+          <p class="mt-3 text-slate-500">{$t('No past events to show.')}</p>
         {:else}
           <ul class="mt-5 divide-y divide-slate-100">
             {#each past as evt}
@@ -194,7 +194,9 @@
                     {#if evt.photoCount}
                       <p class="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
                         <Camera size={13} class="text-clay shrink-0" />
-                        {evt.photoCount} photo{evt.photoCount === 1 ? '' : 's'}
+                        {evt.photoCount === 1
+                          ? $t('{n} photo', { n: evt.photoCount })
+                          : $t('{n} photos', { n: evt.photoCount })}
                       </p>
                     {/if}
                   </div>
@@ -220,10 +222,10 @@
     event={nextEvent}
     venue={uniformVenue ?? nextEvent?.venue ?? null}
     image={ctaImage}
-    heading="Not sure if we can fix it?"
-    body="Bring it anyway. We will always take a look, and we will be honest about what we can and cannot do."
+    heading={$t('Not sure if we can fix it?')}
+    body={$t('Bring it anyway. We will always take a look, and we will be honest about what we can and cannot do.')}
     ctaHref="/contact"
-    ctaLabel="Find us"
+    ctaLabel={$t('Find us')}
   />
 </main>
 

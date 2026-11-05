@@ -69,19 +69,42 @@ function isCacheablePage(request: Request, url: URL): boolean {
   return true;
 }
 
-function pageCacheKey(url: URL): Request {
-  // The query string matters (guide searches, for example), the fragment never
-  // reaches us, and nothing else about the request changes the page.
-  return new Request(`${url.origin}${url.pathname}${url.search}`, { method: 'GET' });
+/**
+ * The language the page will be drawn in, so the cache keeps one copy per
+ * language. This mirrors the rule in apps/web/src/hooks.server.ts: the
+ * visitor's cookie wins, then a forced LANGUAGE setting, then the browser.
+ */
+function cacheLocale(request: Request, env: Env): 'en' | 'fr' {
+  const cookie = /(?:^|;\s*)locale=(en|fr)(?:;|$)/.exec(request.headers.get('cookie') ?? '');
+  if (cookie) return cookie[1] as 'en' | 'fr';
+  const setting = String(env.LANGUAGE ?? 'auto').toLowerCase();
+  if (setting === 'en' || setting === 'fr') return setting;
+  const header = (request.headers.get('accept-language') ?? '').toLowerCase();
+  const first = header.split(',')[0]?.trim() ?? '';
+  if (first.startsWith('fr')) return 'fr';
+  if (first.startsWith('en')) return 'en';
+  const fr = header.indexOf('fr');
+  const en = header.indexOf('en');
+  return fr !== -1 && (en === -1 || fr < en) ? 'fr' : 'en';
 }
 
-async function cachedPage(url: URL): Promise<Response | null> {
+function pageCacheKey(url: URL, locale: 'en' | 'fr'): Request {
+  // The query string matters (guide searches, for example), the fragment never
+  // reaches us, and the language is part of the key because the page text
+  // differs. Nothing else about the request changes the page.
+  const key = new URL(url);
+  key.searchParams.set('__lang', locale);
+  return new Request(key.toString(), { method: 'GET' });
+}
+
+async function cachedPage(url: URL, locale: 'en' | 'fr'): Promise<Response | null> {
   try {
-    const hit = await caches.default.match(pageCacheKey(url));
+    const hit = await caches.default.match(pageCacheKey(url, locale));
     if (!hit) return null;
     const res = new Response(hit.body, hit);
     // The browser should still check back each time, as for a fresh page.
     res.headers.set('Cache-Control', 'no-cache');
+    res.headers.set('Vary', 'Cookie');
     res.headers.set('X-Hub-Cache', 'hit');
     return res;
   } catch {
@@ -89,14 +112,15 @@ async function cachedPage(url: URL): Promise<Response | null> {
   }
 }
 
-function keepPage(url: URL, response: Response, ctx: ExecutionContext): void {
+function keepPage(url: URL, response: Response, ctx: ExecutionContext, locale: 'en' | 'fr'): void {
   if (response.status !== 200) return;
   if (!(response.headers.get('content-type') ?? '').includes('text/html')) return;
   if (response.headers.has('set-cookie')) return;
   try {
     const copy = new Response(response.clone().body, response);
     copy.headers.set('Cache-Control', `public, max-age=${PAGE_CACHE_SECONDS}`);
-    ctx.waitUntil(caches.default.put(pageCacheKey(url), copy).catch(() => {}));
+    copy.headers.set('Vary', 'Cookie');
+    ctx.waitUntil(caches.default.put(pageCacheKey(url, locale), copy).catch(() => {}));
   } catch {
     // Not worth failing a page over.
   }
@@ -121,8 +145,9 @@ export default {
       return withSecurityHeaders(await handleApi(request));
     }
     const cacheable = isCacheablePage(request, url);
+    const locale = cacheable ? cacheLocale(request, env) : 'en';
     if (cacheable) {
-      const hit = await cachedPage(url);
+      const hit = await cachedPage(url, locale);
       if (hit) return withSecurityHeaders(hit);
     }
     const response = await svelte.fetch!(
@@ -130,7 +155,15 @@ export default {
       { ...env, HUB_API: (inner: Request) => handleApi(inner) },
       ctx,
     );
-    if (cacheable) keepPage(url, response, ctx);
+    if (cacheable) {
+      keepPage(url, response, ctx, locale);
+      // The page text depends on the language cookie. Keep the browser from
+      // reusing a copy from the other language for the same address.
+      const out = new Response(response.body, response);
+      out.headers.set('Cache-Control', 'no-cache');
+      out.headers.set('Vary', 'Cookie');
+      return withSecurityHeaders(out);
+    }
     return withSecurityHeaders(response);
   },
 

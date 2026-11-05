@@ -13,6 +13,7 @@
     type GuideSummary,
   } from '$lib/guides';
   import type { PageData } from './$types';
+  import { t } from '$lib/i18n';
 
   const PAGE_SIZE = 24;
 
@@ -115,23 +116,23 @@
 <SiteHeader variant="public" />
 
 <PageHeader
-  eyebrow="Fix it yourself"
-  title="Repair guides"
-  lede="Thousands of free, step-by-step guides from iFixit. Look something up before you come, or follow along at the table with us."
+  eyebrow={$t('Fix it yourself')}
+  title={$t('Repair guides')}
+  lede={$t('Thousands of free, step-by-step guides from iFixit. Look something up before you come, or follow along at the table with us.')}
 >
   <span slot="icon"><BookOpen size={22} /></span>
 </PageHeader>
 
 <!-- ── Search ────────────────────────────────────────────────────────────── -->
 <section class="max-w-5xl mx-auto px-4 pt-10">
-  <label class="sr-only" for="guide-search">Search repair guides</label>
+  <label class="sr-only" for="guide-search">{$t('Search repair guides')}</label>
   <div class="search-row">
     <Search size={18} class="shrink-0 text-slate-400" />
     <input
       id="guide-search"
       class="search-input"
       type="search"
-      placeholder="What needs fixing? Try a make and model, like &quot;Bosch dishwasher&quot;"
+      placeholder={$t('What needs fixing? Try a make and model, like "Bosch dishwasher"')}
       autocomplete="off"
       bind:value={term}
       on:input={onInput}
@@ -143,13 +144,13 @@
       }}
     />
     {#if status === 'loading'}
-      <span class="shrink-0 text-slate-400" aria-label="Searching"><Loader2 size={18} class="animate-spin" /></span>
+      <span class="shrink-0 text-slate-400" aria-label={$t('Searching')}><Loader2 size={18} class="animate-spin" /></span>
     {/if}
   </div>
 
   <!-- Starting points, for anyone who has not thought of a search yet. -->
   {#if showingTopics}
-    <p class="mt-8 eyebrow text-center">Or start with something common</p>
+    <p class="mt-8 eyebrow text-center">{$t('Or start with something common')}</p>
     <div class="mt-4 flex flex-wrap justify-center gap-2">
       {#each POPULAR_TOPICS as topic}
         <button type="button" class="topic" on:click={() => pickTopic(topic)}>{topic}</button>
@@ -162,30 +163,29 @@
 <section class="max-w-5xl mx-auto px-4 py-10">
   {#if status === 'error'}
     <div class="card p-8 text-center">
-      <p class="text-slate-700">We could not reach the guide library just now.</p>
+      <p class="text-slate-700">{$t('We could not reach the guide library just now.')}</p>
       <a
         class="mt-4 inline-flex btn-secondary"
         href="https://www.ifixit.com/Guide"
         target="_blank"
         rel="noopener"
       >
-        Search on iFixit <ExternalLink size={16} />
+        {$t('Search on iFixit')} <ExternalLink size={16} />
       </a>
     </div>
   {:else if active && guides.length === 0 && status === 'idle'}
     <div class="card p-8 text-center">
-      <p class="text-slate-700">No guides found for &ldquo;{active}&rdquo;.</p>
+      <p class="text-slate-700">{$t('No guides found for “{query}”.', { query: active })}</p>
       <p class="mt-2 text-sm text-slate-500">
-        Try the make and model, or something more general like &ldquo;laptop battery&rdquo;.
+        {$t('Try the make and model, or something more general like “laptop battery”.')}
       </p>
     </div>
   {:else if !active && recent.length > 0}
     <!-- Nothing searched for yet. Show what the repair community has been
          working on this week, so the page opens with something real on it. -->
-    <p class="eyebrow">Recently updated by the repair community</p>
+    <p class="eyebrow">{$t('Recently updated by the repair community')}</p>
     <p class="mt-2 text-sm text-slate-600">
-      The newest guides on iFixit that are finished and illustrated. Search above for the thing you
-      are fixing.
+      {$t('The newest guides on iFixit that are finished and illustrated. Search above for the thing you are fixing.')}
     </p>
 
     <div class="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -208,7 +208,9 @@
 
   {:else if guides.length > 0}
     <p class="eyebrow">
-      {guides.length}{moreResults ? '+' : ''} guide{guides.length === 1 ? '' : 's'} for &ldquo;{active}&rdquo;
+      {guides.length}{moreResults ? '+' : ''} {guides.length === 1
+        ? $t('guide for “{query}”', { query: active })
+        : $t('guides for “{query}”', { query: active })}
     </p>
 
     <div class="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -251,7 +253,7 @@
     {#if moreResults}
       <div class="mt-8 text-center">
         <button type="button" class="btn-secondary" on:click={loadMore} disabled={status === 'more'}>
-          {status === 'more' ? 'Loading…' : 'Show more guides'}
+          {status === 'more' ? $t('Loading…') : $t('Show more guides')}
         </button>
       </div>
     {/if}
@@ -262,21 +264,20 @@
 <section class="band">
   <div class="max-w-3xl mx-auto px-4 py-12 text-center">
     <p class="text-slate-700">
-      These guides are written by the
+      {$t('These guides are written by the')}
       <a
         class="underline underline-offset-2 hover:text-pine"
         href="https://www.ifixit.com"
         target="_blank"
         rel="noopener"
       >iFixit</a>
-      community and shared under a
+      {$t('community and shared under a')}
       <a
         class="underline underline-offset-2 hover:text-pine"
         href="https://creativecommons.org/licenses/by-nc-sa/3.0/"
         target="_blank"
         rel="noopener"
-      >Creative Commons BY-NC-SA licence</a>. Every guide here links back to the original,
-      where you can also find tools, parts and the people who wrote it.
+      >{$t('Creative Commons BY-NC-SA licence')}</a>. {$t('Every guide here links back to the original, where you can also find tools, parts and the people who wrote it.')}
     </p>
   </div>
 </section>

@@ -8,6 +8,7 @@
   import AddToCalendar from '$lib/components/AddToCalendar.svelte';
   import { Calendar, Clock, MapPin, ChevronDown, CheckCircle2, Laptop, ExternalLink } from 'lucide-svelte';
   import type { PageData } from './$types';
+  import { t, dateLocale } from '$lib/i18n';
 
   interface LinuxEvent {
     id: string;
@@ -53,19 +54,18 @@
   $: nextEvent = upcoming[0] ?? null;
   $: homeVenue = upcoming[0]?.venue ?? null;
 
-  function formatDateShort(d: string): string {
-    return new Date(d + 'T12:00:00Z').toLocaleDateString('en-GB', {
+  $: formatDateShort = (d: string): string =>
+    new Date(d + 'T12:00:00Z').toLocaleDateString($dateLocale, {
       weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC',
     });
-  }
-  function dateParts(d: string) {
+  $: dateParts = (d: string) => {
     const dt = new Date(d + 'T12:00:00Z');
     return {
-      day: dt.toLocaleDateString('en-GB', { day: 'numeric', timeZone: 'UTC' }),
-      monthShort: dt.toLocaleDateString('en-GB', { month: 'short', timeZone: 'UTC' }),
-      weekdayLong: dt.toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'UTC' }),
+      day: dt.toLocaleDateString($dateLocale, { day: 'numeric', timeZone: 'UTC' }),
+      monthShort: dt.toLocaleDateString($dateLocale, { month: 'short', timeZone: 'UTC' }),
+      weekdayLong: dt.toLocaleDateString($dateLocale, { weekday: 'long', timeZone: 'UTC' }),
     };
-  }
+  };
   function noWrap(s: string): string {
     return s.replace(/\s+/g, ' ');
   }
@@ -102,10 +102,10 @@
   $: statTiles = !stats
     ? []
     : [
-        { value: stats.installedCount.toLocaleString('en-GB'), label: 'Computers now running Linux', show: stats.installedCount > 0 },
-        { value: `${stats.co2SavedKg.toLocaleString('en-GB')} kg`, label: 'CO₂ saved', show: stats.co2SavedKg > 0 },
-        { value: stats.advisedCount.toLocaleString('en-GB'), label: 'People we advised', show: stats.advisedCount > 0 },
-        { value: stats.sessionCount.toLocaleString('en-GB'), label: 'Sessions held', show: stats.sessionCount > 0 },
+        { value: stats.installedCount.toLocaleString($dateLocale), label: $t('Computers now running Linux'), show: stats.installedCount > 0 },
+        { value: `${stats.co2SavedKg.toLocaleString($dateLocale)} kg`, label: $t('CO₂ saved'), show: stats.co2SavedKg > 0 },
+        { value: stats.advisedCount.toLocaleString($dateLocale), label: $t('People we advised'), show: stats.advisedCount > 0 },
+        { value: stats.sessionCount.toLocaleString($dateLocale), label: $t('Sessions held'), show: stats.sessionCount > 0 },
       ].filter((t) => t.show);
 </script>
 
@@ -125,7 +125,7 @@
 
       {#if nextEvent}
         <div class="mt-10 inline-flex flex-col items-center gap-1 rounded-2xl bg-white/10 ring-1 ring-white/20 px-6 py-4">
-          <span class="eyebrow text-white/70">Next session with Linux help</span>
+          <span class="eyebrow text-white/70">{$t('Next session with Linux help')}</span>
           <span class="text-lg font-semibold">
             {formatDateShort(nextEvent.date)}, {nextEvent.startTime.slice(0,5)}–{nextEvent.endTime.slice(0,5)}
           </span>
@@ -141,14 +141,14 @@
       <div class="mt-8 flex flex-col sm:flex-row flex-wrap gap-3 sm:justify-center">
         {#if upcoming.length > 0}
           <a href="#dates" class="btn-primary !bg-white !text-brand-800 hover:!bg-slate-100">
-            <Calendar size={18} /> See when to come
+            <Calendar size={18} /> {$t('See when to come')}
           </a>
         {:else}
           <a href="/events" class="btn-primary !bg-white !text-brand-800 hover:!bg-slate-100">
-            <Calendar size={18} /> See upcoming events
+            <Calendar size={18} /> {$t('See upcoming events')}
           </a>
         {/if}
-        <a href="/contact" class="btn-secondary !bg-white/10 !text-white !ring-white/40 hover:!bg-white/20">Ask us a question</a>
+        <a href="/contact" class="btn-secondary !bg-white/10 !text-white !ring-white/40 hover:!bg-white/20">{$t('Ask us a question')}</a>
       </div>
     </div>
   </section>
@@ -176,7 +176,7 @@
   {#if Array.isArray(page.howItWorks) && page.howItWorks.length > 0}
     <section class="band">
       <div class="section">
-        <SectionHeading eyebrow="Your visit" title="How it works" />
+        <SectionHeading eyebrow={$t('Your visit')} title={$t('How it works')} />
         <div class="relative mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10">
           <div aria-hidden="true" class="hidden lg:block absolute top-6 left-[12.5%] right-[12.5%] h-px bg-brand-200"></div>
           {#each page.howItWorks as step, i}
@@ -197,9 +197,9 @@
       <div class="section">
         <SectionHeading
           tone="inverse"
-          eyebrow="What we have done together"
-          title="Computers saved"
-          lede="Every computer that keeps working is one that nobody had to buy, and one that stays out of the bin."
+          eyebrow={$t('What we have done together')}
+          title={$t('Computers saved')}
+          lede={$t('Every computer that keeps working is one that nobody had to buy, and one that stays out of the bin.')}
         />
         <dl class="mt-12 grid grid-cols-2 gap-8 {statTiles.length >= 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}">
           {#each statTiles as tile}
@@ -219,7 +219,7 @@
   <!-- ────────────────── What to bring ───────────────────────── -->
   {#if page.whatToBring?.body}
     <section class="section">
-      <SectionHeading eyebrow="Before you come" title={page.whatToBring.heading || 'What to bring'} />
+      <SectionHeading eyebrow={$t('Before you come')} title={page.whatToBring.heading || $t('What to bring')} />
       <div class="mt-10 max-w-3xl mx-auto card p-6 sm:p-10">
         {#if bring.isList}
           <ul class="space-y-4">
@@ -246,9 +246,9 @@
     <section id="dates" class="band">
       <div class="section">
         <SectionHeading
-          eyebrow="Mark your calendar"
-          title="When to come"
-          lede="Linux help runs as part of our ordinary repair sessions. Come to any of these and bring your computer."
+          eyebrow={$t('Mark your calendar')}
+          title={$t('When to come')}
+          lede={$t('Linux help runs as part of our ordinary repair sessions. Come to any of these and bring your computer.')}
         >
           {#if homeVenue}
             <p class="section-lede">
@@ -262,7 +262,7 @@
             {@const p = dateParts(e.date)}
             <div class="group relative card overflow-hidden text-center transition-shadow hover:ring-brand-400">
               {#if i === 0}
-                <span class="absolute top-2 right-2 z-10 rounded-full bg-accent-600 text-white text-[10px] font-bold uppercase tracking-wide px-2 py-0.5">Next</span>
+                <span class="absolute top-2 right-2 z-10 rounded-full bg-accent-600 text-white text-[10px] font-bold uppercase tracking-wide px-2 py-0.5">{$t('Next')}</span>
               {/if}
               <div class="absolute top-2 left-2 z-10">
                 <AddToCalendar event={e} variant="compact" class="!bg-brand-800/90 !text-white !ring-white/20 hover:!bg-brand-800" />
@@ -284,10 +284,14 @@
         <div class="text-center mt-10">
           {#if upcoming.length > DATE_PREVIEW}
             <p class="mb-4 text-sm text-slate-500">
-              We have {upcoming.length - DATE_PREVIEW} more {upcoming.length - DATE_PREVIEW === 1 ? 'date' : 'dates'} with Linux help after these.
+              {#if upcoming.length - DATE_PREVIEW === 1}
+                {$t('We have one more date with Linux help after these.')}
+              {:else}
+                {$t('We have {n} more dates with Linux help after these.', { n: upcoming.length - DATE_PREVIEW })}
+              {/if}
             </p>
           {/if}
-          <a href="/events" class="btn-secondary">See every session</a>
+          <a href="/events" class="btn-secondary">{$t('See every session')}</a>
         </div>
       </div>
     </section>
@@ -297,9 +301,9 @@
   {#if volunteers.length > 0}
     <section class="section">
       <SectionHeading
-        eyebrow="The people who will help you"
-        title="Our Linux volunteers"
-        lede="They will install it with you, not for you, so you leave knowing how your computer works."
+        eyebrow={$t('The people who will help you')}
+        title={$t('Our Linux volunteers')}
+        lede={$t('They will install it with you, not for you, so you leave knowing how your computer works.')}
       />
       <div class="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {#each volunteers.slice(0, TEAM_PREVIEW) as v}
@@ -308,7 +312,7 @@
       </div>
       {#if volunteers.length > TEAM_PREVIEW}
         <div class="text-center mt-10">
-          <a href="/skills" class="btn-secondary">Meet the whole team</a>
+          <a href="/skills" class="btn-secondary">{$t('Meet the whole team')}</a>
         </div>
       {/if}
     </section>
@@ -318,7 +322,7 @@
   {#if Array.isArray(page.faqs) && page.faqs.length > 0}
     <section class="band">
       <div class="section">
-        <SectionHeading eyebrow="Good to know" title="Common questions" />
+        <SectionHeading eyebrow={$t('Good to know')} title={$t('Common questions')} />
         <div class="mt-10 max-w-3xl mx-auto space-y-3">
           {#each page.faqs as faq, i}
             <details
@@ -344,11 +348,9 @@
   <!-- ─────────────── Part of a wider movement ───────────────── -->
   <section class="section">
     <div class="max-w-3xl mx-auto card p-6 sm:p-8 text-center">
-      <h2 class="text-xl font-semibold text-pine">Not just us</h2>
+      <h2 class="text-xl font-semibold text-pine">{$t('Not just us')}</h2>
       <p class="mt-3 text-slate-600 leading-relaxed">
-        Linux Repair Cafes are a worldwide effort to keep working computers out of the bin.
-        You can read about the movement, and find other cafes doing the same thing, on the
-        Repair Café International website.
+        {$t('Linux Repair Cafes are a worldwide effort to keep working computers out of the bin. You can read about the movement, and find other cafes doing the same thing, on the Repair Café International website.')}
       </p>
       <a
         href="https://www.repaircafe.org/en/linux-repair-cafe/"
@@ -356,7 +358,7 @@
         rel="noopener"
         class="btn-secondary mt-5"
       >
-        Read about Linux Repair Cafes <ExternalLink size={16} />
+        {$t('Read about Linux Repair Cafes')} <ExternalLink size={16} />
       </a>
     </div>
   </section>
@@ -365,10 +367,10 @@
   <NextSessionCta
     event={nextEvent}
     venue={homeVenue}
-    heading="Bring your old computer along"
-    body={`Come to our next Linux session and we will show you what your computer can still do. It is free, and there is no pressure to decide anything on the day.`}
+    heading={$t('Bring your old computer along')}
+    body={$t('Come to our next Linux session and we will show you what your computer can still do. It is free, and there is no pressure to decide anything on the day.')}
     ctaHref="/contact"
-    ctaLabel="Get in touch"
+    ctaLabel={$t('Get in touch')}
   />
 </main>
 

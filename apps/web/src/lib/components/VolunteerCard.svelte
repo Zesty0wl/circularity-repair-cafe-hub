@@ -2,6 +2,8 @@
   // One volunteer, as shown on the home page and the skills page. The bio and
   // the skill list are both capped so every card in a row ends up close to the
   // same height. The full detail is on the volunteer's own page.
+  import { t } from '$lib/i18n';
+
   interface Volunteer {
     id: string;
     displayName: string;
@@ -17,7 +19,7 @@
 
 <a
   href="/team/{volunteer.id}"
-  aria-label={`View profile: ${volunteer.displayName}`}
+  aria-label={$t('View profile: {name}', { name: volunteer.displayName })}
   class="card-link p-5 h-full"
 >
   <div class="flex items-center gap-3">
@@ -31,7 +33,7 @@
     <div class="min-w-0">
       <p class="font-semibold text-brand-700 truncate">{volunteer.displayName}</p>
       {#if volunteer.joinDate}
-        <p class="text-xs text-slate-500">Joined {new Date(volunteer.joinDate).getFullYear()}</p>
+        <p class="text-xs text-slate-500">{$t('Joined {year}', { year: new Date(volunteer.joinDate).getFullYear() })}</p>
       {/if}
     </div>
   </div>
@@ -46,7 +48,7 @@
         <span class="badge bg-slate-100 text-slate-700">{s}</span>
       {/each}
       {#if volunteer.skills.length > badgeLimit}
-        <span class="badge bg-slate-100 text-slate-500">+{volunteer.skills.length - badgeLimit} more</span>
+        <span class="badge bg-slate-100 text-slate-500">{$t('+{n} more', { n: volunteer.skills.length - badgeLimit })}</span>
       {/if}
     </div>
   {/if}

@@ -17,19 +17,23 @@ function pickLocale(acceptLanguage: string | null, setting: string): 'en' | 'fr'
   return fr !== -1 && (en === -1 || fr < en) ? 'fr' : 'en';
 }
 
-// Only the pages that actually have French translations follow the browser.
-// The public pages are still English, so they stay lang="en" even when the
-// browser asks for French — otherwise a screen reader would read English text
-// with a French voice. It also keeps the public-page cache stable: those pages
-// are always English, so the language never varies between visitors.
-const TRANSLATED = /^\/(checkin|track)(\/|$)/;
+/** The language the visitor picked last time, if they picked one. */
+function cookieLocale(cookieHeader: string | null): 'en' | 'fr' | null {
+  const match = /(?:^|;\s*)locale=(en|fr)(?:;|$)/.exec(cookieHeader ?? '');
+  return match ? (match[1] as 'en' | 'fr') : null;
+}
 
 // Resolve the language for every request and put it on <html lang>, which is
 // what tells screen readers and search engines what the page is in. The value
 // is also handed to the app (see routes/+layout.server.ts).
+//
+// The visitor's own choice wins, then a language forced by the cafe's LANGUAGE
+// setting, then the browser's Accept-Language. All pages are translated now, so
+// the language applies everywhere.
 export const handle: Handle = async ({ event, resolve }) => {
-  const requested = pickLocale(event.request.headers.get('accept-language'), (env.LANGUAGE ?? 'auto').toLowerCase());
-  const locale = TRANSLATED.test(event.url.pathname) ? requested : 'en';
+  const setting = (env.LANGUAGE ?? 'auto').toLowerCase();
+  const chosen = cookieLocale(event.request.headers.get('cookie'));
+  const locale = chosen ?? pickLocale(event.request.headers.get('accept-language'), setting);
   event.locals.locale = locale;
   return resolve(event, {
     transformPageChunk: ({ html }) => html.replace('<html lang="en"', `<html lang="${locale}"`),

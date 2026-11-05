@@ -17,6 +17,8 @@
   import { cafe } from '$lib/stores/cafe';
   import { homeFor, isAdminRole, isCurrent, navFor, tabsFor } from '$lib/staff/nav';
   import { Globe, LogOut, Menu, ShieldAlert, Wrench, X } from 'lucide-svelte';
+  import { t } from '$lib/i18n';
+  import LanguageSwitcher from './LanguageSwitcher.svelte';
 
   /** Only admins may see this part of the site. */
   export let requireAdmin = false;
@@ -97,8 +99,9 @@
           <p class="font-medium text-slate-900 truncate">{user.displayName}</p>
           <p class="text-xs text-slate-500">{admin ? (user.role === 'super_admin' ? 'Super admin' : 'Admin') : 'Repairer'}</p>
         </div>
-        <a href="/" class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100"><Globe size={18} class="text-slate-400" /> View the website</a>
-        <button type="button" on:click={signOut} class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100"><LogOut size={18} class="text-slate-400" /> Sign out</button>
+        <div class="px-3 py-2"><LanguageSwitcher /></div>
+        <a href="/" class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100"><Globe size={18} class="text-slate-400" /> {$t('View the website')}</a>
+        <button type="button" on:click={signOut} class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100"><LogOut size={18} class="text-slate-400" /> {$t('Sign out')}</button>
         {#if admin}
           <a href="/admin/settings?tab=about" class="block px-3 pt-2 text-xs text-slate-400 hover:text-slate-600" title="Version, licence and how to update">
             Repair Cafe Hub {$cafe?.appVersion ?? ''}
@@ -154,8 +157,9 @@
             {/each}
           </nav>
           <div class="border-t border-slate-200 p-3 space-y-1">
-            <a href="/" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-800 hover:bg-slate-100"><Globe size={20} class="text-slate-400" /> View the website</a>
-            <button type="button" on:click={signOut} class="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-slate-800 hover:bg-slate-100"><LogOut size={20} class="text-slate-400" /> Sign out</button>
+            <div class="px-3 py-2"><LanguageSwitcher /></div>
+            <a href="/" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-800 hover:bg-slate-100"><Globe size={20} class="text-slate-400" /> {$t('View the website')}</a>
+            <button type="button" on:click={signOut} class="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-slate-800 hover:bg-slate-100"><LogOut size={20} class="text-slate-400" /> {$t('Sign out')}</button>
           </div>
         </div>
       </div>

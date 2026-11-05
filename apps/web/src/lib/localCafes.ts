@@ -30,8 +30,11 @@ export function repairCafeOrgUrl(slug: string | null | undefined): string | null
 }
 
 /** "12 km away", or "800 m away" when it is close enough to walk. */
-export function formatDistance(km: number | null | undefined): string | null {
+export function formatDistance(
+  km: number | null | undefined,
+  awayLabel = 'away',
+): string | null {
   if (km === null || km === undefined || !Number.isFinite(km)) return null;
-  if (km < 1) return `${Math.round(km * 1000)} m away`;
-  return `${km < 10 ? km.toFixed(1) : Math.round(km)} km away`;
+  if (km < 1) return `${Math.round(km * 1000)} m ${awayLabel}`;
+  return `${km < 10 ? km.toFixed(1) : Math.round(km)} km ${awayLabel}`;
 }

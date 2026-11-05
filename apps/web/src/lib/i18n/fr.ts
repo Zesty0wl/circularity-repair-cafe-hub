@@ -518,4 +518,467 @@ export const fr: Record<string, string> = {
   'Your answer was not found.': 'Votre réponse n’a pas été trouvée.',
   'This sign-up does not exist.': 'Cette inscription n’existe pas.',
   'Please check your answer.': 'Vérifiez votre réponse.',
+
+  // ── Public site and shared wording ─────────────────────────────────
+  About: 'À propos',
+  Contact: 'Contact',
+  Home: 'Accueil',
+  'Repair guides': 'Guides de réparation',
+  Worldwide: 'Dans le monde',
+  'Skills & Team': 'Compétences et équipe',
+  'Skills & team': 'Compétences et équipe',
+  'Repair Cafés worldwide': 'Les Repair Cafés dans le monde',
+  'About & how we measure': 'À propos et méthode de calcul',
+  'Signed in as': 'Connecté en tant que',
+  'Open menu': 'Ouvrir le menu',
+  'Close menu': 'Fermer le menu',
+  Language: 'Langue',
+  'Supported by': 'Soutenu par',
+  'Powered by Repair Cafe Hub': 'Propulsé par Repair Cafe Hub',
+  'Repair Café Hub on GitHub': 'Repair Café Hub sur GitHub',
+  'Repair Café Hub, open source on GitHub': 'Repair Café Hub, logiciel libre sur GitHub',
+  'Install this app': 'Installer cette application',
+  'Add {name} to your home screen for quicker access.':
+    'Ajoutez {name} à votre écran d’accueil pour y accéder plus vite.',
+  'this site': 'ce site',
+  Install: 'Installer',
+  'Not now': 'Pas maintenant',
+  'Support us': 'Nous soutenir',
+  Visit: 'Nous rendre visite',
+  'Get in touch': 'Nous contacter',
+  'Send us a message': 'Envoyez-nous un message',
+  Welcome: 'Bienvenue',
+  'See upcoming events': 'Voir les prochaines dates',
+  'What we repair': 'Ce que nous réparons',
+  'What we can look at': 'Ce que nous pouvons examiner',
+  'Bring one of these along, or just ask. We will always take a look.':
+    'Apportez l’un de ces objets, ou demandez-nous simplement. Nous jetons toujours un œil.',
+  'How it works': 'Comment ça marche',
+  'Your visit': 'Votre visite',
+  'What we have done together': 'Ce que nous avons fait ensemble',
+  'Our numbers': 'Nos chiffres',
+  'Every repair keeps something working, and keeps it out of the bin.':
+    'Chaque réparation garde un objet en état de marche et l’empêche de finir à la poubelle.',
+  'Repairs done': 'Réparations réussies',
+  'CO₂ saved': 'CO₂ évité',
+  'Sessions held': 'Sessions organisées',
+  'From our sessions': 'De nos sessions',
+  'In the workshop': 'Dans l’atelier',
+  'Photos from recent repair sessions. Open one to see which session it came from.':
+    'Des photos de nos dernières sessions de réparation. Ouvrez-en une pour voir de quelle session elle vient.',
+  'A few photos from recent repair sessions.': 'Quelques photos de nos dernières sessions de réparation.',
+  'Mark your calendar': 'Notez la date',
+  'When & where': 'Quand et où',
+  'We have one more date booked after these.': 'Nous avons une autre date prévue après celles-ci.',
+  'We have {n} more dates booked after these.': 'Nous avons {n} autres dates prévues après celles-ci.',
+  'See full schedule': 'Voir tout le calendrier',
+  'Before you come': 'Avant de venir',
+  'What to bring': 'Quoi apporter',
+  'Also here': 'Aussi sur place',
+  'Next session with Linux help:': 'Prochaine session avec de l’aide Linux :',
+  'We are a Linux Repair Cafe': 'Nous sommes un Linux Repair Café',
+  'Is your computer too old for Windows 11? We can put Linux on it instead, for free. It keeps working, it keeps getting updates, and it stays out of the bin.':
+    'Votre ordinateur est trop ancien pour Windows 11 ? Nous pouvons installer Linux à la place, gratuitement. Il continue de fonctionner, il continue d’être mis à jour, et il ne finit pas à la poubelle.',
+  'Find out about Linux': 'En savoir plus sur Linux',
+  'The people who fix things': 'Les personnes qui réparent',
+  'Meet our team': 'Rencontrez notre équipe',
+  'Our repairers are volunteers. They give their time, their tools and their know-how.':
+    'Nos réparateurs sont bénévoles. Ils donnent leur temps, leurs outils et leur savoir-faire.',
+  'See everyone': 'Voir toute l’équipe',
+  'Good to know': 'Bon à savoir',
+  'Common questions': 'Questions fréquentes',
+  'Not just us': 'Pas seulement nous',
+  'Repair Cafes near us': 'Les Repair Cafés près de chez nous',
+  'We are part of a wider community of repairers. If we cannot help, one of these might.':
+    'Nous faisons partie d’une communauté de réparateurs. Si nous ne pouvons pas vous aider, l’un de ces cafés le pourra peut-être.',
+  'Tap a pin to find that cafe in the list. Details come from':
+    'Touchez un repère pour trouver ce café dans la liste. Les informations viennent de',
+  'Show {name} on the map': 'Afficher {name} sur la carte',
+  away: 'de distance',
+  'Their website': 'Leur site web',
+  'On repaircafe.org': 'Sur repaircafe.org',
+  'Got something broken?': 'Quelque chose est cassé ?',
+  'Bring it along to our next session. Repairs are free, everyone is welcome, and the kettle is always on.':
+    'Apportez-le à notre prochaine session. Les réparations sont gratuites, tout le monde est bienvenu, et la bouilloire est toujours chaude.',
+  'Add to calendar': 'Ajouter au calendrier',
+  'Add {name} to your calendar': 'Ajouter {name} à votre calendrier',
+  'View profile: {name}': 'Voir le profil de {name}',
+  'Joined {year}': 'Arrivé en {year}',
+  '+{n} more': '+{n} autres',
+  '{n} volunteer': '{n} bénévole',
+  '{n} volunteers': '{n} bénévoles',
+
+  // ── Contact, events and team ───────────────────────────────────────
+  'Come along to a session, or reach us before you visit.':
+    'Venez à une session, ou contactez-nous avant votre visite.',
+  'See all dates': 'Voir toutes les dates',
+  'Email us': 'Écrivez-nous',
+  'Find us': 'Nous trouver',
+  'pin-precise location': 'emplacement précis',
+  'Get directions': 'Itinéraire',
+  'View on map': 'Voir sur la carte',
+  'Visit our website': 'Visiter notre site',
+  'Map of {name}': 'Carte de {name}',
+  'How to find us': 'Comment nous trouver',
+  'Parking & transport': 'Stationnement et transports',
+  Accessibility: 'Accessibilité',
+  'Find us online': 'Nous trouver en ligne',
+  'Repairs are free. Donations pay for the tools, the room and the tea, and they keep the sessions running.':
+    'Les réparations sont gratuites. Les dons paient les outils, la salle et le thé, et permettent aux sessions de continuer.',
+  "What's on": 'Au programme',
+  'Upcoming events': 'Prochaines dates',
+  "Bring an item to repair. We'll do our best to fix it together.":
+    'Apportez un objet à réparer. Nous ferons de notre mieux pour le réparer ensemble.',
+  'No events scheduled just yet': 'Aucune date prévue pour le moment',
+  "We're planning the next session. Check back soon, or get in touch to be the first to know.":
+    'Nous préparons la prochaine session. Revenez bientôt, ou contactez-nous pour être les premiers informés.',
+  'Contact us': 'Nous contacter',
+  '{name}, {date}, view details': '{name}, {date}, voir les détails',
+  'Linux help too': 'Aide Linux aussi',
+  'Show past events': 'Voir les dates passées',
+  'Past events': 'Dates passées',
+  'See how each session went, and the photos our volunteers took.':
+    'Découvrez comment chaque session s’est passée, et les photos prises par nos bénévoles.',
+  'No past events to show.': 'Aucune date passée à afficher.',
+  '{n} photo': '{n} photo',
+  'Not sure if we can fix it?': 'Vous ne savez pas si nous pouvons le réparer ?',
+  'Bring it anyway. We will always take a look, and we will be honest about what we can and cannot do.':
+    'Apportez-le quand même. Nous y jetterons toujours un œil, et nous vous dirons honnêtement ce que nous pouvons faire ou non.',
+  'Back to all events': 'Retour à toutes les dates',
+  'Event not found': 'Date introuvable',
+  'This event may have been removed or is no longer published.':
+    'Cette date a peut-être été supprimée ou n’est plus publiée.',
+  'Past event': 'Date passée',
+  'Linux help at this session': 'Aide Linux à cette session',
+  'Bring an old computer and we can put Linux on it, free of charge. Back up your files first. Read what to expect.':
+    'Apportez un vieil ordinateur et nous pourrons y installer Linux, gratuitement. Sauvegardez d’abord vos fichiers. Découvrez ce qui vous attend.',
+  'Bringing something to fix?': 'Vous apportez quelque chose à réparer ?',
+  'Pre-register your item. Our repairers can then prepare before the day.':
+    'Pré-enregistrez votre objet. Nos réparateurs pourront ainsi se préparer avant le jour J.',
+  'Pre-register your item': 'Pré-enregistrer votre objet',
+  'What happened at this session': 'Ce qui s’est passé lors de cette session',
+  'Item brought in': 'Objet apporté',
+  'Items brought in': 'Objets apportés',
+  'Went home working': 'Reparti en état de marche',
+  'Fixed on the day': 'Réparé le jour même',
+  'Volunteer repairer': 'Réparateur bénévole',
+  'Volunteer repairers': 'Réparateurs bénévoles',
+  'Computer moved to Linux': 'Ordinateur passé sous Linux',
+  'Computers moved to Linux': 'Ordinateurs passés sous Linux',
+  'Advised about Linux': 'Personnes conseillées sur Linux',
+  'What we worked on': 'Ce sur quoi nous avons travaillé',
+  '{n} item is waiting for a part and will be finished at a later session.':
+    '{n} objet attend une pièce et sera terminé lors d’une prochaine session.',
+  '{n} items are waiting for a part and will be finished at a later session.':
+    '{n} objets attendent une pièce et seront terminés lors d’une prochaine session.',
+  'Figures come from our own records. We never show visitor names or contact details.':
+    'Les chiffres viennent de nos propres registres. Nous n’affichons jamais le nom ni les coordonnées des visiteurs.',
+  'Photos from the day': 'Photos du jour',
+  'Meet our volunteers and see the kinds of items they can help you fix.':
+    'Rencontrez nos bénévoles et découvrez les objets qu’ils peuvent vous aider à réparer.',
+  'Our volunteers': 'Nos bénévoles',
+  'Our team will appear here once volunteers join.':
+    'Notre équipe apparaîtra ici dès que des bénévoles nous auront rejoints.',
+  'Want to join us?': 'Envie de nous rejoindre ?',
+  'We always welcome new repairers, and you do not need to be an expert. Come to a session and say hello.':
+    'Nous accueillons toujours de nouveaux réparateurs, et vous n’avez pas besoin d’être un expert. Venez à une session nous dire bonjour.',
+  'Back to the team': 'Retour à l’équipe',
+  'Volunteer not found': 'Bénévole introuvable',
+  'This volunteer may have left the team or hidden their profile.':
+    'Ce bénévole a peut-être quitté l’équipe ou masqué son profil.',
+  'See our team': 'Voir notre équipe',
+  'Joined {date}': 'Arrivé en {date}',
+  '{n} repair logged': '{n} réparation enregistrée',
+  '{n} repairs logged': '{n} réparations enregistrées',
+  'Next session, {date}, view details and directions':
+    'Prochaine session, {date}, voir les détails et l’itinéraire',
+  'See details and directions': 'Voir les détails et l’itinéraire',
+  'Specialises in': 'Spécialités',
+
+  // ── Repair guides ──────────────────────────────────────────────────
+  'Fix it yourself': 'Réparez-le vous-même',
+  'Thousands of free, step-by-step guides from iFixit. Look something up before you come, or follow along at the table with us.':
+    'Des milliers de guides gratuits, pas à pas, proposés par iFixit. Cherchez votre objet avant de venir, ou suivez le guide avec nous à la table.',
+  'Search repair guides': 'Rechercher des guides de réparation',
+  'What needs fixing? Try a make and model, like "Bosch dishwasher"':
+    'Qu’est-ce qui est cassé ? Essayez une marque et un modèle, par exemple « lave-vaisselle Bosch »',
+  Searching: 'Recherche en cours',
+  'Or start with something common': 'Ou commencez par un objet courant',
+  'We could not reach the guide library just now.': 'Nous n’avons pas pu joindre la bibliothèque de guides pour le moment.',
+  'Search on iFixit': 'Chercher sur iFixit',
+  'No guides found for “{query}”.': 'Aucun guide trouvé pour « {query} ».',
+  'Try the make and model, or something more general like “laptop battery”.':
+    'Essayez la marque et le modèle, ou quelque chose de plus général comme « batterie d’ordinateur portable ».',
+  'Recently updated by the repair community': 'Récemment mis à jour par la communauté de réparation',
+  'The newest guides on iFixit that are finished and illustrated. Search above for the thing you are fixing.':
+    'Les guides les plus récents sur iFixit, terminés et illustrés. Cherchez ci-dessus l’objet que vous réparez.',
+  'guide for “{query}”': 'guide pour « {query} »',
+  'guides for “{query}”': 'guides pour « {query} »',
+  'Show more guides': 'Afficher plus de guides',
+  'These guides are written by the': 'Ces guides sont écrits par la',
+  'community and shared under a': 'communauté et partagés sous une licence',
+  'Creative Commons BY-NC-SA licence': 'Creative Commons BY-NC-SA',
+  'Every guide here links back to the original, where you can also find tools, parts and the people who wrote it.':
+    'Chaque guide renvoie à l’original, où vous trouverez aussi les outils, les pièces et les personnes qui l’ont écrit.',
+  'All repair guides': 'Tous les guides de réparation',
+  '{n} step': '{n} étape',
+  '{n} steps': '{n} étapes',
+  Tools: 'Outils',
+  Parts: 'Pièces',
+  'Step {n}': 'Étape {n}',
+  "This guide's steps are not available here. You can read the whole thing on iFixit.":
+    'Les étapes de ce guide ne sont pas disponibles ici. Vous pouvez lire le guide complet sur iFixit.',
+  'To put it back together': 'Pour le remonter',
+  'Open on iFixit': 'Ouvrir sur iFixit',
+  'Written by the iFixit community and shared under a':
+    'Écrit par la communauté iFixit et partagé sous une licence',
+  'Follow it at your own risk, and please unplug anything electrical before you open it.':
+    'Suivez-le à vos risques et périls, et débranchez tout appareil électrique avant de l’ouvrir.',
+
+  // ── Linux Repair Cafe ──────────────────────────────────────────────
+  'Next session with Linux help': 'Prochaine session avec de l’aide Linux',
+  'See when to come': 'Voir quand venir',
+  'Ask us a question': 'Posez-nous une question',
+  'Computers saved': 'Ordinateurs sauvés',
+  'Every computer that keeps working is one that nobody had to buy, and one that stays out of the bin.':
+    'Chaque ordinateur qui continue de fonctionner est un ordinateur que personne n’a eu à racheter, et qui ne finit pas à la poubelle.',
+  'Computers now running Linux': 'Ordinateurs qui tournent sous Linux',
+  'People we advised': 'Personnes conseillées',
+  'When to come': 'Quand venir',
+  'Linux help runs as part of our ordinary repair sessions. Come to any of these and bring your computer.':
+    'L’aide Linux fait partie de nos sessions de réparation habituelles. Venez à l’une de ces dates avec votre ordinateur.',
+  'We have one more date with Linux help after these.':
+    'Nous avons une autre date avec de l’aide Linux après celles-ci.',
+  'We have {n} more dates with Linux help after these.':
+    'Nous avons {n} autres dates avec de l’aide Linux après celles-ci.',
+  'See every session': 'Voir toutes les sessions',
+  'The people who will help you': 'Les personnes qui vous aideront',
+  'Our Linux volunteers': 'Nos bénévoles Linux',
+  'They will install it with you, not for you, so you leave knowing how your computer works.':
+    'Ils l’installeront avec vous, pas à votre place, pour que vous repartiez en sachant comment fonctionne votre ordinateur.',
+  'Meet the whole team': 'Rencontrer toute l’équipe',
+  'Linux Repair Cafes are a worldwide effort to keep working computers out of the bin. You can read about the movement, and find other cafes doing the same thing, on the Repair Café International website.':
+    'Les Linux Repair Cafés sont un mouvement mondial pour garder les ordinateurs en état de marche hors de la poubelle. Vous pouvez en savoir plus sur le mouvement, et trouver d’autres cafés qui font la même chose, sur le site de Repair Café International.',
+  'Read about Linux Repair Cafes': 'En savoir plus sur les Linux Repair Cafés',
+  'Bring your old computer along': 'Apportez votre vieil ordinateur',
+  'Come to our next Linux session and we will show you what your computer can still do. It is free, and there is no pressure to decide anything on the day.':
+    'Venez à notre prochaine session Linux et nous vous montrerons ce que votre ordinateur peut encore faire. C’est gratuit, et vous n’avez rien à décider le jour même.',
+
+  // ── About and carbon ───────────────────────────────────────────────
+  'How this works': 'Comment cela fonctionne',
+  'A few notes on how {name} runs, and on where the numbers we publish come from.':
+    'Quelques notes sur le fonctionnement de {name}, et sur l’origine des chiffres que nous publions.',
+  'How we work out the carbon saved': 'Comment nous calculons le carbone évité',
+  'Most of the carbon cost of an everyday object is spent before you ever switch it on. Mining the metals, making the parts, putting it together and shipping it across the world all happen first. Keeping a thing working means nobody has to make a new one yet, and that is where a repair does its good.':
+    'L’essentiel du coût carbone d’un objet courant est dépensé avant même que vous l’allumiez. L’extraction des métaux, la fabrication des pièces, l’assemblage et le transport à travers le monde ont déjà eu lieu. Garder un objet en état de marche évite d’en fabriquer un nouveau, et c’est là que la réparation fait du bien.',
+  'So when you check something in, we ask what kind of thing it is. We look up what it costs the planet to make one, then take half of that. We do not ask our volunteers to guess a number.':
+    'Quand vous enregistrez un objet, nous demandons de quel type il s’agit. Nous cherchons ce que sa fabrication coûte à la planète, puis nous en prenons la moitié. Nous ne demandons pas à nos bénévoles de deviner un chiffre.',
+  'The sum': 'Le calcul',
+  'carbon saved = carbon to make one': 'carbone évité = carbone pour en fabriquer un',
+  'That last number matters. A repair does not save the whole cost of a new item. We assume a repaired thing lasts about half as long again as it would have, so one repair prevents about half a new purchase. It is a careful way to count, and it is the same one used across the wider repair movement.':
+    'Ce dernier chiffre compte. Une réparation n’économise pas tout le coût d’un objet neuf. Nous supposons qu’un objet réparé dure environ une fois et demie plus longtemps, donc une réparation évite environ la moitié d’un achat neuf. C’est une façon prudente de compter, et c’est celle utilisée par le mouvement de la réparation.',
+  'Some everyday examples': 'Quelques exemples courants',
+  Thing: 'Objet',
+  Kettle: 'Bouilloire',
+  Toaster: 'Grille-pain',
+  'Laptop medium': 'Ordinateur portable moyen',
+  Mobile: 'Téléphone',
+  Vacuum: 'Aspirateur',
+  'Clothing/textile': 'Vêtement ou textile',
+  'Carbon to make one': 'Carbone pour en fabriquer un',
+  'Saved by fixing it': 'Évité en le réparant',
+  'Measured in kg of CO₂e, which counts all greenhouse gases together as if they were carbon dioxide.':
+    'Mesuré en kg d’équivalent CO₂, qui regroupe tous les gaz à effet de serre comme s’il s’agissait de dioxyde de carbone.',
+  'What this figure is, and what it is not': 'Ce que ce chiffre est, et ce qu’il n’est pas',
+  'It is an estimate.': 'C’est une estimation.',
+  'It uses an average for each kind of thing, not the actual object on the table. Your kettle is not the average kettle.':
+    'Elle utilise une moyenne pour chaque type d’objet, pas l’objet réel posé sur la table. Votre bouilloire n’est pas la bouilloire moyenne.',
+  'It only counts repairs that worked.': 'Elle ne compte que les réparations réussies.',
+  'If we cannot fix something, it counts for nothing, even though we tried.':
+    'Si nous ne pouvons pas réparer un objet, cela ne compte pas, même si nous avons essayé.',
+  'It does not cover every repair.': 'Elle ne couvre pas toutes les réparations.',
+  'We have a figure for about {coverage}% of the repairs we have finished. The rest were things we had no reference for, so they are left out rather than guessed at.':
+    'Nous avons un chiffre pour environ {coverage} % des réparations terminées. Les autres concernent des objets sans référence, nous les laissons de côté plutôt que de deviner.',
+  'It assumes a repair prevents a purchase.': 'Elle suppose qu’une réparation évite un achat.',
+  'Somebody who would have thrown a thing away and not replaced it saves nothing by our sum, and we have no way of knowing which is which.':
+    'Quelqu’un qui aurait jeté un objet sans le remplacer n’économise rien selon notre calcul, et nous ne pouvons pas savoir dans quel cas nous sommes.',
+  'We would rather publish a number we can explain than a bigger one we cannot.':
+    'Nous préférons publier un chiffre que nous pouvons expliquer plutôt qu’un chiffre plus gros que nous ne saurions pas justifier.',
+  'The figures come from': 'Les chiffres viennent de',
+  ', shared under a {licence} licence. It covers {n} kinds of thing, gathered from real products at community repair events. Some rest on only a handful of measurements.':
+    ', partagés sous une licence {licence}. Ils couvrent {n} types d’objets, recueillis à partir de produits réels lors d’événements de réparation. Certains reposent sur seulement quelques mesures.',
+  'We do not publish a carbon figure at the moment.': 'Nous ne publions pas de chiffre carbone pour le moment.',
+  'Everything else we count': 'Tout le reste de ce que nous comptons',
+  'counts items that went home working. An item we could not fix is not counted, and neither is one still waiting for a part.':
+    'compte les objets repartis en état de marche. Un objet que nous n’avons pas pu réparer n’est pas compté, pas plus qu’un objet en attente de pièce.',
+  'Success rate': 'Taux de réussite',
+  'is out of the repairs we finished one way or the other. Items still open are left out, because counting them would make us look worse than we are while we are still working.':
+    'est calculé sur les réparations terminées, d’une manière ou d’une autre. Les objets encore en cours sont exclus, car les compter nous ferait paraître moins bons que nous ne le sommes pendant que nous travaillons.',
+  'counts the people on our team, not visits. Somebody who comes to every session counts once.':
+    'compte les personnes de notre équipe, pas les visites. Une personne qui vient à chaque session compte une fois.',
+  'counts sessions that actually happened, not ones we had in the diary.':
+    'compte les sessions qui ont réellement eu lieu, pas celles qui étaient au programme.',
+  'Behind the scenes': 'Dans les coulisses',
+  'The software we run on': 'Le logiciel que nous utilisons',
+  'This site runs on Repair Café Hub, free and open source software made for grass-roots repair groups. Anyone can read the code, check our sums, or run it for their own cafe.':
+    'Ce site fonctionne avec Repair Café Hub, un logiciel libre et gratuit conçu pour les groupes de réparation locaux. Chacun peut lire le code, vérifier nos calculs ou l’utiliser pour son propre café.',
+  'See the code': 'Voir le code',
+
+  // ── World map ──────────────────────────────────────────────────────
+  'Repair Café International': 'Repair Café International',
+  'Part of a worldwide movement': 'Une partie d’un mouvement mondial',
+  'Every time we fix something together, we join thousands of other Repair Cafés doing the same thing. Here is the whole family, on one map.':
+    'Chaque fois que nous réparons quelque chose ensemble, nous rejoignons des milliers d’autres Repair Cafés qui font la même chose. Voici toute la famille, sur une seule carte.',
+  'Repair Cafés on the map': 'Repair Cafés sur la carte',
+  'A map showing Repair Cafes around the world. The same cafes are listed beside it.':
+    'Une carte montrant les Repair Cafés du monde entier. Les mêmes cafés sont listés à côté.',
+  'listed worldwide': 'répertoriés dans le monde',
+  Reset: 'Réinitialiser',
+  'Loading Repair Cafés from around the world…': 'Chargement des Repair Cafés du monde entier…',
+  'We could not load the worldwide map just now.': 'Nous n’avons pas pu charger la carte mondiale pour le moment.',
+  'Browse the map on repaircafe.org': 'Parcourir la carte sur repaircafe.org',
+  'Search Repair Cafés': 'Rechercher des Repair Cafés',
+  'Search by name or town': 'Rechercher par nom ou par ville',
+  'Finding you…': 'Recherche de votre position…',
+  'Find cafés near me': 'Trouver des cafés près de chez moi',
+  'Your browser cannot share your location.': 'Votre navigateur ne peut pas partager votre position.',
+  'We could not get your location. Please search instead.':
+    'Nous n’avons pas pu obtenir votre position. Utilisez la recherche à la place.',
+  'This is us': 'C’est nous',
+  '{n} match': '{n} résultat',
+  '{n} matches': '{n} résultats',
+  'No matches': 'Aucun résultat',
+  'Closest to you': 'Les plus proches de vous',
+  'Where cafés sit close together they are grouped into one circle with a number in it. Click a circle to zoom in and split it up. Drag the map to move around, and click any pin to see that café.':
+    'Lorsque des cafés sont très proches, ils sont regroupés dans un cercle avec un numéro. Cliquez sur un cercle pour zoomer et le séparer. Faites glisser la carte pour vous déplacer, et cliquez sur un repère pour voir ce café.',
+  'Ours is the orange pin, and every other café is green.':
+    'Le nôtre est le repère orange, et tous les autres cafés sont en vert.',
+  'Where it started': 'Où tout a commencé',
+  'What is Repair Café International?': 'Qu’est-ce que Repair Café International ?',
+  'The first Repair Café was held in Amsterdam on 18 October 2009. Martine Postma, a Dutch journalist, wanted to show that repairing things is practical, sociable and worth doing. People brought broken lamps, clothes and bicycles, and volunteers helped them fix the items themselves.':
+    'Le premier Repair Café a eu lieu à Amsterdam le 18 octobre 2009. Martine Postma, une journaliste néerlandaise, voulait montrer que réparer est pratique, convivial et utile. Des gens ont apporté des lampes cassées, des vêtements et des vélos, et des bénévoles les ont aidés à les réparer eux-mêmes.',
+  'The first Repair Café, in Amsterdam.': 'Le premier Repair Café, à Amsterdam.',
+  'The idea spread quickly. In 2011 the Repair Café International Foundation was set up to help other groups start their own. It is a non-profit organisation based in the Netherlands. It does not run the local cafés. Instead it gives new groups the advice, materials and shared name they need to get going.':
+    'L’idée s’est répandue rapidement. En 2011, la Fondation Repair Café International a été créée pour aider d’autres groupes à lancer le leur. C’est une organisation à but non lucratif basée aux Pays-Bas. Elle ne gère pas les cafés locaux. Elle donne aux nouveaux groupes les conseils, le matériel et le nom commun dont ils ont besoin pour démarrer.',
+  'Every Repair Café is run by local volunteers and makes its own decisions. What we share is the idea: bring a broken thing, sit down with someone who knows how to fix it, and learn something while you are there. Nothing is thrown away that could have been saved.':
+    'Chaque Repair Café est géré par des bénévoles locaux et prend ses propres décisions. Ce que nous partageons, c’est l’idée : apporter un objet cassé, s’asseoir avec quelqu’un qui sait le réparer, et apprendre quelque chose au passage. Rien n’est jeté qui aurait pu être sauvé.',
+  'The foundation starts helping new groups.': 'La fondation commence à aider de nouveaux groupes.',
+  Thousands: 'Des milliers',
+  'Repair Cafés listed around the world today.': 'Repair Cafés répertoriés dans le monde aujourd’hui.',
+  'Our place in it': 'Notre place dans ce mouvement',
+  'How {name} fits in': 'La place de {name}',
+  'We are one of the pins on that map. We run our own sessions, keep our own volunteers and raise our own funds, and we follow the same simple idea as everyone else on the map.':
+    'Nous sommes l’un des repères sur cette carte. Nous organisons nos propres sessions, faisons vivre notre équipe de bénévoles et levons nos propres fonds, et nous suivons la même idée simple que tous les autres sur la carte.',
+  'If you are travelling, or you live somewhere else, use the map above to find a Repair Café near you. If there is not one yet, you can start one. The foundation has a starter kit and will help you set it up.':
+    'Si vous voyagez, ou si vous habitez ailleurs, utilisez la carte ci-dessus pour trouver un Repair Café près de chez vous. S’il n’y en a pas encore, vous pouvez en créer un. La fondation propose un kit de démarrage et vous aidera à le mettre en place.',
+  'Visit repaircafe.org': 'Visiter repaircafe.org',
+  'Start a Repair Café': 'Créer un Repair Café',
+  'Open figures': 'Chiffres ouverts',
+  'Cafés running this software': 'Cafés qui utilisent ce logiciel',
+  'This website runs on Repair Café Hub. It is free software that any Repair Café can use to run its own site, book its sessions and keep track of what it repairs.':
+    'Ce site fonctionne avec Repair Café Hub. C’est un logiciel gratuit que tout Repair Café peut utiliser pour gérer son site, planifier ses sessions et suivre ses réparations.',
+  'Cafés using it can choose to share a few counts with us: how many repairs they recorded, how many were fixed, and the kinds of thing they saw. No names, no notes and no photographs are ever sent. We publish every figure we are given on one open page, so anyone can see how much the software is used and what it all adds up to.':
+    'Les cafés qui l’utilisent peuvent choisir de partager quelques chiffres avec nous : le nombre de réparations enregistrées, le nombre de réparations réussies et les types d’objets vus. Aucun nom, aucune note et aucune photo ne sont jamais envoyés. Nous publions tous les chiffres reçus sur une page ouverte, pour que chacun puisse voir à quel point le logiciel est utilisé et ce que tout cela représente.',
+  'See the shared figures': 'Voir les chiffres partagés',
+  'Café locations come from the': 'Les adresses des cafés viennent de',
+  'Repair Café location API': 'l’API de localisation des Repair Cafés',
+  'and are refreshed once a day. Some cafés are listed without a map position, so the map shows slightly fewer than the total. The map is drawn with':
+    'et sont actualisées une fois par jour. Certains cafés sont répertoriés sans position sur la carte, la carte en montre donc un peu moins que le total. La carte est dessinée avec',
+  'with free tiles from': 'avec des tuiles gratuites de',
+  'Map data': 'Données cartographiques',
+  'contributors.': 'contributeurs.',
+
+  // ── Pre-registration, sign-in and sharing ──────────────────────────
+  'We could not find this session.': 'Nous n’avons pas trouvé cette session.',
+  'Could not load this session': 'Impossible de charger cette session',
+  'Back to the session': 'Retour à la session',
+  'Pre-registration is closed': 'Les pré-inscriptions sont fermées',
+  'You cannot pre-register for this session any more. You can still bring your item on the day.':
+    'Vous ne pouvez plus pré-enregistrer d’objet pour cette session. Vous pouvez toujours apporter votre objet le jour même.',
+  'This cafe does not take pre-registrations. Just bring your item on the day.':
+    'Ce café ne prend pas de pré-inscriptions. Apportez simplement votre objet le jour même.',
+  'See the session': 'Voir la session',
+  'Your item is on the list': 'Votre objet est sur la liste',
+  'Thank you, {name}. We have saved your {item}.':
+    'Merci, {name}. Nous avons enregistré votre {item}.',
+  'A repairer may look into your item before the day.':
+    'Un réparateur peut examiner votre objet avant le jour J.',
+  'Bring your item to the session. When you arrive, scan the QR code at the door with this phone, or give your name at the welcome desk.':
+    'Apportez votre objet à la session. À votre arrivée, scannez le QR code à l’entrée avec ce téléphone, ou donnez votre nom à l’accueil.',
+  'The repair starts when your item is checked in.': 'La réparation commence lorsque votre objet est enregistré.',
+  'Your tracking link': 'Votre lien de suivi',
+  'Save this link. It shows your items, and you can cancel an item there if your plans change.':
+    'Conservez ce lien. Il montre vos objets, et vous pouvez y annuler un objet si vos plans changent.',
+  'Open my tracking page': 'Ouvrir ma page de suivi',
+  'Pre-register another item': 'Pré-enregistrer un autre objet',
+  'Tell us about your item before the session. Our repairers can then prepare, for example by finding a manual.':
+    'Parlez-nous de votre objet avant la session. Nos réparateurs pourront ainsi se préparer, par exemple en trouvant un manuel.',
+  "Adding to {name}'s items for this session.": 'Ajouté aux objets de {name} pour cette session.',
+  'Not {name}?': 'Ce n’est pas {name} ?',
+  'About you': 'À propos de vous',
+  '(optional, if a repairer may contact you about the item)':
+    '(facultatif, si un réparateur peut vous contacter au sujet de l’objet)',
+  'I am happy for my details to be stored for this repair. We do not share them with anyone.':
+    'J’accepte que mes informations soient conservées pour cette réparation. Nous ne les partageons avec personne.',
+  'About the item': 'À propos de l’objet',
+  'What is the item?': 'Quel est l’objet ?',
+  'For example: table lamp, blue': 'Par exemple : lampe de table, bleue',
+  'Brand and model': 'Marque et modèle',
+  '(optional, but it helps us prepare)': '(facultatif, mais cela nous aide à préparer)',
+  'For example: Roberts R250': 'Par exemple : Roberts R250',
+  'What is wrong with it?': 'Quel est le problème ?',
+  'For example: it will not turn on': 'Par exemple : il ne s’allume pas',
+  Saving: 'Enregistrement',
+  'Pre-register my item': 'Pré-enregistrer mon objet',
+  'Pre-registering does not book a time. Please bring your item during the session.':
+    'La pré-inscription ne réserve pas d’horaire. Merci d’apporter votre objet pendant la session.',
+  'Please tell us what is wrong with it': 'Merci de nous dire quel est le problème',
+  'Could not save your item': 'Impossible d’enregistrer votre objet',
+  'Passwords do not match': 'Les mots de passe ne correspondent pas',
+  'Reset link expired or invalid': 'Lien de réinitialisation expiré ou invalide',
+  'Set your password': 'Définissez votre mot de passe',
+  'Use at least 10 characters, with upper and lower case letters and a number.':
+    'Utilisez au moins 10 caractères, avec des majuscules, des minuscules et un chiffre.',
+  'New password': 'Nouveau mot de passe',
+  'Set password and sign in': 'Définir le mot de passe et se connecter',
+  'Share my profile': 'Partager mon profil',
+  'Share this profile': 'Partager ce profil',
+  'Share your profile': 'Partager votre profil',
+  "Share {name}'s profile": 'Partager le profil de {name}',
+  Classic: 'Classique',
+  Bold: 'Audacieux',
+  Close: 'Fermer',
+  'Pick a style, then share the card where your friends are.':
+    'Choisissez un style, puis partagez la carte là où sont vos amis.',
+  'Preview of the sharing card': 'Aperçu de la carte de partage',
+  'Card style': 'Style de carte',
+  Copied: 'Copié',
+  'Download card': 'Télécharger la carte',
+  'More ways to share': 'Plus de façons de partager',
+  'Facebook, X and Bluesky show the card when the link is shared. To post the picture itself, download it and attach it to your post.':
+    'Facebook, X et Bluesky affichent la carte lorsque le lien est partagé. Pour publier l’image elle-même, téléchargez-la et joignez-la à votre publication.',
+  'I will be repairing at {cafe} on {date} at {venue}. Bring something broken and we will help you fix it for free.':
+    'Je réparerai à {cafe} le {date} à {venue}. Apportez un objet cassé et nous vous aiderons à le réparer gratuitement.',
+  'I volunteer as a repairer at {cafe}. Bring something broken to our next session and we will help you fix it for free.':
+    'Je suis bénévole réparateur à {cafe}. Apportez un objet cassé à notre prochaine session et nous vous aiderons à le réparer gratuitement.',
+  '{name} will be repairing at {cafe} on {date} at {venue}. Bring something broken and get help fixing it for free.':
+    '{name} réparera à {cafe} le {date} à {venue}. Apportez un objet cassé et faites-vous aider à le réparer gratuitement.',
+  '{name} volunteers as a repairer at {cafe}. Bring something broken to a repair session and get help fixing it for free.':
+    '{name} est bénévole réparateur à {cafe}. Apportez un objet cassé à une session de réparation et faites-vous aider à le réparer gratuitement.',
+
+  // ── Photo viewer and map loading ───────────────────────────────────
+  'View larger: {caption}': 'Voir en grand : {caption}',
+  'View photo {n} of {total}': 'Voir la photo {n} sur {total}',
+  'Show all {n} photos': 'Afficher les {n} photos',
+  'Show fewer photos': 'Afficher moins de photos',
+  'Photo viewer': 'Visionneuse de photos',
+  'Close photo viewer': 'Fermer la visionneuse',
+  'Close (Esc)': 'Fermer (Échap)',
+  'Previous photo (←)': 'Photo précédente (←)',
+  'Next photo (→)': 'Photo suivante (→)',
+  'From {name}': 'De {name}',
+  'Loading the map…': 'Chargement de la carte…',
+  'The map could not be loaded. The list below has every cafe.':
+    'La carte n’a pas pu être chargée. La liste ci-dessous contient tous les cafés.',
+  '(that is us)': '(c’est nous)',
 };

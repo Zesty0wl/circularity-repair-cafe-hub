@@ -1,6 +1,8 @@
 <script lang="ts">
   import { track } from '$lib/analytics';
   import { cafe } from '$lib/stores/cafe';
+  import { t } from '$lib/i18n';
+  import LanguageSwitcher from './LanguageSwitcher.svelte';
   import { Mail, MapPin, Heart } from 'lucide-svelte';
 
   // Social links are stored as { platform: url }. Capitalise the key for the
@@ -27,25 +29,25 @@
             on:click={() => track('donate', { place: 'footer' })}
             class="mt-5 inline-flex items-center gap-2 rounded-xl bg-white/10 ring-1 ring-white/20 px-4 py-2 text-sm font-semibold transition-colors hover:bg-white/20"
           >
-            <Heart size={16} /> Support us
+            <Heart size={16} /> {$t('Support us')}
           </a>
         {/if}
       </div>
 
       <div>
-        <p class="text-xs font-bold uppercase tracking-[0.18em] text-white/50">Visit</p>
+        <p class="text-xs font-bold uppercase tracking-[0.18em] text-white/50">{$t('Visit')}</p>
         <ul class="mt-4 space-y-2 text-white/80">
-          <li><a class="hover:text-white" href="/events">Events</a></li>
-          <li><a class="hover:text-white" href="/skills">Skills &amp; team</a></li>
-          <li><a class="hover:text-white" href="/guides">Repair guides</a></li>
-          <li><a class="hover:text-white" href="/world">Repair Cafés worldwide</a></li>
-          <li><a class="hover:text-white" href="/about">About &amp; how we measure</a></li>
-          <li><a class="hover:text-white" href="/contact">Contact</a></li>
+          <li><a class="hover:text-white" href="/events">{$t('Events')}</a></li>
+          <li><a class="hover:text-white" href="/skills">{$t('Skills & team')}</a></li>
+          <li><a class="hover:text-white" href="/guides">{$t('Repair guides')}</a></li>
+          <li><a class="hover:text-white" href="/world">{$t('Repair Cafés worldwide')}</a></li>
+          <li><a class="hover:text-white" href="/about">{$t('About & how we measure')}</a></li>
+          <li><a class="hover:text-white" href="/contact">{$t('Contact')}</a></li>
         </ul>
       </div>
 
       <div>
-        <p class="text-xs font-bold uppercase tracking-[0.18em] text-white/50">Get in touch</p>
+        <p class="text-xs font-bold uppercase tracking-[0.18em] text-white/50">{$t('Get in touch')}</p>
         <ul class="mt-4 space-y-2 text-white/80">
           {#if $cafe?.contactEmail}
             <li>
@@ -67,9 +69,12 @@
             </li>
           {/if}
           {#if !$cafe?.contactEmail && !$cafe?.address && socials.length === 0}
-            <li><a class="hover:text-white underline underline-offset-2" href="/contact">Send us a message</a></li>
+            <li><a class="hover:text-white underline underline-offset-2" href="/contact">{$t('Send us a message')}</a></li>
           {/if}
         </ul>
+        <div class="mt-6">
+          <LanguageSwitcher tone="dark" />
+        </div>
       </div>
     </div>
 
@@ -85,7 +90,7 @@
         rel="noopener"
         class="inline-flex items-center gap-2 hover:text-white/80"
       >
-        <span>Supported by</span>
+        <span>{$t('Supported by')}</span>
         <!-- h-5, not smaller. The wordmark stacks ".org" under "Circularity",
              so at 16px each line is about seven pixels tall and unreadable. -->
         <img
@@ -100,14 +105,14 @@
         rel="noopener"
         class="inline-flex items-center gap-2 hover:text-white/80"
       >
-        <span>Powered by Repair Cafe Hub{$cafe?.appVersion ? ` ${$cafe.appVersion}` : ''}</span>
+        <span>{$t('Powered by Repair Cafe Hub')}{$cafe?.appVersion ? ` ${$cafe.appVersion}` : ''}</span>
       </a>
       <a
         href="https://github.com/Zesty0wl/circularity-repair-cafe-hub"
         target="_blank"
         rel="noopener"
         class="inline-flex items-center gap-2 hover:text-white/80"
-        aria-label="Repair Café Hub, open source on GitHub"
+        aria-label={$t('Repair Café Hub, open source on GitHub')}
       >
         <svg viewBox="0 0 98 96" class="h-5 w-5 shrink-0" aria-hidden="true" focusable="false">
           <path
@@ -117,7 +122,7 @@
             fill="currentColor"
           />
         </svg>
-        <span>Repair Café Hub on GitHub</span>
+        <span>{$t('Repair Café Hub on GitHub')}</span>
       </a>
     </div>
   </div>

@@ -8,6 +8,7 @@
   import Icon from '@iconify/svelte';
   import { categoryIcon } from '$lib/categoryIcon';
   import { t, tNow } from '$lib/i18n';
+  import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
 
   type Status = 'waiting' | 'in_progress' | 'completed' | 'cannot_repair' | 'awaiting_return' | 'returned';
 
@@ -163,6 +164,7 @@
 
 <main class="min-h-screen bg-slate-100 customer-ui">
   <div class="max-w-md mx-auto px-4 py-8">
+    <div class="flex justify-end mb-3"><LanguageSwitcher variant="compact" /></div>
     {#if loadError && !data}
       <div class="card p-6 text-center">
         <h1 class="text-2xl font-semibold">{$t('Sorry')}</h1>

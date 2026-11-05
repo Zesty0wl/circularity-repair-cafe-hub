@@ -17,6 +17,7 @@
    * with several thousand cafés loaded.
    */
   import { createEventDispatcher, onDestroy, onMount } from 'svelte';
+  import { t } from '$lib/i18n';
   import 'maplibre-gl/dist/maplibre-gl.css';
   import type * as MapLibre from 'maplibre-gl';
   import {
@@ -279,7 +280,7 @@
   class="world-stage"
   bind:this={container}
   role="img"
-  aria-label="A map showing Repair Cafes around the world. The same cafes are listed beside it."
+  aria-label={$t('A map showing Repair Cafes around the world. The same cafes are listed beside it.')}
 ></div>
 
 {#if failed}

@@ -33,7 +33,7 @@
   // (see onMount) so it can never leak between SSR requests.
   $: cafe.set(data.cafe);
   $: setupCompleted.set(data.setupCompleted);
-  $: setLocale((data.locale ?? 'en') as Locale);
+  $: setLocale(((data as { locale?: Locale }).locale ?? 'en') as Locale);
 
   // Re-theme the UI whenever the cafe's branding changes. Unset colours/fonts
   // fall back to the Circularity defaults declared in app.css. Guarded to the

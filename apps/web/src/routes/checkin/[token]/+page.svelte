@@ -11,6 +11,7 @@
   import { categoryIcon } from '$lib/categoryIcon';
   import { loadPreRegistration } from '$lib/preRegistration';
   import { t, tNow } from '$lib/i18n';
+  import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
 
   $: token = $page.params.token;
 
@@ -396,6 +397,7 @@
 
 <main class="min-h-screen bg-slate-100 customer-ui">
   <div class="max-w-md mx-auto px-4 py-8">
+    <div class="flex justify-end mb-3"><LanguageSwitcher variant="compact" /></div>
     {#if loadError}
       <div class="card p-6 text-center">
         <h1 class="text-2xl font-semibold">{$t('Sorry')}</h1>

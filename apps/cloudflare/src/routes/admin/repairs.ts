@@ -115,6 +115,8 @@ export async function adminRepairsRoutes(app: App): Promise<void> {
         : [];
       pat = {
         needed: needsPatTest(true, job.isElectrical, rows[0].category?.isElectrical),
+        itemIsElectrical: job.isElectrical,
+        categoryIsElectrical: rows[0].category?.isElectrical ?? false,
         result: job.patResult,
         testedAt: job.patTestedAt,
         testedByName: tester?.displayName ?? null,
@@ -139,13 +141,51 @@ export async function adminRepairsRoutes(app: App): Promise<void> {
     }
     const data = parsed.data;
     const [existing] = await db
-      .select({ status: repairJobs.status, eventId: repairJobs.eventId, cardNumber: repairJobs.cardNumber })
+      .select({
+        status: repairJobs.status,
+        eventId: repairJobs.eventId,
+        cardNumber: repairJobs.cardNumber,
+        itemCategoryId: repairJobs.itemCategoryId,
+        isElectrical: repairJobs.isElectrical,
+        patResult: repairJobs.patResult,
+      })
       .from(repairJobs)
       .where(eq(repairJobs.id, id))
       .limit(1);
     if (!existing) {
       reply.code(404).send({ error: 'Repair not found', code: 'repair/not_found' });
       return;
+    }
+    // While the cafe does PAT tests, an admin follows the same rule as a
+    // repairer: an electrical item needs a PAT result before it becomes
+    // Completed, and an item that failed cannot become Completed. Only when
+    // the status changes, so an admin can still edit the notes of a repair
+    // that was finished before PAT testing was switched on.
+    if (data.status === 'completed' && existing.status !== 'completed' && (await cafeFeatures()).patTestingEnabled) {
+      const categoryId = data.itemCategoryId !== undefined ? data.itemCategoryId : existing.itemCategoryId;
+      const [category] = categoryId
+        ? await db
+            .select({ isElectrical: skillCategories.isElectrical })
+            .from(skillCategories)
+            .where(eq(skillCategories.id, categoryId))
+            .limit(1)
+        : [];
+      if (needsPatTest(true, existing.isElectrical, category?.isElectrical)) {
+        if (!existing.patResult) {
+          reply.code(400).send({
+            error: 'This is an electrical item. Record the PAT test result before you mark it as completed.',
+            code: 'pat/required',
+          });
+          return;
+        }
+        if (existing.patResult === 'fail') {
+          reply.code(400).send({
+            error: 'This item failed its PAT test, so it cannot be marked as completed. Choose "Cannot repair", or record a new result.',
+            code: 'pat/failed',
+          });
+          return;
+        }
+      }
     }
     // A card number must not clash with another open repair in the same
     // session. Check before saving, both when the number changes and when a

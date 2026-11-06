@@ -176,6 +176,55 @@ describe('PAT testing', () => {
     expect(res.status).toBe(200);
     await call(`/api/admin/events/${session.id}/complete`, { method: 'POST', token: admin });
   });
+
+  it('lets an admin record a PAT result on any repair, also after it is finished', async () => {
+    const lamp = (await call('/api/admin/repairs?search=Lamp', { token: admin })).body.data[0];
+    expect(lamp.status).toBe('cannot_repair');
+    expect((await call(`/api/admin/repairs/${lamp.id}`, { token: admin })).body.pat).toMatchObject({
+      needed: true,
+      itemIsElectrical: null,
+      categoryIsElectrical: true,
+      result: null,
+    });
+
+    const recorded = await call(`/api/repairer/jobs/${lamp.id}/pat`, { method: 'PATCH', token: admin, json: { result: 'fail', notes: 'Cracked plug' } });
+    expect(recorded.status).toBe(200);
+    expect(recorded.body.status).toBe('cannot_repair');
+    const detail = (await call(`/api/admin/repairs/${lamp.id}`, { token: admin })).body;
+    expect(detail.pat).toMatchObject({ result: 'fail', notes: 'Cracked plug', testedByName: 'Ada Admin' });
+
+    // A repairer who is not working on it still cannot.
+    expect((await call(`/api/repairer/jobs/${lamp.id}/pat`, { method: 'PATCH', token: ada, json: { result: 'pass' } })).status).toBe(403);
+  });
+
+  it('asks an admin for a PAT result before they set an electrical item to Completed', async () => {
+    const day = await makeEvent({ name: 'Admin PAT day', date: daysFromNow(0) });
+    await call(`/api/admin/events/${day.id}/activate`, { method: 'POST', token: admin });
+    const kettle = await checkIn(day.checkInToken, 'Kettle', electronicsId);
+    const toCompleted = () => call(`/api/admin/repairs/${kettle.body.id}`, { method: 'PATCH', token: admin, json: { status: 'completed' } });
+
+    const without = await toCompleted();
+    expect(without.status).toBe(400);
+    expect(without.body.code).toBe('pat/required');
+
+    await call(`/api/repairer/jobs/${kettle.body.id}/pat`, { method: 'PATCH', token: admin, json: { result: 'fail' } });
+    expect((await toCompleted()).body.code).toBe('pat/failed');
+
+    // Moving it to a category that is not electrical, in the same save, is fine.
+    const asToy = await call(`/api/admin/repairs/${kettle.body.id}`, { method: 'PATCH', token: admin, json: { status: 'completed', itemCategoryId: toysId } });
+    expect(asToy.status).toBe(200);
+    await call(`/api/admin/repairs/${kettle.body.id}`, { method: 'PATCH', token: admin, json: { status: 'in_progress', itemCategoryId: electronicsId } });
+
+    await call(`/api/repairer/jobs/${kettle.body.id}/pat`, { method: 'PATCH', token: admin, json: { result: 'pass' } });
+    expect((await toCompleted()).status).toBe(200);
+
+    // A repair finished before PAT testing was switched on can still be edited.
+    const radio = (await call('/api/admin/repairs?search=Radio', { token: admin })).body.data[0];
+    expect(radio.status).toBe('completed');
+    const edit = await call(`/api/admin/repairs/${radio.id}`, { method: 'PATCH', token: admin, json: { status: 'completed', outcomeNotes: 'New valve' } });
+    expect(edit.status).toBe(200);
+    await call(`/api/admin/events/${day.id}/complete`, { method: 'POST', token: admin });
+  });
 });
 
 describe('pre-registration', () => {

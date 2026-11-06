@@ -2122,6 +2122,11 @@ export const fr: Record<string, string> = {
   'Claim this repair': 'Prendre cette réparation',
   'Take over this job': 'Prendre en charge cette réparation',
   'PAT test': 'Test PAT',
+  'Record a new result': 'Enregistrer un nouveau résultat',
+  'Save PAT result': 'Enregistrer le résultat du test PAT',
+  'Could not save the PAT result': 'Impossible d’enregistrer le résultat du test PAT',
+  'This item failed its PAT test, but its status is Completed. Change the status to Cannot repair, or record a new result.':
+    'Cet objet a échoué au test PAT, mais son statut est « Terminé ». Changez le statut en « Non réparable », ou enregistrez un nouveau résultat.',
   'Recorded by {name} on {date}': 'Enregistré par {name} le {date}',
   'Recorded by {name}': 'Enregistré par {name}',
   'on {date}': 'le {date}',
@@ -2414,6 +2419,10 @@ export const fr: Record<string, string> = {
     'Cet objet est électrique. Enregistrez le résultat du test PAT avant de le marquer comme réparé.',
   'The exit question is switched off': 'La question de sortie est désactivée',
   'Repair not found': 'Réparation introuvable',
+  'This is an electrical item. Record the PAT test result before you mark it as completed.':
+    'Cet objet est électrique. Enregistrez le résultat du test PAT avant de le marquer comme terminé.',
+  'This item failed its PAT test, so it cannot be marked as completed. Choose "Cannot repair", or record a new result.':
+    'Cet objet a échoué au test PAT : il ne peut pas être marqué comme terminé. Choisissez « Non réparable », ou enregistrez un nouveau résultat.',
   'Returning customer token not recognised for this event':
     'Nous ne retrouvons pas votre visite précédente pour cet événement',
   'Photos can only be added while the item is waiting':

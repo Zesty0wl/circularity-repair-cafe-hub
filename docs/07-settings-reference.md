@@ -159,6 +159,15 @@ When you turn on **Ask repairers for a PAT test on electrical items**:
   can mark it as **Could not fix**, or test it again after more work.
 - A PAT result is not needed for **Could not fix** or **Coming back**, but the
   repairer can still record one.
+- An admin can record or change a PAT result on any repair, at any time. Open
+  the repair from **Repairs** in the admin area. In the **PAT test** box,
+  choose **Passed**, **Failed** or **Not needed**, add a note if you want, and
+  press **Save PAT result**. The hub saves your name and the time with it. This
+  works after the repair is finished too, so you can fill in results after the
+  session.
+- An admin cannot set an electrical item's status to **Completed** until it
+  has a PAT result, and not at all if it failed. Choose **Cannot repair**
+  instead.
 
 Which items are electrical? Each skill category has an **Electrical** label on
 the **Skills** page. New hubs start with **Electronics** and **Small

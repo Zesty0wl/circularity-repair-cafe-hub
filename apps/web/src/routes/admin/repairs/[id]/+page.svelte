@@ -7,7 +7,8 @@
   import { auth } from '$lib/stores/auth';
   import { cafe } from '$lib/stores/cafe';
   import PatBadge from '$lib/components/PatBadge.svelte';
-  import { ArrowLeft } from 'lucide-svelte';
+  import { ArrowLeft, Zap } from 'lucide-svelte';
+  import { PAT_RESULTS, type PatResult } from '@circularity/shared';
 
   $: id = $page.params.id;
   let detail: any = null;
@@ -18,6 +19,13 @@
   let assigning = false;
   let assignError = '';
   let deleting = false;
+  let saveError = '';
+  /** Recording a PAT result from this page. */
+  let patChoice: PatResult | null = null;
+  let patNotes = '';
+  let changingPat = false;
+  let savingPat = false;
+  let patError = '';
 
   $: myId = $auth?.user.id ?? null;
   $: status = detail?.job?.status as string | undefined;
@@ -47,6 +55,11 @@
     cardNumber: '' as string | number,
     status: 'waiting',
   };
+
+  /** Fetch the repair again without touching the form, so unsaved edits stay. */
+  async function reloadDetail() {
+    detail = await api(`/api/admin/repairs/${id}`);
+  }
 
   async function load() {
     [detail, categories, allUsers] = await Promise.all([
@@ -78,6 +91,7 @@
 
   async function save() {
     busy = true;
+    saveError = '';
     try {
       await api(`/api/admin/repairs/${id}`, {
         method: 'PATCH',
@@ -100,7 +114,44 @@
         },
       });
       await load();
+    } catch (e: any) {
+      saveError = e?.message ?? tNow('Could not save this repair');
     } finally { busy = false; }
+  }
+
+  // Say whether this one item is electrical, whatever its category says.
+  async function setElectrical(value: boolean) {
+    patError = '';
+    try {
+      await api(`/api/repairer/jobs/${id}/electrical`, { method: 'PATCH', json: { isElectrical: value } });
+      await reloadDetail();
+    } catch (e: any) {
+      patError = e?.message ?? tNow('Could not save that change');
+    }
+  }
+
+  // Record the PAT result. The hub saves your name and the time with it.
+  async function savePat() {
+    if (!patChoice) {
+      patError = tNow('Choose Passed, Failed or Not needed');
+      return;
+    }
+    savingPat = true;
+    patError = '';
+    try {
+      await api(`/api/repairer/jobs/${id}/pat`, {
+        method: 'PATCH',
+        json: { result: patChoice, notes: patNotes.trim() || null },
+      });
+      patChoice = null;
+      patNotes = '';
+      changingPat = false;
+      await reloadDetail();
+    } catch (e: any) {
+      patError = e?.message ?? tNow('Could not save the PAT result');
+    } finally {
+      savingPat = false;
+    }
   }
 
   async function claim() {
@@ -170,21 +221,74 @@
     {/if}
   </div>
 
-  {#if detail.pat && (detail.pat.needed || detail.pat.result)}
-    <!-- The PAT test record, while the cafe does PAT tests. -->
-    <div class="card p-4 mt-4 max-w-2xl">
-      <h2 class="font-semibold">{$t('PAT test')}</h2>
-      <p class="mt-2 flex flex-wrap items-center gap-2 text-sm">
-        <PatBadge needed={detail.pat.needed} result={detail.pat.result} />
-        {#if detail.pat.result}
-          <span class="text-slate-600">
-            {#if detail.pat.testedByName && detail.pat.testedAt}{$t('Recorded by {name} on {date}', { name: detail.pat.testedByName, date: new Date(detail.pat.testedAt).toLocaleString(dateLocale(), { dateStyle: 'medium', timeStyle: 'short' }) })}{:else if detail.pat.testedByName}{$t('Recorded by {name}', { name: detail.pat.testedByName })}{:else if detail.pat.testedAt} {$t('on {date}', { date: new Date(detail.pat.testedAt).toLocaleString(dateLocale(), { dateStyle: 'medium', timeStyle: 'short' }) })}{/if}
+  {#if detail.pat}
+    <!-- The PAT test, while the cafe does PAT tests. An admin can record the
+         result here at any time, also after the repair is finished. -->
+    <div class="card p-4 mt-4 max-w-2xl space-y-3">
+      <h2 class="font-semibold flex items-center gap-1.5"><Zap size={16} class="text-amber-700" /> {$t('PAT test')}</h2>
+      <label class="flex items-start gap-3 text-sm cursor-pointer">
+        <input
+          type="checkbox"
+          class="h-5 w-5 rounded border-slate-300 text-brand-600 mt-0.5"
+          checked={detail.pat.needed}
+          on:change={(e) => setElectrical(e.currentTarget.checked)}
+        />
+        <span>
+          <span class="font-medium text-slate-900">{$t('This is an electrical item')}</span>
+          <span class="block text-xs text-slate-500">
+            {#if detail.pat.itemIsElectrical === null}{$t('Set from its category.')}{:else}{$t('Changed for this item.')}{/if}
+            {$t('Electrical items need a PAT test.')}
           </span>
-        {:else}
-          <span class="text-slate-600">{$t('No result recorded yet.')}</span>
-        {/if}
-      </p>
-      {#if detail.pat.notes}<p class="mt-2 text-sm text-slate-700 whitespace-pre-line">{detail.pat.notes}</p>{/if}
+        </span>
+      </label>
+
+      {#if detail.pat.result && !changingPat}
+        <div class="text-sm">
+          <p class="flex flex-wrap items-center gap-2">
+            <PatBadge result={detail.pat.result} />
+            <span class="text-slate-600">
+              {#if detail.pat.testedByName && detail.pat.testedAt}{$t('Recorded by {name} on {date}', { name: detail.pat.testedByName, date: new Date(detail.pat.testedAt).toLocaleString(dateLocale(), { dateStyle: 'medium', timeStyle: 'short' }) })}{:else if detail.pat.testedByName}{$t('Recorded by {name}', { name: detail.pat.testedByName })}{:else if detail.pat.testedAt} {$t('on {date}', { date: new Date(detail.pat.testedAt).toLocaleString(dateLocale(), { dateStyle: 'medium', timeStyle: 'short' }) })}{/if}
+            </span>
+          </p>
+          {#if detail.pat.notes}<p class="mt-1 text-slate-700 whitespace-pre-line">{detail.pat.notes}</p>{/if}
+          {#if detail.pat.result === 'fail' && detail.job.status === 'completed'}
+            <p class="mt-2 text-amber-900 bg-amber-50 rounded-lg px-3 py-2">{$t('This item failed its PAT test, but its status is Completed. Change the status to Cannot repair, or record a new result.')}</p>
+          {/if}
+          <button type="button" class="mt-2 text-sm text-slate-600 underline underline-offset-2" on:click={() => { changingPat = true; patChoice = null; patNotes = ''; patError = ''; }}>{$t('Record a new result')}</button>
+        </div>
+      {:else if detail.pat.needed || changingPat}
+        <div>
+          {#if !detail.pat.result}<p class="text-sm text-slate-600">{$t('No result recorded yet.')}</p>{/if}
+          <p class="mt-2 text-sm font-medium text-slate-900">{$t('PAT test result')}</p>
+          <div class="mt-2 grid grid-cols-3 gap-2" role="radiogroup" aria-label={$t('PAT test result')}>
+            {#each PAT_RESULTS as r}
+              <button
+                type="button"
+                role="radio"
+                aria-checked={patChoice === r.value}
+                class="rounded-lg px-2 py-2 text-sm font-medium ring-1 transition {patChoice === r.value
+                  ? r.value === 'pass'
+                    ? 'ring-2 ring-emerald-500 bg-emerald-50 text-emerald-900'
+                    : r.value === 'fail'
+                      ? 'ring-2 ring-rose-500 bg-rose-50 text-rose-900'
+                      : 'ring-2 ring-slate-500 bg-slate-50 text-slate-900'
+                  : 'ring-slate-200 bg-white hover:bg-slate-50 text-slate-700'}"
+                on:click={() => (patChoice = r.value)}
+              >{$t(r.label)}</button>
+            {/each}
+          </div>
+          <label class="label mt-3" for="patnotes">{$t('PAT notes')} <span class="font-normal text-slate-400">{$t('(optional)')}</span></label>
+          <input id="patnotes" class="input" maxlength="500" placeholder={$t('For example: battery only, or why it failed')} bind:value={patNotes} />
+          <p class="mt-1 text-xs text-slate-500">{$t('Your name and the time are saved with the result.')}</p>
+          <div class="mt-3 flex flex-wrap items-center justify-end gap-2">
+            {#if changingPat}
+              <button type="button" class="btn-ghost" disabled={savingPat} on:click={() => { changingPat = false; patChoice = null; patError = ''; }}>{$t('Cancel')}</button>
+            {/if}
+            <button type="button" class="btn-primary" disabled={savingPat || !patChoice} on:click={savePat}>{savingPat ? $t('Saving…') : $t('Save PAT result')}</button>
+          </div>
+        </div>
+      {/if}
+      {#if patError}<p class="text-sm text-rose-700">{patError}</p>{/if}
     </div>
   {/if}
 
@@ -292,6 +396,7 @@
       <div><label class="label" for="satc">{$t('Comment')}</label><input id="satc" class="input" maxlength="500" bind:value={form.satisfactionComment} /></div>
     </div>
     {/if}
+    {#if saveError}<p class="text-sm text-rose-700">{saveError}</p>{/if}
     <div class="flex justify-end"><button class="btn-primary" on:click={save} disabled={busy}>{$t('Save')}</button></div>
   </div>
 

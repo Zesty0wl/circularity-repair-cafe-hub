@@ -2,6 +2,24 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
+## 1.15.1 (6 November 2026)
+
+### Fixed
+
+- **Admins can record a PAT test result.** An admin could see a repair's PAT
+  test on its page in the admin area, but could not record one. The only way
+  was to take the repair over and finish it in the volunteer area, which did
+  not work for a repair that was already finished. The **PAT test** box on a
+  repair's admin page now lets you choose **Passed**, **Failed** or **Not
+  needed**, add a note and save it, at any time. It also has the **This is an
+  electrical item** tick box. Your name and the time are saved with the
+  result.
+- **The PAT rule now applies to admins too.** The status list on a repair's
+  admin page could set an electrical item to **Completed** with no PAT result,
+  or after it failed. It now asks for a result first, just like a repairer's
+  page. Repairs finished before PAT testing was switched on can still be
+  edited as before.
+
 ## 1.15.0 (26 October 2026)
 
 ### Added

@@ -239,6 +239,11 @@ When you turn on **Let visitors pre-register their items before a session**:
   its page. The visitor gives their first name, an optional phone or email (if
   the contact field is on), the item and what is wrong with it. They get a
   tracking link, and they can cancel an item there.
+- Repairers and admins can also add an item for a visitor who phones, emails
+  or asks in person. In **Pre-registered items**, press **Add an item for a
+  visitor**. The same rules apply as for the visitor's own form, and the
+  visitor gets the same tracking link. See the
+  [repairer guide](./repairer-guide.md#adding-an-item-for-a-visitor).
 - Repairers see the items under **Pre-registered items** in the menu. A
   repairer can **take** an item and write notes before the day, for example a
   link to the manual or a list of parts to bring. Only the repairer who took it

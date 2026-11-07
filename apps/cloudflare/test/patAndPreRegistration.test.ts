@@ -444,6 +444,49 @@ describe('pre-registration', () => {
     expect((await call(`/api/repairer/pre-registrations/${fan.body.id}/check-in`, { method: 'POST', token: ben })).status).toBe(409);
   });
 
+  it('lets a volunteer add an item for a visitor', async () => {
+    const later = await makeEvent({ name: 'Phone-in day', date: daysFromNow(10) });
+    const hidden = await makeEvent({ name: 'Not published yet', date: daysFromNow(11), isPublished: false });
+    const list = (await call('/api/repairer/pre-registrations', { token: ben })).body;
+    const sessionIds = list.sessions.map((s: any) => s.id);
+    expect(sessionIds).toContain(later.id);
+    expect(sessionIds).not.toContain(hidden.id);
+    expect(list.askContact).toBe(true);
+
+    const add = (token: string, json: Record<string, unknown>) => call('/api/repairer/pre-registrations', { token, json });
+    const kettle = { itemDescription: 'Kettle', faultDescription: 'Leaks', itemCategoryId: electronicsId };
+    expect((await add(ben, { eventId: later.id, customerName: 'Joan', ...kettle })).status).toBe(400);
+    expect((await add(ben, { eventId: hidden.id, customerName: 'Joan', gdprConsent: true, ...kettle })).body.code).toBe('preregistration/closed');
+    expect((await add(ben, { eventId: 'not-a-session', customerName: 'Joan', gdprConsent: true, ...kettle })).status).toBe(404);
+
+    // A repairer adds it and takes it in one go.
+    const first = await add(ben, { eventId: later.id, customerName: 'Joan', customerContact: '01234 567890', gdprConsent: true, take: true, ...kettle });
+    expect(first.status, JSON.stringify(first.body)).toBe(200);
+    expect(first.body.customerName).toBe('Joan');
+    expect(first.body.repairerId).not.toBeNull();
+
+    // An admin adds a second item for the same visitor, with the same link.
+    const second = await add(admin, { eventId: later.id, customerToken: first.body.customerToken, itemDescription: 'Toaster', faultDescription: 'Burns the toast' });
+    expect(second.status).toBe(200);
+    expect(second.body.customerToken).toBe(first.body.customerToken);
+    expect(second.body.repairerId).toBeNull();
+
+    const items = (await call('/api/repairer/pre-registrations', { token: ben })).body.items.filter((i: any) => i.event.id === later.id);
+    expect(items.map((i: any) => [i.itemDescription, i.customerFirstName, i.isMine])).toEqual([
+      ['Kettle', 'Joan', true],
+      ['Toaster', 'Joan', false],
+    ]);
+    const track = (await call(`/api/track/${first.body.customerToken}`)).body;
+    expect(track.customerName).toBe('Joan');
+    expect(track.preRegistrations.map((p: any) => p.itemDescription)).toEqual(['Kettle', 'Toaster']);
+
+    // The visitor's own form keeps working the same way.
+    const own = await call(`/api/public/events/${later.id}/pre-register`, {
+      json: { customerToken: first.body.customerToken, itemDescription: 'Lamp', faultDescription: 'Flickers' },
+    });
+    expect(own.status).toBe(200);
+  });
+
   it('removes expired personal details from pre-registrations too', async () => {
     const res = await call('/api/admin/repairs/purge-expired-pii', { token: admin, json: {} });
     expect(res.status).toBe(200);
@@ -454,5 +497,6 @@ describe('pre-registration', () => {
     await setPreferences({ preRegistrationEnabled: false });
     expect((await call('/api/repairer/pre-registrations', { token: ada })).status).toBe(404);
     expect((await call('/api/repairer/pre-registrations-today', { token: ada })).status).toBe(404);
+    expect((await call('/api/repairer/pre-registrations', { token: ada, json: { eventId: venueId } })).status).toBe(404);
   });
 });

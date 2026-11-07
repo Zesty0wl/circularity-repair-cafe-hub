@@ -8,7 +8,7 @@
   import { api } from '$lib/api';
   import PatBadge from '$lib/components/PatBadge.svelte';
   import { firstName, sessionTimes } from '$lib/staff/queue';
-  import { CalendarClock, ChevronRight, NotebookPen } from 'lucide-svelte';
+  import { CalendarClock, ChevronRight, NotebookPen, Plus } from 'lucide-svelte';
   import { t, tNow, dateLocale } from '$lib/i18n';
 
   interface Item {
@@ -98,12 +98,17 @@
 
 <svelte:head><title>{$t('Pre-registered items')}</title></svelte:head>
 
-<header>
-  <p class="kicker flex items-center gap-2"><CalendarClock size={14} /> {$t('Before the session')}</p>
-  <h1 class="text-2xl md:text-3xl font-bold mt-1">{$t('Pre-registered items')}</h1>
-  <p class="mt-1 text-slate-600 max-w-2xl">
-    {$t('Visitors have told us about these items before they come. Take one to look into it before the day. The repair starts when the item is checked in at the session.')}
-  </p>
+<header class="flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="kicker flex items-center gap-2"><CalendarClock size={14} /> {$t('Before the session')}</p>
+    <h1 class="text-2xl md:text-3xl font-bold mt-1">{$t('Pre-registered items')}</h1>
+    <p class="mt-1 text-slate-600 max-w-2xl">
+      {$t('Visitors have told us about these items before they come. Take one to look into it before the day. The repair starts when the item is checked in at the session.')}
+    </p>
+  </div>
+  {#if !loading && !loadError}
+    <a href="/repairer/pre-registered/new" class="btn-primary shrink-0"><Plus size={18} /> {$t('Add an item for a visitor')}</a>
+  {/if}
 </header>
 
 {#if loading}

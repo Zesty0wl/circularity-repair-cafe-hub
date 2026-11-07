@@ -35,7 +35,7 @@ export function describeActivity(a: any): { who: string | null; rest: string } {
     case 'repair.pii_purged': return { who: null, rest: tNow('Personal details were removed from {item}', { item }) };
     case 'repair.pat_recorded': return { who, rest: tNow('recorded a PAT test for {item}', { item }) };
     case 'repair.electrical_changed': return { who, rest: tNow('changed whether {item} needs a PAT test', { item }) };
-    case 'preregistration.created': return { who, rest: tNow('pre-registered an item') };
+    case 'preregistration.created': return { who, rest: a.metadata?.by === 'staff' ? tNow('pre-registered an item for a visitor') : tNow('pre-registered an item') };
     case 'preregistration.claimed': return { who, rest: tNow('took a pre-registered item to look into') };
     case 'preregistration.taken_over': return { who, rest: tNow('took over a pre-registered item') };
     case 'preregistration.released': return { who, rest: tNow('gave back a pre-registered item') };

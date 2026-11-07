@@ -619,6 +619,7 @@ export const fr: Record<string, string> = {
   'recorded a PAT test for {item}': 'a enregistré un test PAT pour {item}',
   'changed whether {item} needs a PAT test': 'a modifié si {item} a besoin d’un test PAT',
   'pre-registered an item': 'a pré-inscrit un objet',
+  'pre-registered an item for a visitor': 'a pré-inscrit un objet pour un visiteur',
   'took a pre-registered item to look into': 'a pris un objet pré-inscrit pour l’étudier',
   'took over a pre-registered item': 'a pris en charge un objet pré-inscrit',
   'gave back a pre-registered item': 'a rendu un objet pré-inscrit',
@@ -733,6 +734,37 @@ export const fr: Record<string, string> = {
   'Open': 'Ouvrir',
   'Taking…': 'En cours…',
   'Take this item': 'Prendre cet objet',
+  // ── Adding a pre-registered item for a visitor ────────────────────────
+  'Add an item for a visitor': 'Ajouter un objet pour un visiteur',
+  'Back to pre-registered items': 'Retour aux objets pré-inscrits',
+  'No sessions to add items to': 'Aucune séance où ajouter des objets',
+  'You can add items to a session that is published and has not started yet. There is none at the moment.':
+    'Vous pouvez ajouter des objets à une séance publiée qui n’a pas encore commencé. Il n’y en a aucune pour le moment.',
+  'The item is on the list': 'L’objet est sur la liste',
+  'We have saved {item} for {name}.': 'Nous avons enregistré {item} pour {name}.',
+  'You have taken it to look into.': 'Vous l’avez pris pour l’étudier.',
+  "The visitor's tracking link": 'Le lien de suivi du visiteur',
+  'Give the visitor this link if you can. It shows their items, and they can cancel an item there if their plans change. On the day, they can also give their name at the welcome desk.':
+    'Donnez ce lien au visiteur si possible. Il montre ses objets, et il peut y annuler un objet si ses projets changent. Le jour venu, il peut aussi donner son nom à l’accueil.',
+  'Another item for {name}': 'Un autre objet pour {name}',
+  'An item for someone else': 'Un objet pour une autre personne',
+  'Open the item': 'Ouvrir l’objet',
+  'For a visitor who phones, emails or asks in person. Their item goes on the list for the session, just as if they had filled in the form themselves.':
+    'Pour un visiteur qui téléphone, envoie un e-mail ou demande en personne. Son objet est ajouté à la liste de la séance, comme s’il avait rempli le formulaire lui-même.',
+  'Someone else': 'Une autre personne',
+  'About the visitor': 'À propos du visiteur',
+  "I've asked, and the visitor is happy for their details to be stored for this repair.":
+    'J’ai demandé, et le visiteur accepte que ses coordonnées soient enregistrées pour cette réparation.',
+  'I will look into this item': 'Je vais étudier cet objet',
+  'The item is taken by you, so other repairers know you are preparing for it.':
+    'L’objet vous est attribué, pour que les autres réparateurs sachent que vous le préparez.',
+  'Add the item': 'Ajouter l’objet',
+  'Choose a session': 'Choisissez une séance',
+  "Please enter the visitor's first name": 'Veuillez saisir le prénom du visiteur',
+  'Please confirm the visitor is happy for their details to be stored':
+    'Veuillez confirmer que le visiteur accepte que ses coordonnées soient enregistrées',
+  'Could not save the item': 'Impossible d’enregistrer l’objet',
+  'Could not load the form': 'Impossible de charger le formulaire',
   'We could not find this item. It may have been removed, or pre-registration is switched off.':
     'Nous n’avons pas trouvé cet objet. Il a peut-être été supprimé, ou la pré-inscription est désactivée.',
   'Could not load this item': 'Impossible de charger cet objet',

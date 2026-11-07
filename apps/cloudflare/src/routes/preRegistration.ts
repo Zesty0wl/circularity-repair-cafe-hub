@@ -9,6 +9,7 @@
 //
 //  Volunteers (signed in):
 //    GET    /api/repairer/pre-registrations            everything still to come
+//    POST   /api/repairer/pre-registrations            add an item for a visitor
 //    GET    /api/repairer/pre-registrations/:id        one item
 //    PATCH  /api/repairer/pre-registrations/:id/claim  take it to look into
 //    PATCH  /api/repairer/pre-registrations/:id/release
@@ -27,6 +28,7 @@ import { needsPatTest, preRegistrationSchema } from '@circularity/shared';
 import type { App, HubReply } from '../lib/router.js';
 import { db } from '../db/index.js';
 import { events, preRegistrations, skillCategories, users, venues } from '../db/schema.js';
+import type { Event, PreRegistration } from '../db/schema.js';
 import { localToday } from '../lib/dates.js';
 import { audit } from '../utils/audit.js';
 import { randomToken } from '../utils/tokens.js';
@@ -51,6 +53,116 @@ function firstName(name: string | null | undefined): string | null {
   return name ? name.trim().split(/\s+/)[0] ?? null : null;
 }
 
+/** Upcoming sessions that still take pre-registered items, soonest first. */
+async function openSessions() {
+  const rows = await db
+    .select({
+      id: events.id,
+      name: events.name,
+      date: events.date,
+      startTime: events.startTime,
+      endTime: events.endTime,
+      status: events.status,
+      isPublished: events.isPublished,
+    })
+    .from(events)
+    .where(and(eq(events.status, 'scheduled'), eq(events.isPublished, true), gte(events.date, localToday())))
+    .orderBy(asc(events.date), asc(events.startTime));
+  return rows
+    .filter((e) => closedReason(e) === null)
+    .map(({ id, name, date, startTime, endTime }) => ({ id, name, date, startTime, endTime }));
+}
+
+type CreateResult =
+  | { status: number; error: { error: string; code: string; details?: unknown } }
+  | { created: PreRegistration; customerToken: string; returning: boolean };
+
+/**
+ * Save a pre-registered item for a session that is open for them. The
+ * visitor's form and the volunteers' form both use this, so the same rules
+ * apply to both: the session's limit on items, the limit per visitor, and a
+ * name and consent for a new visitor.
+ */
+async function createPreRegistration(
+  event: Event,
+  body: unknown,
+  features: Awaited<ReturnType<typeof cafeFeatures>>,
+  extra: Partial<Pick<PreRegistration, 'repairerId' | 'claimedAt'>> = {},
+): Promise<CreateResult> {
+  const parsed = preRegistrationSchema.safeParse(body);
+  if (!parsed.success) {
+    return { status: 400, error: { error: 'Validation failed', code: 'validation/failed', details: parsed.error.flatten() } };
+  }
+  const data = parsed.data;
+
+  // A session with a limit on items keeps the same limit here. Every session
+  // also has an upper limit, so nobody can fill the list with junk.
+  const [{ open }] = await db
+    .select({ open: count() })
+    .from(preRegistrations)
+    .where(and(eq(preRegistrations.eventId, event.id), eq(preRegistrations.status, 'open')));
+  const limit = Math.min(event.maxItems ?? MAX_OPEN_PER_EVENT, MAX_OPEN_PER_EVENT);
+  if (Number(open) >= limit) {
+    return { status: 409, error: { error: 'This session has no pre-registration places left.', code: 'preregistration/full' } };
+  }
+
+  // A visitor adding a second item keeps the same token, name and consent,
+  // so one tracking link shows everything they are bringing.
+  let customerToken: string | null = null;
+  let customerName = data.customerName ?? null;
+  let customerContact = features.enableContactField ? data.customerContact?.trim() || null : null;
+  let gdprConsent = data.gdprConsent === true;
+  if (data.customerToken) {
+    const mine = await db
+      .select({
+        customerName: preRegistrations.customerName,
+        customerContact: preRegistrations.customerContact,
+        gdprConsent: preRegistrations.gdprConsent,
+        status: preRegistrations.status,
+      })
+      .from(preRegistrations)
+      .where(and(eq(preRegistrations.customerToken, data.customerToken), eq(preRegistrations.eventId, event.id)));
+    const known = mine[0];
+    if (known) {
+      if (mine.filter((m) => m.status === 'open').length >= MAX_PER_VISITOR) {
+        return {
+          status: 409,
+          error: { error: `You can pre-register up to ${MAX_PER_VISITOR} items for one session.`, code: 'preregistration/too_many' },
+        };
+      }
+      customerToken = data.customerToken;
+      customerName = known.customerName;
+      customerContact = known.customerContact;
+      gdprConsent = known.gdprConsent;
+    } else if (!customerName || !gdprConsent) {
+      return {
+        status: 400,
+        error: { error: 'We could not find your earlier items. Please enter your name again.', code: 'preregistration/unknown_token' },
+      };
+    }
+  }
+  customerToken ??= randomToken(16);
+
+  const [created] = await db
+    .insert(preRegistrations)
+    .values({
+      eventId: event.id,
+      customerName,
+      customerContact,
+      customerToken,
+      itemDescription: data.itemDescription,
+      itemCategoryId: data.itemCategoryId ?? null,
+      co2FactorId: data.co2FactorId ?? null,
+      itemBrand: data.itemBrand ?? null,
+      faultDescription: data.faultDescription,
+      gdprConsent,
+      dataRetentionDate: retentionDate(features.dataRetentionDays),
+      ...extra,
+    })
+    .returning();
+  return { created, customerToken, returning: Boolean(data.customerToken) };
+}
+
 export async function preRegistrationPublicRoutes(app: App): Promise<void> {
   // ── A visitor tells us about an item before the session ────────────────
   app.post('/api/public/events/:id/pre-register', async (request, reply) => {
@@ -71,83 +183,12 @@ export async function preRegistrationPublicRoutes(app: App): Promise<void> {
       reply.code(400).send({ error: CLOSED_MESSAGE[closed], code: 'preregistration/closed' });
       return;
     }
-    const parsed = preRegistrationSchema.safeParse(request.body);
-    if (!parsed.success) {
-      reply.code(400).send({ error: 'Validation failed', code: 'validation/failed', details: parsed.error.flatten() });
+    const result = await createPreRegistration(event, request.body, features);
+    if ('error' in result) {
+      reply.code(result.status).send(result.error);
       return;
     }
-    const data = parsed.data;
-
-    // A session with a limit on items keeps the same limit here. Every session
-    // also has an upper limit, so nobody can fill the list with junk.
-    const [{ open }] = await db
-      .select({ open: count() })
-      .from(preRegistrations)
-      .where(and(eq(preRegistrations.eventId, event.id), eq(preRegistrations.status, 'open')));
-    const limit = Math.min(event.maxItems ?? MAX_OPEN_PER_EVENT, MAX_OPEN_PER_EVENT);
-    if (Number(open) >= limit) {
-      reply.code(409).send({
-        error: 'This session has no pre-registration places left.',
-        code: 'preregistration/full',
-      });
-      return;
-    }
-
-    // A visitor adding a second item keeps the same token, name and consent,
-    // so one tracking link shows everything they are bringing.
-    let customerToken: string | null = null;
-    let customerName = data.customerName ?? null;
-    let customerContact = features.enableContactField ? data.customerContact?.trim() || null : null;
-    let gdprConsent = data.gdprConsent === true;
-    if (data.customerToken) {
-      const mine = await db
-        .select({
-          customerName: preRegistrations.customerName,
-          customerContact: preRegistrations.customerContact,
-          gdprConsent: preRegistrations.gdprConsent,
-          status: preRegistrations.status,
-        })
-        .from(preRegistrations)
-        .where(and(eq(preRegistrations.customerToken, data.customerToken), eq(preRegistrations.eventId, event.id)));
-      const known = mine[0];
-      if (known) {
-        if (mine.filter((m) => m.status === 'open').length >= MAX_PER_VISITOR) {
-          reply.code(409).send({
-            error: `You can pre-register up to ${MAX_PER_VISITOR} items for one session.`,
-            code: 'preregistration/too_many',
-          });
-          return;
-        }
-        customerToken = data.customerToken;
-        customerName = known.customerName;
-        customerContact = known.customerContact;
-        gdprConsent = known.gdprConsent;
-      } else if (!customerName || !gdprConsent) {
-        reply.code(400).send({
-          error: 'We could not find your earlier items. Please enter your name again.',
-          code: 'preregistration/unknown_token',
-        });
-        return;
-      }
-    }
-    customerToken ??= randomToken(16);
-
-    const [created] = await db
-      .insert(preRegistrations)
-      .values({
-        eventId: event.id,
-        customerName,
-        customerContact,
-        customerToken,
-        itemDescription: data.itemDescription,
-        itemCategoryId: data.itemCategoryId ?? null,
-        co2FactorId: data.co2FactorId ?? null,
-        itemBrand: data.itemBrand ?? null,
-        faultDescription: data.faultDescription,
-        gdprConsent,
-        dataRetentionDate: retentionDate(features.dataRetentionDays),
-      })
-      .returning();
+    const { created, customerToken, returning } = result;
 
     await audit({
       request,
@@ -155,7 +196,7 @@ export async function preRegistrationPublicRoutes(app: App): Promise<void> {
       action: 'preregistration.created',
       entityType: 'pre_registration',
       entityId: created.id,
-      metadata: { eventId: event.id, returning: Boolean(data.customerToken) },
+      metadata: { eventId: event.id, returning },
     });
     return { id: created.id, customerToken, status: created.status };
   });
@@ -344,7 +385,49 @@ export async function preRegistrationStaffRoutes(app: App): Promise<void> {
         needsPat: needsPatTest(features.patTestingEnabled, r.pre.isElectrical, r.category?.isElectrical),
         event: r.event,
       })),
+      // The sessions a volunteer can add an item to for a visitor, and
+      // whether the form asks for a phone number or email.
+      sessions: await openSessions(),
+      askContact: features.enableContactField,
     };
+  });
+
+  // ── A volunteer adds an item for a visitor ─────────────────────────────
+  // For a visitor who phones, emails or asks in person. The same rules as
+  // the visitor's own form. The volunteer can take the item at the same time.
+  app.post('/api/repairer/pre-registrations', async (request, reply) => {
+    const features = await cafeFeatures();
+    if (!features.preRegistrationEnabled) return featureOff(reply);
+    const me = request.auth!;
+    const body = (request.body ?? {}) as { eventId?: unknown; take?: unknown };
+    const eventId = typeof body.eventId === 'string' ? body.eventId : '';
+    const [event] = UUID.test(eventId) ? await db.select().from(events).where(eq(events.id, eventId)).limit(1) : [];
+    if (!event) {
+      reply.code(404).send({ error: 'Event not found', code: 'event/not_found' });
+      return;
+    }
+    const closed = closedReason(event);
+    if (closed) {
+      reply.code(400).send({ error: CLOSED_MESSAGE[closed], code: 'preregistration/closed' });
+      return;
+    }
+    const take = body.take === true;
+    const result = await createPreRegistration(event, request.body, features, take ? { repairerId: me.sub, claimedAt: new Date() } : {});
+    if ('error' in result) {
+      reply.code(result.status).send(result.error);
+      return;
+    }
+    const { created, customerToken, returning } = result;
+    await audit({
+      request,
+      actorId: me.sub,
+      actorType: me.role,
+      action: 'preregistration.created',
+      entityType: 'pre_registration',
+      entityId: created.id,
+      metadata: { eventId: event.id, returning, by: 'staff', taken: take },
+    });
+    return { id: created.id, customerToken, customerName: created.customerName, status: created.status, repairerId: created.repairerId };
   });
 
   app.get('/api/repairer/pre-registrations/:id', async (request, reply) => {

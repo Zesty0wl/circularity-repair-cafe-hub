@@ -2,6 +2,21 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
+## 1.16.0 (7 November 2026)
+
+### Added
+
+- **Add a pre-registered item for a visitor.** Before, only a visitor could
+  pre-register an item, using the form on the session's page. Now repairers
+  and admins can add one for a visitor who phones, emails or asks in person.
+  In **Pre-registered items**, press **Add an item for a visitor**, choose the
+  session, and enter the visitor's name and the item. You can take the item to
+  look into at the same time. The visitor gets the same tracking link as from
+  their own form, and you can copy it to send to them. The same rules apply as
+  for the visitor's own form: the session must be published and not started,
+  the session's limit on items still counts, and the visitor must agree to
+  their details being stored.
+
 ## 1.15.1 (6 November 2026)
 
 ### Fixed

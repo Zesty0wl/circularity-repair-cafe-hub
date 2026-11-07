@@ -131,6 +131,27 @@ does, you see **Pre-registered items** in the menu.
 
 If you cannot do it after all, press **Give it back for someone else to take**.
 
+### Adding an item for a visitor
+
+A visitor may phone, email or ask in person instead of filling in the form
+themselves. You can add their item for them:
+
+1. In **Pre-registered items**, press **Add an item for a visitor**.
+2. Choose the session. You can choose any session that is published and has
+   not started yet.
+3. Enter the visitor's first name, and their phone or email if they want a
+   repairer to be able to contact them. Ask the visitor if they are happy for
+   their details to be stored, then tick the box.
+4. Describe the item and what is wrong with it.
+5. Tick **I will look into this item** if you want to take it straight away.
+6. Press **Add the item**.
+
+You then see the visitor's tracking link. Give it to them if you can, for
+example in a text message or an email. It shows their items, and they can
+cancel an item there. To add another item for the same visitor, press
+**Another item for {name}**. On the day, the visitor can give their name at the
+welcome desk, so the link is not needed to check in.
+
 If your cafe does PAT tests, the item's page also has a **This is an electrical
 item** tick box. Untick it if the item does not need a PAT test, for example a
 games controller that only uses batteries. Take the item first. Admins can

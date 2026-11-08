@@ -13,15 +13,32 @@ If anything in that list is missing, jump back a guide.
 
 ### 1. Bring up the event
 
-Open `/admin/events`, click your event, then **Activate** in the top
-right. The badge changes from *scheduled* to *active*. From this moment:
+When the doors open, press **Start the session** on the dashboard. You can
+also open `/admin/events`, click your event, and press **Start session** in
+the top right. The hub asks you to confirm, and tells you what starting does.
+The badge then changes from *scheduled* to *active*. From this moment:
 
 - The check-in URL on the QR code starts working.
 - The live board (`/admin/board`) shows this event's queue.
 - Any logged-in repairer sees this event's jobs on `/repairer`.
+- Pre-registration for this session closes. People who pre-registered check
+  in at the door instead.
+- The session's page on your website says it is happening now.
 
-You can only activate one event at a time. If you forgot to **End event**
-on the last one, the system will refuse — go and end it first.
+Only start a session on the day. To put a session on your website so people
+know to come, publish it instead: press **Publish on the website** at the top
+of the session's page. You do not need to start it.
+
+Start one session at a time. If you forgot to **End session** on the last
+one, end it first.
+
+**Started a session by mistake?** While nothing has been recorded at it, the
+session's page and the dashboard show **Undo start**. This puts the session
+back to *scheduled*, so it takes pre-registrations again and shows as coming
+up on your website. If you already ended it, the session's page shows **Set
+back to planned** instead (for a session that is today or later). Once a
+repair has been recorded, the session really happened, so you can only end
+it.
 
 ### 2. Stick the QR poster on the door
 
@@ -123,7 +140,8 @@ From `/admin/events/<id>` and `/admin/repairs` an admin can:
 
 ### 1. End the event
 
-`/admin/events/<id>` → **End event**. The status changes to `completed`.
+On the dashboard, or on `/admin/events/<id>`, press **End session**. The
+status changes to `completed`.
 This:
 
 - Stops the QR check-in URL from accepting new check-ins.

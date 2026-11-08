@@ -2,7 +2,8 @@
   import { onMount } from 'svelte';
   import { api } from '$lib/api';
   import { describeRecurrence, describeTimes } from '$lib/recurrence';
-  import { Pencil, Trash2, Laptop } from 'lucide-svelte';
+  import { Pencil, Trash2, Laptop, Play } from 'lucide-svelte';
+  import StartSessionDialog from '$lib/components/StartSessionDialog.svelte';
   import { cafe } from '$lib/stores/cafe';
   import { t, tNow } from '$lib/i18n';
 
@@ -19,10 +20,8 @@
   }
   onMount(load);
 
-  async function activate(id: string) {
-    await api(`/api/admin/events/${id}/activate`, { method: 'POST', json: {} });
-    load();
-  }
+  // The session the "Start this session now?" dialog is open for.
+  let starting: any = null;
   async function publish(e: any, val: boolean) {
     await api(`/api/admin/events/${e.id}`, { method: 'PATCH', json: { isPublished: val } });
     load();
@@ -111,7 +110,7 @@
           <th class="px-3 py-2">{$t('Name')}</th>
           <th class="px-3 py-2">{$t('Venue')}</th>
           <th class="px-3 py-2">{$t('Status')}</th>
-          <th class="px-3 py-2">{$t('Published')}</th>
+          <th class="px-3 py-2">{$t('On the website')}</th>
           <th class="px-3 py-2">{$t('Jobs')}</th>
           <th class="px-3 py-2"></th>
         </tr>
@@ -130,14 +129,14 @@
             </td>
             <td class="px-3 py-1.5">{e.venueName}</td>
             <td class="px-3 py-1.5"><span class="badge badge-{e.status}">{$t(e.status)}</span></td>
-            <td class="px-3 py-1.5"><button class="badge {e.isPublished ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'}" on:click={() => publish(e, !e.isPublished)}>{e.isPublished ? $t('Yes') : $t('No')}</button></td>
+            <td class="px-3 py-1.5"><button class="badge {e.isPublished ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'}" title={e.isPublished ? $t('Click to take it off the website') : $t('Click to publish it on the website')} on:click={() => publish(e, !e.isPublished)}>{e.isPublished ? $t('Yes') : $t('No')}</button></td>
             <td class="px-3 py-1.5">{e.jobCount}</td>
             <td class="px-3 py-1.5 text-right">
               <!-- btn-xs, not btn-sm. A btn-sm here is 36px tall inside a cell
                    of text, which made every row with an Activate button half
                    as tall again as the rest of the table. -->
               {#if e.status === 'scheduled'}
-                <button class="btn-secondary btn-xs" on:click={() => activate(e.id)}>{$t('Activate')}</button>
+                <button class="btn-secondary btn-xs" on:click={() => (starting = e)}><Play size={12} /> {$t('Start')}</button>
               {/if}
             </td>
           </tr>
@@ -148,3 +147,15 @@
     </table>
   </div>
 </section>
+
+{#if starting}
+  <StartSessionDialog
+    session={starting}
+    on:close={() => (starting = null)}
+    on:published={load}
+    on:started={async () => {
+      starting = null;
+      await load();
+    }}
+  />
+{/if}

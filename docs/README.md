@@ -14,7 +14,7 @@ top and work down: each guide builds on the one before it.
 4. **[Venues & events](./04-venues-and-events.md)**: add the places you
    meet and schedule your sessions (one-off or recurring).
 5. **[Running an event day](./05-running-an-event.md)**: print the QR poster,
-   activate the event, watch the live shop-floor board.
+   start the session, watch the live shop-floor board.
 6. **[Reports, history & GDPR](./06-reports-and-gdpr.md)**: repair history,
    CSV export, statistics dashboard, PII purge.
 7. **[Settings reference](./07-settings-reference.md)**: every setting in

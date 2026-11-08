@@ -2,6 +2,26 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
+## 1.16.1 (8 November 2026)
+
+### Fixed
+
+- **Starting a session now asks first.** Some admins pressed **Activate**
+  when they only meant to put a session on their website. The session then
+  started, stopped taking pre-registrations, and showed as happening now.
+  Ending it marked it as finished, so it could not be planned again. Now:
+  - The button is called **Start session**, and it only stands out on the
+    day of the session.
+  - Before a session starts, a box explains what starting does. It warns you
+    if the session is not today, and offers to publish the session on your
+    website instead.
+  - The top of a session's page says whether it is on your website, with a
+    **Publish on the website** button.
+  - **Undo start** puts a session started by mistake back to planned, as
+    long as nothing has been recorded at it. It is on the session's page and
+    on the dashboard. A session that was started and then ended by mistake
+    shows **Set back to planned** on its page.
+
 ## 1.16.0 (7 November 2026)
 
 ### Added

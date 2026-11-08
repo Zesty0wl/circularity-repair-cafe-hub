@@ -103,16 +103,23 @@ Past and active instances are left alone.
 Once an event exists, its detail page is where you do everything else:
 
 - **Status buttons** in the top right:
-  - `scheduled` shows **Activate** — flips it to `active` (and ends any
-    other active event).
-  - `active` shows **End event** — flips it to `completed`.
+  - `scheduled` shows **Start session**. It asks you to confirm first,
+    explains what starting does, and offers to publish the session instead.
+    Then it changes the status to `active`. Only start a session on the day.
+  - `active` shows **End session**, which changes the status to `completed`.
+  - **Undo start** (or **Set back to planned** for a session you already
+    ended) puts a session started by mistake back to `scheduled`. It only
+    shows while nothing has been recorded at the session.
   - Anything not-cancelled shows **Cancel**.
   - Always: **Clone** — make a new one-off event with the same details
     on a different date. Useful for ad-hoc extra sessions.
 - **QR code panel** — image, full check-in URL, **Download PNG**, **Print
   view** (a printable poster), and **Regenerate** (creates a new
   token — old QR codes will stop working).
-- **Settings panel** — toggle Published, change venue, add admin notes.
+- **On your website** (near the top): says whether the session is on your
+  public calendar, with a button to publish it or take it off.
+- **Settings panel**: change the name, date, times and venue, toggle
+  Published, and add admin notes.
 - **Attending repairers** — tick which volunteers are coming. Used for
   attendance records and for showing "your team this Saturday" in the
   repairer view.
@@ -128,10 +135,10 @@ Print on A4, stick on the door.
 
 ### Tips & gotchas
 
-- **Only one active event at a time.** Activating event B will not end
-  event A automatically — you need to **End** the active event first or
-  the API will refuse. (Activate also fails on `completed` and
-  `cancelled` events.)
+- **Run one session at a time.** Starting session B does not end session
+  A. End the active session first.
+- **Publishing and starting are different.** Publish a session to put it on
+  your website. Start it only on the day, when the doors open.
 - **The Public URL on `/admin/settings` is baked into every QR code.** If
   you change it later, regenerate every event's QR.
 - **Don't delete events.** Cancel them instead — that keeps any history

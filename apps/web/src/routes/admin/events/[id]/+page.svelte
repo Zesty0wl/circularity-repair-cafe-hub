@@ -3,7 +3,8 @@
   import { onMount } from 'svelte';
   import { api } from '$lib/api';
   import { goto } from '$app/navigation';
-  import { Printer, Download, RotateCw, Copy, Images, Trash2 } from 'lucide-svelte';
+  import { Printer, Download, RotateCw, Copy, Images, Trash2, Play, Undo2, Globe, Check } from 'lucide-svelte';
+  import StartSessionDialog from '$lib/components/StartSessionDialog.svelte';
   // Aliased: this page already has its own `cafe` holding the admin settings.
   import { cafe as cafeProfile } from '$lib/stores/cafe';
   import { t, tNow } from '$lib/i18n';
@@ -91,12 +92,39 @@
     }
   }
 
-  async function activate() {
-    await api(`/api/admin/events/${id}/activate`, { method: 'POST', json: {} });
-    await load();
+  // Starting asks first, in a dialog that explains what starting does. See
+  // StartSessionDialog.svelte for why.
+  let showStart = false;
+
+  function localToday(): string {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }
+  $: isToday = detail?.event?.date === localToday();
+  // A session started or ended by mistake can go back to planned, as long as
+  // nothing was recorded at it. The server checks this too.
+  $: canUnstart =
+    !!detail &&
+    detail.jobs.length === 0 &&
+    (detail.event.status === 'active' || (detail.event.status === 'completed' && detail.event.date >= localToday()));
+
+  async function unstart() {
+    error = '';
+    try {
+      await api(`/api/admin/events/${id}/unstart`, { method: 'POST', json: {} });
+      await load();
+    } catch (err: any) {
+      error = err?.message || tNow('Could not save that change');
+    }
+  }
+
   async function complete() {
-    if (!confirm(tNow('Mark event as completed?'))) return;
+    const message = canUnstart && detail.event.date > localToday()
+      ? tNow('End this session?') +
+        '\n\n' +
+        tNow('Nothing has been recorded yet, and the session is not until {date}. If you started it by mistake, choose "Undo start" instead, so it stays planned.', { date: detail.event.date })
+      : tNow('End this session?') + '\n\n' + tNow('Visitors can no longer check in, and repairers stop seeing its queue.');
+    if (!confirm(message)) return;
     await api(`/api/admin/events/${id}/complete`, { method: 'POST', json: {} });
     await load();
   }
@@ -141,10 +169,15 @@
     </div>
     <div class="flex flex-wrap gap-2 justify-end">
       {#if detail.event.status === 'scheduled'}
-        <button class="btn-primary" on:click={activate}>{$t('Activate')}</button>
+        <!-- Only the main button on the day itself. On other days it looked
+             like the way to put a session on the website. -->
+        <button class={isToday ? 'btn-primary' : 'btn-secondary'} on:click={() => (showStart = true)}><Play size={16} /> {$t('Start session')}</button>
+      {/if}
+      {#if canUnstart}
+        <button class="btn-secondary" on:click={unstart}><Undo2 size={16} /> {detail.event.status === 'active' ? $t('Undo start') : $t('Set back to planned')}</button>
       {/if}
       {#if detail.event.status === 'active'}
-        <button class="btn-danger" on:click={complete}>{$t('End event')}</button>
+        <button class="btn-danger" on:click={complete}>{$t('End session')}</button>
       {/if}
       {#if detail.event.status !== 'cancelled' && detail.event.status !== 'completed'}
         <button class="btn-ghost" on:click={cancel}>{$t('Cancel')}</button>
@@ -161,6 +194,29 @@
 
   {#if error}
     <p class="mt-4 rounded-lg bg-red-50 text-red-800 px-4 py-2 text-sm">{error}</p>
+  {/if}
+
+  <!-- Whether the session is on the website, said near the top. It used to be
+       only a checkbox further down, so admins pressed the start button to
+       make a session public. -->
+  {#if detail.event.status !== 'cancelled'}
+    {#if detail.event.isPublished}
+      <div class="mt-4 rounded-xl bg-emerald-50 ring-1 ring-emerald-200 px-4 py-3 text-sm flex flex-wrap items-center gap-3">
+        <Check size={18} class="text-emerald-700 shrink-0" />
+        <p class="flex-1 min-w-[12rem] text-emerald-900">{$t('This session is on your website. Visitors can see it on your public calendar.')}</p>
+        <button class="btn-ghost btn-sm" on:click={() => update({ isPublished: false })}>{$t('Take it off the website')}</button>
+      </div>
+    {:else}
+      <div class="mt-4 rounded-xl bg-slate-50 ring-1 ring-slate-200 px-4 py-3 text-sm flex flex-wrap items-center gap-3">
+        <Globe size={18} class="text-slate-500 shrink-0" />
+        <p class="flex-1 min-w-[12rem] text-slate-700">{$t('This session is not on your website yet. Publish it so people know to come.')}</p>
+        <button class="btn-primary btn-sm" on:click={() => update({ isPublished: true })}><Globe size={14} /> {$t('Publish on the website')}</button>
+      </div>
+    {/if}
+  {/if}
+
+  {#if detail.event.status === 'active' && canUnstart}
+    <p class="mt-3 text-sm {isToday ? 'text-slate-600' : 'rounded-xl bg-amber-50 ring-1 ring-amber-200 px-4 py-3 text-amber-900'}">{$t('Started by mistake? Nothing has been recorded yet, so "Undo start" puts it back to planned. It takes pre-registrations again and shows as coming up on your website.')}</p>
   {/if}
 
   {#if photoCounts && photoCounts.total === 0}
@@ -290,4 +346,16 @@
       </table>
     </div>
   </section>
+
+  {#if showStart}
+    <StartSessionDialog
+      session={detail.event}
+      on:close={() => (showStart = false)}
+      on:published={load}
+      on:started={async () => {
+        showStart = false;
+        await load();
+      }}
+    />
+  {/if}
 {/if}

@@ -46,6 +46,7 @@ export function describeActivity(a: any): { who: string | null; rest: string } {
     case 'event.updated': return { who, rest: tNow('updated the event {event}', { event: ev }) };
     case 'event.activated': return { who, rest: tNow('started the event {event}', { event: ev }) };
     case 'event.completed': return { who, rest: tNow('ended the event {event}', { event: ev }) };
+    case 'event.unstarted': return { who, rest: tNow('set the event {event} back to not started', { event: ev }) };
     case 'event.cancelled': return { who, rest: tNow('cancelled the event {event}', { event: ev }) };
     case 'user.created': return { who, rest: tNow('added {person} to the team', { person }) };
     case 'user.updated': return { who, rest: tNow('updated the profile of {person}', { person }) };

@@ -240,6 +240,49 @@ export async function adminEventsRoutes(app: App): Promise<void> {
     return updated;
   });
 
+  // Put a session that was started (or started and ended) by mistake back to
+  // "scheduled", so it is planned again: it takes pre-registrations and shows
+  // as coming up on the public site. Admins pressed Start when they only meant
+  // to publish a session. Only allowed while nothing has been recorded at the
+  // session, because once there are repairs it really did happen.
+  app.post('/api/admin/events/:id/unstart', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const me = request.auth!;
+    const [existing] = await db.select().from(events).where(eq(events.id, id)).limit(1);
+    if (!existing) {
+      reply.code(404).send({ error: 'Event not found', code: 'event/not_found' });
+      return;
+    }
+    if (existing.status !== 'active' && existing.status !== 'completed') {
+      reply.code(400).send({ error: 'This session has not been started.', code: 'event/not_started' });
+      return;
+    }
+    const [{ n: repairs }] = await db.select({ n: sql<number>`count(*)` }).from(repairJobs).where(eq(repairJobs.eventId, id));
+    const [{ n: installs }] = await db.select({ n: sql<number>`count(*)` }).from(linuxInstalls).where(eq(linuxInstalls.eventId, id));
+    if (Number(repairs) + Number(installs) > 0) {
+      reply.code(409).send({
+        error: 'Repairs have been recorded at this session, so it cannot go back to planned. End the session instead.',
+        code: 'event/has_repairs',
+      });
+      return;
+    }
+    const [updated] = await db
+      .update(events)
+      .set({ status: 'scheduled', updatedAt: new Date() })
+      .where(eq(events.id, id))
+      .returning();
+    await audit({
+      request,
+      actorId: me.sub,
+      actorType: me.role,
+      action: 'event.unstarted',
+      entityType: 'event',
+      entityId: id,
+      metadata: { from: existing.status },
+    });
+    return updated;
+  });
+
   app.post('/api/admin/events/:id/complete', async (request, reply) => {
     const { id } = request.params as { id: string };
     const me = request.auth!;

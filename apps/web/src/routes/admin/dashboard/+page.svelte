@@ -19,6 +19,7 @@
   import TelemetryChoice from '$lib/components/TelemetryChoice.svelte';
   import ListingPicker, { type ListingAnswer } from '$lib/components/ListingPicker.svelte';
   import ScreenLinkDialog from '$lib/components/ScreenLinkDialog.svelte';
+  import StartSessionDialog from '$lib/components/StartSessionDialog.svelte';
   import { activityLink, describeActivity } from '$lib/staff/activity';
   import { WAIT_TONE_CLASS, averageRepairMinutes, firstName, formatMinutes, minutesBetween, sessionTimes, waitTone, formatDuration } from '$lib/staff/queue';
   import {
@@ -30,6 +31,7 @@
     Play,
     Square,
     Tv,
+    Undo2,
     UserPlus,
     X,
   } from 'lucide-svelte';
@@ -157,11 +159,18 @@
     };
   });
 
-  async function start(id: string) {
+  // The session the "Start this session now?" dialog is open for.
+  let starting: any = null;
+  let unstartError = '';
+
+  async function unstart(id: string) {
     busy = true;
+    unstartError = '';
     try {
-      await api(`/api/admin/events/${id}/activate`, { method: 'POST', json: {} });
+      await api(`/api/admin/events/${id}/unstart`, { method: 'POST', json: {} });
       await load();
+    } catch (err: any) {
+      unstartError = err?.message ?? tNow('Could not save that change');
     } finally {
       busy = false;
     }
@@ -326,6 +335,18 @@
               <button class="btn-danger-outline btn-sm ml-auto" on:click={() => (confirmEnd = true)}><Square size={14} /> {$t('End session')}</button>
             {/if}
           </div>
+
+          <!-- A session started by mistake (often one planned for another day)
+               can go back to planned while nothing has been recorded at it. -->
+          {#if jobs.length === 0}
+            <div class="mt-4 rounded-xl px-4 py-3 text-sm flex flex-wrap items-center gap-3 {isToday(data.activeEvent.date) ? 'bg-slate-50 ring-1 ring-slate-200 text-slate-700' : 'bg-amber-50 ring-1 ring-amber-200 text-amber-900'}">
+              <p class="flex-1 min-w-[12rem]">
+                {#if !isToday(data.activeEvent.date)}{$t('This session is on {date}, not today.', { date: longDate(data.activeEvent.date) })} {/if}{$t('Started by mistake? Nothing has been recorded yet, so you can put it back to planned.')}
+              </p>
+              <button class="btn-secondary btn-sm" disabled={busy} on:click={() => unstart(data.activeEvent.id)}><Undo2 size={14} /> {$t('Undo start')}</button>
+              {#if unstartError}<p class="w-full text-rose-700">{unstartError}</p>{/if}
+            </div>
+          {/if}
         </section>
 
         {#if overdue.length || (waiting.length && !inProgress.length)}
@@ -396,7 +417,7 @@
           <p class="text-sm text-slate-600">{todayPlanned.venueName} · {sessionTimes(todayPlanned.startTime, todayPlanned.endTime)}</p>
           <p class="mt-3 text-slate-700">{$t('Start the session when the doors open. Visitors can check in, and repairers see the queue.')}</p>
           <div class="mt-4 flex flex-wrap gap-2">
-            <button class="btn-primary" disabled={busy} on:click={() => start(todayPlanned.id)}><Play size={18} /> {$t('Start the session')}</button>
+            <button class="btn-primary" disabled={busy} on:click={() => (starting = todayPlanned)}><Play size={18} /> {$t('Start the session')}</button>
             <button class="btn-secondary" on:click={() => (showScreenLink = true)}><Tv size={18} /> {$t('Show on a screen')}</button>
           </div>
         </section>
@@ -410,7 +431,7 @@
           {/if}
           <div class="mt-4 flex flex-wrap gap-2">
             <a href={`/admin/events/${nextPlanned.id}`} class="btn-secondary btn-sm">{$t('Session details')}</a>
-            <button class="btn-ghost btn-sm" disabled={busy} on:click={() => start(nextPlanned.id)}>{$t('Start it now instead')}</button>
+            <button class="btn-ghost btn-sm" disabled={busy} on:click={() => (starting = nextPlanned)}>{$t('Start it now instead')}</button>
           </div>
         </section>
       {:else}
@@ -503,6 +524,18 @@
       </section>
     </aside>
   </div>
+{/if}
+
+{#if starting}
+  <StartSessionDialog
+    session={starting}
+    on:close={() => (starting = null)}
+    on:published={load}
+    on:started={async () => {
+      starting = null;
+      await load();
+    }}
+  />
 {/if}
 
 {#if showScreenLink}

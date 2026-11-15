@@ -65,6 +65,8 @@
   "env": {
     "demo": {
       "name": "repair-cafe-demo",
+      "workers_dev": false,
+      "preview_urls": false,
       "d1_databases": [{ "binding": "DB", "database_name": "repair-cafe-demo" }],
       "r2_buckets": [{ "binding": "UPLOADS", "bucket_name": "repair-cafe-demo-uploads" }],
       "vars": {

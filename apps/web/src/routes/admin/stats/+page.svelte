@@ -166,7 +166,10 @@
 
 <div class="flex flex-wrap items-center justify-between gap-3">
   <h1 class="text-2xl font-bold">{$t('Statistics')}</h1>
-  <button class="btn-secondary" on:click={exportCsv}>{$t('Export raw data (CSV)')}</button>
+  <div class="flex flex-wrap gap-2">
+    <a href="/admin/history" class="btn-ghost">{$t('Add past sessions')}</a>
+    <button class="btn-secondary" on:click={exportCsv}>{$t('Export raw data (CSV)')}</button>
+  </div>
   {#if exportError}<p class="text-sm text-rose-700">{exportError}</p>{/if}
 </div>
 

@@ -23,6 +23,9 @@
   let showOnHomePage = true;
   // Helps at Linux sessions. Only asked for when the cafe runs them.
   let linuxRepairer = false;
+  // The day they first volunteered. Can be before the cafe used the hub.
+  let joinDate = '';
+  const today = new Date().toLocaleDateString('en-CA');
 
   async function load() {
     [user, categories] = await Promise.all([
@@ -34,6 +37,7 @@
     showOnPublicPage = user.showOnPublicPage ?? true;
     showOnHomePage = user.showOnHomePage ?? true;
     linuxRepairer = user.linuxRepairer === true;
+    joinDate = user.joinDate ?? '';
   }
 
   onMount(load);
@@ -43,7 +47,7 @@
     try {
       await api(`/api/admin/users/${id}`, {
         method: 'PATCH',
-        json: { displayName, email, role, bio: bio || null, isActive, skills, showOnPublicPage, showOnHomePage, linuxRepairer },
+        json: { displayName, email, role, bio: bio || null, isActive, skills, showOnPublicPage, showOnHomePage, linuxRepairer, joinDate: joinDate || null },
       });
       await load();
     } catch (e: any) { error = e?.message || tNow('Could not save'); }
@@ -168,6 +172,11 @@
       <label class="label" for="bi">{$t('Bio')}</label>
       <textarea id="bi" class="input" rows="4" maxlength="2000" bind:value={bio}></textarea>
       <p class="text-xs text-slate-500 mt-1">{$t('Shown on their public profile page. {n}/2000 characters.', { n: bio.length })}</p>
+    </div>
+    <div>
+      <label class="label" for="jd">{$t('Joined the cafe')}</label>
+      <input id="jd" type="date" class="input max-w-xs" max={today} bind:value={joinDate} />
+      <p class="text-xs text-slate-500 mt-1">{$t('The day they first volunteered with you. If they helped before you used the hub, set the real date here. Their public profile shows it.')}</p>
     </div>
     <div class="space-y-2 border-t border-slate-200 pt-4">
       <label class="flex items-center gap-2"><input type="checkbox" bind:checked={isActive} /> {$t('Active (can sign in and work events)')}</label>

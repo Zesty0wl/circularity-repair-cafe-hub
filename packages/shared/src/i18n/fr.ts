@@ -2699,4 +2699,143 @@ export const fr: Record<string, string> = {
   'set the event {event} back to not started': 'a remis l’événement {event} en non démarré',
   'This session has not been started.': 'Cette séance n’a pas été démarrée.',
   'Repairs have been recorded at this session, so it cannot go back to planned. End the session instead.': 'Des réparations ont été enregistrées à cette séance, elle ne peut donc pas revenir en prévu. Terminez plutôt la séance.',
+
+  // ── Past sessions from a spreadsheet, and joined dates ─────────────
+  'Add past sessions': 'Ajouter des séances passées',
+  'Did your cafe run before you used the hub? Add those sessions and repairs from a spreadsheet. They count in all your totals and charts, so your figures show how long you have really been running.':
+    'Votre café existait-il avant d’utiliser le hub ? Ajoutez ces séances et réparations depuis un tableur. Elles comptent dans tous vos totaux et graphiques, et vos chiffres montrent depuis combien de temps vous existez vraiment.',
+  'Download the sample file': 'Télécharger le fichier exemple',
+  'It opens in Excel, Numbers, LibreOffice or Google Sheets. It has the right columns and a few example rows to show how to fill it in.':
+    'Il s’ouvre dans Excel, Numbers, LibreOffice ou Google Sheets. Il a les bonnes colonnes et quelques lignes d’exemple pour montrer comment le remplir.',
+  'past-sessions-sample': 'exemple-seances-passees',
+  'Fill it in': 'Remplissez-le',
+  'Delete the example rows, then add one row for each item.': 'Supprimez les lignes d’exemple, puis ajoutez une ligne pour chaque objet.',
+  'Only counted, not listed? Leave Item empty and write the outcome and the number: a row with "Fixed" and "14".':
+    'Vous avez seulement compté les objets ? Laissez Objet vide et indiquez le résultat et le nombre : une ligne avec « Réparé » et « 14 ».',
+  'A row with only a date adds a session where nothing was written down.': 'Une ligne avec seulement une date ajoute une séance où rien n’a été noté.',
+  'Keep the first row with the column names. You can leave out columns you do not need.':
+    'Gardez la première ligne avec les noms des colonnes. Vous pouvez supprimer les colonnes dont vous n’avez pas besoin.',
+  'Save it as a CSV file (in Excel: File, Save As, CSV UTF-8).': 'Enregistrez-le au format CSV (dans Excel : Fichier, Enregistrer sous, CSV UTF-8).',
+  'What goes in each column': 'Que mettre dans chaque colonne',
+  'Column': 'Colonne',
+  'What to write': 'Quoi écrire',
+  'Required': 'Obligatoire',
+  'Number of items': 'Nombre d’objets',
+  'Not fixed': 'Non réparé',
+  'The day of the session, day first: 14/09/2019. 2019-09-14 also works.': 'Le jour de la séance, le jour en premier : 14/09/2019. 2019-09-14 fonctionne aussi.',
+  'Where it was. Leave it empty for your main venue. A name the hub does not know is added as a past venue.':
+    'Où elle a eu lieu. Laissez vide pour votre lieu principal. Un nom que le hub ne connaît pas est ajouté comme ancien lieu.',
+  'What the visitor brought. Leave it empty if you only counted items.': 'Ce que le visiteur a apporté. Laissez vide si vous avez seulement compté les objets.',
+  'One of your skill categories, such as the ones under Skills. Optional.': 'Une de vos catégories, comme celles de la page Compétences. Facultatif.',
+  'Optional.': 'Facultatif.',
+  'What was wrong with it. Optional.': 'Ce qui n’allait pas. Facultatif.',
+  'Fixed, Not fixed, or Other (advice given, needs a part, or not known).': 'Réparé, Non réparé ou Autre (conseil donné, pièce à commander, ou inconnu).',
+  'How many items this row stands for. Empty means 1. Use it for tallies: "Fixed, 14".':
+    'Le nombre d’objets que représente cette ligne. Vide veut dire 1. Utile pour les comptages : « Réparé, 14 ».',
+  'The weight of one item in kilograms. Optional.': 'Le poids d’un objet, en kilogrammes. Facultatif.',
+  'The volunteer who did the repair, by name or email address, as they are in the hub. Optional.':
+    'Le bénévole qui a fait la réparation, par son nom ou son adresse e-mail, tels qu’ils sont dans le hub. Facultatif.',
+  'Anything else, such as what was done. Optional.': 'Toute autre information, par exemple ce qui a été fait. Facultatif.',
+  'Upload it and check the preview': 'Envoyez-le et vérifiez l’aperçu',
+  'Nothing is saved until you press the button under the preview.': 'Rien n’est enregistré tant que vous n’avez pas appuyé sur le bouton sous l’aperçu.',
+  'Choose your CSV file': 'Choisir votre fichier CSV',
+  'Choose a different file': 'Choisir un autre fichier',
+  'Reading the file…': 'Lecture du fichier…',
+  'That file could not be read. Save it from your spreadsheet as a CSV file and try again.':
+    'Impossible de lire ce fichier. Enregistrez-le au format CSV depuis votre tableur, puis réessayez.',
+  'Please fix these in your file, then upload it again': 'Corrigez ces points dans votre fichier, puis envoyez-le de nouveau',
+  'Row {n}': 'Ligne {n}',
+  'And {count} more.': 'Et {count} de plus.',
+  'What will be added': 'Ce qui sera ajouté',
+  'New sessions': 'Nouvelles séances',
+  'From {from} to {to}.': 'Du {from} au {to}.',
+  '{count} items have the outcome "Other".': '{count} objets ont le résultat « Autre ».',
+  '{count} sessions you already have get more items.': '{count} séances que vous avez déjà reçoivent des objets en plus.',
+  'These venues are new, and will be added as past venues: {names}.': 'Ces lieux sont nouveaux et seront ajoutés comme anciens lieux : {names}.',
+  'These columns are not used: {names}.': 'Ces colonnes ne sont pas utilisées : {names}.',
+  '1 thing to check': '1 point à vérifier',
+  '{count} things to check': '{count} points à vérifier',
+  'These do not stop the import.': 'Ils n’empêchent pas l’import.',
+  'See each session': 'Voir chaque séance',
+  'Already in the hub': 'Déjà dans le hub',
+  'Show these sessions in the list of past sessions on your website': 'Afficher ces séances dans la liste des séances passées sur votre site',
+  'Leave it off to count them in your figures without listing each one.': 'Laissez décoché pour les compter dans vos chiffres sans les lister une par une.',
+  'Adding… part {n} of {total}': 'Ajout en cours… partie {n} sur {total}',
+  'What was added so far is kept. Press the button again to carry on.': 'Ce qui a déjà été ajouté est conservé. Appuyez de nouveau sur le bouton pour continuer.',
+  'Carry on adding': 'Continuer l’ajout',
+  'Add {sessions} sessions and {items} items': 'Ajouter {sessions} séances et {items} objets',
+  'The import stopped. Please try again.': 'L’import s’est arrêté. Veuillez réessayer.',
+  'Could not load this page. Please try again.': 'Impossible de charger cette page. Veuillez réessayer.',
+  'Your past sessions are in the hub': 'Vos séances passées sont dans le hub',
+  'Added {sessions} sessions and {repairs} repairs, from {from} to {to}.': '{sessions} séances et {repairs} réparations ajoutées, du {from} au {to}.',
+  'See your statistics': 'Voir vos statistiques',
+  'Add another file': 'Ajouter un autre fichier',
+  'Files you have added': 'Fichiers que vous avez ajoutés',
+  'Added the wrong file, or the same file twice? Remove it here and everything it added goes.':
+    'Vous avez ajouté le mauvais fichier, ou deux fois le même ? Retirez-le ici et tout ce qu’il a ajouté disparaît.',
+  'Past sessions': 'Séances passées',
+  'Not finished': 'Pas terminé',
+  '{sessions} sessions and {repairs} repairs, from {from} to {to}': '{sessions} séances et {repairs} réparations, du {from} au {to}',
+  'Added on {date} by {name}': 'Ajouté le {date} par {name}',
+  'Remove the {sessions} sessions and {repairs} repairs this file added? This cannot be undone.':
+    'Retirer les {sessions} séances et {repairs} réparations ajoutées par ce fichier ? Cette action est définitive.',
+  'Could not remove it. Please try again.': 'Impossible de le retirer. Veuillez réessayer.',
+  // Problems found in a file
+  'The file is empty.': 'Le fichier est vide.',
+  'The first row must hold the column names, with one called "{name}". Download the sample file to see the layout.':
+    'La première ligne doit contenir les noms des colonnes, dont une appelée « {name} ». Téléchargez le fichier exemple pour voir la présentation.',
+  'The date is missing.': 'La date manque.',
+  '"{value}" is not a date we can read. Write it as 25/12/2023 (day first) or 2023-12-25.':
+    '« {value} » n’est pas une date que nous pouvons lire. Écrivez-la 25/12/2023 (le jour en premier) ou 2023-12-25.',
+  '{date} is in the future. Only past sessions can be added.': '{date} est dans le futur. Seules les séances passées peuvent être ajoutées.',
+  '{date} is too long ago. Please check the year.': '{date} est trop ancien. Vérifiez l’année.',
+  'More than one venue is called "{name}". Rename one of them first.': 'Plusieurs lieux s’appellent « {name} ». Renommez-en un d’abord.',
+  'The venue name is too long.': 'Le nom du lieu est trop long.',
+  'No venue is given, and the hub has no venues yet. Add a venue first.': 'Aucun lieu n’est indiqué et le hub n’a pas encore de lieu. Ajoutez d’abord un lieu.',
+  '"{value}" is not an outcome we know. Use {fixed}, {notFixed} or {other}.': '« {value} » n’est pas un résultat que nous connaissons. Utilisez {fixed}, {notFixed} ou {other}.',
+  'No outcome is given, so it is counted as "{other}".': 'Aucun résultat n’est indiqué, il est donc compté comme « {other} ».',
+  '"{value}" is not a whole number of items.': '« {value} » n’est pas un nombre entier d’objets.',
+  '{value} items on one row is more than we allow ({max}). Split it over several rows.':
+    '{value} objets sur une ligne, c’est plus que le maximum ({max}). Répartissez-les sur plusieurs lignes.',
+  '"{value}" is not a weight in kilograms we can use.': '« {value} » n’est pas un poids en kilogrammes utilisable.',
+  '"{name}" is not one of your skill categories, so these items have no category. Rows below with the same category are not listed again.':
+    '« {name} » n’est pas une de vos catégories, ces objets n’ont donc pas de catégorie. Les lignes suivantes avec la même catégorie ne sont pas listées de nouveau.',
+  'More than one volunteer is called "{name}", so these repairs are not linked to anyone. Use their email address instead.':
+    'Plusieurs bénévoles s’appellent « {name} », ces réparations ne sont donc liées à personne. Utilisez plutôt leur adresse e-mail.',
+  '"{name}" is not a volunteer in the hub, so these repairs are not linked to anyone. Add them under Volunteers first, or use their email address.':
+    '« {name} » n’est pas un bénévole du hub, ces réparations ne sont donc liées à personne. Ajoutez-le d’abord dans Bénévoles, ou utilisez son adresse e-mail.',
+  'The item description is too long.': 'La description de l’objet est trop longue.',
+  'The brand is too long.': 'La marque est trop longue.',
+  'The fault description is too long.': 'La description de la panne est trop longue.',
+  'The notes are too long.': 'Les notes sont trop longues.',
+  'The file has {count} items. One file can add at most {max}. Split it into several files.':
+    'Le fichier contient {count} objets. Un fichier peut en ajouter {max} au plus. Répartissez-les sur plusieurs fichiers.',
+  'The file has no rows to add below the column names.': 'Le fichier n’a aucune ligne à ajouter sous les noms des colonnes.',
+  'You already have a finished session on {date}. Its items from this file are added to that session. Check that they are not in the hub already.':
+    'Vous avez déjà une séance terminée le {date}. Les objets de ce fichier pour ce jour-là sont ajoutés à cette séance. Vérifiez qu’ils ne sont pas déjà dans le hub.',
+  // The sample file
+  'Does not switch on': 'Ne s’allume pas',
+  'New fuse fitted': 'Fusible remplacé',
+  Trousers: 'Pantalon',
+  'Torn seam': 'Couture déchirée',
+  Radio: 'Radio',
+  'No sound': 'Pas de son',
+  'Part no longer made': 'Pièce plus fabriquée',
+  // Joined dates
+  Joined: 'Depuis',
+  'Joined the cafe': 'Arrivée au café',
+  'Joined the cafe (optional)': 'Arrivée au café (facultatif)',
+  'The day they first volunteered with you. If they helped before you used the hub, set the real date here. Their public profile shows it.':
+    'Le jour où cette personne a aidé pour la première fois. Si c’était avant que vous utilisiez le hub, indiquez ici la vraie date. Son profil public l’affiche.',
+  'Leave it empty to use today. If they helped before you used the hub, enter the day they started.':
+    'Laissez vide pour utiliser la date du jour. Si cette personne aidait avant que vous utilisiez le hub, indiquez le jour où elle a commencé.',
+  '1 volunteer repaired things before the date they joined': '1 bénévole a réparé des objets avant sa date d’arrivée',
+  '{count} volunteers repaired things before the date they joined': '{count} bénévoles ont réparé des objets avant leur date d’arrivée',
+  'Move their joined date back to their first recorded repair, so their profile shows how long they have helped.':
+    'Avancez leur date d’arrivée à leur première réparation enregistrée, pour que leur profil montre depuis combien de temps ils aident.',
+  'joined {from}, first repair {to}': 'arrivée le {from}, première réparation le {to}',
+  'Use their first repair date': 'Utiliser la date de leur première réparation',
+  '1 joined date moved back.': '1 date d’arrivée avancée.',
+  '{count} joined dates moved back.': '{count} dates d’arrivée avancées.',
+  'Repairing since': 'Nous réparons depuis',
 };

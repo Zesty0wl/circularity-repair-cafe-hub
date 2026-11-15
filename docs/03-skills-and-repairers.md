@@ -105,6 +105,21 @@ Click their name in the list. From there you can:
 - **Generate password reset link** — for password recovery, role hand-overs,
   or if they're locked out.
 
+### The date they joined
+
+Each volunteer has a **Joined the cafe** date. Their public profile shows it,
+and the Volunteers list has a **Joined** column. A new volunteer gets today's
+date, unless you enter another one when you add them.
+
+If someone volunteered before your cafe used the hub, open their page and set
+the real date. It cannot be in the future.
+
+If you add past repairs from a spreadsheet (see "Adding past sessions" in
+[4. Venues & events](04-venues-and-events.md)), the hub notices volunteers
+whose first recorded repair is before the date they joined. The Volunteers
+list then shows a box with their names. Tick the ones you want and press
+**Use their first repair date**.
+
 ### Passwords
 
 - Min 10 characters, must include an uppercase letter, a lowercase letter

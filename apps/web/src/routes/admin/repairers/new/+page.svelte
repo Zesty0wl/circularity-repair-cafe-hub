@@ -13,6 +13,9 @@
   let skills: string[] = [];
   /** Helps at Linux sessions. Only asked for when the cafe runs them. */
   let linuxRepairer = false;
+  /** The day they first volunteered. Empty means today. */
+  let joinDate = '';
+  const today = new Date().toLocaleDateString('en-CA');
   let busy = false;
   let result: { token: string; userId: string } | null = null;
   let error = '';
@@ -26,7 +29,7 @@
     try {
       const res = await api<{ user: { id: string }; resetToken: string }>('/api/admin/users', {
         method: 'POST',
-        json: { displayName, email, role, bio: bio || null, skills, linuxRepairer },
+        json: { displayName, email, role, bio: bio || null, skills, linuxRepairer, joinDate: joinDate || null },
       });
       result = { userId: res.user.id, token: res.resetToken };
     } catch (e: any) {
@@ -67,6 +70,11 @@
     <div>
       <label class="label" for="bi">{$t('Short bio (optional)')}</label>
       <textarea id="bi" class="input" rows="2" bind:value={bio}></textarea>
+    </div>
+    <div>
+      <label class="label" for="jd">{$t('Joined the cafe (optional)')}</label>
+      <input id="jd" type="date" class="input max-w-xs" max={today} bind:value={joinDate} />
+      <p class="text-xs text-slate-500 mt-1">{$t('Leave it empty to use today. If they helped before you used the hub, enter the day they started.')}</p>
     </div>
     <div>
       <span class="label">{$t('Skills')}</span>

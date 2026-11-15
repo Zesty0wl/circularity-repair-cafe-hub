@@ -133,6 +133,55 @@ the event name, date, venue, the QR code at large size, and the check-in
 URL underneath as a fallback for people without a smartphone camera.
 Print on A4, stick on the door.
 
+### Adding past sessions (`/admin/history`)
+
+If your cafe ran before it used the hub, add those sessions and repairs from
+a spreadsheet. They count in every total, chart and export, so your figures
+show how long the cafe has really been running. Open **Events** and press
+**Add past sessions** (there is also a link on **Statistics**).
+
+1. **Download the sample file.** It has the right columns and a few example
+   rows, in the language you are using the hub in.
+2. **Fill it in.** One row is one item. The columns are Date, Venue, Item,
+   Category, Brand, Fault, Outcome, Number of items, Weight (kg), Repairer
+   and Notes. Only Date is required.
+   - Dates are day first: `14/09/2019`. `2019-09-14` also works.
+   - Outcome is **Fixed**, **Not fixed** or **Other** (advice given, needs a
+     part, or not known). Common words such as "Repaired", "Yes", "No" and
+     "End of life" work too, in English or French.
+   - Only kept a tally? Leave Item empty and write the outcome and the
+     number: a row with "Fixed" and "14", and another with "Not fixed" and
+     "5".
+   - A row with only a date adds a session where nothing was written down.
+   - Venue can be left empty for your main venue. A venue the hub does not
+     know is added as a past venue (not active).
+   - Repairer is a volunteer's name or email address, as they are in the
+     hub. Add former volunteers under **Volunteers** first if you want their
+     repairs linked to them. You can make them inactive afterwards.
+3. **Save it as a CSV file** and upload it. The hub checks the file in your
+   browser and shows a preview: how many sessions and items it will add, and
+   any problems. A problem marked as an error (such as a date it cannot
+   read) must be fixed in the file first. A warning (such as a category it
+   does not know) does not stop the import.
+4. Press **Add … sessions and … items**.
+
+Good to know:
+
+- Imported sessions are marked as finished. They are not shown in the list
+  of past sessions on your website unless you tick that box before adding
+  them.
+- If the hub already has a finished session on the same day, the items are
+  added to that session. The preview warns you, so you can check they are
+  not in the hub twice.
+- Imported repairs have no visitor details, and no repair times, so they do
+  not change your average repair time.
+- The CO2 figure is worked out for items whose kind is clear from the item,
+  brand or category, in the same way as for old repairs from a backup.
+- Each file is listed under **Files you have added**. **Remove** takes away
+  everything that file added, if you added the wrong file or added it twice.
+- Large files are sent in small parts. If the connection drops, press the
+  button again to carry on. Nothing is added twice.
+
 ### Tips & gotchas
 
 - **Run one session at a time.** Starting session B does not end session

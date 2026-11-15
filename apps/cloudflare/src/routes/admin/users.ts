@@ -8,6 +8,12 @@ import { generateResetLinkForUser } from '../auth.js';
 import { audit } from '../../utils/audit.js';
 import { withoutPassword } from '../../utils/users.js';
 import { randomToken } from '../../utils/tokens.js';
+import { localToday } from '../../lib/dates.js';
+
+/** A joined date can be moved back to before the hub, but not into the future. */
+function joinDateInFuture(joinDate: string | null | undefined): boolean {
+  return typeof joinDate === 'string' && joinDate > localToday();
+}
 
 /**
  * Whether a user is a super admin. Admins may manage everyone else, but only
@@ -66,6 +72,10 @@ export async function adminUsersRoutes(app: App): Promise<void> {
       reply.code(403).send({ error: 'Only super admins can create super admins', code: 'auth/forbidden' });
       return;
     }
+    if (joinDateInFuture(data.joinDate)) {
+      reply.code(400).send({ error: 'The joined date cannot be in the future', code: 'user/join_date_future' });
+      return;
+    }
     // Generate temp password (user will reset via link)
     const tempPassword = randomToken(16);
     const passwordHash = await hashPassword(tempPassword);
@@ -80,7 +90,7 @@ export async function adminUsersRoutes(app: App): Promise<void> {
           role: data.role,
           bio: data.bio ?? null,
           skills: data.skills,
-          joinDate: data.joinDate ?? new Date().toISOString().slice(0, 10),
+          joinDate: data.joinDate ?? localToday(),
           showOnPublicPage: data.showOnPublicPage,
           showOnHomePage: data.showOnHomePage,
           linuxRepairer: data.linuxRepairer,
@@ -109,6 +119,10 @@ export async function adminUsersRoutes(app: App): Promise<void> {
     const data = parsed.data;
     if (data.role === 'super_admin' && me.role !== 'super_admin') {
       reply.code(403).send({ error: 'Only super admins can promote to super admin', code: 'auth/forbidden' });
+      return;
+    }
+    if (joinDateInFuture(data.joinDate)) {
+      reply.code(400).send({ error: 'The joined date cannot be in the future', code: 'user/join_date_future' });
       return;
     }
     if (me.role !== 'super_admin' && (await isSuperAdmin(id))) {

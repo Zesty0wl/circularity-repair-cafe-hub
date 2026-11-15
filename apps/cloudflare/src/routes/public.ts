@@ -312,7 +312,10 @@ export async function publicRoutes(app: App): Promise<void> {
         COALESCE(SUM(rj.co2_saving_kg) FILTER (WHERE rj.status = 'completed'), 0) AS savings_kg,
         -- How many finished repairs actually carry a figure. The total is a sum
         -- over these, not over every repair, and the page says so.
-        COUNT(rj.id) FILTER (WHERE rj.status = 'completed' AND rj.co2_saving_kg IS NOT NULL) AS savings_counted
+        COUNT(rj.id) FILTER (WHERE rj.status = 'completed' AND rj.co2_saving_kg IS NOT NULL) AS savings_counted,
+        -- The first session that happened, for "Repairing since". Past sessions
+        -- added from a spreadsheet count, so this shows the cafe's real age.
+        MIN(e.date) AS first_session
       FROM events e
       LEFT JOIN repair_jobs rj ON rj.event_id = e.id
       WHERE e.status IN ('completed','active')
@@ -338,6 +341,8 @@ export async function publicRoutes(app: App): Promise<void> {
       // "from 78% of repairs" rather than implying it covers all of them.
       co2CountedRepairs: Number(r.savings_counted ?? 0),
       volunteerCount: Number(volunteerRow?.count ?? 0),
+      // 'YYYY-MM-DD', or null before the first session.
+      firstSessionDate: (r.first_session as string | null) ?? null,
     };
   });
 

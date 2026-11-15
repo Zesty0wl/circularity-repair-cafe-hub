@@ -291,6 +291,8 @@ export const venues = sqliteTable('venues', {
   notes: text('notes'),
   isHomeVenue: bool('is_home_venue').notNull().default(false),
   isActive: bool('is_active').notNull().default(true),
+  /** Set when a file of past sessions added this venue. See routes/admin/history.ts. */
+  importId: uuid('import_id'),
   createdAt: timestamp('created_at').notNull().$defaultFn(() => new Date()),
 });
 
@@ -334,6 +336,8 @@ export const events = sqliteTable(
     qrCodeUrl: text('qr_code_url'),
     checkInToken: text('check_in_token').unique(),
     maxItems: integer('max_items'),
+    /** Set when a file of past sessions added this session. See routes/admin/history.ts. */
+    importId: uuid('import_id'),
     createdBy: uuid('created_by').references(() => users.id),
     createdAt: timestamp('created_at').notNull().$defaultFn(() => new Date()),
     updatedAt: timestamp('updated_at').notNull().$defaultFn(() => new Date()),
@@ -342,6 +346,7 @@ export const events = sqliteTable(
     index('idx_events_date').on(t.date),
     index('idx_events_check_in_token').on(t.checkInToken),
     index('idx_events_status').on(t.status),
+    index('idx_events_import_id').on(t.importId),
   ],
 );
 
@@ -403,6 +408,8 @@ export const repairJobs = sqliteTable(
     /** Who recorded the PAT test. No foreign key, so the record outlives the account. */
     patTestedBy: uuid('pat_tested_by'),
     patNotes: text('pat_notes'),
+    /** Set when a file of past sessions added this repair. See routes/admin/history.ts. */
+    importId: uuid('import_id'),
     createdAt: timestamp('created_at').notNull().$defaultFn(() => new Date()),
     updatedAt: timestamp('updated_at').notNull().$defaultFn(() => new Date()),
   },
@@ -412,6 +419,7 @@ export const repairJobs = sqliteTable(
     index('idx_repair_jobs_repairer_id').on(t.repairerId),
     index('idx_repair_jobs_created_at').on(t.createdAt),
     index('idx_repair_jobs_customer_token').on(t.customerToken),
+    index('idx_repair_jobs_import_id').on(t.importId),
   ],
 );
 

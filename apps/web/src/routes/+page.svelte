@@ -34,6 +34,8 @@
     successRate: number;
     co2SavedKg: number;
     volunteerCount: number;
+    /** The first session that took place, 'YYYY-MM-DD'. Missing on older hubs. */
+    firstSessionDate?: string | null;
   }
   interface Repairer { id: string; displayName: string; avatarUrl: string | null; bio: string | null; skills: string[]; joinDate: string | null; showOnHomePage?: boolean }
 
@@ -101,6 +103,15 @@
   $: statTiles = !stats
     ? []
     : [
+        // How long the cafe has been going, from its first session. Past
+        // sessions added from a spreadsheet count, so an older cafe shows its
+        // real age. Wide on phones, so the four figures below stay in pairs.
+        {
+          value: stats.firstSessionDate ? stats.firstSessionDate.slice(0, 4) : '',
+          label: $t('Repairing since'),
+          show: !!stats.firstSessionDate,
+          wide: true,
+        },
         { value: stats.completedCount.toLocaleString(dateLocale()), label: $t('Repairs done'), show: stats.completedCount > 0 },
         // Same figure the admin stats page reports as "CO₂ saved" (the
         // environmental_saving_kg a repairer records on a finished job), so
@@ -275,9 +286,9 @@
           title={$t('Our numbers')}
           lede={$t('Every repair keeps something working, and keeps it out of the bin.')}
         />
-        <dl class="mt-12 grid grid-cols-2 gap-8 {statTiles.length >= 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}">
+        <dl class="mt-12 grid grid-cols-2 gap-8 {statTiles.length >= 5 ? 'lg:grid-cols-5' : statTiles.length === 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}">
           {#each statTiles as tile}
-            <div class="text-center">
+            <div class="text-center {tile.wide && statTiles.length % 2 === 1 ? 'col-span-2 lg:col-span-1' : ''}">
               <dt class="sr-only">{tile.label}</dt>
               <dd>
                 <span class="block font-display text-4xl md:text-5xl font-bold leading-none">{tile.value}</span>

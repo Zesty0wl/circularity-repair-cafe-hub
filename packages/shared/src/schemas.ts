@@ -278,7 +278,14 @@ export const userCreateSchema = z.object({
   role: z.enum(['super_admin', 'admin', 'repairer']).default('repairer'),
   bio: z.string().max(2000).optional().nullable(),
   skills: z.array(z.string()).default([]),
-  joinDate: z.string().optional().nullable(),
+  // The day they first volunteered with the cafe. An admin can set it back to
+  // before the cafe used the hub. The Worker also checks it is not in the future.
+  joinDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Use a date like 2019-09-14')
+    .refine((v) => !Number.isNaN(Date.parse(`${v}T12:00:00Z`)), 'Use a real date')
+    .optional()
+    .nullable(),
   showOnPublicPage: z.boolean().default(true),
   showOnHomePage: z.boolean().default(true),
   // Helps at Linux sessions. Only asked for when the cafe runs them.

@@ -1,12 +1,21 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { api } from '$lib/api';
-  import { t, tNow } from '$lib/i18n';
+  import { t, tNow, dateLocale } from '$lib/i18n';
+  import JoinDateSuggestions from '$lib/components/JoinDateSuggestions.svelte';
 
   let users: any[] = [];
+  let joinDates: any[] = [];
 
-  async function load() { users = await api('/api/admin/users'); }
+  async function load() {
+    [users, joinDates] = await Promise.all([api<any[]>('/api/admin/users'), api<any[]>('/api/admin/history/join-dates')]);
+  }
   onMount(load);
+
+  function joined(date: string | null): string {
+    if (!date) return '';
+    return new Date(`${date}T12:00:00Z`).toLocaleDateString(dateLocale(), { month: 'short', year: 'numeric' });
+  }
 
   async function toggleActive(u: any) {
     await api(`/api/admin/users/${u.id}`, { method: 'PATCH', json: { isActive: !u.isActive } });
@@ -25,6 +34,10 @@
   <a href="/admin/repairers/new" class="btn-primary">{$t('Add repairer')}</a>
 </div>
 
+<div class="mt-4">
+  <JoinDateSuggestions suggestions={joinDates} on:updated={load} />
+</div>
+
 <div class="card mt-4 overflow-x-auto">
   <table class="w-full text-sm">
     <thead class="bg-slate-50 text-left text-slate-600">
@@ -33,6 +46,7 @@
         <th class="px-3 py-2">{$t('Email')}</th>
         <th class="px-3 py-2">{$t('Role')}</th>
         <th class="px-3 py-2">{$t('Skills')}</th>
+        <th class="px-3 py-2">{$t('Joined')}</th>
         <th class="px-3 py-2">{$t('Repairs')}</th>
         <th class="px-3 py-2">{$t('Active')}</th>
         <th class="px-3 py-2"></th>
@@ -45,6 +59,7 @@
           <td class="px-3 py-2">{u.email}</td>
           <td class="px-3 py-2"><span class="badge bg-slate-100 text-slate-700">{$t(u.role)}</span></td>
           <td class="px-3 py-2 text-xs text-slate-600">{(u.skills || []).length === 1 ? $t('{count} skill', { count: 1 }) : $t('{count} skills', { count: (u.skills || []).length })}</td>
+          <td class="px-3 py-2 whitespace-nowrap">{joined(u.joinDate)}</td>
           <td class="px-3 py-2">{u.repairCountCache}</td>
           <td class="px-3 py-2"><button class="badge {u.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'}" on:click={() => toggleActive(u)}>{u.isActive ? $t('Yes') : $t('No')}</button></td>
           <td class="px-3 py-2 text-right"><button class="btn-ghost btn-sm" on:click={() => resetLink(u.id)}>{$t('Reset link')}</button></td>

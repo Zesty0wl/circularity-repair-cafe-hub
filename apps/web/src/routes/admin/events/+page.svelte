@@ -52,9 +52,13 @@
   }
 </script>
 
-<div class="flex items-center justify-between">
+<div class="flex flex-wrap items-center justify-between gap-3">
   <h1 class="text-2xl font-bold">{$t('Events')}</h1>
-  <a href="/admin/events/new" class="btn-primary">{$t('Create event')}</a>
+  <div class="flex flex-wrap gap-2">
+    <!-- For a cafe that ran before it used the hub. See routes/admin/history. -->
+    <a href="/admin/history" class="btn-secondary">{$t('Add past sessions')}</a>
+    <a href="/admin/events/new" class="btn-primary">{$t('Create event')}</a>
+  </div>
 </div>
 
 {#if error}

@@ -2,6 +2,28 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
+## 1.17.0 (15 November 2026)
+
+### Added
+
+- **Add past sessions from a spreadsheet.** A cafe that ran before it used
+  the hub can now add its history, so its totals, charts and exports show
+  how long it has really been running. In **Events**, press **Add past
+  sessions**, download the sample file, fill it in and upload it. You can
+  list each item, or just give a tally such as "Fixed, 14". The hub checks
+  the file and shows a preview before anything is saved. Each file you add
+  can be removed again in one step. See "Adding past sessions" in
+  `docs/04-venues-and-events.md`.
+- **Set the date a volunteer joined.** A volunteer's page now has a
+  **Joined the cafe** date, so you can set it to before the cafe used the
+  hub. The Volunteers list shows it. When a volunteer's first recorded
+  repair is earlier than the date they joined, the hub offers to move the
+  date back.
+- **"Repairing since" on the home page.** The "Our numbers" section now
+  starts with the year of the cafe's first session. Past sessions you add
+  from a spreadsheet count, so it shows how long the cafe has really been
+  running.
+
 ## 1.16.1 (8 November 2026)
 
 ### Fixed

@@ -45,7 +45,7 @@
   </p>
   {#if ready && !hasReviews}
     <p class="mt-4 rounded-lg bg-amber-50 text-amber-900 px-4 py-3 text-sm">
-      {$t('Add your Google Place ID under Settings, Cafe profile, Google reviews first. The cards need it.')}
+      {$t('First add your Google Maps link in Settings, under Cafe profile, Google reviews. The cards need it.')}
     </p>
   {:else if ready}
     <button class="btn-primary mt-4" on:click={() => window.print()} disabled={qrLoaded === 0}>

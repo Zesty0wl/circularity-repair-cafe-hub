@@ -46,26 +46,37 @@ The QR code and the short address go to your hub first, and the hub sends
 the visitor on to Google. So if you change the setting later, the cards you
 have already handed out still work.
 
-**What to enter.** You do not need to manage your Google listing. The
-quickest way:
+**How to set it up.** You do not need to manage your Google listing. It
+takes about a minute:
 
-1. Find your cafe in Google Maps, on your phone or computer.
-2. Press **Share** and copy the link.
-3. Paste it into **Google reviews** and press **Save changes**.
+1. Open Google Maps, on your phone or computer, and find your cafe.
+2. Press **Share**, then **Copy link**.
+3. In the hub, go to **Settings**, **Cafe profile**. Paste the link into
+   **Google reviews** and press **Save changes**.
+4. Press **Test the link**. Google should open a "write a review" box for
+   your cafe. Close it without posting.
+5. To hand out cards, press **Print review cards**.
 
-The hub finds your cafe's Place ID (a code that usually starts with `ChIJ`)
-from the link and saves that instead. The Place ID opens Google's "write a
-review" box straight away. Press **Test the link** to check it is your cafe.
+When you save, the hub finds your cafe's Place ID in the link (a code that
+usually starts with `ChIJ`) and keeps that instead. So after saving, the
+field shows the Place ID, not your link. This is expected.
 
-Use a link from Google **Maps**. A link shared from Google **Search** (it
-starts `share.google`) only opens your listing, and visitors then have to
-press **Write a review** themselves. If the hub cannot find the Place ID in a
-link, it keeps the link and works the same way.
+**If it does not work:**
 
-You can also find the Place ID yourself with Google's
-[Place ID Finder](https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder):
+- *"Paste a link from Google Maps…"*: the field does not hold a Google
+  link. Copy the link again from the **Share** button in Google Maps.
+- *"This opens your Google listing"*: the hub could not find the Place ID
+  in your link. It still works, but visitors have to press **Write a
+  review** themselves. This happens with links shared from Google
+  **Search** (they start `share.google`). Use a link from Google **Maps**
+  instead, or use the Place ID Finder below.
+- **Test the link** opens a different place: clear the field, save, and
+  copy the link again from your cafe's page in Google Maps.
+
+**Using the Place ID Finder instead.** Open Google's
+[Place ID Finder](https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder),
 press **Try Sample**, search for your cafe on the map, then copy the code
-after "Place ID".
+after "Place ID" into **Google reviews**.
 
 **Ask everyone.** The button and the cards are for every visitor, whether or
 not their item was fixed. Google's rules do not allow asking only the people

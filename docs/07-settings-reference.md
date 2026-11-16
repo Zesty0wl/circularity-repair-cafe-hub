@@ -16,6 +16,8 @@ The basics. Used everywhere — header, hero, footer, emails, QR codes.
 | Contact email     | Footer, contact section                                       |
 | Phone             | Contact section (optional)                                    |
 | Public URL        | **Encoded into every QR code.** Match your reverse-proxy domain. |
+| Donate link       | Shown to visitors after they check in and on their live tracker (optional). |
+| Google reviews    | Your Google Place ID, or a link to your Google listing (optional). Adds a "Write a review" button to the live tracker and lets you print review cards. See "Google reviews" below. |
 | Your page on repaircafe.org | Your cafe's listing on repaircafe.org (optional). It picks you out on the Worldwide map, and "Repair Cafes near us" is measured from it. Paste the page's address. |
 | Country code      | Your country as 3 letters, such as GBR or FRA. Used in the Open Repair export (optional). |
 | Primary colour    | Buttons, links, accents across the public + admin UI          |
@@ -27,6 +29,43 @@ The basics. Used everywhere — header, hero, footer, emails, QR codes.
 
 **Save changes** at the bottom commits this tab. *(Other tabs save
 separately.)*
+
+### Google reviews
+
+Reviews on Google help people find your cafe. Fill in **Google reviews** and
+the hub asks visitors for one in two ways:
+
+- **On the live tracker.** Once one of a visitor's items is finished, their
+  tracker shows "How did we do?" with a **Write a review** button.
+- **On printed cards.** Press **Print review cards** for an A4 sheet of
+  eight cards to cut out. Each has your logo, a thank-you, a QR code and
+  your own short address, such as `repair.example.org/review`. Hand one to
+  each visitor with their item.
+
+The QR code and the short address go to your hub first, and the hub sends
+the visitor on to Google. So if you change the setting later, the cards you
+have already handed out still work.
+
+**What to enter.** The best choice is your **Place ID**, a code that usually
+starts with `ChIJ`. It opens Google's "write a review" box straight away.
+You do not need to manage your Google listing to find it:
+
+1. Open Google's
+   [Place ID Finder](https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder)
+   and press **Try Sample**.
+2. Type your cafe's name in the search box on the map and pick it from the
+   list.
+3. Copy the code after "Place ID" and paste it into **Google reviews**.
+
+You can also paste any link to your Google listing, such as one from the
+**Share** button on Google Maps. That opens your listing, and visitors press
+**Write a review** there. **Test the link** shows you where visitors will go.
+
+**Ask everyone.** The button and the cards are for every visitor, whether or
+not their item was fixed. Google's rules do not allow asking only the people
+who were happy, and reviews that break the rules can be removed. Hand the
+cards out to take home, too: reviews written on one shared phone or tablet
+at the venue are more likely to be filtered out by Google.
 
 ## Tab: Home page
 
@@ -327,6 +366,7 @@ They are all ticked when you turn QWA on. Untick any you do not want.
 | ------------------- | ----------------------- | ----------------------------------------------------- |
 | Item checked in     | `Item Check-in`         | A visitor finishes checking in an item. Records the kind of item and whether it is their second item or more. |
 | Donate link         | `Donate`                | Someone opens your donation page. Records where the link was. |
+| Google review link  | `Google Review`         | A visitor opens your Google review link from their live tracker. |
 | Add to calendar     | `Add to Calendar`       | Someone saves a session to their calendar.            |
 | Directions and maps | `Get Directions`        | Someone opens directions, a map or a what3words link. |
 | Contact email       | `Contact Email`         | Someone clicks your contact email address.            |

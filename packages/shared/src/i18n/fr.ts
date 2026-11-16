@@ -2838,4 +2838,36 @@ export const fr: Record<string, string> = {
   '1 joined date moved back.': '1 date d’arrivée avancée.',
   '{count} joined dates moved back.': '{count} dates d’arrivée avancées.',
   'Repairing since': 'Nous réparons depuis',
+
+  // ── Google reviews ─────────────────────────────────────────────────
+  'Google reviews': 'Avis Google',
+  'Your Google Place ID, or a link to your listing on Google. A Place ID is best: it opens the "write a review" box straight away. You do not need to manage your Google listing to use it. Find it with':
+    'Votre identifiant de lieu Google (Place ID), ou un lien vers votre fiche Google. Le Place ID est le meilleur choix : il ouvre directement la fenêtre « Écrire un avis ». Vous n’avez pas besoin de gérer votre fiche Google pour l’utiliser. Trouvez-le avec',
+  "Google's Place ID Finder": 'l’outil Place ID Finder de Google',
+  'Visitors see a "Write a review" button on their live tracker once an item is finished, whether or not it was fixed. Google does not allow asking only the people who were happy.':
+    'Les visiteurs voient un bouton « Écrire un avis » sur leur suivi en direct dès qu’un objet est terminé, qu’il ait été réparé ou non. Google ne permet pas de solliciter uniquement les personnes satisfaites.',
+  'Enter a Google Place ID (it usually starts with ChIJ) or a link to your Google listing.':
+    'Saisissez un identifiant de lieu Google (il commence en général par ChIJ) ou un lien vers votre fiche Google.',
+  'This opens the "write a review" box on Google.': 'Ce lien ouvre la fenêtre « Écrire un avis » de Google.',
+  'This opens your Google listing. Visitors then press "Write a review".': 'Ce lien ouvre votre fiche Google. Les visiteurs appuient ensuite sur « Écrire un avis ».',
+  'Test the link': 'Tester le lien',
+  'Print review cards': 'Imprimer les cartes d’avis',
+  'How did we do?': 'Comment ça s’est passé ?',
+  'A review on Google helps other people find us.': 'Un avis sur Google aide d’autres personnes à nous trouver.',
+  'Write a review →': 'Écrire un avis →',
+  'Review cards': 'Cartes d’avis',
+  'Print this sheet and cut it into eight cards. Hand one to each visitor with their item, whether or not it was fixed. The QR code takes them to your Google review page.':
+    'Imprimez cette feuille et découpez-la en huit cartes. Donnez-en une à chaque visiteur avec son objet, qu’il ait été réparé ou non. Le QR code mène à votre page d’avis Google.',
+  'Add your Google Place ID under Settings, Cafe profile, Google reviews first. The cards need it.':
+    'Ajoutez d’abord votre identifiant de lieu Google dans Paramètres, Profil du café, Avis Google. Les cartes en ont besoin.',
+  Print: 'Imprimer',
+  'Print on A4 at 100% (actual size), with no page margins or headers if your browser offers them.':
+    'Imprimez en A4 à 100 % (taille réelle), sans marges ni en-têtes si votre navigateur le propose.',
+  'Thank you for visiting!': 'Merci de votre visite !',
+  'Did we help? Please tell others about us in a Google review. It takes a minute, and it helps more people find us.':
+    'Nous vous avons aidé ? Parlez de nous dans un avis Google. Cela prend une minute et aide plus de personnes à nous trouver.',
+  'QR code for our Google review page': 'QR code vers notre page d’avis Google',
+  'Scan the code, or go to': 'Scannez le code, ou allez sur',
+  'Google review link': 'Lien d’avis Google',
+  'A visitor opens your Google review link from their live tracker.': 'Un visiteur ouvre votre lien d’avis Google depuis son suivi en direct.',
 };

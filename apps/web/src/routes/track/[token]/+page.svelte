@@ -4,7 +4,7 @@
   import { onMount, onDestroy } from 'svelte';
   import { browser } from '$app/environment';
   import { api } from '$lib/api';
-  import { Wrench, RefreshCw, Clock, CheckCircle2, XCircle, PackageX, Hourglass, Heart, CalendarClock } from 'lucide-svelte';
+  import { Wrench, RefreshCw, Clock, CheckCircle2, XCircle, PackageX, Hourglass, Heart, CalendarClock, Star } from 'lucide-svelte';
   import Icon from '@iconify/svelte';
   import { categoryIcon } from '$lib/categoryIcon';
   import { t, tNow, dateLocale } from '$lib/i18n';
@@ -42,7 +42,7 @@
     preRegistrations?: TrackPreRegistration[];
     event: { id: string; name: string; date: string; startTime: string; endTime: string; status: string };
     venue: { name: string; address: string | null };
-    cafe: { name: string; logoUrl: string | null; donateUrl: string | null };
+    cafe: { name: string; logoUrl: string | null; donateUrl: string | null; googleReviewUrl?: string | null };
     jobs: TrackJob[];
   }
 
@@ -195,6 +195,25 @@
           <RefreshCw size={14} class={busy ? 'animate-spin' : ''} /> {$t('Refresh')}
         </button>
       </div>
+
+      {#if data.cafe.googleReviewUrl && data.jobs.some((j) => j.status === 'completed' || j.status === 'cannot_repair' || j.status === 'returned')}
+        <!-- Review prompt, once an item is finished. It is shown whatever the
+             outcome: Google does not allow asking only the people who were happy. -->
+        <a
+          href={data.cafe.googleReviewUrl}
+          target="_blank"
+          rel="noopener"
+          on:click={() => track('review', { place: 'tracking page' })}
+          class="mt-3 flex items-center gap-3 rounded-2xl bg-amber-50 ring-1 ring-amber-200 p-4 text-amber-950 hover:bg-amber-100 transition-colors"
+        >
+          <Star size={20} class="fill-amber-400 text-amber-500 shrink-0" />
+          <span class="text-sm leading-tight flex-1">
+            <strong class="block">{$t('How did we do?')}</strong>
+            {$t('A review on Google helps other people find us.')}
+          </span>
+          <span class="text-sm font-semibold text-amber-800 whitespace-nowrap">{$t('Write a review →')}</span>
+        </a>
+      {/if}
 
       {#if data.cafe.donateUrl}
         <!-- Donate prompt. Kept subtle, easy to scroll past, and only shown when the cafe has set a link. -->

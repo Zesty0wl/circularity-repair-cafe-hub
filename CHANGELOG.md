@@ -2,6 +2,24 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
+## 1.18.0 (16 November 2026)
+
+### Added
+
+- **Ask visitors for a Google review.** In **Settings**, **Cafe profile**,
+  enter your Google Place ID (or a link to your Google listing) under
+  **Google reviews**. You do not need to manage your Google listing. Then:
+  - A visitor's live tracker shows "How did we do?" with a **Write a
+    review** button once one of their items is finished.
+  - **Print review cards** gives an A4 sheet of eight cards to hand out
+    with finished items. Each has a QR code and your own short address
+    (`/review`), which sends people on to Google. Cards already handed out
+    keep working if you change the setting.
+
+  Everyone is asked, whether or not their item was fixed, because Google
+  does not allow asking only happy visitors. See "Google reviews" in
+  `docs/07-settings-reference.md`.
+
 ## 1.17.0 (15 November 2026)
 
 ### Added

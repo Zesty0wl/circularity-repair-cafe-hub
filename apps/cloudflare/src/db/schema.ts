@@ -130,6 +130,8 @@ export const cafes = sqliteTable('cafes', {
   headingFont: text('heading_font'),
   bodyFont: text('body_font'),
   donateUrl: text('donate_url'),
+  /** A Google Place ID or Google link, for "Review us on Google". See shared/reviews.ts. */
+  googleReview: text('google_review'),
   contactEmail: text('contact_email'),
   address: text('address'),
   socialLinks: json('social_links').notNull().default({}),

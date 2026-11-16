@@ -3,8 +3,8 @@
   import { api } from '$lib/api';
   import { auth } from '$lib/stores/auth';
   import { loadCafe, cafe as publicCafe } from '$lib/stores/cafe';
-  import { DEFAULT_QWA_EVENTS, FONT_OPTIONS, QWA_EVENTS, activeAnalytics, type AnalyticsProvider } from '@circularity/shared';
-  import { Trash2, Plus, Download, Upload, AlertTriangle } from 'lucide-svelte';
+  import { DEFAULT_QWA_EVENTS, FONT_OPTIONS, PLACE_ID_FINDER_URL, QWA_EVENTS, activeAnalytics, googleReviewLink, type AnalyticsProvider } from '@circularity/shared';
+  import { Trash2, Plus, Download, Upload, AlertTriangle, ExternalLink, Printer, Star } from 'lucide-svelte';
   import ImageDropzone from '$lib/components/ImageDropzone.svelte';
   import GalleryManager from '$lib/components/GalleryManager.svelte';
   import type { ManagedPhoto } from '$lib/gallery';
@@ -301,8 +301,14 @@
     await loadGallery();
   });
 
+  // What the Google review setting gives: a link, or a problem to show.
+  $: googleReviewText = (cafe?.googleReview ?? '').trim();
+  $: googleReview = googleReviewLink(googleReviewText);
+  let profileError = '';
+
   async function save() {
     busy = true;
+    profileError = '';
     try {
       await api('/api/admin/settings', {
         method: 'PATCH',
@@ -314,6 +320,7 @@
           headingFont: headingFontInput || null,
           bodyFont: bodyFontInput || null,
           donateUrl: cafe.donateUrl || null,
+          googleReview: googleReviewText || null,
           repaircafeSlug: cafe.repaircafeSlug || null,
           ordsCountry: cafe.ordsCountry || null,
           socialFacebook: cafe.socialFacebook || null, socialTwitter: cafe.socialTwitter || null,
@@ -322,6 +329,8 @@
       });
       await loadCafe();
       await load();
+    } catch (err: any) {
+      profileError = err?.message ?? tNow('Could not save');
     } finally { busy = false; }
   }
 
@@ -506,6 +515,29 @@
         <p class="text-xs text-slate-500 mt-1">{$t('Shown to guests after they check in and on their live tracker. Leave blank to hide.')}</p>
       </div>
       <div>
+        <label class="label" for="gr">{$t('Google reviews')} <span class="font-normal text-slate-500">{$t('(optional)')}</span></label>
+        <input id="gr" class="input font-mono text-sm" placeholder="ChIJ…" bind:value={cafe.googleReview} />
+        <p class="text-xs text-slate-500 mt-1">
+          {$t('Your Google Place ID, or a link to your listing on Google. A Place ID is best: it opens the "write a review" box straight away. You do not need to manage your Google listing to use it. Find it with')}
+          <a href={PLACE_ID_FINDER_URL} class="text-brand-700 underline underline-offset-2" target="_blank" rel="noopener">{$t("Google's Place ID Finder")}</a>.
+        </p>
+        <p class="text-xs text-slate-500 mt-1">{$t('Visitors see a "Write a review" button on their live tracker once an item is finished, whether or not it was fixed. Google does not allow asking only the people who were happy.')}</p>
+        {#if googleReviewText && !googleReview}
+          <p class="text-xs text-rose-700 mt-1">{$t('Enter a Google Place ID (it usually starts with ChIJ) or a link to your Google listing.')}</p>
+        {:else if googleReview}
+          <p class="text-xs text-slate-600 mt-1 inline-flex items-center gap-1">
+            <Star size={12} class="text-amber-500" aria-hidden="true" />
+            {googleReview.direct ? $t('This opens the "write a review" box on Google.') : $t('This opens your Google listing. Visitors then press "Write a review".')}
+          </p>
+          <div class="mt-2 flex flex-wrap gap-2">
+            <a href={googleReview.url} target="_blank" rel="noopener" class="btn-secondary btn-sm"><ExternalLink size={14} /> {$t('Test the link')}</a>
+            {#if $publicCafe?.googleReviewUrl}
+              <a href="/admin/review-cards" class="btn-secondary btn-sm"><Printer size={14} /> {$t('Print review cards')}</a>
+            {/if}
+          </div>
+        {/if}
+      </div>
+      <div>
         <label class="label" for="rc">{$t('Your page on repaircafe.org')} <span class="font-normal text-slate-500">{$t('(optional)')}</span></label>
         <input id="rc" class="input" placeholder="https://www.repaircafe.org/cafe/your-cafe" bind:value={cafe.repaircafeSlug} />
         <p class="text-xs text-slate-500 mt-1">
@@ -607,7 +639,8 @@
         </div>
       </div>
 
-      <div class="flex justify-end pt-2"><button class="btn-primary" on:click={save} disabled={busy}>{$t('Save changes')}</button></div>
+      {#if profileError}<p class="text-sm text-rose-700" role="alert">{profileError}</p>{/if}
+      <div class="flex justify-end pt-2"><button class="btn-primary" on:click={save} disabled={busy || (!!googleReviewText && !googleReview)}>{$t('Save changes')}</button></div>
     </div>
   {/if}
 

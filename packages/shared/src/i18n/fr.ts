@@ -2841,14 +2841,21 @@ export const fr: Record<string, string> = {
 
   // ── Google reviews ─────────────────────────────────────────────────
   'Google reviews': 'Avis Google',
-  'Find your cafe in Google Maps, press Share, copy the link and paste it here. You do not need to manage your Google listing. You can also paste a Place ID from':
-    'Trouvez votre café dans Google Maps, appuyez sur Partager, copiez le lien et collez-le ici. Vous n’avez pas besoin de gérer votre fiche Google. Vous pouvez aussi coller un identifiant de lieu (Place ID) trouvé avec',
   "Google's Place ID Finder": 'l’outil Place ID Finder de Google',
+  'Ask visitors to review your cafe on Google. You do not need to manage your Google listing. To set it up:':
+    'Demandez aux visiteurs de laisser un avis sur votre café sur Google. Vous n’avez pas besoin de gérer votre fiche Google. Pour le configurer :',
+  'Open Google Maps and find your cafe.': 'Ouvrez Google Maps et trouvez votre café.',
+  'Press Share, then Copy link.': 'Appuyez sur Partager, puis sur Copier le lien.',
+  'Paste the link here and press Save changes.': 'Collez le lien ici et appuyez sur Enregistrer.',
+  'Press Test the link. Check that Google opens a review box for your cafe.':
+    'Appuyez sur Tester le lien. Vérifiez que Google ouvre une fenêtre d’avis pour votre café.',
+  'Now press Save changes. The hub then finds your cafe on Google from this link.':
+    'Appuyez maintenant sur Enregistrer. Le hub retrouve alors votre café sur Google à partir de ce lien.',
+  'Instead of a link, you can paste your Place ID from': 'Au lieu d’un lien, vous pouvez coller votre identifiant de lieu (Place ID) trouvé avec',
   'Visitors see a "Write a review" button on their live tracker once an item is finished, whether or not it was fixed. Google does not allow asking only the people who were happy.':
     'Les visiteurs voient un bouton « Écrire un avis » sur leur suivi en direct dès qu’un objet est terminé, qu’il ait été réparé ou non. Google ne permet pas de solliciter uniquement les personnes satisfaites.',
   'Paste a link from Google Maps, or a Google Place ID (it usually starts with ChIJ).':
     'Collez un lien Google Maps, ou un identifiant de lieu Google (il commence en général par ChIJ).',
-  'Save to find your cafe on Google from this link.': 'Enregistrez pour retrouver votre café sur Google à partir de ce lien.',
   'This opens the "write a review" box on Google.': 'Ce lien ouvre la fenêtre « Écrire un avis » de Google.',
   'This opens your Google listing. Visitors then press "Write a review".': 'Ce lien ouvre votre fiche Google. Les visiteurs appuient ensuite sur « Écrire un avis ».',
   'Test the link': 'Tester le lien',
@@ -2859,8 +2866,8 @@ export const fr: Record<string, string> = {
   'Review cards': 'Cartes d’avis',
   'Print this sheet and cut it into eight cards. Hand one to each visitor with their item, whether or not it was fixed. The QR code takes them to your Google review page.':
     'Imprimez cette feuille et découpez-la en huit cartes. Donnez-en une à chaque visiteur avec son objet, qu’il ait été réparé ou non. Le QR code mène à votre page d’avis Google.',
-  'Add your Google Place ID under Settings, Cafe profile, Google reviews first. The cards need it.':
-    'Ajoutez d’abord votre identifiant de lieu Google dans Paramètres, Profil du café, Avis Google. Les cartes en ont besoin.',
+  'First add your Google Maps link in Settings, under Cafe profile, Google reviews. The cards need it.':
+    'Ajoutez d’abord votre lien Google Maps dans Paramètres, Profil du café, Avis Google. Les cartes en ont besoin.',
   Print: 'Imprimer',
   'Print on A4 at 100% (actual size), with no page margins or headers if your browser offers them.':
     'Imprimez en A4 à 100 % (taille réelle), sans marges ni en-têtes si votre navigateur le propose.',

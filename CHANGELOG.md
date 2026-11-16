@@ -2,6 +2,15 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
+## 1.18.2 (16 November 2026)
+
+### Changed
+
+- **Clearer steps for Google reviews.** **Settings**, **Cafe profile**,
+  **Google reviews** now lists the steps to follow, and says what to do
+  next at each stage. The docs explain what to do if the link does not
+  work.
+
 ## 1.18.1 (16 November 2026)
 
 ### Changed

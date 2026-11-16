@@ -1,7 +1,8 @@
 import type { App } from '../../lib/router.js';
 import { db } from '../../db/index.js';
 import { cafeGallery, cafes } from '../../db/schema.js';
-import { ANALYTICS_PROVIDERS, activeAnalytics, cafeSettingsSchema, cleanQwaEvents, cleanSiteDomain, googleReviewLink } from '@circularity/shared';
+import { ANALYTICS_PROVIDERS, activeAnalytics, cafeSettingsSchema, cleanQwaEvents, cleanSiteDomain, googleReviewLink, isMapsShortLink } from '@circularity/shared';
+import { placeIdFromShortLink } from '../reviews.js';
 import { asc, eq } from 'drizzle-orm';
 import { audit } from '../../utils/audit.js';
 import { saveValidatedImage, deleteImage } from '../../services/imageUpload.js';
@@ -58,12 +59,16 @@ export async function adminSettingsRoutes(app: App): Promise<void> {
       update.ordsCountry = data.ordsCountry ? data.ordsCountry.toUpperCase() : null;
     }
     // Keep what the admin typed, so they see it again as they wrote it, but
-    // only if it gives a review link we can use.
+    // only if it gives a review link we can use. A short link from the Share
+    // button in Google Maps is swapped for the Place ID behind it, which opens
+    // the "write a review" box. If we cannot find one, the link is kept: it
+    // still opens the cafe's listing.
     if (data.googleReview !== undefined) {
-      const raw = (data.googleReview ?? '').trim();
+      let raw = (data.googleReview ?? '').trim();
+      if (isMapsShortLink(raw)) raw = (await placeIdFromShortLink(raw)) ?? raw;
       if (raw && !googleReviewLink(raw)) {
         reply.code(400).send({
-          error: 'Enter a Google Place ID (it usually starts with ChIJ) or a link to your Google listing.',
+          error: 'Paste a link from Google Maps, or a Google Place ID (it usually starts with ChIJ).',
           code: 'cafe/bad_google_review',
         });
         return;

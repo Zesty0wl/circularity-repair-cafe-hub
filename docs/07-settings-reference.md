@@ -17,7 +17,7 @@ The basics. Used everywhere — header, hero, footer, emails, QR codes.
 | Phone             | Contact section (optional)                                    |
 | Public URL        | **Encoded into every QR code.** Match your reverse-proxy domain. |
 | Donate link       | Shown to visitors after they check in and on their live tracker (optional). |
-| Google reviews    | Your Google Place ID, or a link to your Google listing (optional). Adds a "Write a review" button to the live tracker and lets you print review cards. See "Google reviews" below. |
+| Google reviews    | A link to your cafe from Google Maps, or its Google Place ID (optional). Adds a "Write a review" button to the live tracker and lets you print review cards. See "Google reviews" below. |
 | Your page on repaircafe.org | Your cafe's listing on repaircafe.org (optional). It picks you out on the Worldwide map, and "Repair Cafes near us" is measured from it. Paste the page's address. |
 | Country code      | Your country as 3 letters, such as GBR or FRA. Used in the Open Repair export (optional). |
 | Primary colour    | Buttons, links, accents across the public + admin UI          |
@@ -46,20 +46,26 @@ The QR code and the short address go to your hub first, and the hub sends
 the visitor on to Google. So if you change the setting later, the cards you
 have already handed out still work.
 
-**What to enter.** The best choice is your **Place ID**, a code that usually
-starts with `ChIJ`. It opens Google's "write a review" box straight away.
-You do not need to manage your Google listing to find it:
+**What to enter.** You do not need to manage your Google listing. The
+quickest way:
 
-1. Open Google's
-   [Place ID Finder](https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder)
-   and press **Try Sample**.
-2. Type your cafe's name in the search box on the map and pick it from the
-   list.
-3. Copy the code after "Place ID" and paste it into **Google reviews**.
+1. Find your cafe in Google Maps, on your phone or computer.
+2. Press **Share** and copy the link.
+3. Paste it into **Google reviews** and press **Save changes**.
 
-You can also paste any link to your Google listing, such as one from the
-**Share** button on Google Maps. That opens your listing, and visitors press
-**Write a review** there. **Test the link** shows you where visitors will go.
+The hub finds your cafe's Place ID (a code that usually starts with `ChIJ`)
+from the link and saves that instead. The Place ID opens Google's "write a
+review" box straight away. Press **Test the link** to check it is your cafe.
+
+Use a link from Google **Maps**. A link shared from Google **Search** (it
+starts `share.google`) only opens your listing, and visitors then have to
+press **Write a review** themselves. If the hub cannot find the Place ID in a
+link, it keeps the link and works the same way.
+
+You can also find the Place ID yourself with Google's
+[Place ID Finder](https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder):
+press **Try Sample**, search for your cafe on the map, then copy the code
+after "Place ID".
 
 **Ask everyone.** The button and the cards are for every visitor, whether or
 not their item was fixed. Google's rules do not allow asking only the people

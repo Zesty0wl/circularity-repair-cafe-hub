@@ -2841,13 +2841,14 @@ export const fr: Record<string, string> = {
 
   // ── Google reviews ─────────────────────────────────────────────────
   'Google reviews': 'Avis Google',
-  'Your Google Place ID, or a link to your listing on Google. A Place ID is best: it opens the "write a review" box straight away. You do not need to manage your Google listing to use it. Find it with':
-    'Votre identifiant de lieu Google (Place ID), ou un lien vers votre fiche Google. Le Place ID est le meilleur choix : il ouvre directement la fenêtre « Écrire un avis ». Vous n’avez pas besoin de gérer votre fiche Google pour l’utiliser. Trouvez-le avec',
+  'Find your cafe in Google Maps, press Share, copy the link and paste it here. You do not need to manage your Google listing. You can also paste a Place ID from':
+    'Trouvez votre café dans Google Maps, appuyez sur Partager, copiez le lien et collez-le ici. Vous n’avez pas besoin de gérer votre fiche Google. Vous pouvez aussi coller un identifiant de lieu (Place ID) trouvé avec',
   "Google's Place ID Finder": 'l’outil Place ID Finder de Google',
   'Visitors see a "Write a review" button on their live tracker once an item is finished, whether or not it was fixed. Google does not allow asking only the people who were happy.':
     'Les visiteurs voient un bouton « Écrire un avis » sur leur suivi en direct dès qu’un objet est terminé, qu’il ait été réparé ou non. Google ne permet pas de solliciter uniquement les personnes satisfaites.',
-  'Enter a Google Place ID (it usually starts with ChIJ) or a link to your Google listing.':
-    'Saisissez un identifiant de lieu Google (il commence en général par ChIJ) ou un lien vers votre fiche Google.',
+  'Paste a link from Google Maps, or a Google Place ID (it usually starts with ChIJ).':
+    'Collez un lien Google Maps, ou un identifiant de lieu Google (il commence en général par ChIJ).',
+  'Save to find your cafe on Google from this link.': 'Enregistrez pour retrouver votre café sur Google à partir de ce lien.',
   'This opens the "write a review" box on Google.': 'Ce lien ouvre la fenêtre « Écrire un avis » de Google.',
   'This opens your Google listing. Visitors then press "Write a review".': 'Ce lien ouvre votre fiche Google. Les visiteurs appuient ensuite sur « Écrire un avis ».',
   'Test the link': 'Tester le lien',

@@ -36,6 +36,49 @@ function isPlaceId(value: string): boolean {
   return /^[A-Za-z0-9_-]{20,300}$/.test(value);
 }
 
+/**
+ * The Place ID inside a Google Maps link, or null when it has none.
+ *
+ * A Maps link to a place includes the place's code as two hex numbers, such
+ * as "0x4879ff52cf77c66b:0xed09ab45a6fda2ec". A Place ID starting "ChIJ" is
+ * those same two numbers, packed into 20 bytes and written in base64:
+ *   0a 12 | 09 <first, 8 bytes, low byte first> | 11 <second, the same way>
+ * Google does not document this, so a wrong guess is possible. The "Test the
+ * link" button in Settings shows which place the review box is for.
+ */
+export function placeIdFromMapsUrl(link: string): string | null {
+  let text = link;
+  try {
+    text = decodeURIComponent(link);
+  } catch {
+    // Use the link as it is.
+  }
+  const m = /0x([0-9a-f]{1,16}):0x([0-9a-f]{1,16})/i.exec(text);
+  if (!m) return null;
+  const bytes = [0x0a, 0x12, 0x09, ...littleEndian(m[1]), 0x11, ...littleEndian(m[2])];
+  let binary = '';
+  for (const b of bytes) binary += String.fromCharCode(b);
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+/** A hex number as 8 bytes, lowest first. */
+function littleEndian(hex: string): number[] {
+  const padded = hex.padStart(16, '0');
+  const out: number[] = [];
+  for (let i = 14; i >= 0; i -= 2) out.push(parseInt(padded.slice(i, i + 2), 16));
+  return out;
+}
+
+/** Short links from the Share button in Google Maps, which hide the place's code. */
+export function isMapsShortLink(raw: string): boolean {
+  try {
+    const url = new URL(raw.trim());
+    return url.protocol === 'https:' && (url.hostname === 'maps.app.goo.gl' || url.hostname === 'goo.gl');
+  } catch {
+    return false;
+  }
+}
+
 /** Hosts that belong to Google, for the links we accept as they are. */
 function isGoogleHost(host: string): boolean {
   const h = host.toLowerCase();
@@ -70,6 +113,11 @@ export function googleReviewLink(raw: string | null | undefined): GoogleReviewLi
   const fromQuery = /place_id:([A-Za-z0-9_-]{20,300})/.exec(url.searchParams.get('q') ?? '')?.[1];
   const placeId = fromParam ?? fromQuery;
   if (placeId && isPlaceId(placeId)) return { url: writeReviewUrl(placeId), direct: true };
+
+  // A Google Maps link to a place carries the place's code ("0x…:0x…"), which
+  // is the Place ID written another way.
+  const fromMaps = placeIdFromMapsUrl(value);
+  if (fromMaps) return { url: writeReviewUrl(fromMaps), direct: true };
 
   // A Google Business Profile review link (g.page/r/<code>/review) opens the
   // review box too.

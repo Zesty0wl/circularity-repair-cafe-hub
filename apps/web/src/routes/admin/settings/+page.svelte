@@ -3,7 +3,7 @@
   import { api } from '$lib/api';
   import { auth } from '$lib/stores/auth';
   import { loadCafe, cafe as publicCafe } from '$lib/stores/cafe';
-  import { DEFAULT_QWA_EVENTS, FONT_OPTIONS, PLACE_ID_FINDER_URL, QWA_EVENTS, activeAnalytics, googleReviewLink, type AnalyticsProvider } from '@circularity/shared';
+  import { DEFAULT_QWA_EVENTS, FONT_OPTIONS, PLACE_ID_FINDER_URL, QWA_EVENTS, activeAnalytics, googleReviewLink, isMapsShortLink, type AnalyticsProvider } from '@circularity/shared';
   import { Trash2, Plus, Download, Upload, AlertTriangle, ExternalLink, Printer, Star } from 'lucide-svelte';
   import ImageDropzone from '$lib/components/ImageDropzone.svelte';
   import GalleryManager from '$lib/components/GalleryManager.svelte';
@@ -304,6 +304,9 @@
   // What the Google review setting gives: a link, or a problem to show.
   $: googleReviewText = (cafe?.googleReview ?? '').trim();
   $: googleReview = googleReviewLink(googleReviewText);
+  // A short link from the Share button in Google Maps: the hub finds the
+  // place behind it when it saves.
+  $: googleReviewShort = isMapsShortLink(googleReviewText) && !googleReview?.direct;
   let profileError = '';
 
   async function save() {
@@ -516,14 +519,16 @@
       </div>
       <div>
         <label class="label" for="gr">{$t('Google reviews')} <span class="font-normal text-slate-500">{$t('(optional)')}</span></label>
-        <input id="gr" class="input font-mono text-sm" placeholder="ChIJ…" bind:value={cafe.googleReview} />
+        <input id="gr" class="input font-mono text-sm" placeholder="https://maps.app.goo.gl/…" bind:value={cafe.googleReview} />
         <p class="text-xs text-slate-500 mt-1">
-          {$t('Your Google Place ID, or a link to your listing on Google. A Place ID is best: it opens the "write a review" box straight away. You do not need to manage your Google listing to use it. Find it with')}
+          {$t('Find your cafe in Google Maps, press Share, copy the link and paste it here. You do not need to manage your Google listing. You can also paste a Place ID from')}
           <a href={PLACE_ID_FINDER_URL} class="text-brand-700 underline underline-offset-2" target="_blank" rel="noopener">{$t("Google's Place ID Finder")}</a>.
         </p>
         <p class="text-xs text-slate-500 mt-1">{$t('Visitors see a "Write a review" button on their live tracker once an item is finished, whether or not it was fixed. Google does not allow asking only the people who were happy.')}</p>
         {#if googleReviewText && !googleReview}
-          <p class="text-xs text-rose-700 mt-1">{$t('Enter a Google Place ID (it usually starts with ChIJ) or a link to your Google listing.')}</p>
+          <p class="text-xs text-rose-700 mt-1">{$t('Paste a link from Google Maps, or a Google Place ID (it usually starts with ChIJ).')}</p>
+        {:else if googleReviewShort}
+          <p class="text-xs text-slate-600 mt-1">{$t('Save to find your cafe on Google from this link.')}</p>
         {:else if googleReview}
           <p class="text-xs text-slate-600 mt-1 inline-flex items-center gap-1">
             <Star size={12} class="text-amber-500" aria-hidden="true" />

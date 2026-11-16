@@ -1,7 +1,8 @@
 // "Review us on Google": the setting, the short /review address, the QR code
 // for the printed cards, and the link on a visitor's tracker.
 import { beforeAll, describe, expect, it } from 'vitest';
-import { googleReviewLink, writeReviewUrl } from '../../../packages/shared/src/reviews.js';
+import { googleReviewLink, isMapsShortLink, placeIdFromMapsUrl, writeReviewUrl } from '../../../packages/shared/src/reviews.js';
+import { placeIdFromShortLink } from '../src/routes/reviews.js';
 import { BASE, call, freshHub, setUpHub, worker } from './helpers.js';
 
 /** Ask for /review without following the redirect. */
@@ -12,6 +13,17 @@ async function review(): Promise<{ status: number; location: string | null }> {
 
 const PLACE_ID = 'ChIJa8Z3z1L_eUgR7KL9pkWrCe0';
 const REVIEW_URL = `https://search.google.com/local/writereview?placeid=${PLACE_ID}`;
+// Repair Cafe Woodville in Google Maps, as the Maps website gives it.
+const MAPS_URL =
+  'https://www.google.com/maps/place/Repair+Cafe+Woodville/@52.7695,-1.5323,17z/data=!3m1!4b1!4m6!3m5!1s0x4879ff52cf77c66b:0xed09ab45a6fda2ec!8m2!3d52.7695!4d-1.5323!16s%2Fg%2F11z901g9h9';
+const SHORT_URL = 'https://maps.app.goo.gl/Abc123Def456';
+
+/** A stand-in for Google's link shortener: one redirect to the Maps page. */
+const fakeShortener = (async (input: RequestInfo | URL) => {
+  const url = String(input);
+  if (url === SHORT_URL) return new Response(null, { status: 302, headers: { location: MAPS_URL } });
+  return new Response('not found', { status: 404 });
+}) as typeof fetch;
 
 describe('reading the Google review setting', () => {
   it('turns a Place ID into the "write a review" box', () => {
@@ -23,6 +35,21 @@ describe('reading the Google review setting', () => {
   it('finds the Place ID inside a Google link', () => {
     expect(googleReviewLink(REVIEW_URL)).toEqual({ url: REVIEW_URL, direct: true });
     expect(googleReviewLink(`https://www.google.com/maps/place/?q=place_id:${PLACE_ID}`)).toEqual({ url: REVIEW_URL, direct: true });
+  });
+
+  it('finds the Place ID inside a Google Maps link', () => {
+    expect(placeIdFromMapsUrl(MAPS_URL)).toBe(PLACE_ID);
+    expect(googleReviewLink(MAPS_URL)).toEqual({ url: REVIEW_URL, direct: true });
+    // The same code, written with %3A for the colon.
+    expect(placeIdFromMapsUrl('https://www.google.com/maps?ftid=0x4879ff52cf77c66b%3A0xed09ab45a6fda2ec')).toBe(PLACE_ID);
+    expect(placeIdFromMapsUrl('https://www.google.com/maps/search/repair+cafe')).toBeNull();
+  });
+
+  it('follows a short link from the Share button to the Place ID', async () => {
+    expect(isMapsShortLink(SHORT_URL)).toBe(true);
+    expect(isMapsShortLink('https://www.google.com/maps')).toBe(false);
+    expect(await placeIdFromShortLink(SHORT_URL, fakeShortener)).toBe(PLACE_ID);
+    expect(await placeIdFromShortLink('https://maps.app.goo.gl/gone', fakeShortener)).toBeNull();
   });
 
   it('keeps other Google links as they are, as a link to the listing', () => {

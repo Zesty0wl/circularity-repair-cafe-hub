@@ -16,12 +16,36 @@
 import type { App } from '../lib/router.js';
 import { db } from '../db/index.js';
 import { cafes } from '../db/schema.js';
-import { googleReviewLink } from '@circularity/shared';
+import { googleReviewLink, placeIdFromMapsUrl } from '@circularity/shared';
 import { qrPng } from '../services/qrcode.js';
 
 async function reviewSettings() {
   const [cafe] = await db.select({ googleReview: cafes.googleReview, publicUrl: cafes.publicUrl }).from(cafes).limit(1);
   return { link: googleReviewLink(cafe?.googleReview), publicUrl: cafe?.publicUrl ?? '' };
+}
+
+/**
+ * The Place ID behind a short link from the Share button in Google Maps
+ * (maps.app.goo.gl/…), or null when we cannot find one. The short link hides
+ * the place's code, so we follow its redirects (without loading Google's
+ * pages) until a link shows it. Each step has a short time limit.
+ */
+export async function placeIdFromShortLink(link: string, fetcher: typeof fetch = fetch): Promise<string | null> {
+  let next = link.trim();
+  for (let step = 0; step < 4; step++) {
+    const found = placeIdFromMapsUrl(next);
+    if (found) return found;
+    let res: Response;
+    try {
+      res = await fetcher(next, { redirect: 'manual', signal: AbortSignal.timeout(5000) });
+    } catch {
+      return null;
+    }
+    const location = res.headers.get('location');
+    if (!location || res.status < 300 || res.status >= 400) return null;
+    next = new URL(location, next).toString();
+  }
+  return placeIdFromMapsUrl(next);
 }
 
 /** The hub's own short review address, such as https://repair.example.org/review. */

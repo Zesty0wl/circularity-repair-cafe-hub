@@ -2,6 +2,16 @@
 
 Notable changes to the Repair Café Hub. Newest first.
 
+## 1.18.1 (16 November 2026)
+
+### Changed
+
+- **Google reviews is easier to set up.** Find your cafe in Google Maps,
+  press **Share** and paste the link into **Settings**, **Cafe profile**,
+  **Google reviews**. The hub finds your cafe's Place ID from the link, so
+  visitors go straight to Google's "write a review" box. You no longer need
+  Google's Place ID Finder.
+
 ## 1.18.0 (16 November 2026)
 
 ### Added

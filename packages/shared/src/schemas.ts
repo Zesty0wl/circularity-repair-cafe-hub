@@ -438,6 +438,9 @@ export const cafeSettingsSchema = z.object({
   headingFont: fontChoiceSchema.optional().nullable().or(z.literal('')),
   bodyFont: fontChoiceSchema.optional().nullable().or(z.literal('')),
   donateUrl: z.string().url().optional().nullable().or(z.literal('')),
+  // A Google Place ID or a Google link. The server checks it with
+  // googleReviewLink() before saving.
+  googleReview: z.string().max(500).optional().nullable().or(z.literal('')),
   contactEmail: z.string().email().optional().nullable(),
   address: z.string().max(500).optional().nullable(),
   socialLinks: z.record(z.string(), z.string()).optional(),

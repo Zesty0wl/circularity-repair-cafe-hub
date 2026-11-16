@@ -2,7 +2,7 @@ import type { App, HubRequest } from '../lib/router.js';
 import { db, inList } from '../db/index.js';
 import { cafes, events, preRegistrations, repairImages, repairJobs, skillCategories, users, venues } from '../db/schema.js';
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
-import { checkInSubmitSchema } from '@circularity/shared';
+import { checkInSubmitSchema, googleReviewLink } from '@circularity/shared';
 import { withJobNumber } from '../services/jobNumber.js';
 import { cardInUse, cardInUseError } from '../services/cardNumbers.js';
 import { audit } from '../utils/audit.js';
@@ -407,7 +407,7 @@ export async function checkInRoutes(app: App): Promise<void> {
     }
 
     const [cafe] = await db
-      .select({ name: cafes.name, logoUrl: cafes.logoUrl, donateUrl: cafes.donateUrl })
+      .select({ name: cafes.name, logoUrl: cafes.logoUrl, donateUrl: cafes.donateUrl, googleReview: cafes.googleReview })
       .from(cafes)
       .limit(1);
 
@@ -441,7 +441,15 @@ export async function checkInRoutes(app: App): Promise<void> {
       customerName: first?.job.customerName ?? firstPre?.pre.customerName ?? null,
       event: first?.event ?? firstPre!.event,
       venue: first?.venue ?? firstPre!.venue,
-      cafe: cafe ?? { name: '', logoUrl: null, donateUrl: null },
+      cafe: cafe
+        ? {
+            name: cafe.name,
+            logoUrl: cafe.logoUrl,
+            donateUrl: cafe.donateUrl,
+            // Shown once an item is finished, whatever the outcome.
+            googleReviewUrl: googleReviewLink(cafe.googleReview)?.url ?? null,
+          }
+        : { name: '', logoUrl: null, donateUrl: null, googleReviewUrl: null },
       preRegistrations: preRows.map((r) => ({
         id: r.pre.id,
         status: r.pre.status,

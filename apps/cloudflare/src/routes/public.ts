@@ -20,7 +20,7 @@ import { findCafeInJson, getNetworkJson, resolveSlugsInJson } from '../services/
 import { getGuide, recentGuides, searchGuides } from '../services/ifixit.js';
 import { co2Settings, listFactors } from '../services/co2.js';
 import { linuxStats, linuxStatsForEvent } from '../services/linux.js';
-import { activeAnalytics, enabledQwaEvents } from '@circularity/shared';
+import { activeAnalytics, enabledQwaEvents, googleReviewLink } from '@circularity/shared';
 import { closedReason } from '../services/preRegistration.js';
 import { telemetryClaim } from '../services/telemetry.js';
 import { sha256Hex } from '../lib/crypto.js';
@@ -70,6 +70,8 @@ export async function publicRoutes(app: App): Promise<void> {
       headingFont: cafe.headingFont,
       bodyFont: cafe.bodyFont,
       donateUrl: cafe.donateUrl,
+      // Where "Review us on Google" goes, or null when the cafe has not set it.
+      googleReviewUrl: googleReviewLink(cafe.googleReview)?.url ?? null,
       // ── SEO + analytics surfaced for the SPA <head> ────────────
       faviconUrl: cafe.faviconUrl,
       seoTitle: cafe.seoTitle,

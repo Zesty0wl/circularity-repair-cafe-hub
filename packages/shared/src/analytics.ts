@@ -33,6 +33,12 @@ export const QWA_EVENTS = [
     help: 'Someone opens your donation page.',
   },
   {
+    key: 'review',
+    name: 'Google Review',
+    label: 'Google review link',
+    help: 'A visitor opens your Google review link from their live tracker.',
+  },
+  {
     key: 'calendar',
     name: 'Add to Calendar',
     label: 'Add to calendar',

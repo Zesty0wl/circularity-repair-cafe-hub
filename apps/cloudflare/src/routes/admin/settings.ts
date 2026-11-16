@@ -1,7 +1,7 @@
 import type { App } from '../../lib/router.js';
 import { db } from '../../db/index.js';
 import { cafeGallery, cafes } from '../../db/schema.js';
-import { ANALYTICS_PROVIDERS, activeAnalytics, cafeSettingsSchema, cleanQwaEvents, cleanSiteDomain } from '@circularity/shared';
+import { ANALYTICS_PROVIDERS, activeAnalytics, cafeSettingsSchema, cleanQwaEvents, cleanSiteDomain, googleReviewLink } from '@circularity/shared';
 import { asc, eq } from 'drizzle-orm';
 import { audit } from '../../utils/audit.js';
 import { saveValidatedImage, deleteImage } from '../../services/imageUpload.js';
@@ -56,6 +56,19 @@ export async function adminSettingsRoutes(app: App): Promise<void> {
     }
     if (data.ordsCountry !== undefined) {
       update.ordsCountry = data.ordsCountry ? data.ordsCountry.toUpperCase() : null;
+    }
+    // Keep what the admin typed, so they see it again as they wrote it, but
+    // only if it gives a review link we can use.
+    if (data.googleReview !== undefined) {
+      const raw = (data.googleReview ?? '').trim();
+      if (raw && !googleReviewLink(raw)) {
+        reply.code(400).send({
+          error: 'Enter a Google Place ID (it usually starts with ChIJ) or a link to your Google listing.',
+          code: 'cafe/bad_google_review',
+        });
+        return;
+      }
+      update.googleReview = raw || null;
     }
     const [updated] = await db.update(cafes).set(update).where(eq(cafes.id, cafe.id)).returning();
     await audit({ request, actorId: me.sub, actorType: me.role, action: 'cafe.updated', entityType: 'cafe', entityId: cafe.id });

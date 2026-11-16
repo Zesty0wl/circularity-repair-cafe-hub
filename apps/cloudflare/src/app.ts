@@ -23,6 +23,7 @@ import { displayRoutes } from './routes/display.js';
 import { demoRoutes } from './routes/demo.js';
 import { importRoutes, setupImportRoutes } from './routes/admin/backup.js';
 import { fileRoutes } from './routes/files.js';
+import { reviewRoutes } from './routes/reviews.js';
 
 const router = createRouter();
 
@@ -37,6 +38,7 @@ const registered = (async () => {
   await app.register(setupImportRoutes);
   await app.register(authRoutes);
   await app.register(publicRoutes);
+  await app.register(reviewRoutes);
   await app.register(pwaRoutes);
   await app.register(ogRoutes);
   await app.register(checkInRoutes);
@@ -60,7 +62,9 @@ export function isApiPath(pathname: string): boolean {
     pathname.startsWith('/icons/') ||
     pathname === '/manifest.webmanifest' ||
     pathname === '/robots.txt' ||
-    pathname === '/sitemap.xml'
+    pathname === '/sitemap.xml' ||
+    // The short "review us on Google" address on the printed cards.
+    pathname === '/review'
   );
 }
 

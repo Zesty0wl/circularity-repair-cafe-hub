@@ -77,6 +77,8 @@ export interface CafeInfo {
   headingFont: string | null;
   bodyFont: string | null;
   donateUrl: string | null;
+  /** Where "Review us on Google" goes. Null when the cafe has not set it. */
+  googleReviewUrl?: string | null;
   // SEO + analytics (all optional)
   faviconUrl: string | null;
   seoTitle: string | null;
